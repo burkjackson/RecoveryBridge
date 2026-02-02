@@ -81,3 +81,46 @@ body {
 .animate-fadeIn {
   animation: fadeIn 0.2s ease-out;
 }
+
+/* Enhanced Keyboard Focus Indicators for Accessibility */
+/* Visible focus states for all interactive elements */
+
+/* Focus visible polyfill - only show focus ring for keyboard navigation */
+*:focus {
+  outline: none;
+}
+
+*:focus-visible {
+  outline: 3px solid #5A7A8C;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Enhanced focus for buttons */
+button:focus-visible {
+  outline: 3px solid #5A7A8C;
+  outline-offset: 2px;
+}
+
+/* Enhanced focus for links */
+a:focus-visible {
+  outline: 3px solid #5A7A8C;
+  outline-offset: 2px;
+  text-decoration: underline;
+}
+
+/* Enhanced focus for form inputs */
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 3px solid #5A7A8C;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 3px rgba(90, 122, 140, 0.2);
+}
+
+/* Focus indicator for Crisis Help button */
+.crisis-button:focus-visible {
+  outline: 3px solid #FFFFFF;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 6px rgba(255, 255, 255, 0.3);
+}

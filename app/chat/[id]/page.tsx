@@ -8,6 +8,7 @@ import Modal from '@/components/Modal'
 import { SkeletonChatMessage } from '@/components/Skeleton'
 import ErrorState from '@/components/ErrorState'
 import { PrivacyBadge } from '@/components/Footer'
+import SkipLink from '@/components/SkipLink'
 
 interface Message {
   id: string
@@ -257,245 +258,265 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
 
   if (loading) {
     return (
-      <main id="main-content" className="min-h-screen flex flex-col" style={{ backgroundColor: '#F8F9FA' }}>
-        {/* Header skeleton */}
-        <div className="bg-white border-b border-gray-200 p-4 sm:p-6">
-          <div className="max-w-4xl mx-auto">
-            <div className="h-6 bg-gray-200 rounded animate-pulse w-32 mb-2" />
-            <div className="h-4 bg-gray-200 rounded animate-pulse w-24" />
+      <>
+        <SkipLink />
+        <main id="main-content" className="min-h-screen flex flex-col bg-gradient-to-br from-rb-blue/5 via-rb-white to-rb-blue/10">
+          {/* Header skeleton */}
+          <div className="bg-white border-b border-rb-gray/20 shadow-sm p-4 sm:p-6">
+            <div className="max-w-4xl mx-auto">
+              <div className="h-6 bg-gray-200 rounded animate-pulse w-32 mb-2" />
+              <div className="h-4 bg-gray-200 rounded animate-pulse w-24" />
+            </div>
           </div>
-        </div>
 
-        {/* Messages skeleton */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6">
-          <div className="max-w-4xl mx-auto" role="status" aria-label="Loading chat">
-            <SkeletonChatMessage isOwn={false} />
-            <SkeletonChatMessage isOwn={true} />
-            <SkeletonChatMessage isOwn={false} />
-            <SkeletonChatMessage isOwn={true} />
+          {/* Messages skeleton */}
+          <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+            <div className="max-w-4xl mx-auto" role="status" aria-label="Loading chat">
+              <SkeletonChatMessage isOwn={false} />
+              <SkeletonChatMessage isOwn={true} />
+              <SkeletonChatMessage isOwn={false} />
+              <SkeletonChatMessage isOwn={true} />
+            </div>
           </div>
-        </div>
 
-        {/* Input skeleton */}
-        <div className="bg-white border-t border-gray-200 p-4">
-          <div className="max-w-4xl mx-auto">
-            <div className="h-12 bg-gray-200 rounded-full animate-pulse" />
+          {/* Input skeleton */}
+          <div className="bg-white border-t border-rb-gray/20 shadow-sm p-4">
+            <div className="max-w-4xl mx-auto">
+              <div className="h-12 bg-gray-200 rounded-full animate-pulse" />
+            </div>
           </div>
-        </div>
-      </main>
+        </main>
+      </>
     )
   }
 
   return (
-    <main id="main-content" className="min-h-screen flex flex-col" style={{ backgroundColor: '#F8F9FA' }}>
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200 p-4 sm:p-6">
-        <div className="max-w-4xl mx-auto flex justify-between items-center">
-          <div>
-            <Body18>Chat with {otherUserName}</Body18>
-            <div className="flex flex-wrap items-center gap-2 mt-1">
-              <Body16 className="text-sm text-gray-500">
-                {session?.status === 'active' ? 'Active session' : 'Session ended'}
-              </Body16>
-              <PrivacyBadge />
-            </div>
-          </div>
-          {session?.status === 'active' ? (
-            <div className="flex gap-2">
-              <button
-                onClick={reportUser}
-                className="min-h-[44px] px-4 py-3 text-sm text-white rounded-full transition"
-                style={{ backgroundColor: '#F59E0B' }}
-                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#D97706'}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#F59E0B'}
-              >
-                🚩 Report
-              </button>
-              <button
-                onClick={endSession}
-                className="min-h-[44px] px-4 py-3 text-sm text-white rounded-full transition"
-                style={{ backgroundColor: '#DC2626' }}
-                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#B91C1C'}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#DC2626'}
-              >
-                End Session
-              </button>
-            </div>
-          ) : (
-            <button
-              onClick={() => router.push('/dashboard')}
-              className="min-h-[44px] px-4 py-3 text-sm text-white rounded-full transition"
-              style={{ backgroundColor: 'rb-blue-TEMP' }}
-              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rb-blue-hover-TEMP'}
-              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rb-blue-TEMP'}
-            >
-              ← Back to Dashboard
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* End Session Error */}
-      {endSessionError && (
-        <div className="p-4 max-w-4xl mx-auto w-full">
-          <ErrorState
-            type="banner"
-            title="Couldn't End Session"
-            message="We couldn't end this session right now. Please try again in a moment."
-            onRetry={() => {
-              setEndSessionError(false)
-              endSession()
-            }}
-            retryText="Try Ending Again"
-          />
-        </div>
-      )}
-
-      {/* Messages */}
-      <div
-        className="flex-1 overflow-y-auto p-4 sm:p-6"
-        role="log"
-        aria-live="polite"
-        aria-label="Chat messages"
-      >
-        <div className="max-w-4xl mx-auto space-y-4">
-          {messages.length === 0 ? (
-            <div className="text-center py-8">
-              <Body16 className="text-gray-500">No messages yet. Say hello! <span aria-hidden="true">👋</span></Body16>
-            </div>
-          ) : (
-            messages.map((message) => (
-              <div
-                key={message.id}
-                className={`flex ${message.sender_id === currentUserId ? 'justify-end' : 'justify-start'}`}
-              >
-                <div
-                  className={`max-w-[70%] sm:max-w-md px-4 py-3 rounded-2xl ${
-                    message.sender_id === currentUserId
-                      ? 'bg-rb-blue text-white'
-                      : 'bg-white border border-gray-200'
-                  }`}
-                  role="article"
-                  aria-label={`Message from ${message.sender_id === currentUserId ? 'you' : otherUserName}`}
-                >
-                  <Body16 className={message.sender_id === currentUserId ? 'text-white' : ''}>
-                    {message.content}
-                  </Body16>
-                  <p className={`text-xs mt-1 ${message.sender_id === currentUserId ? 'text-white/70' : 'text-gray-400'}`}>
-                    {new Date(message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  </p>
-                </div>
+    <>
+      <SkipLink />
+      <main id="main-content" className="min-h-screen flex flex-col bg-gradient-to-br from-rb-blue/5 via-rb-white to-rb-blue/10">
+        {/* Header */}
+        <div className="bg-white border-b border-rb-gray/20 shadow-md p-4 sm:p-6">
+          <div className="max-w-4xl mx-auto flex justify-between items-center">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-xl" role="img" aria-label="Chat">💬</span>
+                <Body18 className="font-bold text-[#2D3436]">Chat with {otherUserName}</Body18>
               </div>
-            ))
-          )}
-          <div ref={messagesEndRef} />
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="flex items-center gap-1.5">
+                  {session?.status === 'active' ? (
+                    <>
+                      <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" aria-label="Active"></span>
+                      <Body16 className="text-sm text-rb-gray">Active session</Body16>
+                    </>
+                  ) : (
+                    <Body16 className="text-sm text-rb-gray">Session ended</Body16>
+                  )}
+                </div>
+                <PrivacyBadge />
+              </div>
+            </div>
+            {session?.status === 'active' ? (
+              <div className="flex gap-2">
+                <button
+                  onClick={reportUser}
+                  aria-label="Report user"
+                  className="min-h-[44px] px-4 py-3 text-sm bg-amber-500 hover:bg-amber-600 text-white rounded-full transition-all transform hover:scale-105 font-semibold shadow-sm hover:shadow-md"
+                >
+                  <span role="img" aria-label="Flag">🚩</span> Report
+                </button>
+                <button
+                  onClick={endSession}
+                  aria-label="End session"
+                  className="min-h-[44px] px-4 py-3 text-sm bg-red-600 hover:bg-red-700 text-white rounded-full transition-all transform hover:scale-105 font-semibold shadow-sm hover:shadow-md"
+                >
+                  End Session
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => router.push('/dashboard')}
+                className="min-h-[44px] px-4 py-3 text-sm bg-gradient-to-r from-rb-blue to-rb-blue-hover text-white rounded-full transition-all transform hover:scale-105 font-semibold shadow-sm hover:shadow-md"
+              >
+                ← Back to Dashboard
+              </button>
+            )}
+          </div>
+        </div>
 
-          {/* Send Error */}
-          {sendError && (
+        {/* End Session Error */}
+        {endSessionError && (
+          <div className="p-4 max-w-4xl mx-auto w-full">
             <ErrorState
-              type="inline"
-              message="We couldn't send your message. Your connection might be unstable."
+              type="banner"
+              title="Couldn't End Session"
+              message="We couldn't end this session right now. Please try again in a moment."
               onRetry={() => {
-                setSendError(false)
-                if (newMessage.trim()) {
-                  const fakeEvent = { preventDefault: () => {} } as React.FormEvent
-                  sendMessage(fakeEvent)
-                }
+                setEndSessionError(false)
+                endSession()
               }}
-              retryText="Send Again"
+              retryText="Try Ending Again"
             />
-          )}
-        </div>
-      </div>
+          </div>
+        )}
 
-      {/* Message Input */}
-      {session?.status === 'active' && (
-        <div className="bg-white border-t border-gray-200 p-4">
-          <form onSubmit={sendMessage} className="max-w-4xl mx-auto flex gap-2" aria-label="Send message">
-            <label htmlFor="message-input" className="sr-only">Type your message</label>
-            <input
-              id="message-input"
-              type="text"
-              value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
-              placeholder="Type a message..."
-              className="flex-1 px-4 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-rb-blue"
-              disabled={sending}
-              aria-label="Message text"
-            />
-            <button
-              type="submit"
-              disabled={!newMessage.trim() || sending}
-              aria-label={sending ? "Sending message..." : "Send message"}
-              className="px-6 py-3 rounded-full font-semibold bg-rb-blue hover:bg-rb-blue-hover text-white transition disabled:opacity-50"
-            >
-              {sending ? 'Sending...' : 'Send'}
-            </button>
-          </form>
-        </div>
-      )}
+        {/* Messages */}
+        <div
+          className="flex-1 overflow-y-auto p-4 sm:p-6"
+          role="log"
+          aria-live="polite"
+          aria-label="Chat messages"
+        >
+          <div className="max-w-4xl mx-auto space-y-4">
+            {messages.length === 0 ? (
+              <div className="bg-gradient-to-br from-white to-rb-blue/5 rounded-2xl p-8 text-center shadow-lg border border-rb-blue/20">
+                <span className="text-4xl mb-3 block" role="img" aria-label="Wave">👋</span>
+                <Body16 className="text-rb-gray">No messages yet. Say hello!</Body16>
+              </div>
+            ) : (
+              messages.map((message) => (
+                <div
+                  key={message.id}
+                  className={`flex ${message.sender_id === currentUserId ? 'justify-end' : 'justify-start'}`}
+                >
+                  <div
+                    className={`max-w-[70%] sm:max-w-md px-5 py-3 rounded-2xl shadow-sm ${
+                      message.sender_id === currentUserId
+                        ? 'bg-gradient-to-r from-rb-blue to-rb-blue-hover text-white'
+                        : 'bg-white border-2 border-rb-blue/20'
+                    }`}
+                    role="article"
+                    aria-label={`Message from ${message.sender_id === currentUserId ? 'you' : otherUserName}`}
+                  >
+                    <Body16 className={message.sender_id === currentUserId ? 'text-white' : 'text-[#2D3436]'}>
+                      {message.content}
+                    </Body16>
+                    <p className={`text-xs mt-1.5 ${message.sender_id === currentUserId ? 'text-white/70' : 'text-rb-gray'}`}>
+                      {new Date(message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </p>
+                  </div>
+                </div>
+              ))
+            )}
+            <div ref={messagesEndRef} />
 
-      {/* Account Blocked Modal */}
-      <Modal
-        isOpen={blockModal.show}
-        onClose={() => {
-          setBlockModal({ show: false, reason: '' })
-          router.push('/dashboard')
-        }}
-        title="Account Restricted"
-        confirmText="Go to Dashboard"
-        confirmStyle="primary"
-      >
-        <p className="text-lg mb-4">
-          Your account has been restricted and you cannot access chats at this time.
-        </p>
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
-          <p className="text-sm">
-            <strong>Reason:</strong>
-            <br />
-            {blockModal.reason}
+            {/* Send Error */}
+            {sendError && (
+              <ErrorState
+                type="inline"
+                message="We couldn't send your message. Your connection might be unstable."
+                onRetry={() => {
+                  setSendError(false)
+                  if (newMessage.trim()) {
+                    const fakeEvent = { preventDefault: () => {} } as React.FormEvent
+                    sendMessage(fakeEvent)
+                  }
+                }}
+                retryText="Send Again"
+              />
+            )}
+          </div>
+        </div>
+
+        {/* Message Input */}
+        {session?.status === 'active' && (
+          <div className="bg-white border-t border-rb-gray/20 shadow-lg p-4">
+            <form onSubmit={sendMessage} className="max-w-4xl mx-auto flex gap-2" aria-label="Send message">
+              <label htmlFor="message-input" className="sr-only">Type your message</label>
+              <input
+                id="message-input"
+                type="text"
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                placeholder="Type a message..."
+                className="flex-1 px-5 py-3 border-2 border-rb-gray/20 rounded-full focus:outline-none focus:ring-2 focus:ring-rb-blue focus:border-transparent transition-all"
+                disabled={sending}
+                aria-label="Message text"
+              />
+              <button
+                type="submit"
+                disabled={!newMessage.trim() || sending}
+                aria-label={sending ? "Sending message..." : "Send message"}
+                className="min-h-[44px] px-6 py-3 rounded-full font-semibold bg-gradient-to-r from-rb-blue to-rb-blue-hover text-white hover:shadow-lg disabled:opacity-50 transition-all transform hover:scale-105"
+              >
+                {sending ? (
+                  <span className="flex items-center gap-2">
+                    <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Sending...
+                  </span>
+                ) : (
+                  'Send'
+                )}
+              </button>
+            </form>
+          </div>
+        )}
+
+        {/* Account Blocked Modal */}
+        <Modal
+          isOpen={blockModal.show}
+          onClose={() => {
+            setBlockModal({ show: false, reason: '' })
+            router.push('/dashboard')
+          }}
+          title="Account Restricted"
+          confirmText="Go to Dashboard"
+          confirmStyle="primary"
+        >
+          <p className="text-lg mb-4">
+            Your account has been restricted and you cannot access chats at this time.
           </p>
-        </div>
-        <p className="text-sm text-rb-gray">
-          If you believe this is a mistake, please contact support for assistance.
-        </p>
-      </Modal>
-
-      {/* Report Success Modal */}
-      <Modal
-        isOpen={reportSuccessModal}
-        onClose={() => setReportSuccessModal(false)}
-        title="Report Submitted"
-        confirmText="OK"
-        confirmStyle="success"
-      >
-        <p className="text-lg mb-4">
-          Thank you for your report. Our team will review it shortly.
-        </p>
-        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-          <p className="text-sm">
-            We take all reports seriously and will investigate this matter. You'll be notified if we need any additional information.
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+            <p className="text-sm">
+              <strong>Reason:</strong>
+              <br />
+              {blockModal.reason}
+            </p>
+          </div>
+          <p className="text-sm text-rb-gray">
+            If you believe this is a mistake, please contact support for assistance.
           </p>
-        </div>
-      </Modal>
+        </Modal>
 
-      {/* Report Error Modal */}
-      <Modal
-        isOpen={reportErrorModal}
-        onClose={() => setReportErrorModal(false)}
-        title="Report Failed"
-        confirmText="Try Again"
-        confirmStyle="danger"
-      >
-        <p className="text-lg mb-4">
-          We couldn't submit your report right now.
-        </p>
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <p className="text-sm">
-            This might be a temporary connection issue. Please try again in a moment, or contact support if the problem continues.
+        {/* Report Success Modal */}
+        <Modal
+          isOpen={reportSuccessModal}
+          onClose={() => setReportSuccessModal(false)}
+          title="Report Submitted"
+          confirmText="OK"
+          confirmStyle="success"
+        >
+          <p className="text-lg mb-4">
+            Thank you for your report. Our team will review it shortly.
           </p>
-        </div>
-      </Modal>
-    </main>
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+            <p className="text-sm">
+              We take all reports seriously and will investigate this matter. You'll be notified if we need any additional information.
+            </p>
+          </div>
+        </Modal>
+
+        {/* Report Error Modal */}
+        <Modal
+          isOpen={reportErrorModal}
+          onClose={() => setReportErrorModal(false)}
+          title="Report Failed"
+          confirmText="Try Again"
+          confirmStyle="danger"
+        >
+          <p className="text-lg mb-4">
+            We couldn't submit your report right now.
+          </p>
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+            <p className="text-sm">
+              This might be a temporary connection issue. Please try again in a moment, or contact support if the problem continues.
+            </p>
+          </div>
+        </Modal>
+      </main>
+    </>
   )
 }

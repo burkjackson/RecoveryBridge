@@ -7,6 +7,7 @@ import { Heading1, Body16, Body18 } from '@/components/ui/Typography'
 import { SkeletonRoleCard } from '@/components/Skeleton'
 import ErrorState from '@/components/ErrorState'
 import Footer from '@/components/Footer'
+import SkipLink from '@/components/SkipLink'
 
 export default function DashboardPage() {
   const [profile, setProfile] = useState<any>(null)
@@ -159,7 +160,9 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <main id="main-content" className="min-h-screen p-4 sm:p-6" style={{ backgroundColor: '#F8F9FA' }}>
+      <>
+        <SkipLink />
+        <main id="main-content" className="min-h-screen p-4 sm:p-6" style={{ backgroundColor: '#F8F9FA' }}>
         <div className="max-w-6xl mx-auto">
           {/* Header skeleton */}
           <div className="mb-6 sm:mb-8">
@@ -179,40 +182,46 @@ export default function DashboardPage() {
           </div>
         </div>
       </main>
+      </>
     )
   }
 
   return (
-    <main id="main-content" className="min-h-screen p-4 sm:p-6" style={{ backgroundColor: '#F8F9FA' }}>
+    <>
+      <SkipLink />
+      <main id="main-content" className="min-h-screen p-4 sm:p-6" style={{ backgroundColor: '#F8F9FA' }}>
       <div className="max-w-6xl mx-auto">
         {/* Header */}
-        <div className="mb-6 sm:mb-8">
+        <div className="bg-white rounded-2xl shadow-lg p-6 sm:p-8 mb-6 sm:mb-8 border border-rb-gray/10">
           <div className="flex gap-4 items-start mb-4">
             {/* Avatar */}
             {profile?.avatar_url && (
               <img
                 src={profile.avatar_url}
                 alt={profile.display_name}
-                className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover border-2 border-rb-blue flex-shrink-0"
+                className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover border-3 border-rb-blue flex-shrink-0 shadow-md"
               />
             )}
             <div className="flex-1 min-w-0">
-              <Heading1 className="text-xl sm:text-2xl md:text-3xl break-words">Welcome back, {profile?.display_name}!</Heading1>
-              <Body16 className="mt-1 sm:mt-2">Your RecoveryBridge Dashboard</Body16>
+              <Heading1 className="text-xl sm:text-2xl md:text-3xl break-words mb-2">Welcome back, {profile?.display_name}!</Heading1>
+              <Body16 className="text-rb-gray font-medium italic mb-1">"Your story matters here"</Body16>
+              <Body16 className="text-rb-gray text-sm">Choose how you'd like to engage today</Body16>
             </div>
             <button
               onClick={handleSignOut}
-              className="ml-4 min-h-[44px] min-w-[44px] px-4 py-3 text-sm bg-rb-blue text-white rounded-full hover:bg-rb-blue-hover transition whitespace-nowrap"
+              className="ml-4 min-h-[44px] min-w-[44px] px-4 py-3 text-sm bg-gradient-to-r from-rb-blue to-rb-blue-hover text-white rounded-full hover:shadow-lg transition-all transform hover:scale-105 whitespace-nowrap"
             >
               Sign Out
             </button>
           </div>
-          <button
-            onClick={() => router.push('/profile')}
-            className="inline-block min-h-[44px] py-3 text-sm text-rb-blue hover:text-rb-blue-hover transition"
-          >
-            View Profile →
-          </button>
+          <div className="flex gap-3 pt-4 border-t border-rb-gray/10">
+            <button
+              onClick={() => router.push('/profile')}
+              className="inline-flex items-center gap-2 min-h-[44px] px-4 py-2 text-sm text-rb-blue hover:text-rb-blue-hover font-semibold transition"
+            >
+              <span role="img" aria-label="Profile">👤</span> View Profile →
+            </button>
+          </div>
         </div>
 
         {/* Role Display */}
@@ -239,21 +248,29 @@ export default function DashboardPage() {
         )}
 
         {/* Role Buttons */}
-        <div className="grid sm:grid-cols-2 gap-3 sm:gap-4 mb-6 sm:mb-8" role="group" aria-label="Choose your current role">
+        <div className="grid sm:grid-cols-2 gap-4 mb-6 sm:mb-8" role="group" aria-label="Choose your current role">
           <button
             onClick={() => setRoleState(profile?.role_state === 'available' ? 'offline' : 'available')}
             aria-label={profile?.role_state === 'available' ? 'You are currently available to listen. Click to go offline' : 'Make yourself available to listen and support others'}
             aria-pressed={profile?.role_state === 'available'}
-            className={`p-6 sm:p-8 rounded-xl sm:rounded-2xl text-left transition border-2 ${
+            className={`p-5 sm:p-6 rounded-xl text-left transition-all border-4 shadow-sm hover:shadow-md active:shadow-inner ${
               profile?.role_state === 'available'
-                ? 'border-rb-blue bg-[#E8E4F0]'
-                : 'border-rb-blue bg-white hover:bg-[#F8F9FA]'
+                ? 'border-[#3B82F6] bg-gradient-to-br from-blue-50 to-blue-25 shadow-md'
+                : 'border-rb-gray bg-white hover:border-[#3B82F6] active:border-[#3B82F6]'
             }`}
           >
-            <Body18 className="mb-2"><span aria-hidden="true">🎧</span> I'm Here To Listen</Body18>
-            <Body16>Make yourself available to support others</Body16>
-            {profile?.role_state === 'available' && (
-              <Body16 className="mt-4 text-sm text-rb-blue font-semibold" aria-live="polite">● You're available</Body16>
+            <div className="flex items-center gap-3 mb-2">
+              <span className="text-2xl" role="img" aria-label="Headphones">🎧</span>
+              <Body18 className="font-bold text-[#2D3436]">I'm Here To Listen</Body18>
+            </div>
+            <Body16 className="text-rb-gray text-sm mb-3">Offer support and connection to others on their journey</Body16>
+            {profile?.role_state === 'available' ? (
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-100 rounded-full w-fit">
+                <span className="w-2 h-2 bg-[#3B82F6] rounded-full animate-pulse"></span>
+                <Body16 className="text-sm text-[#3B82F6] font-bold" aria-live="polite">Available Now</Body16>
+              </div>
+            ) : (
+              <Body16 className="text-xs text-rb-gray italic">Click to make yourself available</Body16>
             )}
           </button>
 
@@ -261,24 +278,35 @@ export default function DashboardPage() {
             onClick={() => setRoleState(profile?.role_state === 'requesting' ? 'offline' : 'requesting')}
             aria-label={profile?.role_state === 'requesting' ? 'You are currently looking for support. Click to cancel' : 'Request support and connect with an available listener'}
             aria-pressed={profile?.role_state === 'requesting'}
-            className={`p-6 sm:p-8 rounded-xl sm:rounded-2xl text-left transition border-2 ${
+            className={`p-5 sm:p-6 rounded-xl text-left transition-all border-4 shadow-sm hover:shadow-md active:shadow-inner ${
               profile?.role_state === 'requesting'
-                ? 'border-[#B8A9C9] bg-[#E8E4F0]'
-                : 'border-[#B8A9C9] bg-white hover:bg-[#F8F9FA]'
+                ? 'border-[#A855F7] bg-gradient-to-br from-purple-50 to-purple-25 shadow-md'
+                : 'border-rb-gray bg-white hover:border-[#A855F7] active:border-[#A855F7]'
             }`}
           >
-            <Body18 className="mb-2"><span aria-hidden="true">🤝</span> I Need Support</Body18>
-            <Body16>Connect with an available listener</Body16>
-            {profile?.role_state === 'requesting' && (
-              <Body16 className="mt-4 text-sm text-[#B8A9C9] font-semibold" aria-live="polite">● Looking for support</Body16>
+            <div className="flex items-center gap-3 mb-2">
+              <span className="text-2xl" role="img" aria-label="Handshake">🤝</span>
+              <Body18 className="font-bold text-[#2D3436]">I Need Support</Body18>
+            </div>
+            <Body16 className="text-rb-gray text-sm mb-3">Connect with someone who understands your journey</Body16>
+            {profile?.role_state === 'requesting' ? (
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-purple-100 rounded-full w-fit">
+                <span className="w-2 h-2 bg-[#A855F7] rounded-full animate-pulse"></span>
+                <Body16 className="text-sm text-[#A855F7] font-bold" aria-live="polite">Seeking Support</Body16>
+              </div>
+            ) : (
+              <Body16 className="text-xs text-rb-gray italic">Click to find a listener</Body16>
             )}
           </button>
         </div>
 
         {/* Active Sessions */}
         {activeSessions.length > 0 && (
-          <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-sm mb-6 sm:mb-8">
-            <Body18 className="mb-4"><span aria-hidden="true">💬</span> Active Chats</Body18>
+          <div className="bg-gradient-to-br from-white to-rb-blue/5 rounded-2xl p-6 sm:p-8 shadow-lg mb-6 sm:mb-8 border border-rb-blue/20">
+            <div className="flex items-center gap-3 mb-6">
+              <span className="text-3xl" role="img" aria-label="Chat">💬</span>
+              <Body18 className="font-bold text-[#2D3436]">Your Active Conversations</Body18>
+            </div>
             <div className="space-y-3" role="list" aria-label="Active chat sessions">
               {activeSessions.map((session: any) => (
                 <button
@@ -286,14 +314,19 @@ export default function DashboardPage() {
                   onClick={() => router.push(`/chat/${session.id}`)}
                   aria-label={`Open chat with ${session.otherUserName}`}
                   role="listitem"
-                  className="w-full p-4 bg-[#E8E4F0] rounded-lg text-left hover:bg-[#D6E5F3] transition border-2 border-rb-blue"
+                  className="w-full p-5 bg-white rounded-xl text-left hover:shadow-md transition-all border-2 border-rb-blue/30 hover:border-rb-blue transform hover:scale-[1.01]"
                 >
-                  <Body16 className="font-semibold text-[#2D3436]">
-                    <span aria-hidden="true">💬</span> Chat with {session.otherUserName}
-                  </Body16>
-                  <Body16 className="text-sm text-rb-gray">
-                    Click to open chat →
-                  </Body16>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Body16 className="font-bold text-[#2D3436] mb-1">
+                        <span role="img" aria-label="Chat">💬</span> {session.otherUserName}
+                      </Body16>
+                      <Body16 className="text-sm text-rb-gray">
+                        Continue your conversation
+                      </Body16>
+                    </div>
+                    <span className="text-rb-blue font-semibold">→</span>
+                  </div>
                 </button>
               ))}
             </div>
@@ -302,9 +335,12 @@ export default function DashboardPage() {
 
         {/* Bio Display */}
         {profile?.bio && (
-          <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-sm">
-            <Body18 className="mb-2">About You</Body18>
-            <Body16>{profile.bio}</Body16>
+          <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-md border border-rb-gray/10 mb-6">
+            <div className="flex items-center gap-3 mb-4">
+              <span className="text-2xl" role="img" aria-label="Person">👤</span>
+              <Body18 className="font-bold text-[#2D3436]">About You</Body18>
+            </div>
+            <Body16 className="text-rb-gray leading-relaxed">{profile.bio}</Body16>
           </div>
         )}
 
@@ -312,5 +348,6 @@ export default function DashboardPage() {
         <Footer />
       </div>
     </main>
+    </>
   )
 }
