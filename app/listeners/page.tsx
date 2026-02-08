@@ -7,7 +7,6 @@ import { Heading1, Body16, Body18 } from '@/components/ui/Typography'
 import Modal from '@/components/Modal'
 import { SkeletonListenerCard } from '@/components/Skeleton'
 import Footer from '@/components/Footer'
-import SkipLink from '@/components/SkipLink'
 
 interface Listener {
   id: string
@@ -101,9 +100,7 @@ export default function ListenersPage() {
 
   if (loading) {
     return (
-      <>
-        <SkipLink />
-        <main id="main-content" className="min-h-screen p-4 sm:p-6 bg-gradient-to-br from-rb-blue/5 via-rb-white to-rb-blue/10">
+      <main id="main-content" className="min-h-screen p-4 sm:p-6 bg-gradient-to-br from-rb-blue/5 via-rb-white to-rb-blue/10">
           <div className="max-w-4xl mx-auto">
             {/* Header skeleton */}
             <div className="mb-6 sm:mb-8">
@@ -120,15 +117,12 @@ export default function ListenersPage() {
             </div>
           </div>
         </main>
-      </>
     )
   }
 
   return (
-    <>
-      <SkipLink />
-      <main id="main-content" className="min-h-screen p-4 sm:p-6 bg-gradient-to-br from-rb-blue/5 via-rb-white to-rb-blue/10">
-        <div className="max-w-4xl mx-auto">
+    <main id="main-content" className="min-h-screen p-4 sm:p-6 bg-gradient-to-br from-rb-blue/5 via-rb-white to-rb-blue/10">
+      <div className="max-w-4xl mx-auto">
           {/* Header Card */}
           <div className="bg-white rounded-2xl shadow-lg p-6 sm:p-8 mb-6 sm:mb-8 border border-rb-gray/10">
             <button
@@ -183,9 +177,9 @@ export default function ListenersPage() {
                       <div className="flex items-center gap-1 mb-2">
                         <span className="text-sm" role="img" aria-label="Role">🎯</span>
                         <Body16 className="text-sm text-rb-gray">
-                          {listener.user_role === 'person_in_recovery' && 'People in Recovery'}
-                          {listener.user_role === 'professional' && 'Allies in Long-Term Recovery'}
-                          {listener.user_role === 'ally' && 'Recovery Support'}
+                          {listener.user_role === 'person_in_recovery' && 'Person in Recovery'}
+                          {listener.user_role === 'professional' && 'Allies for Long-Term Recovery'}
+                          {listener.user_role === 'ally' && 'Recovery Support (Legacy)'}
                         </Body16>
                       </div>
                       {listener.bio && (
@@ -269,7 +263,6 @@ export default function ListenersPage() {
             )}
           </div>
         </Modal>
-      </main>
-    </>
+    </main>
   )
 }

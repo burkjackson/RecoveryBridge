@@ -2,15 +2,12 @@
 
 import { useRouter } from 'next/navigation'
 import Footer from '@/components/Footer'
-import SkipLink from '@/components/SkipLink'
 
 export default function Home() {
   const router = useRouter()
 
   return (
-    <>
-      <SkipLink />
-      <main id="main-content" className="min-h-screen flex flex-col bg-gradient-to-br from-rb-blue/5 via-rb-white to-rb-blue/10">
+    <main id="main-content" className="min-h-screen flex flex-col bg-gradient-to-br from-rb-blue/5 via-rb-white to-rb-blue/10">
         {/* Hero Section */}
         <div className="flex-1 flex items-center justify-center p-4 sm:p-6">
           <div className="max-w-4xl w-full text-center">
@@ -132,20 +129,14 @@ export default function Home() {
                 <ul className="space-y-8">
                   <li className="flex flex-col items-center text-center">
                     <span className="text-5xl mb-3" role="img" aria-label="Star">🌟</span>
-                    <strong className="text-[#2D3436] mb-2 text-lg">People in Recovery</strong>
+                    <strong className="text-[#2D3436] mb-2 text-lg">Person in Recovery</strong>
                     <p className="text-sm text-rb-gray leading-relaxed">From substance abuse, behavioral addictions, or any form of recovery journey</p>
                   </li>
                   <div className="border-t border-rb-blue/20"></div>
                   <li className="flex flex-col items-center text-center">
                     <span className="text-5xl mb-3" role="img" aria-label="Handshake">🤝</span>
-                    <strong className="text-[#2D3436] mb-2 text-lg">Allies in Long-Term Recovery</strong>
+                    <strong className="text-[#2D3436] mb-2 text-lg">Allies for Long-Term Recovery</strong>
                     <p className="text-sm text-rb-gray leading-relaxed">Giving back by offering support to others on their journey</p>
-                  </li>
-                  <div className="border-t border-rb-blue/20"></div>
-                  <li className="flex flex-col items-center text-center">
-                    <span className="text-5xl mb-3" role="img" aria-label="Shield">🛡️</span>
-                    <strong className="text-[#2D3436] mb-2 text-lg">Recovery Support</strong>
-                    <p className="text-sm text-rb-gray leading-relaxed">Supporting the recovery community with empathy and understanding</p>
                   </li>
                 </ul>
               </div>
@@ -193,6 +184,5 @@ export default function Home() {
         {/* Footer with all links */}
         <Footer />
       </main>
-    </>
   )
 }

@@ -6,7 +6,7 @@ interface FooterProps {
 
 export default function Footer({ className = '' }: FooterProps) {
   return (
-    <footer className={`mt-8 pt-6 pb-8 px-4 border-t border-gray-200 ${className}`}>
+    <footer className={`mt-8 pt-6 pb-24 px-4 border-t border-gray-200 ${className}`}>
       <div className="max-w-4xl mx-auto">
         {/* Privacy Reassurance */}
         <div className="text-center mb-6">

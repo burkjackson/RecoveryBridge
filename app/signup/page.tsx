@@ -5,7 +5,6 @@ import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { Heading1, Body16 } from '@/components/ui/Typography'
 import Modal from '@/components/Modal'
-import SkipLink from '@/components/SkipLink'
 
 export default function SignupPage() {
   const [email, setEmail] = useState('')
@@ -67,9 +66,7 @@ export default function SignupPage() {
   }
 
   return (
-    <>
-      <SkipLink />
-      <main id="main-content" className="min-h-screen flex items-center justify-center p-4 sm:p-6 bg-gradient-to-br from-rb-blue/5 via-rb-white to-rb-blue/10">
+    <main id="main-content" className="min-h-screen flex items-center justify-center p-4 sm:p-6 bg-gradient-to-br from-rb-blue/5 via-rb-white to-rb-blue/10">
         <div className="w-full max-w-md">
           {/* Welcome Card */}
           <div className="bg-white rounded-2xl shadow-xl p-8 sm:p-10 border border-rb-gray/10">
@@ -233,6 +230,5 @@ export default function SignupPage() {
           </div>
         </Modal>
       </main>
-    </>
   )
 }

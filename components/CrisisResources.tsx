@@ -1,16 +1,19 @@
 'use client'
 
 import { useState } from 'react'
+import { usePathname } from 'next/navigation'
 
 export default function CrisisResources() {
   const [isOpen, setIsOpen] = useState(false)
+  const pathname = usePathname()
+  const isChat = pathname?.startsWith('/chat')
 
   return (
     <>
       {/* Floating Crisis Button - Always Visible */}
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 z-50 bg-red-600 hover:bg-red-700 text-white px-4 py-3 rounded-full shadow-lg transition-all hover:scale-105 flex items-center gap-2 font-semibold"
+        className={`fixed right-6 z-50 bg-red-600 hover:bg-red-700 text-white px-4 py-3 rounded-full shadow-lg transition-all hover:scale-105 flex items-center gap-2 font-semibold ${isChat ? 'bottom-24' : 'bottom-6'}`}
         aria-label="Access crisis resources and emergency contacts"
       >
         <span className="text-xl" aria-hidden="true">🆘</span>
@@ -20,16 +23,17 @@ export default function CrisisResources() {
       {/* Crisis Resources Modal */}
       {isOpen && (
         <div
-          role="dialog"
-          aria-labelledby="crisis-modal-title"
-          aria-modal="true"
-          className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4"
+          className="fixed inset-0 bg-black/60 z-50 overflow-y-auto"
           onClick={() => setIsOpen(false)}
         >
-          <div
-            className="bg-white rounded-2xl p-6 sm:p-8 max-w-md w-full shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
+          <div className="min-h-full flex items-start sm:items-center justify-center p-4">
+            <div
+              role="dialog"
+              aria-labelledby="crisis-modal-title"
+              aria-modal="true"
+              className="bg-white rounded-2xl p-6 sm:p-8 max-w-md w-full shadow-2xl my-4"
+              onClick={(e) => e.stopPropagation()}
+            >
             {/* Header */}
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-center gap-3">
@@ -153,6 +157,7 @@ export default function CrisisResources() {
             >
               Close
             </button>
+            </div>
           </div>
         </div>
       )}

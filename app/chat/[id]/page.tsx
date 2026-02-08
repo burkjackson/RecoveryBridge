@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { Heading1, Body16, Body18 } from '@/components/ui/Typography'
@@ -8,7 +8,6 @@ import Modal from '@/components/Modal'
 import { SkeletonChatMessage } from '@/components/Skeleton'
 import ErrorState from '@/components/ErrorState'
 import { PrivacyBadge } from '@/components/Footer'
-import SkipLink from '@/components/SkipLink'
 
 interface Message {
   id: string
@@ -41,10 +40,16 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   const [blockModal, setBlockModal] = useState({ show: false, reason: '' })
   const [reportSuccessModal, setReportSuccessModal] = useState(false)
   const [reportErrorModal, setReportErrorModal] = useState(false)
+  const [inactivityModal, setInactivityModal] = useState(false)
 
   // Error states
   const [sendError, setSendError] = useState(false)
   const [endSessionError, setEndSessionError] = useState(false)
+
+  // Inactivity tracking
+  const [lastActivityTime, setLastActivityTime] = useState(Date.now())
+  const inactivityWarningTime = 15 * 60 * 1000 // 15 minutes
+  const autoCloseTime = 5 * 60 * 1000 // 5 minutes after warning
 
   useEffect(() => {
     params.then(p => setSessionId(p.id))
@@ -66,6 +71,56 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   useEffect(() => {
     scrollToBottom()
   }, [messages])
+
+  // Inactivity warning and auto-close
+  useEffect(() => {
+    if (session?.status !== 'active') return
+
+    const checkInactivity = setInterval(() => {
+      const timeSinceLastActivity = Date.now() - lastActivityTime
+
+      // Show warning after 15 minutes of inactivity
+      if (timeSinceLastActivity >= inactivityWarningTime && !inactivityModal) {
+        setInactivityModal(true)
+      }
+
+      // Auto-close after 20 minutes total (15 min + 5 min warning)
+      if (timeSinceLastActivity >= inactivityWarningTime + autoCloseTime) {
+        endSessionDueToInactivity()
+      }
+    }, 30000) // Check every 30 seconds
+
+    return () => clearInterval(checkInactivity)
+  }, [session, lastActivityTime, inactivityModal, inactivityWarningTime, autoCloseTime, endSessionDueToInactivity])
+
+  // Update activity on new messages
+  useEffect(() => {
+    if (messages.length > 0) {
+      setLastActivityTime(Date.now())
+      setInactivityModal(false) // Dismiss warning if they sent a message
+    }
+  }, [messages])
+
+  const endSessionDueToInactivity = useCallback(async () => {
+    try {
+      const { error } = await supabase
+        .from('sessions')
+        .update({ status: 'ended', ended_at: new Date().toISOString() })
+        .eq('id', sessionId)
+
+      if (error) throw error
+      setInactivityModal(false)
+      alert('This session was closed due to inactivity.')
+      router.push('/dashboard')
+    } catch (error) {
+      console.error('Error ending session:', error)
+    }
+  }, [sessionId, router, supabase])
+
+  const dismissInactivityWarning = useCallback(() => {
+    setInactivityModal(false)
+    setLastActivityTime(Date.now()) // Reset timer
+  }, [])
 
   async function loadSession() {
     try {
@@ -177,6 +232,8 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
       if (error) throw error
       setNewMessage('')
       setSendError(false) // Clear any previous errors
+      setLastActivityTime(Date.now()) // Reset inactivity timer
+      setInactivityModal(false) // Dismiss warning if showing
     } catch (error: any) {
       console.error('Error sending message:', error)
       setSendError(true)
@@ -259,7 +316,6 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   if (loading) {
     return (
       <>
-        <SkipLink />
         <main id="main-content" className="min-h-screen flex flex-col bg-gradient-to-br from-rb-blue/5 via-rb-white to-rb-blue/10">
           {/* Header skeleton */}
           <div className="bg-white border-b border-rb-gray/20 shadow-sm p-4 sm:p-6">
@@ -292,7 +348,6 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
 
   return (
     <>
-      <SkipLink />
       <main id="main-content" className="min-h-screen flex flex-col bg-gradient-to-br from-rb-blue/5 via-rb-white to-rb-blue/10">
         {/* Header */}
         <div className="bg-white border-b border-rb-gray/20 shadow-md p-4 sm:p-6">
@@ -513,6 +568,25 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
           <div className="bg-red-50 border border-red-200 rounded-lg p-4">
             <p className="text-sm">
               This might be a temporary connection issue. Please try again in a moment, or contact support if the problem continues.
+            </p>
+          </div>
+        </Modal>
+
+        {/* Inactivity Warning Modal */}
+        <Modal
+          isOpen={inactivityModal}
+          onClose={dismissInactivityWarning}
+          title="Still There?"
+          confirmText="I'm Still Here"
+          confirmStyle="primary"
+        >
+          <p className="text-lg mb-4">
+            We haven't seen any activity in this chat for a while.
+          </p>
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+            <p className="text-sm">
+              <strong>This chat will automatically close in 5 minutes</strong> if there's no response.
+              Send a message or click "I'm Still Here" to keep the conversation going.
             </p>
           </div>
         </Modal>

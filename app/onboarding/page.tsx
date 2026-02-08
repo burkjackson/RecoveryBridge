@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { Heading1, Body16, Body18 } from '@/components/ui/Typography'
-import SkipLink from '@/components/SkipLink'
 
 export default function OnboardingPage() {
   const [step, setStep] = useState(1)
@@ -97,9 +96,7 @@ export default function OnboardingPage() {
   }
 
   return (
-    <>
-      <SkipLink />
-      <main id="main-content" className="min-h-screen flex items-center justify-center p-4 sm:p-6 bg-gradient-to-br from-rb-blue/5 via-rb-white to-rb-blue/10">
+    <main id="main-content" className="min-h-screen flex items-center justify-center p-4 sm:p-6 bg-gradient-to-br from-rb-blue/5 via-rb-white to-rb-blue/10">
         <div className="w-full max-w-2xl bg-white rounded-2xl shadow-xl p-6 sm:p-8 md:p-10 border border-rb-gray/10">
           {/* Branding */}
           <div className="text-center mb-6">
@@ -172,7 +169,7 @@ export default function OnboardingPage() {
               >
                 <div className="flex items-center gap-3 mb-2">
                   <span className="text-2xl" role="img" aria-label="Star">🌟</span>
-                  <Body18 className="font-bold text-[#2D3436]">People in Recovery</Body18>
+                  <Body18 className="font-bold text-[#2D3436]">Person in Recovery</Body18>
                 </div>
                 <Body16 className="text-rb-gray text-sm">
                   I'm on my recovery journey and may seek support or offer it to others.
@@ -189,27 +186,10 @@ export default function OnboardingPage() {
               >
                 <div className="flex items-center gap-3 mb-2">
                   <span className="text-2xl" role="img" aria-label="Handshake">🤝</span>
-                  <Body18 className="font-bold text-[#2D3436]">Allies in Long-Term Recovery</Body18>
+                  <Body18 className="font-bold text-[#2D3436]">Allies for Long-Term Recovery</Body18>
                 </div>
                 <Body16 className="text-rb-gray text-sm">
                   Giving back by offering support to others on their journey.
-                </Body16>
-              </button>
-
-              <button
-                onClick={() => setUserRole('ally')}
-                className={`w-full p-5 rounded-xl border-4 text-left transition-all shadow-sm hover:shadow-md ${
-                  userRole === 'ally'
-                    ? 'border-[#3B82F6] bg-gradient-to-br from-blue-50 to-blue-25 shadow-md'
-                    : 'border-rb-gray/40 hover:border-[#3B82F6]'
-                }`}
-              >
-                <div className="flex items-center gap-3 mb-2">
-                  <span className="text-2xl" role="img" aria-label="Shield">🛡️</span>
-                  <Body18 className="font-bold text-[#2D3436]">Recovery Support</Body18>
-                </div>
-                <Body16 className="text-rb-gray text-sm">
-                  Supporting the recovery community with empathy and understanding.
                 </Body16>
               </button>
             </div>
@@ -259,6 +239,9 @@ export default function OnboardingPage() {
                 className="w-full px-4 py-3 border-2 border-rb-gray/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent transition-all resize-none"
                 placeholder="Share your story, what brings you here, or what you hope to offer others..."
               />
+              <Body16 className="mt-2 text-rb-gray text-sm">
+                💭 Not sure what to share? Consider: What brings you to RecoveryBridge? What does recovery look like for you? What's one thing you'd like others to know about you? What helps you most in your recovery journey?
+              </Body16>
               <Body16 className="mt-2 text-rb-gray text-sm italic">
                 This appears on your profile and helps others connect with you.
               </Body16>
@@ -393,6 +376,5 @@ export default function OnboardingPage() {
         )}
       </div>
     </main>
-    </>
   )
 }

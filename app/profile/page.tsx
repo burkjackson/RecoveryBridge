@@ -8,7 +8,6 @@ import AvatarUpload from '@/components/AvatarUpload'
 import Modal from '@/components/Modal'
 import { SkeletonProfile } from '@/components/Skeleton'
 import Footer from '@/components/Footer'
-import SkipLink from '@/components/SkipLink'
 
 interface Profile {
   id: string
@@ -122,10 +121,8 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <>
-        <SkipLink />
-        <main id="main-content" className="min-h-screen p-4 sm:p-6 bg-gradient-to-br from-rb-blue/5 via-rb-white to-rb-blue/10">
-        <div className="max-w-2xl mx-auto">
+      <main id="main-content" className="min-h-screen p-4 sm:p-6 bg-gradient-to-br from-rb-blue/5 via-rb-white to-rb-blue/10">
+      <div className="max-w-2xl mx-auto">
           {/* Header skeleton */}
           <div className="mb-6 sm:mb-8">
             <div className="h-8 bg-gray-200 rounded animate-pulse w-40 mb-4" />
@@ -135,28 +132,22 @@ export default function ProfilePage() {
           <div role="status" aria-label="Loading profile">
             <SkeletonProfile />
           </div>
-        </div>
+      </div>
       </main>
-      </>
     )
   }
 
   if (!profile) {
     return (
-      <>
-        <SkipLink />
-        <main id="main-content" className="min-h-screen flex items-center justify-center p-4 sm:p-6 bg-gradient-to-br from-rb-blue/5 via-rb-white to-rb-blue/10">
+      <main id="main-content" className="min-h-screen flex items-center justify-center p-4 sm:p-6 bg-gradient-to-br from-rb-blue/5 via-rb-white to-rb-blue/10">
           <Body16>Profile not found</Body16>
         </main>
-      </>
     )
   }
 
   return (
-    <>
-      <SkipLink />
-      <main id="main-content" className="min-h-screen p-4 sm:p-6 bg-gradient-to-br from-rb-blue/5 via-rb-white to-rb-blue/10">
-      <div className="max-w-2xl mx-auto">
+    <main id="main-content" className="min-h-screen p-4 sm:p-6 bg-gradient-to-br from-rb-blue/5 via-rb-white to-rb-blue/10">
+    <div className="max-w-2xl mx-auto">
         {/* Header Card */}
         <div className="bg-white rounded-2xl shadow-lg p-6 sm:p-8 mb-6 border border-rb-gray/10">
           <div className="flex justify-between items-start mb-4">
@@ -278,6 +269,9 @@ export default function ProfilePage() {
                   className="w-full px-4 py-3 border-2 border-rb-gray/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-rb-blue focus:border-transparent transition-all"
                   placeholder="Tell us about yourself..."
                 />
+                <Body16 className="text-rb-gray text-sm">
+                  💭 Not sure what to share? Consider: What brings you to RecoveryBridge? What does recovery look like for you? What's one thing you'd like others to know about you? What helps you most in your recovery journey?
+                </Body16>
                 <div className="flex gap-2">
                   <button
                     onClick={() => handleSave('bio')}
@@ -323,9 +317,8 @@ export default function ProfilePage() {
                   className="w-full px-4 py-3 border-2 border-rb-gray/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-rb-blue focus:border-transparent transition-all"
                 >
                   <option value="">Select your role...</option>
-                  <option value="person_in_recovery">People in Recovery</option>
-                  <option value="professional">Allies in Long-Term Recovery</option>
-                  <option value="ally">Recovery Support</option>
+                  <option value="person_in_recovery">Person in Recovery</option>
+                  <option value="professional">Allies for Long-Term Recovery</option>
                 </select>
                 <div className="flex gap-2">
                   <button
@@ -345,9 +338,9 @@ export default function ProfilePage() {
               </div>
             ) : (
               <Body16 className="text-[#2D3436]">
-                {profile.user_role === 'person_in_recovery' && 'People in Recovery'}
-                {profile.user_role === 'professional' && 'Allies in Long-Term Recovery'}
-                {profile.user_role === 'ally' && 'Recovery Support'}
+                {profile.user_role === 'person_in_recovery' && 'Person in Recovery'}
+                {profile.user_role === 'professional' && 'Allies for Long-Term Recovery'}
+                {profile.user_role === 'ally' && 'Recovery Support (Legacy)'}
                 {!profile.user_role && 'Not set'}
               </Body16>
             )}
@@ -369,6 +362,5 @@ export default function ProfilePage() {
         <p>{errorModal.message}</p>
       </Modal>
     </main>
-    </>
   )
 }

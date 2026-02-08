@@ -15,13 +15,6 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <a
-          href="#main-content"
-          className="skip-link"
-          aria-label="Skip to main content"
-        >
-          Skip to main content
-        </a>
         {children}
         <CrisisResources />
       </body>

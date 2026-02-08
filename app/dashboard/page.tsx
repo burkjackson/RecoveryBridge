@@ -7,7 +7,6 @@ import { Heading1, Body16, Body18 } from '@/components/ui/Typography'
 import { SkeletonRoleCard } from '@/components/Skeleton'
 import ErrorState from '@/components/ErrorState'
 import Footer from '@/components/Footer'
-import SkipLink from '@/components/SkipLink'
 
 export default function DashboardPage() {
   const [profile, setProfile] = useState<any>(null)
@@ -126,7 +125,26 @@ export default function DashboardPage() {
     }
   }
 
+  async function endAllActiveSessions() {
+    if (!profile) return
+
+    try {
+      // End all active sessions where user is either listener or seeker
+      const { error } = await supabase
+        .from('sessions')
+        .update({ status: 'ended', ended_at: new Date().toISOString() })
+        .eq('status', 'active')
+        .or(`listener_id.eq.${profile.id},seeker_id.eq.${profile.id}`)
+
+      if (error) throw error
+    } catch (error) {
+      console.error('Error ending sessions:', error)
+    }
+  }
+
   async function handleSignOut() {
+    // End all active sessions before signing out
+    await endAllActiveSessions()
     await supabase.auth.signOut()
     router.push('/')
   }
@@ -144,6 +162,11 @@ export default function DashboardPage() {
 
       setProfile({ ...profile, role_state: newState })
 
+      // If going offline, end all active sessions
+      if (newState === 'offline') {
+        await endAllActiveSessions()
+      }
+
       // If requesting support, navigate to listeners page
       if (newState === 'requesting') {
         router.push('/listeners')
@@ -160,9 +183,7 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <>
-        <SkipLink />
-        <main id="main-content" className="min-h-screen p-4 sm:p-6" style={{ backgroundColor: '#F8F9FA' }}>
+      <main id="main-content" className="min-h-screen p-4 sm:p-6" style={{ backgroundColor: '#F8F9FA' }}>
         <div className="max-w-6xl mx-auto">
           {/* Header skeleton */}
           <div className="mb-6 sm:mb-8">
@@ -182,14 +203,11 @@ export default function DashboardPage() {
           </div>
         </div>
       </main>
-      </>
     )
   }
 
   return (
-    <>
-      <SkipLink />
-      <main id="main-content" className="min-h-screen p-4 sm:p-6" style={{ backgroundColor: '#F8F9FA' }}>
+    <main id="main-content" className="min-h-screen p-4 sm:p-6" style={{ backgroundColor: '#F8F9FA' }}>
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="bg-white rounded-2xl shadow-lg p-6 sm:p-8 mb-6 sm:mb-8 border border-rb-gray/10">
@@ -228,9 +246,9 @@ export default function DashboardPage() {
         <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-sm mb-4 sm:mb-6">
           <Body18 className="mb-2">Your Role</Body18>
           <Body16>
-            {profile?.user_role === 'person_in_recovery' && 'People in Recovery'}
-            {profile?.user_role === 'professional' && 'Allies in Long-Term Recovery'}
-            {profile?.user_role === 'ally' && 'Recovery Support'}
+            {profile?.user_role === 'person_in_recovery' && 'Person in Recovery'}
+            {profile?.user_role === 'professional' && 'Allies for Long-Term Recovery'}
+            {profile?.user_role === 'ally' && 'Recovery Support (Legacy)'}
             {!profile?.user_role && 'Not set'}
           </Body16>
         </div>
@@ -348,6 +366,5 @@ export default function DashboardPage() {
         <Footer />
       </div>
     </main>
-    </>
   )
 }
