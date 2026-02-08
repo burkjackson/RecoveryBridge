@@ -168,8 +168,29 @@ export default function DashboardPage() {
         await endAllActiveSessions()
       }
 
-      // If requesting support, navigate to listeners page
+      // If requesting support, send notifications to available listeners
       if (newState === 'requesting') {
+        try {
+          const response = await fetch('/api/notifications/send', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              seekerName: profile.display_name,
+              seekerId: profile.id
+            })
+          })
+
+          const result = await response.json()
+          console.log('Notification result:', result)
+
+          if (result.notified > 0) {
+            console.log(`✅ Notified ${result.notified} listener(s)`)
+          }
+        } catch (notifError) {
+          console.error('Failed to send notifications:', notifError)
+          // Don't block the user flow if notifications fail
+        }
+
         router.push('/listeners')
       }
     } catch (error) {
