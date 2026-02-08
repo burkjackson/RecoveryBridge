@@ -13,9 +13,12 @@ export default function Home() {
           <div className="max-w-4xl w-full text-center">
             {/* Logo/Title */}
             <div className="mb-8 sm:mb-10">
-              <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-slate-600 mb-4">
-                RecoveryBridge
-              </h1>
+              <img
+                src="/logo-with-text.png"
+                alt="RecoveryBridge Logo"
+                className="mx-auto mb-6"
+                style={{ width: '500px', maxWidth: '90%' }}
+              />
               <p className="text-xl sm:text-2xl text-slate-400 italic mb-3">
                 "Connection is the antidote to addiction"
               </p>
