@@ -9,17 +9,17 @@ export default function Home() {
   return (
     <main id="main-content" className="min-h-screen flex flex-col bg-gradient-to-br from-slate-50 via-white to-slate-50">
         {/* Hero Section */}
-        <div className="flex-1 flex items-center justify-center p-4 sm:p-6">
+        <div className="flex-1 flex items-start justify-center pt-12 sm:pt-16 p-4 sm:p-6">
           <div className="max-w-4xl w-full text-center">
             {/* Logo/Title */}
-            <div className="mb-8 sm:mb-10">
+            <div className="mb-6 sm:mb-8">
               <img
                 src="/logo-with-text.png"
                 alt="RecoveryBridge Logo"
-                className="mx-auto mb-2"
+                className="mx-auto mb-1"
                 style={{ width: '500px', maxWidth: '90%' }}
               />
-              <p className="text-xl sm:text-2xl text-slate-400 italic mb-4">
+              <p className="text-xl sm:text-2xl text-slate-400 italic mb-3">
                 "Connection is the antidote to addiction"
               </p>
             </div>
