@@ -16,10 +16,10 @@ export default function Home() {
               <img
                 src="/logo-with-text.png"
                 alt="RecoveryBridge Logo"
-                className="mx-auto mb-3"
+                className="mx-auto mb-2"
                 style={{ width: '500px', maxWidth: '90%' }}
               />
-              <p className="text-xl sm:text-2xl text-slate-400 italic mb-6">
+              <p className="text-xl sm:text-2xl text-slate-400 italic mb-4">
                 "Connection is the antidote to addiction"
               </p>
             </div>
