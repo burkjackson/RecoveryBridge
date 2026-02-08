@@ -8,6 +8,7 @@ interface Listener {
   id: string
   display_name: string
   bio: string
+  tagline: string | null
   avatar_url: string | null
   user_role: string
 }
@@ -52,7 +53,7 @@ export default function AvailableListeners() {
 
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, display_name, bio, avatar_url, user_role, last_heartbeat_at')
+        .select('id, display_name, bio, tagline, avatar_url, user_role, last_heartbeat_at')
         .eq('role_state', 'available')
         .neq('id', user?.id || '') // Exclude current user
         .gte('last_heartbeat_at', twoMinutesAgo) // Only show listeners with recent heartbeat
@@ -67,7 +68,12 @@ export default function AvailableListeners() {
     }
   }
 
-  function getBioSnippet(bio: string): string {
+  function getDisplayMessage(tagline: string | null, bio: string): string {
+    // Use tagline if available
+    if (tagline && tagline.trim()) {
+      return tagline
+    }
+    // Fall back to bio excerpt
     if (!bio || bio.trim() === '') {
       return 'Available to listen'
     }
@@ -154,7 +160,7 @@ export default function AvailableListeners() {
                 {listener.display_name}
               </Body16>
               <Body16 className="text-sm text-rb-gray italic truncate">
-                "{getBioSnippet(listener.bio)}"
+                "{getDisplayMessage(listener.tagline, listener.bio)}"
               </Body16>
             </div>
 

@@ -14,6 +14,7 @@ interface Profile {
   display_name: string
   email: string
   bio: string | null
+  tagline: string | null
   role_state: string | null
   tags: string[] | null
   avatar_url: string | null
@@ -290,6 +291,61 @@ export default function ProfilePage() {
               </div>
             ) : (
               <Body16 className="text-[#2D3436] leading-relaxed">{profile.bio || 'No bio yet'}</Body16>
+            )}
+          </div>
+
+          {/* Tagline */}
+          <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl border-2 border-blue-200 shadow-sm p-5 sm:p-6 hover:shadow-md transition-shadow">
+            <div className="flex justify-between items-start mb-3">
+              <div className="flex items-center gap-2">
+                <span className="text-xl" role="img" aria-label="Tagline">💬</span>
+                <Body18>Available Listeners Tagline</Body18>
+              </div>
+              {editingField !== 'tagline' && (
+                <button
+                  onClick={() => startEditing('tagline', profile.tagline)}
+                  className="min-h-[44px] px-4 py-2 text-sm text-rb-blue hover:text-rb-blue-hover font-semibold transition"
+                >
+                  Edit
+                </button>
+              )}
+            </div>
+            {editingField === 'tagline' ? (
+              <div className="space-y-3">
+                <input
+                  type="text"
+                  value={editValue}
+                  onChange={(e) => setEditValue(e.target.value.slice(0, 60))}
+                  maxLength={60}
+                  className="w-full px-4 py-3 border-2 border-rb-gray/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-rb-blue focus:border-transparent transition-all"
+                  placeholder="e.g., 5 years sober, here to help"
+                />
+                <Body16 className="text-rb-gray text-sm">
+                  📝 This short message appears next to your name in the "Available Listeners" section. Keep it under 60 characters. Examples: "Available to listen" or "Recovery is possible"
+                </Body16>
+                <Body16 className="text-rb-gray text-xs">
+                  {editValue.length}/60 characters
+                </Body16>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleSave('tagline')}
+                    disabled={saving}
+                    className="px-5 py-2.5 bg-gradient-to-r from-rb-blue to-rb-blue-hover text-white rounded-full text-sm font-semibold hover:shadow-lg disabled:opacity-50 transition-all transform hover:scale-105"
+                  >
+                    {saving ? 'Saving...' : 'Save'}
+                  </button>
+                  <button
+                    onClick={cancelEditing}
+                    className="px-5 py-2.5 border-2 border-rb-gray/30 rounded-full text-sm font-semibold hover:bg-rb-gray/5 transition"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <Body16 className="text-[#2D3436] leading-relaxed italic">
+                "{profile.tagline || 'Available to listen'}"
+              </Body16>
             )}
           </div>
 
