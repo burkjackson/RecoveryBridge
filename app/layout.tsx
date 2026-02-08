@@ -4,7 +4,7 @@ import CrisisResources from '@/components/CrisisResources'
 
 export const metadata: Metadata = {
   title: 'RecoveryBridge',
-  description: 'A modern recovery support application',
+  description: 'Safe, peer-to-peer support for people in recovery - because connection is the antidote to addiction',
 }
 
 export default function RootLayout({
