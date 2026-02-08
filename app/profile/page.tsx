@@ -282,55 +282,6 @@ export default function ProfilePage() {
             <Body18 className="text-gray-900">{profile.email}</Body18>
           </div>
 
-          {/* Bio */}
-          <div className="bg-white rounded-lg shadow-sm p-5 hover:shadow-md transition-all">
-            <div className="flex justify-between items-center mb-2">
-              <Body16 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">About</Body16>
-              {editingField !== 'bio' && (
-                <button
-                  onClick={() => startEditing('bio', profile.bio)}
-                  className="text-gray-400 hover:text-rb-blue transition"
-                  aria-label="Edit bio"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                  </svg>
-                </button>
-              )}
-            </div>
-            {editingField === 'bio' ? (
-              <div className="space-y-3">
-                <textarea
-                  value={editValue}
-                  onChange={(e) => setEditValue(e.target.value)}
-                  rows={4}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rb-blue focus:border-transparent transition-all resize-none"
-                  placeholder="Tell us about yourself..."
-                />
-                <Body16 className="text-gray-500 text-xs leading-relaxed">
-                  Share what brings you to RecoveryBridge, what recovery means to you, or what helps you most in your journey.
-                </Body16>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => handleSave('bio')}
-                    disabled={saving}
-                    className="px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800 disabled:opacity-50 transition-all"
-                  >
-                    {saving ? 'Saving...' : 'Save'}
-                  </button>
-                  <button
-                    onClick={cancelEditing}
-                    className="px-4 py-2 border border-gray-200 rounded-lg text-sm font-medium hover:bg-gray-50 transition"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <Body16 className="text-gray-700 leading-relaxed">{profile.bio || 'No bio yet'}</Body16>
-            )}
-          </div>
-
           {/* Tagline */}
           <div className="bg-white rounded-lg shadow-sm p-5 hover:shadow-md transition-all">
             <div className="flex justify-between items-center mb-2">
@@ -380,6 +331,55 @@ export default function ProfilePage() {
               <Body16 className="text-gray-700 leading-relaxed italic">
                 "{profile.tagline || 'Available to listen'}"
               </Body16>
+            )}
+          </div>
+
+          {/* Bio */}
+          <div className="bg-white rounded-lg shadow-sm p-5 hover:shadow-md transition-all">
+            <div className="flex justify-between items-center mb-2">
+              <Body16 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">About</Body16>
+              {editingField !== 'bio' && (
+                <button
+                  onClick={() => startEditing('bio', profile.bio)}
+                  className="text-gray-400 hover:text-rb-blue transition"
+                  aria-label="Edit bio"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                  </svg>
+                </button>
+              )}
+            </div>
+            {editingField === 'bio' ? (
+              <div className="space-y-3">
+                <textarea
+                  value={editValue}
+                  onChange={(e) => setEditValue(e.target.value)}
+                  rows={4}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rb-blue focus:border-transparent transition-all resize-none"
+                  placeholder="Tell us about yourself..."
+                />
+                <Body16 className="text-gray-500 text-xs leading-relaxed">
+                  Share what brings you to RecoveryBridge, what recovery means to you, or what helps you most in your journey.
+                </Body16>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleSave('bio')}
+                    disabled={saving}
+                    className="px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800 disabled:opacity-50 transition-all"
+                  >
+                    {saving ? 'Saving...' : 'Save'}
+                  </button>
+                  <button
+                    onClick={cancelEditing}
+                    className="px-4 py-2 border border-gray-200 rounded-lg text-sm font-medium hover:bg-gray-50 transition"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <Body16 className="text-gray-700 leading-relaxed">{profile.bio || 'No bio yet'}</Body16>
             )}
           </div>
 
