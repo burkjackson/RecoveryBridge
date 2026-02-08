@@ -19,11 +19,8 @@ export default function Home() {
                 className="mx-auto mb-6"
                 style={{ width: '500px', maxWidth: '90%' }}
               />
-              <p className="text-xl sm:text-2xl text-slate-400 italic mb-3">
+              <p className="text-xl sm:text-2xl text-slate-400 italic">
                 "Connection is the antidote to addiction"
-              </p>
-              <p className="text-lg sm:text-xl text-slate-400 font-semibold">
-                Your recovery support community
               </p>
             </div>
 
