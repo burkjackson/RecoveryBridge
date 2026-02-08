@@ -318,7 +318,7 @@ export default function DashboardPage() {
             )}
             <div className="flex-1 min-w-0">
               <Heading1 className="text-base sm:text-xl md:text-2xl break-words mb-1">Welcome back, {profile?.display_name}!</Heading1>
-              <Body16 className="text-rb-gray font-medium italic text-sm mb-1">"Your story matters here"</Body16>
+              <Body16 className="text-rb-gray font-medium italic text-sm mb-1">"{profile?.tagline || 'Your story matters here'}"</Body16>
               <Body16 className="text-rb-gray text-xs sm:text-sm">Choose how you'd like to engage today</Body16>
             </div>
           </div>
