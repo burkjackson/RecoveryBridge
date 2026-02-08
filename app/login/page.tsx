@@ -36,34 +36,25 @@ export default function LoginPage() {
   }
 
   return (
-    <main id="main-content" className="min-h-screen flex items-center justify-center p-4 sm:p-6 bg-gradient-to-br from-rb-blue/5 via-rb-white to-rb-blue/10">
+    <main id="main-content" className="min-h-screen flex items-center justify-center p-4 sm:p-6" style={{ backgroundColor: '#F8F9FA' }}>
       <div className="w-full max-w-md">
         {/* Welcome Card */}
-        <div className="bg-white rounded-2xl shadow-xl p-8 sm:p-10 border border-rb-gray/10">
+        <div className="bg-white rounded-lg shadow-sm p-8 sm:p-10">
           {/* Header */}
           <div className="text-center mb-8">
-            <div className="mb-4">
-              <h2 className="text-4xl font-bold text-[#2D3436] mb-2">RecoveryBridge</h2>
-              <Body16 className="text-rb-gray italic mb-4">
-                "Connection is the antidote to addiction"
-              </Body16>
-              <Body16 className="text-rb-gray font-bold mb-2">
-                We do not heal in isolation
-              </Body16>
-              <Body16 className="text-rb-gray font-bold">
-                Your story matters here
-              </Body16>
-            </div>
-            <Heading1 className="mb-2 mt-6">Welcome Back</Heading1>
-            <Body16 className="text-rb-gray">
-              Your community is here for you
-            </Body16>
+            <img
+              src="/logo-with-text.png"
+              alt="RecoveryBridge Logo"
+              className="mx-auto mb-4"
+              style={{ width: '300px' }}
+            />
+            <Body16 className="text-gray-500 mb-6">Welcome back to your community</Body16>
           </div>
 
-          <form onSubmit={handleLogin} className="space-y-5" aria-label="Login form">
+          <form onSubmit={handleLogin} className="space-y-4" aria-label="Login form">
             <div>
-              <label htmlFor="email-input" className="body-16 block mb-2 font-medium text-[#2D3436]">
-                Email <span className="text-red-600" aria-label="required">*</span>
+              <label htmlFor="email-input" className="block mb-2 text-sm font-medium text-gray-700">
+                Email
               </label>
               <input
                 id="email-input"
@@ -74,18 +65,18 @@ export default function LoginPage() {
                 aria-required="true"
                 aria-invalid={error ? "true" : "false"}
                 aria-describedby={error ? "login-error" : undefined}
-                className="w-full px-4 py-3 border-2 border-rb-gray/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-rb-blue focus:border-transparent transition-all"
+                className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rb-blue focus:border-transparent transition-all"
                 placeholder="you@example.com"
               />
             </div>
 
             <div>
               <div className="flex justify-between items-center mb-2">
-                <label htmlFor="password-input" className="body-16 font-medium text-[#2D3436]">
-                  Password <span className="text-red-600" aria-label="required">*</span>
+                <label htmlFor="password-input" className="text-sm font-medium text-gray-700">
+                  Password
                 </label>
-                <a href="/forgot-password" className="text-sm text-rb-blue hover:text-rb-blue-hover hover:underline transition">
-                  Forgot?
+                <a href="/forgot-password" className="text-sm text-gray-600 hover:text-gray-900 transition">
+                  Forgot password?
                 </a>
               </div>
               <div className="relative">
@@ -98,13 +89,13 @@ export default function LoginPage() {
                   aria-required="true"
                   aria-invalid={error ? "true" : "false"}
                   aria-describedby={error ? "login-error" : undefined}
-                  className="w-full px-4 py-3 pr-12 border-2 border-rb-gray/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-rb-blue focus:border-transparent transition-all"
-                  placeholder="Your password"
+                  className="w-full px-4 py-3 pr-12 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rb-blue focus:border-transparent transition-all"
+                  placeholder="Enter your password"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-rb-gray hover:text-rb-blue transition-colors p-1 rounded"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors p-1 rounded"
                   aria-label={showPassword ? "Hide password" : "Show password"}
                 >
                   {showPassword ? (
@@ -122,15 +113,15 @@ export default function LoginPage() {
             </div>
 
             {error && (
-              <div id="login-error" role="alert" className="p-4 bg-red-50 border-l-4 border-red-500 rounded-lg">
-                <Body16 className="text-red-700 font-medium">{error}</Body16>
+              <div id="login-error" role="alert" className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                <Body16 className="text-red-600 text-sm">{error}</Body16>
               </div>
             )}
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-gradient-to-r from-rb-blue to-rb-blue-hover text-white py-3.5 rounded-full font-semibold hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all transform hover:scale-[1.02] active:scale-[0.98]"
+              className="w-full bg-gray-900 text-white py-3 rounded-lg font-medium hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
             >
               {loading ? (
                 <span className="flex items-center justify-center">
@@ -138,18 +129,18 @@ export default function LoginPage() {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
-                  Logging in...
+                  Signing in...
                 </span>
               ) : (
-                'Log In'
+                'Sign In'
               )}
             </button>
           </form>
 
-          <div className="mt-6 pt-6 border-t border-rb-gray/10">
-            <Body16 className="text-center">
+          <div className="mt-6 pt-6 border-t border-gray-100">
+            <Body16 className="text-center text-sm text-gray-600">
               Don't have an account?{' '}
-              <a href="/signup" className="text-rb-blue font-semibold hover:text-rb-blue-hover hover:underline transition">
+              <a href="/signup" className="text-gray-900 font-medium hover:underline transition">
                 Sign up
               </a>
             </Body16>

@@ -189,42 +189,40 @@ export default function ProfilePage() {
   }
 
   return (
-    <main id="main-content" className="min-h-screen p-4 sm:p-6 bg-gradient-to-br from-rb-blue/5 via-rb-white to-rb-blue/10">
+    <main id="main-content" className="min-h-screen p-4 sm:p-6" style={{ backgroundColor: '#F8F9FA' }}>
     <div className="max-w-2xl mx-auto">
-        {/* Header Card */}
-        <div className="bg-white rounded-2xl shadow-lg p-6 sm:p-8 mb-6 border border-rb-gray/10">
-          <div className="flex justify-between items-start mb-4">
-            <div>
-              <Heading1 className="text-2xl sm:text-3xl mb-2">Your Profile</Heading1>
-              <Body16 className="text-rb-gray italic">"Your story matters here"</Body16>
-            </div>
-            <div className="flex gap-2 sm:gap-3">
-              {profile.is_admin && (
-                <button
-                  onClick={() => router.push('/admin')}
-                  className="px-3 sm:px-4 py-2 text-sm bg-rb-dark text-white rounded-lg hover:bg-rb-dark/90 transition whitespace-nowrap"
-                >
-                  Admin Panel
-                </button>
-              )}
-              <button
-                onClick={handleSignOut}
-                className="min-h-[44px] px-4 sm:px-6 py-3 text-sm bg-gradient-to-r from-rb-blue to-rb-blue-hover text-white rounded-full hover:shadow-lg transition-all transform hover:scale-105 whitespace-nowrap"
-              >
-                Sign Out
-              </button>
-            </div>
+        {/* Header */}
+        <div className="flex justify-between items-center mb-8">
+          <div>
+            <button
+              onClick={() => router.push('/dashboard')}
+              className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-rb-blue transition mb-2"
+            >
+              ← Dashboard
+            </button>
+            <Heading1 className="text-2xl sm:text-3xl mb-1">Profile</Heading1>
+            <Body16 className="text-gray-500 text-sm">Manage your account settings</Body16>
           </div>
-          <button
-            onClick={() => router.push('/dashboard')}
-            className="inline-flex items-center gap-2 min-h-[44px] py-2 text-sm text-rb-blue hover:text-rb-blue-hover font-semibold transition"
-          >
-            ← Back to Dashboard
-          </button>
+          <div className="flex gap-2">
+            {profile.is_admin && (
+              <button
+                onClick={() => router.push('/admin')}
+                className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 transition whitespace-nowrap"
+              >
+                Admin
+              </button>
+            )}
+            <button
+              onClick={handleSignOut}
+              className="px-5 py-2 text-sm bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition whitespace-nowrap"
+            >
+              Sign Out
+            </button>
+          </div>
         </div>
 
         {/* Profile Picture */}
-        <div className="flex justify-center mb-6 sm:mb-8">
+        <div className="flex justify-center mb-10">
           <AvatarUpload
             userId={profile.id}
             currentAvatarUrl={profile.avatar_url}
@@ -232,20 +230,20 @@ export default function ProfilePage() {
           />
         </div>
 
-        <div className="space-y-4 sm:space-y-6">
+        <div className="space-y-3">
           {/* Display Name */}
-          <div className="bg-white rounded-xl border-2 border-rb-gray/20 shadow-sm p-5 sm:p-6 hover:shadow-md transition-shadow">
-            <div className="flex justify-between items-start mb-3">
-              <div className="flex items-center gap-2">
-                <span className="text-xl" role="img" aria-label="Name tag">👤</span>
-                <Body18>Display Name</Body18>
-              </div>
+          <div className="bg-white rounded-lg shadow-sm p-5 hover:shadow-md transition-all">
+            <div className="flex justify-between items-center mb-2">
+              <Body16 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Display Name</Body16>
               {editingField !== 'display_name' && (
                 <button
                   onClick={() => startEditing('display_name', profile.display_name)}
-                  className="min-h-[44px] px-4 py-2 text-sm text-rb-blue hover:text-rb-blue-hover font-semibold transition"
+                  className="text-gray-400 hover:text-rb-blue transition"
+                  aria-label="Edit display name"
                 >
-                  Edit
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                  </svg>
                 </button>
               )}
             </div>
@@ -255,51 +253,48 @@ export default function ProfilePage() {
                   type="text"
                   value={editValue}
                   onChange={(e) => setEditValue(e.target.value)}
-                  className="w-full px-4 py-3 border-2 border-rb-gray/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-rb-blue focus:border-transparent transition-all"
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rb-blue focus:border-transparent transition-all"
                 />
                 <div className="flex gap-2">
                   <button
                     onClick={() => handleSave('display_name')}
                     disabled={saving}
-                    className="px-5 py-2.5 bg-gradient-to-r from-rb-blue to-rb-blue-hover text-white rounded-full text-sm font-semibold hover:shadow-lg disabled:opacity-50 transition-all transform hover:scale-105"
+                    className="px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800 disabled:opacity-50 transition-all"
                   >
                     {saving ? 'Saving...' : 'Save'}
                   </button>
                   <button
                     onClick={cancelEditing}
-                    className="px-5 py-2.5 border-2 border-rb-gray/30 rounded-full text-sm font-semibold hover:bg-rb-gray/5 transition"
+                    className="px-4 py-2 border border-gray-200 rounded-lg text-sm font-medium hover:bg-gray-50 transition"
                   >
                     Cancel
                   </button>
                 </div>
               </div>
             ) : (
-              <Body16 className="text-[#2D3436]">{profile.display_name}</Body16>
+              <Body18 className="text-gray-900">{profile.display_name}</Body18>
             )}
           </div>
 
           {/* Email (not editable) */}
-          <div className="bg-white rounded-xl border-2 border-rb-gray/20 shadow-sm p-5 sm:p-6">
-            <div className="flex items-center gap-2 mb-3">
-              <span className="text-xl" role="img" aria-label="Email">📧</span>
-              <Body18>Email</Body18>
-            </div>
-            <Body16 className="text-[#2D3436]">{profile.email}</Body16>
+          <div className="bg-white rounded-lg shadow-sm p-5">
+            <Body16 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Email</Body16>
+            <Body18 className="text-gray-900">{profile.email}</Body18>
           </div>
 
           {/* Bio */}
-          <div className="bg-white rounded-xl border-2 border-rb-gray/20 shadow-sm p-5 sm:p-6 hover:shadow-md transition-shadow">
-            <div className="flex justify-between items-start mb-3">
-              <div className="flex items-center gap-2">
-                <span className="text-xl" role="img" aria-label="About">✍️</span>
-                <Body18>Bio</Body18>
-              </div>
+          <div className="bg-white rounded-lg shadow-sm p-5 hover:shadow-md transition-all">
+            <div className="flex justify-between items-center mb-2">
+              <Body16 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">About</Body16>
               {editingField !== 'bio' && (
                 <button
                   onClick={() => startEditing('bio', profile.bio)}
-                  className="min-h-[44px] px-4 py-2 text-sm text-rb-blue hover:text-rb-blue-hover font-semibold transition"
+                  className="text-gray-400 hover:text-rb-blue transition"
+                  aria-label="Edit bio"
                 >
-                  Edit
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                  </svg>
                 </button>
               )}
             </div>
@@ -309,46 +304,46 @@ export default function ProfilePage() {
                   value={editValue}
                   onChange={(e) => setEditValue(e.target.value)}
                   rows={4}
-                  className="w-full px-4 py-3 border-2 border-rb-gray/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-rb-blue focus:border-transparent transition-all"
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rb-blue focus:border-transparent transition-all resize-none"
                   placeholder="Tell us about yourself..."
                 />
-                <Body16 className="text-rb-gray text-sm">
-                  💭 Not sure what to share? Consider: What brings you to RecoveryBridge? What does recovery look like for you? What's one thing you'd like others to know about you? What helps you most in your recovery journey?
+                <Body16 className="text-gray-500 text-xs leading-relaxed">
+                  Share what brings you to RecoveryBridge, what recovery means to you, or what helps you most in your journey.
                 </Body16>
                 <div className="flex gap-2">
                   <button
                     onClick={() => handleSave('bio')}
                     disabled={saving}
-                    className="px-5 py-2.5 bg-gradient-to-r from-rb-blue to-rb-blue-hover text-white rounded-full text-sm font-semibold hover:shadow-lg disabled:opacity-50 transition-all transform hover:scale-105"
+                    className="px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800 disabled:opacity-50 transition-all"
                   >
                     {saving ? 'Saving...' : 'Save'}
                   </button>
                   <button
                     onClick={cancelEditing}
-                    className="px-5 py-2.5 border-2 border-rb-gray/30 rounded-full text-sm font-semibold hover:bg-rb-gray/5 transition"
+                    className="px-4 py-2 border border-gray-200 rounded-lg text-sm font-medium hover:bg-gray-50 transition"
                   >
                     Cancel
                   </button>
                 </div>
               </div>
             ) : (
-              <Body16 className="text-[#2D3436] leading-relaxed">{profile.bio || 'No bio yet'}</Body16>
+              <Body16 className="text-gray-700 leading-relaxed">{profile.bio || 'No bio yet'}</Body16>
             )}
           </div>
 
           {/* Tagline */}
-          <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl border-2 border-blue-200 shadow-sm p-5 sm:p-6 hover:shadow-md transition-shadow">
-            <div className="flex justify-between items-start mb-3">
-              <div className="flex items-center gap-2">
-                <span className="text-xl" role="img" aria-label="Tagline">💬</span>
-                <Body18>Available Listeners Tagline</Body18>
-              </div>
+          <div className="bg-white rounded-lg shadow-sm p-5 hover:shadow-md transition-all">
+            <div className="flex justify-between items-center mb-2">
+              <Body16 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Listener Tagline</Body16>
               {editingField !== 'tagline' && (
                 <button
                   onClick={() => startEditing('tagline', profile.tagline)}
-                  className="min-h-[44px] px-4 py-2 text-sm text-rb-blue hover:text-rb-blue-hover font-semibold transition"
+                  className="text-gray-400 hover:text-rb-blue transition"
+                  aria-label="Edit tagline"
                 >
-                  Edit
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                  </svg>
                 </button>
               )}
             </div>
@@ -359,51 +354,48 @@ export default function ProfilePage() {
                   value={editValue}
                   onChange={(e) => setEditValue(e.target.value.slice(0, 60))}
                   maxLength={60}
-                  className="w-full px-4 py-3 border-2 border-rb-gray/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-rb-blue focus:border-transparent transition-all"
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rb-blue focus:border-transparent transition-all"
                   placeholder="e.g., 5 years sober, here to help"
                 />
-                <Body16 className="text-rb-gray text-sm">
-                  📝 This short message appears next to your name in the "Available Listeners" section. Keep it under 60 characters. Examples: "Available to listen" or "Recovery is possible"
-                </Body16>
-                <Body16 className="text-rb-gray text-xs">
-                  {editValue.length}/60 characters
+                <Body16 className="text-gray-500 text-xs">
+                  This appears next to your name when you're available to listen. {editValue.length}/60 characters
                 </Body16>
                 <div className="flex gap-2">
                   <button
                     onClick={() => handleSave('tagline')}
                     disabled={saving}
-                    className="px-5 py-2.5 bg-gradient-to-r from-rb-blue to-rb-blue-hover text-white rounded-full text-sm font-semibold hover:shadow-lg disabled:opacity-50 transition-all transform hover:scale-105"
+                    className="px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800 disabled:opacity-50 transition-all"
                   >
                     {saving ? 'Saving...' : 'Save'}
                   </button>
                   <button
                     onClick={cancelEditing}
-                    className="px-5 py-2.5 border-2 border-rb-gray/30 rounded-full text-sm font-semibold hover:bg-rb-gray/5 transition"
+                    className="px-4 py-2 border border-gray-200 rounded-lg text-sm font-medium hover:bg-gray-50 transition"
                   >
                     Cancel
                   </button>
                 </div>
               </div>
             ) : (
-              <Body16 className="text-[#2D3436] leading-relaxed italic">
+              <Body16 className="text-gray-700 leading-relaxed italic">
                 "{profile.tagline || 'Available to listen'}"
               </Body16>
             )}
           </div>
 
           {/* User Role */}
-          <div className="bg-white rounded-xl border-2 border-rb-gray/20 shadow-sm p-5 sm:p-6 hover:shadow-md transition-shadow">
-            <div className="flex justify-between items-start mb-3">
-              <div className="flex items-center gap-2">
-                <span className="text-xl" role="img" aria-label="Role">🎯</span>
-                <Body18>Your Role</Body18>
-              </div>
+          <div className="bg-white rounded-lg shadow-sm p-5 hover:shadow-md transition-all">
+            <div className="flex justify-between items-center mb-2">
+              <Body16 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Role</Body16>
               {editingField !== 'user_role' && (
                 <button
                   onClick={() => startEditing('user_role', profile.user_role)}
-                  className="min-h-[44px] px-4 py-2 text-sm text-rb-blue hover:text-rb-blue-hover font-semibold transition"
+                  className="text-gray-400 hover:text-rb-blue transition"
+                  aria-label="Edit role"
                 >
-                  Edit
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                  </svg>
                 </button>
               )}
             </div>
@@ -412,7 +404,7 @@ export default function ProfilePage() {
                 <select
                   value={editValue}
                   onChange={(e) => setEditValue(e.target.value)}
-                  className="w-full px-4 py-3 border-2 border-rb-gray/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-rb-blue focus:border-transparent transition-all"
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rb-blue focus:border-transparent transition-all"
                 >
                   <option value="">Select your role...</option>
                   <option value="person_in_recovery">Person in Recovery</option>
@@ -422,43 +414,36 @@ export default function ProfilePage() {
                   <button
                     onClick={() => handleSave('user_role')}
                     disabled={saving}
-                    className="px-5 py-2.5 bg-gradient-to-r from-rb-blue to-rb-blue-hover text-white rounded-full text-sm font-semibold hover:shadow-lg disabled:opacity-50 transition-all transform hover:scale-105"
+                    className="px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800 disabled:opacity-50 transition-all"
                   >
                     {saving ? 'Saving...' : 'Save'}
                   </button>
                   <button
                     onClick={cancelEditing}
-                    className="px-5 py-2.5 border-2 border-rb-gray/30 rounded-full text-sm font-semibold hover:bg-rb-gray/5 transition"
+                    className="px-4 py-2 border border-gray-200 rounded-lg text-sm font-medium hover:bg-gray-50 transition"
                   >
                     Cancel
                   </button>
                 </div>
               </div>
             ) : (
-              <Body16 className="text-[#2D3436]">
+              <Body18 className="text-gray-900">
                 {profile.user_role === 'person_in_recovery' && 'Person in Recovery'}
                 {profile.user_role === 'professional' && 'Allies for Long-Term Recovery'}
                 {profile.user_role === 'ally' && 'Recovery Support (Legacy)'}
                 {!profile.user_role && 'Not set'}
-              </Body16>
+              </Body18>
             )}
           </div>
         </div>
 
-        {/* Danger Zone - Delete Account */}
-        <div className="mt-8 bg-gradient-to-br from-red-50 to-orange-50 rounded-xl border-2 border-red-300 shadow-sm p-5 sm:p-6">
-          <div className="flex items-center gap-2 mb-3">
-            <span className="text-xl" role="img" aria-label="Warning">⚠️</span>
-            <Body18 className="font-bold text-red-700">Danger Zone</Body18>
-          </div>
-          <Body16 className="text-red-700 mb-4">
-            Once you delete your account, there is no going back. All your data, conversations, and profile information will be permanently deleted.
-          </Body16>
+        {/* Delete Account */}
+        <div className="mt-8 flex justify-center">
           <button
             onClick={() => setShowDeleteModal(true)}
-            className="px-5 py-2.5 bg-red-600 text-white rounded-full text-sm font-semibold hover:bg-red-700 transition-all"
+            className="px-5 py-2.5 text-gray-500 text-sm hover:text-red-600 transition-all underline"
           >
-            Delete My Account
+            Delete Account
           </button>
         </div>
       </div>

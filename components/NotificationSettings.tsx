@@ -18,6 +18,8 @@ export default function NotificationSettings() {
   const [isSubscribed, setIsSubscribed] = useState(false)
   const [loading, setLoading] = useState(false)
   const [showIOSInstructions, setShowIOSInstructions] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const supabase = createClient()
 
   useEffect(() => {
@@ -52,6 +54,9 @@ export default function NotificationSettings() {
 
   async function handleEnableNotifications() {
     setLoading(true)
+    setError(null)
+    setSuccessMessage(null)
+
     try {
       // Request permission
       const newPermission = await requestNotificationPermission()
@@ -61,32 +66,38 @@ export default function NotificationSettings() {
         // Subscribe to push notifications
         const subscription = await subscribeToPushNotifications()
 
-        if (subscription) {
-          // Save subscription to database
-          const { data: { user } } = await supabase.auth.getUser()
-          if (user) {
-            const { error } = await supabase.from('push_subscriptions').upsert({
-              user_id: user.id,
-              subscription: subscription,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString(),
-            })
-
-            if (error) {
-              console.error('Error saving subscription:', error)
-              alert('Failed to save notification settings. Please try again.')
-            } else {
-              setIsSubscribed(true)
-              alert('Notifications enabled! You\'ll be notified when someone needs support.')
-            }
-          }
+        if (!subscription) {
+          throw new Error('Failed to create push subscription')
         }
+
+        // Save subscription to database
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) {
+          throw new Error('User not authenticated')
+        }
+
+        const { error: dbError } = await supabase.from('push_subscriptions').upsert({
+          user_id: user.id,
+          subscription: subscription,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+
+        if (dbError) {
+          console.error('Error saving subscription:', dbError)
+          throw new Error('Failed to save notification settings')
+        }
+
+        setIsSubscribed(true)
+        setSuccessMessage('Notifications enabled! You\'ll be notified when someone needs support.')
+      } else if (newPermission === 'denied') {
+        setError('Notifications blocked. Please enable them in your browser settings.')
       } else {
-        alert('Please allow notifications in your browser settings to receive alerts.')
+        setError('Notification permission was not granted. Please try again.')
       }
-    } catch (error) {
-      console.error('Error enabling notifications:', error)
-      alert('Failed to enable notifications. Please try again.')
+    } catch (err: any) {
+      console.error('Error enabling notifications:', err)
+      setError(err.message || 'Failed to enable notifications. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -94,24 +105,37 @@ export default function NotificationSettings() {
 
   async function handleDisableNotifications() {
     setLoading(true)
+    setError(null)
+    setSuccessMessage(null)
+
     try {
       const unsubscribed = await unsubscribeFromPushNotifications()
 
-      if (unsubscribed) {
-        // Remove subscription from database
-        const { data: { user } } = await supabase.auth.getUser()
-        if (user) {
-          await supabase
-            .from('push_subscriptions')
-            .delete()
-            .eq('user_id', user.id)
-        }
-        setIsSubscribed(false)
-        alert('Notifications disabled.')
+      if (!unsubscribed) {
+        throw new Error('Failed to unsubscribe from push notifications')
       }
-    } catch (error) {
-      console.error('Error disabling notifications:', error)
-      alert('Failed to disable notifications. Please try again.')
+
+      // Remove subscription from database
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        throw new Error('User not authenticated')
+      }
+
+      const { error: dbError } = await supabase
+        .from('push_subscriptions')
+        .delete()
+        .eq('user_id', user.id)
+
+      if (dbError) {
+        console.error('Error deleting subscription:', dbError)
+        throw new Error('Failed to remove notification settings')
+      }
+
+      setIsSubscribed(false)
+      setSuccessMessage('Notifications disabled successfully.')
+    } catch (err: any) {
+      console.error('Error disabling notifications:', err)
+      setError(err.message || 'Failed to disable notifications. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -172,9 +196,25 @@ export default function NotificationSettings() {
             </div>
           )}
 
+          {error && (
+            <div className="mb-3 p-3 bg-red-50 border-l-4 border-red-500 rounded">
+              <Body16 className="text-sm text-red-700">
+                {error}
+              </Body16>
+            </div>
+          )}
+
+          {successMessage && (
+            <div className="mb-3 p-3 bg-green-50 border-l-4 border-green-500 rounded">
+              <Body16 className="text-sm text-green-700">
+                {successMessage}
+              </Body16>
+            </div>
+          )}
+
           {isSubscribed ? (
-            <div>
-              <div className="flex items-center gap-2 mb-3">
+            <div className="text-center">
+              <div className="flex items-center justify-center gap-2 mb-3">
                 <span className="text-green-600">✓</span>
                 <Body16 className="text-sm font-medium text-green-700">
                   Notifications enabled
@@ -189,13 +229,15 @@ export default function NotificationSettings() {
               </button>
             </div>
           ) : (
-            <button
-              onClick={handleEnableNotifications}
-              disabled={loading || permission === 'denied'}
-              className="px-6 py-2.5 bg-gradient-to-r from-[#3B82F6] to-[#2563EB] text-white rounded-full text-sm font-semibold hover:shadow-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? 'Enabling...' : 'Enable Notifications'}
-            </button>
+            <div className="flex justify-start pl-[30%]">
+              <button
+                onClick={handleEnableNotifications}
+                disabled={loading || permission === 'denied'}
+                className="px-6 py-2.5 bg-gradient-to-r from-[#3B82F6] to-[#2563EB] text-white rounded-full text-sm font-semibold hover:shadow-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? 'Enabling...' : 'Enable Notifications'}
+              </button>
+            </div>
           )}
         </div>
       </div>

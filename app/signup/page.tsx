@@ -66,34 +66,25 @@ export default function SignupPage() {
   }
 
   return (
-    <main id="main-content" className="min-h-screen flex items-center justify-center p-4 sm:p-6 bg-gradient-to-br from-rb-blue/5 via-rb-white to-rb-blue/10">
+    <main id="main-content" className="min-h-screen flex items-center justify-center p-4 sm:p-6" style={{ backgroundColor: '#F8F9FA' }}>
         <div className="w-full max-w-md">
           {/* Welcome Card */}
-          <div className="bg-white rounded-2xl shadow-xl p-8 sm:p-10 border border-rb-gray/10">
+          <div className="bg-white rounded-lg shadow-sm p-8 sm:p-10">
             {/* Header */}
             <div className="text-center mb-8">
-              <div className="mb-4">
-                <h2 className="text-4xl font-bold text-[#2D3436] mb-2">RecoveryBridge</h2>
-                <Body16 className="text-rb-gray italic mb-4">
-                  "Connection is the antidote to addiction"
-                </Body16>
-                <Body16 className="text-rb-gray font-bold mb-2">
-                  We do not heal in isolation
-                </Body16>
-                <Body16 className="text-rb-gray font-bold">
-                  Your story matters here
-                </Body16>
-              </div>
-              <Heading1 className="mb-2 mt-6">Join RecoveryBridge</Heading1>
-              <Body16 className="text-rb-gray">
-                Start your journey with us
-              </Body16>
+              <img
+                src="/logo-with-text.png"
+                alt="RecoveryBridge Logo"
+                className="mx-auto mb-4"
+                style={{ width: '400px' }}
+              />
+              <Body16 className="text-gray-500 mb-6">Create your account</Body16>
             </div>
 
-            <form onSubmit={handleSignup} className="space-y-5" aria-label="Sign up form">
+            <form onSubmit={handleSignup} className="space-y-4" aria-label="Sign up form">
               <div>
-                <label htmlFor="displayname-input" className="body-16 block mb-2 font-medium text-[#2D3436]">
-                  Display Name <span className="text-red-600" aria-label="required">*</span>
+                <label htmlFor="displayname-input" className="block mb-2 text-sm font-medium text-gray-700">
+                  Display Name
                 </label>
                 <input
                   id="displayname-input"
@@ -103,13 +94,13 @@ export default function SignupPage() {
                   required
                   aria-required="true"
                   aria-invalid={error ? "true" : "false"}
-                  className="w-full px-4 py-3 border-2 border-rb-gray/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-rb-blue focus:border-transparent transition-all"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rb-blue focus:border-transparent transition-all"
                   placeholder="Your name"
                 />
               </div>
 
               <div>
-                <label htmlFor="signup-email-input" className="body-16 block mb-2 font-medium text-[#2D3436]">
+                <label htmlFor="signup-email-input" className="block mb-2 text-sm font-medium text-gray-700">
                   Email <span className="text-red-600" aria-label="required">*</span>
                 </label>
                 <input
@@ -121,13 +112,13 @@ export default function SignupPage() {
                   aria-required="true"
                   aria-invalid={error ? "true" : "false"}
                   aria-describedby={error ? "signup-error" : undefined}
-                  className="w-full px-4 py-3 border-2 border-rb-gray/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-rb-blue focus:border-transparent transition-all"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rb-blue focus:border-transparent transition-all"
                   placeholder="you@example.com"
                 />
               </div>
 
               <div>
-                <label htmlFor="signup-password-input" className="body-16 block mb-2 font-medium text-[#2D3436]">
+                <label htmlFor="signup-password-input" className="block mb-2 text-sm font-medium text-gray-700">
                   Password <span className="text-red-600" aria-label="required">*</span>
                 </label>
                 <div className="relative">
@@ -141,7 +132,7 @@ export default function SignupPage() {
                     aria-required="true"
                     aria-invalid={error ? "true" : "false"}
                     aria-describedby="password-help"
-                    className="w-full px-4 py-3 pr-12 border-2 border-rb-gray/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-rb-blue focus:border-transparent transition-all"
+                    className="w-full px-4 py-3 pr-12 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rb-blue focus:border-transparent transition-all"
                     placeholder="At least 6 characters"
                   />
                   <button
@@ -168,15 +159,15 @@ export default function SignupPage() {
               </div>
 
               {error && (
-                <div id="signup-error" role="alert" className="p-4 bg-red-50 border-l-4 border-red-500 rounded-lg">
-                  <Body16 className="text-red-700 font-medium">{error}</Body16>
+                <div id="signup-error" role="alert" className="p-3 bg-red-50 border-l-4 border-red-500 rounded">
+                  <Body16 className="text-sm text-red-700">{error}</Body16>
                 </div>
               )}
 
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-gradient-to-r from-rb-blue to-rb-blue-hover text-white py-3.5 rounded-full font-semibold hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all transform hover:scale-[1.02] active:scale-[0.98]"
+                className="w-full bg-gray-900 text-white py-3 rounded-lg font-semibold hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
               >
                 {loading ? (
                   <span className="flex items-center justify-center">
@@ -192,10 +183,10 @@ export default function SignupPage() {
               </button>
             </form>
 
-            <div className="mt-6 pt-6 border-t border-rb-gray/10">
-              <Body16 className="text-center">
+            <div className="mt-6 pt-6 border-t border-gray-200">
+              <Body16 className="text-center text-gray-600">
                 Already have an account?{' '}
-                <a href="/login" className="text-rb-blue font-semibold hover:text-rb-blue-hover hover:underline transition">
+                <a href="/login" className="text-rb-blue font-semibold hover:underline transition">
                   Log in
                 </a>
               </Body16>

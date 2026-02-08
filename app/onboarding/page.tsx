@@ -96,12 +96,17 @@ export default function OnboardingPage() {
   }
 
   return (
-    <main id="main-content" className="min-h-screen flex items-center justify-center p-4 sm:p-6 bg-gradient-to-br from-rb-blue/5 via-rb-white to-rb-blue/10">
-        <div className="w-full max-w-2xl bg-white rounded-2xl shadow-xl p-6 sm:p-8 md:p-10 border border-rb-gray/10">
+    <main id="main-content" className="min-h-screen flex items-center justify-center p-4 sm:p-6" style={{ backgroundColor: '#F8F9FA' }}>
+        <div className="w-full max-w-2xl bg-white rounded-lg shadow-sm p-6 sm:p-8 md:p-10">
           {/* Branding */}
           <div className="text-center mb-6">
-            <h2 className="text-3xl font-bold text-[#2D3436] mb-2">RecoveryBridge</h2>
-            <Body16 className="text-rb-gray italic">"Connection is the antidote to addiction"</Body16>
+            <img
+              src="/logo-with-text.png"
+              alt="RecoveryBridge Logo"
+              className="mx-auto mb-4"
+              style={{ width: '400px' }}
+            />
+            <Body16 className="text-gray-500">Set up your profile</Body16>
           </div>
 
           {/* Progress indicator */}
@@ -109,8 +114,8 @@ export default function OnboardingPage() {
             {[1, 2, 3, 4].map((s) => (
               <div
                 key={s}
-                className={`h-3 flex-1 rounded-full transition-all ${
-                  s <= step ? 'bg-gradient-to-r from-[#3B82F6] to-[#2563EB] shadow-sm' : 'bg-gray-200'
+                className={`h-2 flex-1 rounded-full transition-all ${
+                  s <= step ? 'bg-rb-blue' : 'bg-gray-200'
                 }`}
                 role="progressbar"
                 aria-valuenow={step}
@@ -120,30 +125,27 @@ export default function OnboardingPage() {
               />
             ))}
           </div>
-          <Body16 className="text-center text-rb-gray text-sm mb-8">Step {step} of 4</Body16>
+          <Body16 className="text-center text-gray-500 text-sm mb-8">Step {step} of 4</Body16>
 
         {/* Step 1: Welcome */}
         {step === 1 && (
           <div className="text-center">
             <Heading1 className="mb-4">Welcome to RecoveryBridge</Heading1>
-            <Body16 className="mb-8 text-rb-gray leading-relaxed">
+            <Body16 className="mb-8 text-gray-600 leading-relaxed">
               RecoveryBridge is a safe, supportive space where people in recovery can connect with
               listeners who understand the journey. Whether you're here to offer support or seek it,
               you're part of a compassionate community working to make the world a better place in recovery.
             </Body16>
-            <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl p-6 mb-8 border-2 border-[#3B82F6]/20 shadow-sm">
-              <div className="flex items-center gap-2 justify-center mb-3">
-                <span className="text-2xl" role="img" aria-label="Heart">💙</span>
-                <Body18 className="font-bold text-[#2D3436]">Our Mission</Body18>
-              </div>
-              <Body16 className="text-rb-gray">
+            <div className="bg-blue-50 rounded-lg p-6 mb-8 border-l-4 border-rb-blue">
+              <Body18 className="font-bold text-gray-900 mb-2">Our Mission</Body18>
+              <Body16 className="text-gray-600">
                 We believe recovery is stronger together. Every conversation here is built on empathy,
                 respect, and the shared understanding that healing takes courage.
               </Body16>
             </div>
             <button
               onClick={handleNext}
-              className="w-full bg-gradient-to-r from-[#3B82F6] to-[#2563EB] text-white py-3.5 rounded-full font-semibold hover:shadow-lg transition-all transform hover:scale-[1.02] active:scale-[0.98]"
+              className="w-full bg-gray-900 text-white py-3 rounded-lg font-semibold hover:bg-gray-800 transition-all"
             >
               Get Started →
             </button>
@@ -154,62 +156,56 @@ export default function OnboardingPage() {
         {step === 2 && (
           <div>
             <Heading1 className="mb-4 text-center">How would you like to participate?</Heading1>
-            <Body16 className="mb-8 text-center text-rb-gray">
+            <Body16 className="mb-8 text-center text-gray-600">
               You can switch between these roles anytime from your dashboard.
             </Body16>
 
             <div className="space-y-3 mb-8">
               <button
                 onClick={() => setUserRole('person_in_recovery')}
-                className={`w-full p-5 rounded-xl border-4 text-left transition-all shadow-sm hover:shadow-md ${
+                className={`w-full p-5 rounded-lg text-left transition-all ${
                   userRole === 'person_in_recovery'
-                    ? 'border-[#3B82F6] bg-gradient-to-br from-blue-50 to-blue-25 shadow-md'
-                    : 'border-rb-gray/40 hover:border-[#3B82F6]'
+                    ? 'border-2 border-rb-blue bg-blue-50 shadow-sm'
+                    : 'border border-gray-200 hover:border-rb-blue'
                 }`}
               >
-                <div className="flex items-center gap-3 mb-2">
-                  <span className="text-2xl" role="img" aria-label="Star">🌟</span>
-                  <Body18 className="font-bold text-[#2D3436]">Person in Recovery</Body18>
-                </div>
-                <Body16 className="text-rb-gray text-sm">
+                <Body18 className="font-bold text-gray-900 mb-1">Person in Recovery</Body18>
+                <Body16 className="text-gray-600 text-sm">
                   I'm on my recovery journey and may seek support or offer it to others.
                 </Body16>
               </button>
 
               <button
                 onClick={() => setUserRole('professional')}
-                className={`w-full p-5 rounded-xl border-4 text-left transition-all shadow-sm hover:shadow-md ${
+                className={`w-full p-5 rounded-lg text-left transition-all ${
                   userRole === 'professional'
-                    ? 'border-[#3B82F6] bg-gradient-to-br from-blue-50 to-blue-25 shadow-md'
-                    : 'border-rb-gray/40 hover:border-[#3B82F6]'
+                    ? 'border-2 border-rb-blue bg-blue-50 shadow-sm'
+                    : 'border border-gray-200 hover:border-rb-blue'
                 }`}
               >
-                <div className="flex items-center gap-3 mb-2">
-                  <span className="text-2xl" role="img" aria-label="Handshake">🤝</span>
-                  <Body18 className="font-bold text-[#2D3436]">Allies for Long-Term Recovery</Body18>
-                </div>
-                <Body16 className="text-rb-gray text-sm">
+                <Body18 className="font-bold text-gray-900 mb-1">Allies for Long-Term Recovery</Body18>
+                <Body16 className="text-gray-600 text-sm">
                   Giving back by offering support to others on their journey.
                 </Body16>
               </button>
             </div>
 
             {error && (
-              <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded-lg">
-                <Body16 className="text-red-700 font-medium">{error}</Body16>
+              <div className="mb-6 p-3 bg-red-50 border-l-4 border-red-500 rounded">
+                <Body16 className="text-sm text-red-700">{error}</Body16>
               </div>
             )}
 
             <div className="flex gap-3">
               <button
                 onClick={() => setStep(1)}
-                className="flex-1 py-3 rounded-full font-semibold border-2 border-rb-gray text-rb-gray hover:border-[#3B82F6] hover:text-[#3B82F6] transition-all"
+                className="flex-1 py-3 rounded-lg font-semibold border border-gray-300 text-gray-700 hover:border-gray-400 transition-all"
               >
                 ← Back
               </button>
               <button
                 onClick={handleNext}
-                className="flex-1 bg-gradient-to-r from-[#3B82F6] to-[#2563EB] text-white py-3 rounded-full font-semibold hover:shadow-lg transition-all transform hover:scale-[1.02]"
+                className="flex-1 bg-gray-900 text-white py-3 rounded-lg font-semibold hover:bg-gray-800 transition-all"
               >
                 Continue →
               </button>
@@ -220,59 +216,53 @@ export default function OnboardingPage() {
         {/* Step 3: Bio */}
         {step === 3 && (
           <div>
-            <div className="text-center mb-8">
-              <span className="text-4xl mb-4 inline-block" role="img" aria-label="Writing">✍️</span>
-            </div>
             <Heading1 className="mb-4 text-center">Tell us about yourself</Heading1>
-            <Body16 className="mb-6 text-center text-rb-gray">
+            <Body16 className="mb-6 text-center text-gray-600">
               Share what you're comfortable with. This helps others understand how to connect with you.
             </Body16>
 
             {/* Privacy reminder */}
-            <div className="mb-6 p-4 bg-purple-50 border-l-4 border-purple-500 rounded-lg">
-              <div className="flex items-start gap-2">
-                <span className="text-lg mt-0.5" role="img" aria-label="Privacy">🔒</span>
-                <Body16 className="text-purple-900 text-sm">
-                  <strong>Privacy tip:</strong> If you wish to remain anonymous, please be mindful when choosing your username and profile picture.
-                </Body16>
-              </div>
+            <div className="mb-6 p-4 bg-purple-50 border-l-4 border-purple-500 rounded">
+              <Body16 className="text-purple-900 text-sm">
+                <strong>Privacy tip:</strong> If you wish to remain anonymous, please be mindful when choosing your username and profile picture.
+              </Body16>
             </div>
 
             <div className="mb-8">
-              <label className="body-16 block mb-3 font-medium text-[#2D3436]">
+              <label className="block mb-3 text-sm font-medium text-gray-700">
                 About You
               </label>
               <textarea
                 value={bio}
                 onChange={(e) => setBio(e.target.value)}
                 rows={6}
-                className="w-full px-4 py-3 border-2 border-rb-gray/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent transition-all resize-none"
+                className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rb-blue focus:border-transparent transition-all resize-none"
                 placeholder="Share your story, what brings you here, or what you hope to offer others..."
               />
-              <Body16 className="mt-2 text-rb-gray text-sm">
-                💭 Not sure what to share? Consider: What brings you to RecoveryBridge? What does recovery look like for you? What's one thing you'd like others to know about you? What helps you most in your recovery journey?
+              <Body16 className="mt-2 text-gray-500 text-sm">
+                Not sure what to share? Consider: What brings you to RecoveryBridge? What does recovery look like for you? What's one thing you'd like others to know about you?
               </Body16>
-              <Body16 className="mt-2 text-rb-gray text-sm italic">
+              <Body16 className="mt-2 text-gray-500 text-sm italic">
                 This appears on your profile and helps others connect with you.
               </Body16>
             </div>
 
             {error && (
-              <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded-lg">
-                <Body16 className="text-red-700 font-medium">{error}</Body16>
+              <div className="mb-6 p-3 bg-red-50 border-l-4 border-red-500 rounded">
+                <Body16 className="text-sm text-red-700">{error}</Body16>
               </div>
             )}
 
             <div className="flex gap-3">
               <button
                 onClick={() => setStep(2)}
-                className="flex-1 py-3 rounded-full font-semibold border-2 border-rb-gray text-rb-gray hover:border-[#3B82F6] hover:text-[#3B82F6] transition-all"
+                className="flex-1 py-3 rounded-lg font-semibold border border-gray-300 text-gray-700 hover:border-gray-400 transition-all"
               >
                 ← Back
               </button>
               <button
                 onClick={handleNext}
-                className="flex-1 bg-gradient-to-r from-[#3B82F6] to-[#2563EB] text-white py-3 rounded-full font-semibold hover:shadow-lg transition-all transform hover:scale-[1.02]"
+                className="flex-1 bg-gray-900 text-white py-3 rounded-lg font-semibold hover:bg-gray-800 transition-all"
               >
                 Continue →
               </button>
@@ -284,90 +274,90 @@ export default function OnboardingPage() {
         {step === 4 && (
           <div>
             <Heading1 className="mb-4 text-center">Community Guidelines</Heading1>
-            <Body16 className="mb-6 text-center">
+            <Body16 className="mb-6 text-justify text-gray-600">
               RecoveryBridge is built on the belief that connection is the antidote to addiction and we do not heal in isolation. This is a space where your story matters, your struggles are valid, and your progress—no matter how small—deserves celebration.
             </Body16>
 
-            <div className="bg-[#F8F9FA] rounded-2xl p-6 mb-8 space-y-4">
+            <div className="bg-gray-50 rounded-lg p-6 mb-8 space-y-4">
               <div>
-                <Body18 className="mb-2"><span role="img" aria-label="Blue heart">💙</span> Lead with Compassion</Body18>
-                <Body16>
+                <Body18 className="mb-2 font-semibold text-gray-900">Lead with Compassion</Body18>
+                <Body16 className="text-gray-600 text-justify">
                   We're all doing our best. Approach every conversation with compassion, remembering that everyone here is on their own unique journey. Your kindness can be someone's lifeline today.
                 </Body16>
               </div>
 
               <div>
-                <Body18 className="mb-2"><span role="img" aria-label="Lock">🔒</span> Honor Sacred Trust</Body18>
-                <Body16>
+                <Body18 className="mb-2 font-semibold text-gray-900">Honor Sacred Trust</Body18>
+                <Body16 className="text-gray-600 text-justify">
                   What's shared here is sacred. Protect each other's stories and privacy as if they were your own. This trust is what makes vulnerability possible.
                 </Body16>
               </div>
 
               <div>
-                <Body18 className="mb-2"><span role="img" aria-label="Star">🌟</span> Celebrate Every Step</Body18>
-                <Body16>
+                <Body18 className="mb-2 font-semibold text-gray-900">Celebrate Every Step</Body18>
+                <Body16 className="text-gray-600 text-justify">
                   Recovery isn't linear, and every journey looks different. Whether someone is on day 1 or year 10, meet them where they are with encouragement, not advice. Your role is to listen, not to fix.
                 </Body16>
               </div>
 
               <div>
-                <Body18 className="mb-2"><span role="img" aria-label="SOS">🆘</span> You Are Worth Saving</Body18>
-                <Body16>
+                <Body18 className="mb-2 font-semibold text-gray-900">You Are Worth Saving</Body18>
+                <Body16 className="text-gray-600 text-justify">
                   If you're in crisis, please reach out for immediate help: <strong>988</strong> (Suicide & Crisis Lifeline), <strong>911</strong> (Emergency), or text <strong>HOME to 741741</strong> (Crisis Text Line). RecoveryBridge is here for peer support, but your safety comes first. There's no shame in reaching out for professional help—it's a sign of strength.
                 </Body16>
               </div>
 
               <div>
-                <Body18 className="mb-2"><span role="img" aria-label="Sparkles">✨</span> Practice Self-Care</Body18>
-                <Body16>
+                <Body18 className="mb-2 font-semibold text-gray-900">Practice Self-Care</Body18>
+                <Body16 className="text-gray-600 text-justify">
                   You can't pour from an empty cup. It's okay to step away, set boundaries, or take breaks. Taking care of yourself isn't selfish—it's essential to your recovery.
                 </Body16>
               </div>
 
               <div>
-                <Body18 className="mb-2"><span role="img" aria-label="Raised hands">🙌</span> Share Your Wins</Body18>
-                <Body16>
+                <Body18 className="mb-2 font-semibold text-gray-900">Share Your Wins</Body18>
+                <Body16 className="text-gray-600 text-justify">
                   Recovery is hard work and deserves recognition. Celebrate your victories—whether it's 24 hours sober, getting out of bed, or reaching out for help. We're here to cheer you on.
                 </Body16>
               </div>
 
               <div>
-                <Body18 className="mb-2"><span role="img" aria-label="Shield">🛡️</span> Protect Our Community</Body18>
-                <Body16>
+                <Body18 className="mb-2 font-semibold text-gray-900">Protect Our Community</Body18>
+                <Body16 className="text-gray-600 text-justify">
                   If something doesn't feel right or someone needs help, please let us know. Reporting concerns helps us keep this space safe for everyone. You're not causing trouble—you're protecting our community.
                 </Body16>
               </div>
             </div>
 
-            <label className="flex items-start gap-3 mb-6 p-4 rounded-xl bg-blue-50 border-2 border-[#3B82F6]/30 cursor-pointer hover:border-[#3B82F6] transition-all">
+            <label className="flex items-start gap-3 mb-6 p-4 rounded-lg bg-blue-50 border border-rb-blue cursor-pointer hover:bg-blue-100 transition-all">
               <input
                 type="checkbox"
                 checked={agreedToGuidelines}
                 onChange={(e) => setAgreedToGuidelines(e.target.checked)}
-                className="mt-1 w-5 h-5 accent-[#3B82F6] cursor-pointer"
+                className="mt-1 w-5 h-5 accent-rb-blue cursor-pointer"
               />
-              <Body16 className="font-medium text-[#2D3436]">
+              <Body16 className="font-medium text-gray-900">
                 I commit to showing up with compassion, honoring confidentiality, and helping create a safe space where everyone can heal and grow together.
               </Body16>
             </label>
 
             {error && (
-              <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded-lg">
-                <Body16 className="text-red-700 font-medium">{error}</Body16>
+              <div className="mb-6 p-3 bg-red-50 border-l-4 border-red-500 rounded">
+                <Body16 className="text-sm text-red-700">{error}</Body16>
               </div>
             )}
 
             <div className="flex gap-3">
               <button
                 onClick={() => setStep(3)}
-                className="flex-1 py-3 rounded-full font-semibold border-2 border-rb-gray text-rb-gray hover:border-[#3B82F6] hover:text-[#3B82F6] transition-all"
+                className="flex-1 py-3 rounded-lg font-semibold border border-gray-300 text-gray-700 hover:border-gray-400 transition-all"
               >
                 ← Back
               </button>
               <button
                 onClick={handleNext}
                 disabled={saving}
-                className="flex-1 bg-gradient-to-r from-[#3B82F6] to-[#2563EB] text-white py-3 rounded-full font-semibold hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all transform hover:scale-[1.02]"
+                className="flex-1 bg-gray-900 text-white py-3 rounded-lg font-semibold hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
               >
                 {saving ? (
                   <span className="flex items-center justify-center">
@@ -378,7 +368,7 @@ export default function OnboardingPage() {
                     Saving...
                   </span>
                 ) : (
-                  'Complete Onboarding ✓'
+                  'Complete Onboarding'
                 )}
               </button>
             </div>
