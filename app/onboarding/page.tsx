@@ -224,9 +224,19 @@ export default function OnboardingPage() {
               <span className="text-4xl mb-4 inline-block" role="img" aria-label="Writing">✍️</span>
             </div>
             <Heading1 className="mb-4 text-center">Tell us about yourself</Heading1>
-            <Body16 className="mb-8 text-center text-rb-gray">
+            <Body16 className="mb-6 text-center text-rb-gray">
               Share what you're comfortable with. This helps others understand how to connect with you.
             </Body16>
+
+            {/* Privacy reminder */}
+            <div className="mb-6 p-4 bg-purple-50 border-l-4 border-purple-500 rounded-lg">
+              <div className="flex items-start gap-2">
+                <span className="text-lg mt-0.5" role="img" aria-label="Privacy">🔒</span>
+                <Body16 className="text-purple-900 text-sm">
+                  <strong>Privacy tip:</strong> If you wish to remain anonymous, please be mindful when choosing your username and profile picture.
+                </Body16>
+              </div>
+            </div>
 
             <div className="mb-8">
               <label className="body-16 block mb-3 font-medium text-[#2D3436]">
