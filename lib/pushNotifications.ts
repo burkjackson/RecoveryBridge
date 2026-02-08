@@ -63,8 +63,7 @@ export async function subscribeToPushNotifications(): Promise<PushSubscriptionDa
     const subscription = await registration.pushManager.subscribe({
       userVisibleOnly: true,
       applicationServerKey: urlBase64ToUint8Array(
-        // This is a placeholder - replace with your VAPID public key
-        'BEl62iUYgUivxIkv69yViEuiBIa-Ib37J8xQmrEcj4SFpT-pZKsX4FYuPz_4BPRB6VGBHQYD2-vCJcOVXsJ-K_s'
+        'BMLJXYKAITvXj0qK63T4TVWtPn4hissUN5VrPPlV-_AVB4NwwzRe_vudHDRkV0pHq2ZBGcG-vY8tEIZWQ7buINM'
       ),
     })
 
