@@ -8,6 +8,7 @@ import { SkeletonRoleCard } from '@/components/Skeleton'
 import ErrorState from '@/components/ErrorState'
 import Footer from '@/components/Footer'
 import NotificationSettings from '@/components/NotificationSettings'
+import AvailableListeners from '@/components/AvailableListeners'
 
 export default function DashboardPage() {
   const [profile, setProfile] = useState<any>(null)
@@ -344,6 +345,9 @@ export default function DashboardPage() {
             )}
           </button>
         </div>
+
+        {/* Available Listeners */}
+        <AvailableListeners />
 
         {/* Active Sessions */}
         {activeSessions.length > 0 && (
