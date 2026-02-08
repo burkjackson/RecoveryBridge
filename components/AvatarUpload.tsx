@@ -25,9 +25,9 @@ export default function AvatarUpload({ userId, currentAvatarUrl, onUploadComplet
 
       const file = event.target.files[0]
 
-      // Validate file size (max 2MB)
-      if (file.size > 2 * 1024 * 1024) {
-        alert('File size must be less than 2MB')
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        alert('File size must be less than 5MB')
         return
       }
 
@@ -114,7 +114,7 @@ export default function AvatarUpload({ userId, currentAvatarUrl, onUploadComplet
       />
 
       <Body16 className="text-center text-xs sm:text-sm">
-        JPG, PNG or GIF. Max 2MB.
+        JPG, PNG or GIF. Max 5MB.
       </Body16>
     </div>
   )
