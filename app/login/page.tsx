@@ -46,7 +46,7 @@ export default function LoginPage() {
               src="/logo-with-text.png"
               alt="RecoveryBridge Logo"
               className="mx-auto mb-4"
-              style={{ width: '300px' }}
+              style={{ width: '400px' }}
             />
             <Body16 className="text-gray-500 mb-6">Welcome back to your community</Body16>
           </div>
