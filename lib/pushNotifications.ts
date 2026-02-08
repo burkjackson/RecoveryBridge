@@ -64,7 +64,7 @@ export async function subscribeToPushNotifications(): Promise<PushSubscriptionDa
       userVisibleOnly: true,
       applicationServerKey: urlBase64ToUint8Array(
         'BMLJXYKAITvXj0qK63T4TVWtPn4hissUN5VrPPlV-_AVB4NwwzRe_vudHDRkV0pHq2ZBGcG-vY8tEIZWQ7buINM'
-      ),
+      ) as BufferSource,
     })
 
     return subscriptionToData(subscription)
