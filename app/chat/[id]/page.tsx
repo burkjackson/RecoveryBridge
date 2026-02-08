@@ -72,6 +72,28 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
     scrollToBottom()
   }, [messages])
 
+  // Define callbacks BEFORE useEffects that use them
+  const endSessionDueToInactivity = useCallback(async () => {
+    try {
+      const { error } = await supabase
+        .from('sessions')
+        .update({ status: 'ended', ended_at: new Date().toISOString() })
+        .eq('id', sessionId)
+
+      if (error) throw error
+      setInactivityModal(false)
+      alert('This session was closed due to inactivity.')
+      router.push('/dashboard')
+    } catch (error) {
+      console.error('Error ending session:', error)
+    }
+  }, [sessionId, router, supabase])
+
+  const dismissInactivityWarning = useCallback(() => {
+    setInactivityModal(false)
+    setLastActivityTime(Date.now()) // Reset timer
+  }, [])
+
   // Inactivity warning and auto-close
   useEffect(() => {
     if (session?.status !== 'active') return
@@ -100,27 +122,6 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
       setInactivityModal(false) // Dismiss warning if they sent a message
     }
   }, [messages])
-
-  const endSessionDueToInactivity = useCallback(async () => {
-    try {
-      const { error } = await supabase
-        .from('sessions')
-        .update({ status: 'ended', ended_at: new Date().toISOString() })
-        .eq('id', sessionId)
-
-      if (error) throw error
-      setInactivityModal(false)
-      alert('This session was closed due to inactivity.')
-      router.push('/dashboard')
-    } catch (error) {
-      console.error('Error ending session:', error)
-    }
-  }, [sessionId, router, supabase])
-
-  const dismissInactivityWarning = useCallback(() => {
-    setInactivityModal(false)
-    setLastActivityTime(Date.now()) // Reset timer
-  }, [])
 
   async function loadSession() {
     try {
