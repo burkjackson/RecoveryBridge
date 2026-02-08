@@ -2,15 +2,15 @@ import { NextRequest, NextResponse } from 'next/server'
 import webpush from 'web-push'
 import { createClient } from '@supabase/supabase-js'
 
-// Configure VAPID keys for web push
-webpush.setVapidDetails(
-  'mailto:burk.jackson@gmail.com',
-  process.env.VAPID_PUBLIC_KEY!,
-  process.env.VAPID_PRIVATE_KEY!
-)
-
 export async function POST(request: NextRequest) {
   try {
+    // Configure VAPID keys for web push (at runtime, not build time)
+    webpush.setVapidDetails(
+      'mailto:burk.jackson@gmail.com',
+      process.env.VAPID_PUBLIC_KEY!,
+      process.env.VAPID_PRIVATE_KEY!
+    )
+
     const { seekerName, seekerId } = await request.json()
 
     // Create Supabase client with service role for server-side access
