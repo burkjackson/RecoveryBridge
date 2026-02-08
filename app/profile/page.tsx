@@ -285,7 +285,7 @@ export default function ProfilePage() {
           {/* Tagline */}
           <div className="bg-white rounded-lg shadow-sm p-5 hover:shadow-md transition-all">
             <div className="flex justify-between items-center mb-2">
-              <Body16 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Listener Tagline</Body16>
+              <Body16 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Tagline</Body16>
               {editingField !== 'tagline' && (
                 <button
                   onClick={() => startEditing('tagline', profile.tagline)}
