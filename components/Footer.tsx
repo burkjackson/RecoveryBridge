@@ -24,7 +24,7 @@ export default function Footer({ className = '' }: FooterProps) {
         {/* Beta Feedback Button */}
         <div className="text-center mb-6">
           <a
-            href="YOUR_GOOGLE_FORM_URL_HERE"
+            href="https://docs.google.com/forms/d/1FTmTnABHwsP1VpDg-RAtLUpAIv9S3ZaSOoK-ldjX9to/viewform"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 px-6 py-3 bg-rb-blue text-white font-semibold rounded-full hover:bg-[#6B8DA1] transition shadow-md"
