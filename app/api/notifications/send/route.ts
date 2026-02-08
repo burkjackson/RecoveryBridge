@@ -11,13 +11,31 @@ export async function POST(request: NextRequest) {
       process.env.VAPID_PRIVATE_KEY!
     )
 
-    const { seekerName, seekerId } = await request.json()
-
     // Create Supabase client with service role for server-side access
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
     )
+
+    // Authenticate the request
+    const authHeader = request.headers.get('authorization')
+    if (!authHeader) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const token = authHeader.replace('Bearer ', '')
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token)
+
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
+    }
+
+    const { seekerName, seekerId } = await request.json()
+
+    // Verify that the seekerId matches the authenticated user
+    if (seekerId !== user.id) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
 
     // Find all available listeners (excluding the person requesting support)
     const { data: listeners, error: listenersError } = await supabase

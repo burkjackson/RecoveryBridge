@@ -3,10 +3,10 @@ import { createClient } from '@supabase/supabase-js'
 
 export async function POST(request: NextRequest) {
   try {
-    // Create Supabase client
+    // Create Supabase client with service role for server-side operations
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
     )
 
     // Get authenticated user from request
@@ -15,11 +15,24 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    // Verify the token and get user
+    const token = authHeader.replace('Bearer ', '')
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token)
+
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
+    }
+
     // Parse user ID from request body
     const { userId } = await request.json()
 
     if (!userId) {
       return NextResponse.json({ error: 'User ID required' }, { status: 400 })
+    }
+
+    // Verify that the userId matches the authenticated user
+    if (userId !== user.id) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
     // Update last_heartbeat_at timestamp

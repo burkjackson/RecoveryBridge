@@ -58,13 +58,14 @@ export async function subscribeToPushNotifications(): Promise<PushSubscriptionDa
     }
 
     // Subscribe to push notifications
-    // TODO: Replace with your actual VAPID public key
-    // For now, using a placeholder - you'll need to generate real keys
+    const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
+    if (!vapidPublicKey) {
+      throw new Error('VAPID public key not configured')
+    }
+
     const subscription = await registration.pushManager.subscribe({
       userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(
-        'BMLJXYKAITvXj0qK63T4TVWtPn4hissUN5VrPPlV-_AVB4NwwzRe_vudHDRkV0pHq2ZBGcG-vY8tEIZWQ7buINM'
-      ) as BufferSource,
+      applicationServerKey: urlBase64ToUint8Array(vapidPublicKey) as BufferSource,
     })
 
     return subscriptionToData(subscription)
