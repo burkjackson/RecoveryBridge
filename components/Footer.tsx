@@ -21,6 +21,22 @@ export default function Footer({ className = '' }: FooterProps) {
           </p>
         </div>
 
+        {/* Beta Feedback Button */}
+        <div className="text-center mb-6">
+          <a
+            href="YOUR_GOOGLE_FORM_URL_HERE"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-rb-blue text-white font-semibold rounded-full hover:bg-[#6B8DA1] transition shadow-md"
+          >
+            <span className="text-lg" role="img" aria-label="Feedback">💭</span>
+            <span>Share Beta Feedback</span>
+          </a>
+          <p className="text-xs text-rb-gray mt-2">
+            Help us improve RecoveryBridge! Your feedback shapes our future.
+          </p>
+        </div>
+
         {/* Links */}
         <div className="flex flex-wrap justify-center items-center gap-3 text-sm text-rb-gray mb-4">
           <a
