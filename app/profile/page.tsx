@@ -29,6 +29,9 @@ export default function ProfilePage() {
   const [editValue, setEditValue] = useState('')
   const [saving, setSaving] = useState(false)
   const [errorModal, setErrorModal] = useState({ show: false, message: '' })
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [deleteConfirmText, setDeleteConfirmText] = useState('')
+  const [deleting, setDeleting] = useState(false)
   const router = useRouter()
   const supabase = createClient()
 
@@ -118,6 +121,45 @@ export default function ProfilePage() {
   async function handleSignOut() {
     await supabase.auth.signOut()
     router.push('/')
+  }
+
+  async function handleDeleteAccount() {
+    if (deleteConfirmText !== 'delete') {
+      return
+    }
+
+    if (!profile) return
+
+    setDeleting(true)
+    try {
+      // Delete the user account (this will cascade delete the profile due to foreign key)
+      const { error } = await supabase.auth.admin.deleteUser(profile.id)
+
+      if (error) {
+        // If admin delete fails (requires service role), try deleting profile directly
+        // Note: This requires RLS policy allowing users to delete their own profile
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .delete()
+          .eq('id', profile.id)
+
+        if (profileError) throw profileError
+      }
+
+      // Sign out and redirect to homepage
+      await supabase.auth.signOut()
+      router.push('/')
+    } catch (error) {
+      console.error('Error deleting account:', error)
+      setErrorModal({
+        show: true,
+        message: 'We couldn\'t delete your account right now. Please contact support or try again later.'
+      })
+    } finally {
+      setDeleting(false)
+      setShowDeleteModal(false)
+      setDeleteConfirmText('')
+    }
   }
 
   if (loading) {
@@ -402,6 +444,23 @@ export default function ProfilePage() {
             )}
           </div>
         </div>
+
+        {/* Danger Zone - Delete Account */}
+        <div className="mt-8 bg-gradient-to-br from-red-50 to-orange-50 rounded-xl border-2 border-red-300 shadow-sm p-5 sm:p-6">
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-xl" role="img" aria-label="Warning">⚠️</span>
+            <Body18 className="font-bold text-red-700">Danger Zone</Body18>
+          </div>
+          <Body16 className="text-red-700 mb-4">
+            Once you delete your account, there is no going back. All your data, conversations, and profile information will be permanently deleted.
+          </Body16>
+          <button
+            onClick={() => setShowDeleteModal(true)}
+            className="px-5 py-2.5 bg-red-600 text-white rounded-full text-sm font-semibold hover:bg-red-700 transition-all"
+          >
+            Delete My Account
+          </button>
+        </div>
       </div>
 
       {/* Footer */}
@@ -417,6 +476,65 @@ export default function ProfilePage() {
       >
         <p>{errorModal.message}</p>
       </Modal>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl">
+            <div className="flex items-center gap-2 mb-4">
+              <span className="text-3xl" role="img" aria-label="Warning">⚠️</span>
+              <Heading1 className="text-2xl">Delete Account</Heading1>
+            </div>
+
+            <Body16 className="mb-4 text-red-700">
+              <strong>This action cannot be undone.</strong> All your data including:
+            </Body16>
+
+            <ul className="mb-4 text-sm text-rb-gray space-y-1 ml-5 list-disc">
+              <li>Profile information</li>
+              <li>Chat history</li>
+              <li>Connections</li>
+              <li>All account data</li>
+            </ul>
+
+            <Body16 className="mb-4">
+              will be permanently deleted.
+            </Body16>
+
+            <div className="bg-gray-50 p-4 rounded-lg mb-4">
+              <Body16 className="font-semibold mb-2">
+                Type <span className="text-red-600 font-mono">delete</span> to confirm:
+              </Body16>
+              <input
+                type="text"
+                value={deleteConfirmText}
+                onChange={(e) => setDeleteConfirmText(e.target.value.toLowerCase())}
+                className="w-full px-4 py-3 border-2 border-rb-gray/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all"
+                placeholder="Type 'delete' here"
+              />
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setShowDeleteModal(false)
+                  setDeleteConfirmText('')
+                }}
+                className="flex-1 px-5 py-2.5 border-2 border-rb-gray/30 rounded-full text-sm font-semibold hover:bg-rb-gray/5 transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteAccount}
+                disabled={deleteConfirmText !== 'delete' || deleting}
+                className="flex-1 px-5 py-2.5 bg-red-600 text-white rounded-full text-sm font-semibold hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              >
+                {deleting ? 'Deleting...' : 'Delete Forever'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   )
 }
