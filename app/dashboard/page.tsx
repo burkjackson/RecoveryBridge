@@ -7,6 +7,7 @@ import { Heading1, Body16, Body18 } from '@/components/ui/Typography'
 import { SkeletonRoleCard } from '@/components/Skeleton'
 import ErrorState from '@/components/ErrorState'
 import Footer from '@/components/Footer'
+import NotificationSettings from '@/components/NotificationSettings'
 
 export default function DashboardPage() {
   const [profile, setProfile] = useState<any>(null)
@@ -251,6 +252,11 @@ export default function DashboardPage() {
             {profile?.user_role === 'ally' && 'Recovery Support (Legacy)'}
             {!profile?.user_role && 'Not set'}
           </Body16>
+        </div>
+
+        {/* Notification Settings */}
+        <div className="mb-4 sm:mb-6">
+          <NotificationSettings />
         </div>
 
         {/* Error State */}

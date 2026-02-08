@@ -1,0 +1,27 @@
+{
+  "name": "RecoveryBridge",
+  "short_name": "RecoveryBridge",
+  "description": "Safe, peer-to-peer support for people in recovery - because connection is the antidote to addiction",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#7FA1B3",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["health", "lifestyle", "social"],
+  "screenshots": [],
+  "prefer_related_applications": false
+}
