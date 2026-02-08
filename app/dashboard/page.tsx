@@ -58,6 +58,41 @@ export default function DashboardPage() {
     }
   }, [])
 
+  // Heartbeat system: Send "I'm still here" signal every 30 seconds when available
+  useEffect(() => {
+    if (!profile || profile.role_state !== 'available') {
+      return
+    }
+
+    // Send initial heartbeat immediately
+    sendHeartbeat()
+
+    // Then send heartbeat every 30 seconds
+    const heartbeatInterval = setInterval(() => {
+      sendHeartbeat()
+    }, 30000) // 30 seconds
+
+    return () => {
+      clearInterval(heartbeatInterval)
+    }
+  }, [profile?.role_state])
+
+  async function sendHeartbeat() {
+    if (!profile || profile.role_state !== 'available') {
+      return
+    }
+
+    try {
+      await fetch('/api/heartbeat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: profile.id })
+      })
+    } catch (error) {
+      console.error('Failed to send heartbeat:', error)
+    }
+  }
+
   async function loadProfile() {
     try {
       const { data: { user } } = await supabase.auth.getUser()
@@ -155,9 +190,15 @@ export default function DashboardPage() {
     if (!profile) return
 
     try {
+      // Set heartbeat timestamp when going available
+      const updateData: any = { role_state: newState }
+      if (newState === 'available') {
+        updateData.last_heartbeat_at = new Date().toISOString()
+      }
+
       const { error } = await supabase
         .from('profiles')
-        .update({ role_state: newState })
+        .update(updateData)
         .eq('id', profile.id)
 
       if (error) throw error

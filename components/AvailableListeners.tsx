@@ -47,11 +47,15 @@ export default function AvailableListeners() {
     try {
       const { data: { user } } = await supabase.auth.getUser()
 
+      // Calculate timestamp for 2 minutes ago
+      const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000).toISOString()
+
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, display_name, bio, avatar_url, user_role')
+        .select('id, display_name, bio, avatar_url, user_role, last_heartbeat_at')
         .eq('role_state', 'available')
         .neq('id', user?.id || '') // Exclude current user
+        .gte('last_heartbeat_at', twoMinutesAgo) // Only show listeners with recent heartbeat
 
       if (error) throw error
 
