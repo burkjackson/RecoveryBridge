@@ -9,7 +9,7 @@ export default function Home() {
   return (
     <main id="main-content" className="min-h-screen flex flex-col bg-gradient-to-br from-slate-50 via-white to-slate-50">
         {/* Hero Section */}
-        <div className="flex-1 flex items-start justify-center pt-4 sm:pt-6 p-4 sm:p-6">
+        <div className="flex-1 flex items-start justify-center pt-2 p-4 sm:p-6">
           <div className="max-w-4xl w-full text-center">
             {/* Logo/Title */}
             <div className="mb-6 sm:mb-8">
