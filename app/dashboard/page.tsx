@@ -22,6 +22,7 @@ export default function DashboardPage() {
   useEffect(() => {
     loadProfile()
     loadActiveSessions()
+    cleanupStaleSessions() // Clean up abandoned sessions in the background
 
     // Subscribe to new sessions
     const channel = supabase
@@ -97,6 +98,26 @@ export default function DashboardPage() {
       })
     } catch (error) {
       console.error('Failed to send heartbeat:', error)
+    }
+  }
+
+  async function cleanupStaleSessions() {
+    try {
+      const response = await fetch('/api/cleanup-sessions', {
+        method: 'POST'
+      })
+
+      if (response.ok) {
+        const result = await response.json()
+        if (result.cleaned > 0) {
+          console.log(`🧹 Cleaned up ${result.cleaned} stale session(s)`)
+          // Refresh the active sessions list if any were cleaned up
+          loadActiveSessions()
+        }
+      }
+    } catch (error) {
+      // Silent fail - don't disrupt user experience if cleanup fails
+      console.error('Session cleanup failed:', error)
     }
   }
 
@@ -297,6 +318,7 @@ export default function DashboardPage() {
             <img
               src="/logo-icon.png"
               alt="RecoveryBridge Icon"
+              className="ml-24"
               style={{ width: '200px' }}
             />
             <button

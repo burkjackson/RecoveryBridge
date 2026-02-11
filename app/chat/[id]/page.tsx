@@ -23,7 +23,7 @@ interface Session {
   status: string
 }
 
-export default function ChatPage({ params }: { params: Promise<{ id: string }> }) {
+export default function ChatPage({ params }: { params: { id: string } }) {
   const [messages, setMessages] = useState<Message[]>([])
   const [newMessage, setNewMessage] = useState('')
   const [session, setSession] = useState<Session | null>(null)
@@ -52,8 +52,8 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   const autoCloseTime = 5 * 60 * 1000 // 5 minutes after warning
 
   useEffect(() => {
-    params.then(p => setSessionId(p.id))
-  }, [])
+    setSessionId(params.id)
+  }, [params.id])
 
   useEffect(() => {
     if (sessionId) {

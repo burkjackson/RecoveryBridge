@@ -16,7 +16,7 @@ export default function Home() {
               <img
                 src="/logo-with-text.png"
                 alt="RecoveryBridge Logo"
-                className="mx-auto mb-1"
+                className="mx-auto mb-6"
                 style={{ width: '500px', maxWidth: '90%' }}
               />
               <p className="text-xl sm:text-2xl text-slate-400 italic mb-3">
