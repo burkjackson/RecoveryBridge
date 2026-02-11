@@ -64,7 +64,8 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   useEffect(() => {
     if (session && currentUserId) {
       loadMessages()
-      subscribeToMessages()
+      const cleanup = subscribeToMessages()
+      return cleanup
     }
   }, [session, currentUserId])
 
