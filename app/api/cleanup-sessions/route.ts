@@ -59,10 +59,10 @@ export async function POST(request: NextRequest) {
       const minutesSinceLastActivity = (now.getTime() - lastActivityTime.getTime()) / 1000 / 60
 
       // Close session if:
-      // 1. No messages and session is > 5 minutes old (abandoned before chatting)
-      // 2. Last message is > 25 minutes old (longer than client-side 20 min timeout)
-      const shouldClose = (!lastMessage && minutesSinceLastActivity > 5) ||
-                          (lastMessage && minutesSinceLastActivity > 25)
+      // 1. No messages and session is > 10 minutes old (abandoned before chatting)
+      // 2. Last message is > 30 minutes old (longer than client-side 20 min timeout)
+      const shouldClose = (!lastMessage && minutesSinceLastActivity > 10) ||
+                          (lastMessage && minutesSinceLastActivity > 30)
 
       if (shouldClose) {
         console.log(`⏱️  Session ${session.id}: ${minutesSinceLastActivity.toFixed(1)} minutes inactive - will close`)
