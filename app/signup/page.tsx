@@ -23,19 +23,7 @@ export default function SignupPage() {
     setLoading(true)
 
     try {
-      // First check if username is already taken
-      const { data: existingProfile } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('display_name', displayName)
-        .single()
-
-      if (existingProfile) {
-        setError('This username is already taken. Please choose another.')
-        setLoading(false)
-        return
-      }
-
+      // Create account - database unique constraint will prevent duplicates atomically
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -54,7 +42,7 @@ export default function SignupPage() {
         setShowSuccessModal(true)
       }
     } catch (error: any) {
-      // Handle unique constraint violation
+      // Handle unique constraint violation for duplicate usernames
       if (error.message?.includes('duplicate') || error.message?.includes('unique')) {
         setError('This username is already taken. Please choose another.')
       } else {

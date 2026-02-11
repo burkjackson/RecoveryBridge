@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { TIME_MINUTES } from '@/lib/constants'
 
 export async function POST(request: NextRequest) {
   try {
@@ -9,9 +10,32 @@ export async function POST(request: NextRequest) {
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     )
 
-    // Optional: Add authentication check for admin or cron job
-    // const authHeader = request.headers.get('authorization')
-    // You could add a secret key check here for cron jobs
+    // Authentication: Allow either authenticated users OR secret key (for cron jobs)
+    const authHeader = request.headers.get('authorization')
+    const secretKey = request.headers.get('x-cleanup-secret')
+
+    // Check for secret key first (for cron jobs or manual triggers)
+    if (secretKey) {
+      const validSecret = process.env.CLEANUP_SECRET_KEY || 'dev-secret-key-change-in-production'
+      if (secretKey !== validSecret) {
+        return NextResponse.json({ error: 'Invalid secret key' }, { status: 401 })
+      }
+    }
+    // Otherwise require authentication (for dashboard-triggered cleanups)
+    else if (authHeader) {
+      const token = authHeader.replace('Bearer ', '')
+      const { data: { user }, error: authError } = await supabase.auth.getUser(token)
+
+      if (authError || !user) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      }
+    }
+    // No authentication provided
+    else {
+      return NextResponse.json({
+        error: 'Authentication required. Provide either Authorization header or x-cleanup-secret.'
+      }, { status: 401 })
+    }
 
     console.log('🧹 Starting session cleanup...')
 
@@ -40,29 +64,38 @@ export async function POST(request: NextRequest) {
     const now = new Date()
     const sessionsToClose: string[] = []
 
-    // Check each session for cleanup criteria
+    // Batch query: Get last message for ALL active sessions at once (fixes N+1 query)
+    const sessionIds = activeSessions.map(s => s.id)
+    const { data: allMessages } = await supabase
+      .from('messages')
+      .select('session_id, created_at')
+      .in('session_id', sessionIds)
+      .order('created_at', { ascending: false })
+
+    // Create a map of session_id to last message timestamp
+    const lastMessageMap = new Map<string, string>()
+    allMessages?.forEach(msg => {
+      if (!lastMessageMap.has(msg.session_id)) {
+        lastMessageMap.set(msg.session_id, msg.created_at)
+      }
+    })
+
+    // Check each session for cleanup criteria (with in-memory lookups)
     for (const session of activeSessions) {
-      // Get the last message timestamp for this session
-      const { data: lastMessage } = await supabase
-        .from('messages')
-        .select('created_at')
-        .eq('session_id', session.id)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single()
+      const lastMessageTimestamp = lastMessageMap.get(session.id)
 
       // Calculate time since last activity
-      const lastActivityTime = lastMessage
-        ? new Date(lastMessage.created_at)
+      const lastActivityTime = lastMessageTimestamp
+        ? new Date(lastMessageTimestamp)
         : new Date(session.created_at)
 
       const minutesSinceLastActivity = (now.getTime() - lastActivityTime.getTime()) / 1000 / 60
 
       // Close session if:
-      // 1. No messages and session is > 10 minutes old (abandoned before chatting)
-      // 2. Last message is > 30 minutes old (longer than client-side 20 min timeout)
-      const shouldClose = (!lastMessage && minutesSinceLastActivity > 10) ||
-                          (lastMessage && minutesSinceLastActivity > 30)
+      // 1. No messages and session is older than threshold (abandoned before chatting)
+      // 2. Last message exceeds inactivity threshold
+      const shouldClose = (!lastMessageTimestamp && minutesSinceLastActivity > TIME_MINUTES.CLEANUP_NO_MESSAGES) ||
+                          (lastMessageTimestamp && minutesSinceLastActivity > TIME_MINUTES.CLEANUP_INACTIVE)
 
       if (shouldClose) {
         console.log(`⏱️  Session ${session.id}: ${minutesSinceLastActivity.toFixed(1)} minutes inactive - will close`)

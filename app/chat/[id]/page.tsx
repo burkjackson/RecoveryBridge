@@ -8,6 +8,7 @@ import Modal from '@/components/Modal'
 import { SkeletonChatMessage } from '@/components/Skeleton'
 import ErrorState from '@/components/ErrorState'
 import { PrivacyBadge } from '@/components/Footer'
+import { TIME } from '@/lib/constants'
 
 interface Message {
   id: string
@@ -48,8 +49,8 @@ export default function ChatPage({ params }: { params: { id: string } }) {
 
   // Inactivity tracking
   const [lastActivityTime, setLastActivityTime] = useState(Date.now())
-  const inactivityWarningTime = 15 * 60 * 1000 // 15 minutes
-  const autoCloseTime = 5 * 60 * 1000 // 5 minutes after warning
+  const inactivityWarningTime = TIME.INACTIVITY_WARNING_MS
+  const autoCloseTime = TIME.INACTIVITY_AUTO_CLOSE_MS
 
   useEffect(() => {
     setSessionId(params.id)
@@ -111,7 +112,7 @@ export default function ChatPage({ params }: { params: { id: string } }) {
       if (timeSinceLastActivity >= inactivityWarningTime + autoCloseTime) {
         endSessionDueToInactivity()
       }
-    }, 30000) // Check every 30 seconds
+    }, TIME.INACTIVITY_CHECK_INTERVAL_MS)
 
     return () => clearInterval(checkInactivity)
   }, [session, lastActivityTime, inactivityModal, inactivityWarningTime, autoCloseTime, endSessionDueToInactivity])

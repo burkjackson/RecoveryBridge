@@ -95,6 +95,19 @@ export default function AdminPage() {
         return
       }
 
+      // SECURITY WARNING: This is client-side authorization only!
+      // ⚠️ CRITICAL: Ensure Row Level Security (RLS) policies are enabled on:
+      //    - reports table
+      //    - user_blocks table
+      //    - sessions table (for admin viewing all sessions)
+      //    - profiles table (for admin viewing all profiles)
+      //
+      // RLS policies should restrict access to these tables to users with is_admin = true
+      // Without proper RLS, a malicious user could bypass this client-side check
+      // and query admin data directly using browser DevTools.
+      //
+      // TODO: Consider moving admin operations to server-side API routes with
+      // proper authentication middleware for defense-in-depth security.
       const { data: profile } = await supabase
         .from('profiles')
         .select('is_admin')

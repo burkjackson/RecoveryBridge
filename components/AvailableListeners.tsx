@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Body16, Body18 } from '@/components/ui/Typography'
 import ErrorState from '@/components/ErrorState'
+import { TIME } from '@/lib/constants'
 
 interface Listener {
   id: string
@@ -51,8 +52,8 @@ export default function AvailableListeners() {
       setError(null) // Clear any previous errors
       const { data: { user } } = await supabase.auth.getUser()
 
-      // Calculate timestamp for 2 minutes ago
-      const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000).toISOString()
+      // Calculate timestamp for heartbeat threshold
+      const heartbeatThreshold = new Date(Date.now() - TIME.HEARTBEAT_THRESHOLD_MS).toISOString()
 
       const { data, error } = await supabase
         .from('profiles')
@@ -60,7 +61,7 @@ export default function AvailableListeners() {
         .eq('role_state', 'available')
         .neq('id', user?.id || '') // Exclude current user
         .not('last_heartbeat_at', 'is', null) // Exclude profiles without heartbeat
-        .gte('last_heartbeat_at', twoMinutesAgo) // Only show listeners with recent heartbeat
+        .gte('last_heartbeat_at', heartbeatThreshold) // Only show listeners with recent heartbeat
 
       if (error) throw error
 

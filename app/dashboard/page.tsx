@@ -10,6 +10,7 @@ import Footer from '@/components/Footer'
 import NotificationSettings from '@/components/NotificationSettings'
 import AvailableListeners from '@/components/AvailableListeners'
 import type { Profile, SessionWithUserName, ProfileUpdateData } from '@/lib/types/database'
+import { TIME } from '@/lib/constants'
 
 export default function DashboardPage() {
   const [profile, setProfile] = useState<Profile | null>(null)
@@ -69,10 +70,10 @@ export default function DashboardPage() {
     // Send initial heartbeat immediately
     sendHeartbeat()
 
-    // Then send heartbeat every 30 seconds
+    // Then send heartbeat at regular intervals
     const heartbeatInterval = setInterval(() => {
       sendHeartbeat()
-    }, 30000) // 30 seconds
+    }, TIME.HEARTBEAT_INTERVAL_MS)
 
     return () => {
       clearInterval(heartbeatInterval)
@@ -103,8 +104,15 @@ export default function DashboardPage() {
 
   async function cleanupStaleSessions() {
     try {
+      // Get auth token to authorize the cleanup request
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) return // Not authenticated, skip cleanup
+
       const response = await fetch('/api/cleanup-sessions', {
-        method: 'POST'
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`
+        }
       })
 
       if (response.ok) {
