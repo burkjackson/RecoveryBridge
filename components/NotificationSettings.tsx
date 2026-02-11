@@ -11,6 +11,7 @@ import {
   isIOSNeedsPWAInstall,
 } from '@/lib/pushNotifications'
 import { Body16 } from '@/components/ui/Typography'
+import NotificationInstructionsModal from '@/components/NotificationInstructionsModal'
 
 export default function NotificationSettings() {
   const [supported, setSupported] = useState(false)
@@ -18,6 +19,7 @@ export default function NotificationSettings() {
   const [isSubscribed, setIsSubscribed] = useState(false)
   const [loading, setLoading] = useState(false)
   const [showIOSInstructions, setShowIOSInstructions] = useState(false)
+  const [showInstructionsModal, setShowInstructionsModal] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const supabase = createClient()
@@ -241,8 +243,24 @@ export default function NotificationSettings() {
               </button>
             </div>
           )}
+
+          {/* Help Button */}
+          <div className="mt-3 text-center">
+            <button
+              onClick={() => setShowInstructionsModal(true)}
+              className="text-sm text-blue-600 hover:text-blue-800 underline font-medium"
+            >
+              How do I enable notifications on iPhone?
+            </button>
+          </div>
         </div>
       </div>
+
+      {/* Instructions Modal */}
+      <NotificationInstructionsModal
+        isOpen={showInstructionsModal}
+        onClose={() => setShowInstructionsModal(false)}
+      />
     </div>
   )
 }
