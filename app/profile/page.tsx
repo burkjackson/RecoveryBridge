@@ -8,19 +8,7 @@ import AvatarUpload from '@/components/AvatarUpload'
 import Modal from '@/components/Modal'
 import { SkeletonProfile } from '@/components/Skeleton'
 import Footer from '@/components/Footer'
-
-interface Profile {
-  id: string
-  display_name: string
-  email: string
-  bio: string | null
-  tagline: string | null
-  role_state: string | null
-  tags: string[] | null
-  avatar_url: string | null
-  user_role: string | null
-  is_admin: boolean | null
-}
+import type { Profile } from '@/lib/types/database'
 
 export default function ProfilePage() {
   const [profile, setProfile] = useState<Profile | null>(null)
@@ -68,21 +56,8 @@ export default function ProfilePage() {
 
     setSaving(true)
     try {
-      // Check if username is already taken (only for display_name field)
-      if (field === 'display_name' && editValue !== profile.display_name) {
-        const { data: existingProfile } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('display_name', editValue)
-          .single()
-
-        if (existingProfile) {
-          setErrorModal({ show: true, message: 'This username is already taken. Please choose another.' })
-          setSaving(false)
-          return
-        }
-      }
-
+      // Attempt to update the field directly
+      // The database unique constraint will handle username conflicts atomically
       const { error } = await supabase
         .from('profiles')
         .update({ [field]: editValue })
@@ -108,7 +83,7 @@ export default function ProfilePage() {
     }
   }
 
-  function startEditing(field: string, currentValue: any) {
+  function startEditing(field: string, currentValue: string | null) {
     setEditingField(field)
     setEditValue(currentValue || '')
   }
@@ -131,11 +106,15 @@ export default function ProfilePage() {
     if (!profile) return
 
     setDeleting(true)
-    try {
-      // Delete the user account (this will cascade delete the profile due to foreign key)
-      const { error } = await supabase.auth.admin.deleteUser(profile.id)
+    let deletionSucceeded = false
 
-      if (error) {
+    try {
+      // Try to delete the user account (this will cascade delete the profile due to foreign key)
+      const { error: adminError } = await supabase.auth.admin.deleteUser(profile.id)
+
+      if (adminError) {
+        console.log('Admin delete not available, trying direct profile deletion')
+
         // If admin delete fails (requires service role), try deleting profile directly
         // Note: This requires RLS policy allowing users to delete their own profile
         const { error: profileError } = await supabase
@@ -143,22 +122,50 @@ export default function ProfilePage() {
           .delete()
           .eq('id', profile.id)
 
-        if (profileError) throw profileError
+        if (profileError) {
+          // Check if it's a foreign key constraint error
+          if (profileError.message?.includes('violates foreign key constraint')) {
+            throw new Error('Your account has active data that must be cleaned up first. Please end any active sessions and try again, or contact support for assistance.')
+          }
+          // Check if it's a permissions error
+          if (profileError.message?.includes('permission denied') || profileError.message?.includes('RLS')) {
+            throw new Error('Account deletion is not available through this method. Please contact support to delete your account.')
+          }
+          throw new Error('We couldn\'t delete your account. Please try again or contact support if the problem persists.')
+        }
       }
 
-      // Sign out and redirect to homepage
-      await supabase.auth.signOut()
+      deletionSucceeded = true
+
+      // Try to sign out
+      const { error: signOutError } = await supabase.auth.signOut()
+
+      if (signOutError) {
+        // Account was deleted but sign out failed - still redirect
+        console.error('Sign out error after account deletion:', signOutError)
+      }
+
+      // Redirect to homepage
       router.push('/')
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error deleting account:', error)
+
+      // If deletion succeeded but we hit an error after, still redirect
+      if (deletionSucceeded) {
+        router.push('/')
+        return
+      }
+
       setErrorModal({
         show: true,
-        message: 'We couldn\'t delete your account right now. Please contact support or try again later.'
+        message: error.message || 'We couldn\'t delete your account right now. Please try again or contact support if the problem persists.'
       })
     } finally {
       setDeleting(false)
-      setShowDeleteModal(false)
-      setDeleteConfirmText('')
+      if (!deletionSucceeded) {
+        setShowDeleteModal(false)
+        setDeleteConfirmText('')
+      }
     }
   }
 

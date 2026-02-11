@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Body16, Body18 } from '@/components/ui/Typography'
+import ErrorState from '@/components/ErrorState'
 
 interface Listener {
   id: string
@@ -16,6 +17,7 @@ interface Listener {
 export default function AvailableListeners() {
   const [listeners, setListeners] = useState<Listener[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const supabase = createClient()
 
   useEffect(() => {
@@ -46,6 +48,7 @@ export default function AvailableListeners() {
 
   async function loadAvailableListeners() {
     try {
+      setError(null) // Clear any previous errors
       const { data: { user } } = await supabase.auth.getUser()
 
       // Calculate timestamp for 2 minutes ago
@@ -62,8 +65,9 @@ export default function AvailableListeners() {
       if (error) throw error
 
       setListeners(data || [])
-    } catch (error) {
-      console.error('Error loading available listeners:', error)
+    } catch (err) {
+      console.error('Error loading available listeners:', err)
+      setError('We couldn\'t load available listeners right now. Please check your connection and try again.')
     } finally {
       setLoading(false)
     }
@@ -96,6 +100,23 @@ export default function AvailableListeners() {
             </div>
           ))}
         </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="bg-white rounded-lg p-5 shadow-sm mb-6">
+        <Body18 className="font-semibold text-gray-900 mb-4">Available Listeners</Body18>
+        <ErrorState
+          type="inline"
+          message={error}
+          onRetry={() => {
+            setLoading(true)
+            loadAvailableListeners()
+          }}
+          retryText="Try Again"
+        />
       </div>
     )
   }

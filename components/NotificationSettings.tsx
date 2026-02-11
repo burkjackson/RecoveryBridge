@@ -215,7 +215,7 @@ export default function NotificationSettings() {
           {isSubscribed ? (
             <div className="text-center">
               <div className="flex items-center justify-center gap-2 mb-3">
-                <span className="text-green-600">✓</span>
+                <span className="text-green-600" aria-hidden="true">✓</span>
                 <Body16 className="text-sm font-medium text-green-700">
                   Notifications enabled
                 </Body16>
@@ -223,17 +223,19 @@ export default function NotificationSettings() {
               <button
                 onClick={handleDisableNotifications}
                 disabled={loading}
-                className="px-4 py-2 bg-white border-2 border-rb-gray text-rb-gray rounded-full text-sm font-semibold hover:border-red-500 hover:text-red-600 transition disabled:opacity-50"
+                aria-label={loading ? 'Disabling notifications...' : 'Disable push notifications'}
+                className="min-h-[44px] px-4 py-2 bg-white border-2 border-rb-gray text-rb-gray rounded-full text-sm font-semibold hover:border-red-500 hover:text-red-600 transition disabled:opacity-50"
               >
                 {loading ? 'Disabling...' : 'Disable Notifications'}
               </button>
             </div>
           ) : (
-            <div className="flex justify-start pl-[30%]">
+            <div className="flex justify-center">
               <button
                 onClick={handleEnableNotifications}
                 disabled={loading || permission === 'denied'}
-                className="px-6 py-2.5 bg-gradient-to-r from-[#3B82F6] to-[#2563EB] text-white rounded-full text-sm font-semibold hover:shadow-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
+                aria-label={loading ? 'Enabling notifications...' : 'Enable push notifications'}
+                className="min-h-[44px] px-6 py-2.5 bg-gradient-to-r from-[#3B82F6] to-[#2563EB] text-white rounded-full text-sm font-semibold hover:shadow-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? 'Enabling...' : 'Enable Notifications'}
               </button>

@@ -9,11 +9,12 @@ import ErrorState from '@/components/ErrorState'
 import Footer from '@/components/Footer'
 import NotificationSettings from '@/components/NotificationSettings'
 import AvailableListeners from '@/components/AvailableListeners'
+import type { Profile, SessionWithUserName, ProfileUpdateData } from '@/lib/types/database'
 
 export default function DashboardPage() {
-  const [profile, setProfile] = useState<any>(null)
+  const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
-  const [activeSessions, setActiveSessions] = useState<any[]>([])
+  const [activeSessions, setActiveSessions] = useState<SessionWithUserName[]>([])
   const [error, setError] = useState<{ show: boolean; message: string; action?: () => void }>({ show: false, message: '' })
   const router = useRouter()
   const supabase = createClient()
@@ -192,12 +193,12 @@ export default function DashboardPage() {
     router.push('/')
   }
 
-  async function setRoleState(newState: string) {
+  async function setRoleState(newState: Profile['role_state']) {
     if (!profile) return
 
     try {
       // Set heartbeat timestamp when going available
-      const updateData: any = { role_state: newState }
+      const updateData: ProfileUpdateData = { role_state: newState }
       if (newState === 'available') {
         updateData.last_heartbeat_at = new Date().toISOString()
       }
@@ -415,7 +416,7 @@ export default function DashboardPage() {
           <div className="bg-white rounded-lg p-6 shadow-sm mb-8">
             <Body18 className="font-semibold text-gray-900 mb-4">Active Conversations</Body18>
             <div className="space-y-2" role="list" aria-label="Active chat sessions">
-              {activeSessions.map((session: any) => (
+              {activeSessions.map((session) => (
                 <button
                   key={session.id}
                   onClick={() => router.push(`/chat/${session.id}`)}
