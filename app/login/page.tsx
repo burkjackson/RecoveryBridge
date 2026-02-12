@@ -1,8 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Heading1, Body16 } from '@/components/ui/Typography'
 
 export default function LoginPage() {
@@ -11,8 +11,18 @@ export default function LoginPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
+  const [successMessage, setSuccessMessage] = useState('')
   const router = useRouter()
+  const searchParams = useSearchParams()
   const supabase = createClient()
+
+  useEffect(() => {
+    // Check for success message in URL params
+    const message = searchParams.get('message')
+    if (message) {
+      setSuccessMessage(message)
+    }
+  }, [searchParams])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -111,6 +121,12 @@ export default function LoginPage() {
                 </button>
               </div>
             </div>
+
+            {successMessage && (
+              <div role="alert" className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                <Body16 className="text-green-600 text-sm">{successMessage}</Body16>
+              </div>
+            )}
 
             {error && (
               <div id="login-error" role="alert" className="p-3 bg-red-50 border border-red-200 rounded-lg">
