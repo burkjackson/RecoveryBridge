@@ -187,26 +187,15 @@ export default function SignupPage() {
           isOpen={showSuccessModal}
           onClose={() => {
             setShowSuccessModal(false)
-            router.push('/login')
+            router.push('/onboarding')
           }}
-          title="Account Created! 🎉"
-          confirmText="Go to Login"
+          title="Welcome to RecoveryBridge! 🎉"
+          confirmText="Get Started"
           confirmStyle="success"
         >
-          <p className="text-lg mb-4">
-            Your account has been created successfully!
+          <p className="text-lg">
+            Your account has been created successfully! Let's get you set up.
           </p>
-          <div className="bg-rb-blue/10 border border-rb-blue/30 rounded-lg p-4">
-            <p className="text-sm">
-              <strong>📧 Check your email</strong>
-              <br />
-              <br />
-              We've sent a verification link to <strong>{email}</strong>. Please click the link to activate your account.
-              <br />
-              <br />
-              Once verified, you can log in and start using RecoveryBridge.
-            </p>
-          </div>
         </Modal>
       </main>
   )
