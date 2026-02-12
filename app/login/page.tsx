@@ -1,28 +1,18 @@
 'use client'
 
-import { useState, useEffect, Suspense } from 'react'
+import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { Heading1, Body16 } from '@/components/ui/Typography'
 
-function LoginForm() {
+export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
-  const [successMessage, setSuccessMessage] = useState('')
   const router = useRouter()
-  const searchParams = useSearchParams()
   const supabase = createClient()
-
-  useEffect(() => {
-    // Check for success message in URL params
-    const message = searchParams.get('message')
-    if (message) {
-      setSuccessMessage(message)
-    }
-  }, [searchParams])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -122,12 +112,6 @@ function LoginForm() {
               </div>
             </div>
 
-            {successMessage && (
-              <div role="alert" className="p-3 bg-green-50 border border-green-200 rounded-lg">
-                <Body16 className="text-green-600 text-sm">{successMessage}</Body16>
-              </div>
-            )}
-
             {error && (
               <div id="login-error" role="alert" className="p-3 bg-red-50 border border-red-200 rounded-lg">
                 <Body16 className="text-red-600 text-sm">{error}</Body16>
@@ -164,17 +148,5 @@ function LoginForm() {
         </div>
       </div>
     </main>
-  )
-}
-
-export default function LoginPage() {
-  return (
-    <Suspense fallback={
-      <main id="main-content" className="min-h-screen flex items-center justify-center p-4 sm:p-6" style={{ backgroundColor: '#F8F9FA' }}>
-        <div className="text-gray-500">Loading...</div>
-      </main>
-    }>
-      <LoginForm />
-    </Suspense>
   )
 }
