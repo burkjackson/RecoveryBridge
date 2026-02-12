@@ -8,6 +8,7 @@ import { SkeletonRoleCard } from '@/components/Skeleton'
 import ErrorState from '@/components/ErrorState'
 import Footer from '@/components/Footer'
 import NotificationSettings from '@/components/NotificationSettings'
+import NotificationDebug from '@/components/NotificationDebug'
 import AvailableListeners from '@/components/AvailableListeners'
 import type { Profile, SessionWithUserName, ProfileUpdateData } from '@/lib/types/database'
 import { TIME } from '@/lib/constants'
@@ -372,6 +373,11 @@ export default function DashboardPage() {
             {profile?.user_role === 'ally' && 'Recovery Support (Legacy)'}
             {!profile?.user_role && 'Not set'}
           </Body18>
+        </div>
+
+        {/* Notification Debug Info */}
+        <div className="mb-4 sm:mb-6">
+          <NotificationDebug />
         </div>
 
         {/* Notification Settings */}
