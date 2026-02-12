@@ -1,5 +1,6 @@
 import { createBrowserClient } from '@supabase/ssr'
 
+// Supabase client for browser-side authentication
 export function createClient() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
