@@ -4,7 +4,10 @@ import { useState, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Body16 } from './ui/Typography'
 import Cropper from 'react-easy-crop'
-import { Point, Area } from 'react-easy-crop/types'
+
+// Type definitions for react-easy-crop
+type Point = { x: number; y: number }
+type Area = { x: number; y: number; width: number; height: number }
 
 interface AvatarUploadProps {
   userId: string
