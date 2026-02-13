@@ -215,39 +215,30 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
   // Don't show this message if they're already in PWA with notifications enabled
   if (!supported && !(isPWA && isSubscribed)) {
     return (
-      <button
-        onClick={() => setShowInstructionsModal(true)}
-        className="w-full p-4 bg-blue-50 rounded-lg border-2 border-blue-200 hover:border-blue-400 hover:bg-blue-100 transition-all text-left"
-      >
-        <div className="flex items-start gap-2 mb-3">
-          <span className="text-xl">📱</span>
-          <div className="flex-1">
-            <Body16 className="font-semibold text-blue-900 mb-2">
-              Install as Web App for Notifications
-            </Body16>
-            <Body16 className="text-sm text-blue-800 mb-3">
-              Push notifications require RecoveryBridge to be installed as a Progressive Web App (PWA) on your home screen.
-            </Body16>
-            <ol className="text-sm text-blue-800 space-y-2 ml-4 mb-3">
-              <li><strong>1.</strong> Open RecoveryBridge in Safari</li>
-              <li><strong>2.</strong> Tap the Share button (□↑) at the bottom</li>
-              <li><strong>3.</strong> Scroll down and tap "Add to Home Screen"</li>
-              <li><strong>4.</strong> Tap "Add"</li>
-              <li><strong>5.</strong> Open RecoveryBridge from your home screen icon</li>
-              <li><strong>6.</strong> Enable notifications here</li>
-            </ol>
-            <Body16 className="text-xs text-blue-700 font-medium">
-              👆 Tap for detailed instructions
-            </Body16>
+      <>
+        <button
+          onClick={() => setShowInstructionsModal(true)}
+          className="w-full p-3 bg-blue-50 rounded-lg border border-blue-200 hover:border-blue-400 hover:bg-blue-100 transition-all text-left"
+        >
+          <div className="flex items-center gap-2">
+            <span className="text-lg">📱</span>
+            <div className="flex-1">
+              <Body16 className="text-sm font-semibold text-blue-900">
+                Install as Web App for Notifications
+              </Body16>
+              <Body16 className="text-xs text-blue-700">
+                Tap for setup instructions →
+              </Body16>
+            </div>
           </div>
-        </div>
+        </button>
         
         {/* Instructions Modal */}
         <NotificationInstructionsModal
           isOpen={showInstructionsModal}
           onClose={() => setShowInstructionsModal(false)}
         />
-      </button>
+      </>
     )
   }
 
