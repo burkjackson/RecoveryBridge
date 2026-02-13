@@ -12,6 +12,7 @@ export interface Profile {
   user_role: 'person_in_recovery' | 'professional' | 'ally' | null
   is_admin: boolean | null
   last_heartbeat_at: string | null
+  always_available: boolean
   created_at?: string
   updated_at?: string
 }

@@ -12,8 +12,14 @@ import {
 } from '@/lib/pushNotifications'
 import { Body16 } from '@/components/ui/Typography'
 import NotificationInstructionsModal from '@/components/NotificationInstructionsModal'
+import type { Profile } from '@/lib/types/database'
 
-export default function NotificationSettings() {
+interface NotificationSettingsProps {
+  profile?: Profile | null
+  onProfileUpdate?: (profile: Profile) => void
+}
+
+export default function NotificationSettings({ profile, onProfileUpdate }: NotificationSettingsProps) {
   const [supported, setSupported] = useState(false)
   const [permission, setPermission] = useState<NotificationPermission>('default')
   const [isSubscribed, setIsSubscribed] = useState(false)
@@ -22,11 +28,20 @@ export default function NotificationSettings() {
   const [showInstructionsModal, setShowInstructionsModal] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const [alwaysAvailable, setAlwaysAvailable] = useState(profile?.always_available || false)
+  const [isPWA, setIsPWA] = useState(false)
   const supabase = createClient()
 
   useEffect(() => {
     checkNotificationStatus()
+    checkPWAMode()
   }, [])
+
+  const checkPWAMode = () => {
+    // Check if app is running as PWA
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches
+    setIsPWA(isStandalone)
+  }
 
   async function checkNotificationStatus() {
     const isSupported = isPushNotificationSupported()
@@ -143,6 +158,52 @@ export default function NotificationSettings() {
     }
   }
 
+  async function toggleAlwaysAvailable() {
+    if (!profile) return
+    
+    if (!isSubscribed) {
+      setError('Please enable push notifications first to use Always Available mode.')
+      return
+    }
+
+    setLoading(true)
+    setError(null)
+    const newValue = !alwaysAvailable
+
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .update({ always_available: newValue })
+        .eq('id', profile.id)
+        .select()
+        .single()
+
+      if (error) throw error
+
+      setAlwaysAvailable(newValue)
+
+      if (onProfileUpdate && data) {
+        onProfileUpdate(data)
+      }
+
+      setSuccessMessage(newValue 
+        ? 'Always Available mode enabled! You\'ll stay online indefinitely.' 
+        : 'Always Available mode disabled. Normal 2-minute timeout applies.'
+      )
+      
+      // Clear success message after 5 seconds
+      setTimeout(() => setSuccessMessage(null), 5000)
+    } catch (err: any) {
+      console.error('Error updating always available:', err)
+      setError('Failed to update Always Available setting. Please try again.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Only show Always Available for listeners/allies
+  const isListener = profile?.user_role === 'ally' || profile?.user_role === 'professional'
+
   if (!supported) {
     return (
       <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
@@ -255,6 +316,56 @@ export default function NotificationSettings() {
           </div>
         </div>
       </div>
+
+      {/* Always Available Toggle - Only for listeners */}
+      {isListener && (
+        <div className="mt-4 p-4 bg-white rounded-lg border border-gray-200">
+          {!isPWA && (
+            <div className="bg-yellow-50 border-l-4 border-yellow-500 p-3 rounded mb-3">
+              <Body16 className="text-sm text-yellow-800">
+                ⚠️ <strong>Not running as PWA:</strong> Always Available mode only works when RecoveryBridge is opened as a Progressive Web App from your home screen.
+              </Body16>
+            </div>
+          )}
+          
+          <div className="flex items-start space-x-3">
+            <input
+              type="checkbox"
+              id="alwaysAvailable"
+              checked={alwaysAvailable}
+              onChange={toggleAlwaysAvailable}
+              disabled={loading || !isSubscribed}
+              className="mt-1 h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            />
+            <div className="flex-1">
+              <label
+                htmlFor="alwaysAvailable"
+                className={`block font-medium ${
+                  !isSubscribed ? 'text-gray-400' : 'text-gray-900 cursor-pointer'
+                }`}
+              >
+                ⚡ Always Available Mode
+              </label>
+              <Body16 className="text-sm text-gray-600 mt-1">
+                Stay marked as "Available" even when the app is in the background. You'll receive push notifications when someone needs support.
+                {!isSubscribed && (
+                  <span className="block mt-1 text-amber-600 font-medium">
+                    Enable push notifications above to use this feature.
+                  </span>
+                )}
+              </Body16>
+            </div>
+          </div>
+
+          {alwaysAvailable && isSubscribed && (
+            <div className="bg-green-50 border-l-4 border-green-500 p-3 rounded mt-3">
+              <Body16 className="text-sm text-green-800">
+                ✅ <strong>Always Available is ON:</strong> You will stay marked as available indefinitely. You'll get notified when someone needs support, even if the app is closed.
+              </Body16>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Instructions Modal */}
       <NotificationInstructionsModal

@@ -385,7 +385,7 @@ export default function DashboardPage() {
 
         {/* Notification Settings */}
         <div className="mb-4 sm:mb-6">
-          <NotificationSettings />
+          <NotificationSettings profile={profile} onProfileUpdate={setProfile} />
         </div>
 
         {/* Error State */}

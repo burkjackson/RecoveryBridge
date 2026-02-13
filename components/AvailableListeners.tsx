@@ -13,6 +13,8 @@ interface Listener {
   tagline: string | null
   avatar_url: string | null
   user_role: string
+  always_available: boolean
+  last_heartbeat_at: string | null
 }
 
 export default function AvailableListeners() {
@@ -57,15 +59,28 @@ export default function AvailableListeners() {
 
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, display_name, bio, tagline, avatar_url, user_role, last_heartbeat_at')
+        .select('id, display_name, bio, tagline, avatar_url, user_role, last_heartbeat_at, always_available')
         .eq('role_state', 'available')
         .neq('id', user?.id || '') // Exclude current user
-        .not('last_heartbeat_at', 'is', null) // Exclude profiles without heartbeat
-        .gte('last_heartbeat_at', heartbeatThreshold) // Only show listeners with recent heartbeat
 
       if (error) throw error
 
-      setListeners(data || [])
+      // Filter to show only:
+      // 1. Users with always_available enabled (stay online indefinitely), OR
+      // 2. Users with recent heartbeat (active in last 2 minutes)
+      const onlineListeners = (data || []).filter(listener => {
+        // Always available users are always shown
+        if (listener.always_available) {
+          return true
+        }
+        // Otherwise, check if heartbeat is recent
+        if (!listener.last_heartbeat_at) {
+          return false
+        }
+        return listener.last_heartbeat_at >= heartbeatThreshold
+      })
+
+      setListeners(onlineListeners)
     } catch (err) {
       console.error('Error loading available listeners:', err)
       setError('We couldn\'t load available listeners right now. Please check your connection and try again.')
@@ -169,9 +184,16 @@ export default function AvailableListeners() {
 
             {/* Info */}
             <div className="flex-1 min-w-0">
-              <Body16 className="font-semibold text-gray-900 truncate">
-                {listener.display_name}
-              </Body16>
+              <div className="flex items-center gap-2">
+                <Body16 className="font-semibold text-gray-900 truncate">
+                  {listener.display_name}
+                </Body16>
+                {listener.always_available && (
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 flex-shrink-0">
+                    ⚡
+                  </span>
+                )}
+              </div>
               <Body16 className="text-sm text-gray-600 truncate">
                 {getDisplayMessage(listener.tagline, listener.bio)}
               </Body16>
