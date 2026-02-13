@@ -317,7 +317,7 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
           )}
 
           {isSubscribed ? (
-            <div className="text-center">
+            <div className="flex flex-col items-center text-center">
               <div className="flex items-center justify-center gap-2 mb-3">
                 <span className="text-green-600" aria-hidden="true">✓</span>
                 <Body16 className="text-sm font-medium text-green-700">

@@ -35,8 +35,7 @@ export default function DashboardPage() {
           schema: 'public',
           table: 'sessions'
         },
-        (payload) => {
-          console.log('🔔 New session created:', payload)
+        () => {
           loadActiveSessions()
         }
       )
@@ -47,14 +46,11 @@ export default function DashboardPage() {
           schema: 'public',
           table: 'sessions'
         },
-        (payload) => {
-          console.log('🔔 Session updated:', payload)
+        () => {
           loadActiveSessions()
         }
       )
-      .subscribe((status) => {
-        console.log('📡 Realtime subscription status:', status)
-      })
+      .subscribe()
 
     return () => {
       supabase.removeChannel(channel)
@@ -118,7 +114,6 @@ export default function DashboardPage() {
       if (response.ok) {
         const result = await response.json()
         if (result.cleaned > 0) {
-          console.log(`🧹 Cleaned up ${result.cleaned} stale session(s)`)
           // Refresh the active sessions list if any were cleaned up
           loadActiveSessions()
         }
@@ -167,8 +162,6 @@ export default function DashboardPage() {
       if (!session?.user) return
       const user = session.user
 
-      console.log('👤 Current user ID:', user.id)
-
       // Get active sessions
       const { data: sessions, error } = await supabase
         .from('sessions')
@@ -177,8 +170,6 @@ export default function DashboardPage() {
         .or(`listener_id.eq.${user.id},seeker_id.eq.${user.id}`)
 
       if (error) throw error
-
-      console.log('💬 Found active sessions:', sessions)
 
       // Get other user's names for each session
       const sessionsWithNames = await Promise.all(
@@ -200,7 +191,6 @@ export default function DashboardPage() {
         })
       )
 
-      console.log('✅ Sessions with names:', sessionsWithNames)
       setActiveSessions(sessionsWithNames)
     } catch (error) {
       console.error('Error loading sessions:', error)
@@ -278,11 +268,7 @@ export default function DashboardPage() {
           })
 
           const result = await response.json()
-          console.log('Notification result:', result)
-
-          if (result.notified > 0) {
-            console.log(`✅ Notified ${result.notified} listener(s)`)
-          }
+          // Notifications sent successfully
         } catch (notifError) {
           console.error('Failed to send notifications:', notifError)
           // Don't block the user flow if notifications fail

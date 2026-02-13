@@ -80,10 +80,12 @@ export interface AdminLog {
 export interface PushSubscription {
   id: string
   user_id: string
-  endpoint: string
-  keys: {
-    p256dh: string
-    auth: string
+  subscription: {
+    endpoint: string
+    keys: {
+      p256dh: string
+      auth: string
+    }
   }
   created_at: string
 }

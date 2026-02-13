@@ -113,8 +113,6 @@ export default function ProfilePage() {
       const { error: adminError } = await supabase.auth.admin.deleteUser(profile.id)
 
       if (adminError) {
-        console.log('Admin delete not available, trying direct profile deletion')
-
         // If admin delete fails (requires service role), try deleting profile directly
         // Note: This requires RLS policy allowing users to delete their own profile
         const { error: profileError } = await supabase

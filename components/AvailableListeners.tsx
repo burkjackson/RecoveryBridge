@@ -38,7 +38,6 @@ export default function AvailableListeners() {
           filter: 'role_state=eq.available'
         },
         () => {
-          console.log('🔔 Available listeners updated')
           loadAvailableListeners()
         }
       )
