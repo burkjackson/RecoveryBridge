@@ -212,10 +212,29 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
 
   if (!supported) {
     return (
-      <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-        <Body16 className="text-rb-gray">
-          Push notifications are not supported in this browser.
-        </Body16>
+      <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+        <div className="flex items-start gap-2 mb-3">
+          <span className="text-xl">📱</span>
+          <div>
+            <Body16 className="font-semibold text-blue-900 mb-2">
+              Install as Web App for Notifications
+            </Body16>
+            <Body16 className="text-sm text-blue-800 mb-3">
+              Push notifications require RecoveryBridge to be installed as a Progressive Web App (PWA) on your home screen.
+            </Body16>
+            <ol className="text-sm text-blue-800 space-y-2 ml-4 mb-3">
+              <li><strong>1.</strong> Open RecoveryBridge in Safari</li>
+              <li><strong>2.</strong> Tap the Share button (□↑) at the bottom</li>
+              <li><strong>3.</strong> Scroll down and tap "Add to Home Screen"</li>
+              <li><strong>4.</strong> Tap "Add"</li>
+              <li><strong>5.</strong> Open RecoveryBridge from your home screen icon</li>
+              <li><strong>6.</strong> Enable notifications here</li>
+            </ol>
+            <Body16 className="text-xs text-blue-700 italic">
+              💡 Notifications won't work in Safari browser - only in the PWA version.
+            </Body16>
+          </div>
+        </div>
       </div>
     )
   }
