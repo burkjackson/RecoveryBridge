@@ -38,34 +38,36 @@ export default function Footer({ className = '' }: FooterProps) {
         </div>
 
         {/* Links */}
-        <div className="flex flex-wrap justify-center items-center gap-3 text-sm text-rb-gray mb-4">
-          <a
-            href="/privacy"
-            className="min-h-[44px] inline-flex items-center hover:text-rb-blue transition"
-          >
-            Privacy Policy
-          </a>
-          <span className="text-gray-300">•</span>
-          <a
-            href="/terms"
-            className="min-h-[44px] inline-flex items-center hover:text-rb-blue transition"
-          >
-            Terms of Service
-          </a>
-          <span className="text-gray-300">•</span>
-          <a
-            href="/safety"
-            className="min-h-[44px] inline-flex items-center hover:text-rb-blue transition"
-          >
-            Safety Guidelines
-          </a>
-          <span className="text-gray-300">•</span>
-          <a
-            href="/contact"
-            className="min-h-[44px] inline-flex items-center hover:text-rb-blue transition"
-          >
-            Contact Us
-          </a>
+        <div className="text-center mb-4">
+          <div className="inline-flex flex-wrap justify-center items-center gap-x-3 gap-y-2 text-sm text-rb-gray">
+            <a
+              href="/privacy"
+              className="min-h-[44px] inline-flex items-center hover:text-rb-blue transition"
+            >
+              Privacy Policy
+            </a>
+            <span className="text-gray-300 hidden sm:inline">•</span>
+            <a
+              href="/terms"
+              className="min-h-[44px] inline-flex items-center hover:text-rb-blue transition"
+            >
+              Terms of Service
+            </a>
+            <span className="text-gray-300 hidden sm:inline">•</span>
+            <a
+              href="/safety"
+              className="min-h-[44px] inline-flex items-center hover:text-rb-blue transition"
+            >
+              Safety Guidelines
+            </a>
+            <span className="text-gray-300 hidden sm:inline">•</span>
+            <a
+              href="/contact"
+              className="min-h-[44px] inline-flex items-center hover:text-rb-blue transition"
+            >
+              Contact Us
+            </a>
+          </div>
         </div>
 
         {/* Copyright */}
