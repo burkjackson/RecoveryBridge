@@ -102,8 +102,10 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
 
         const { error: dbError } = await supabase.from('push_subscriptions').upsert({
           user_id: user.id,
-          endpoint: subscription.endpoint,
-          keys: subscription.keys,
+          subscription: {
+            endpoint: subscription.endpoint,
+            keys: subscription.keys,
+          },
         })
 
         if (dbError) {
