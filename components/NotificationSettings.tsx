@@ -176,6 +176,12 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
       return
     }
 
+    // Only allow Always Available when user is in "Available to Listen" mode
+    if (profile.role_state !== 'available') {
+      setError('Always Available only works when you\'re marked as "Available to Listen". Please switch to Available mode first.')
+      return
+    }
+
     setLoading(true)
     setError(null)
     const newValue = !alwaysAvailable
@@ -197,8 +203,8 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
       }
 
       setSuccessMessage(newValue 
-        ? 'Always Available mode enabled! You\'ll stay online indefinitely.' 
-        : 'Always Available mode disabled. Normal 5-minute timeout applies.'
+        ? 'Always Available to Listen enabled! You\'ll stay marked as available indefinitely when listening.' 
+        : 'Always Available mode disabled. Normal 5-minute timeout applies when listening.'
       )
       
       // Clear success message after 5 seconds
@@ -210,9 +216,6 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
       setLoading(false)
     }
   }
-
-  // Only show Always Available for listeners/allies
-  const isListener = profile?.user_role === 'ally' || profile?.user_role === 'professional'
 
   // Don't show this message if they're already in PWA with notifications enabled
   if (!supported && !(isPWA && isSubscribed)) {
@@ -317,8 +320,8 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
           )}
 
           {isSubscribed ? (
-            <div className="flex flex-col items-center text-center">
-              <div className="flex items-center justify-center gap-2 mb-3">
+            <div className="flex flex-col items-center justify-center text-center space-y-3">
+              <div className="flex items-center justify-center gap-2">
                 <span className="text-green-600" aria-hidden="true">✓</span>
                 <Body16 className="text-sm font-medium text-green-700">
                   Notifications enabled
@@ -328,7 +331,7 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
                 onClick={handleDisableNotifications}
                 disabled={loading}
                 aria-label={loading ? 'Disabling notifications...' : 'Disable push notifications'}
-                className="min-h-[44px] px-4 py-2 bg-white border-2 border-rb-gray text-rb-gray rounded-full text-sm font-semibold hover:border-red-500 hover:text-red-600 transition disabled:opacity-50"
+                className="min-h-[44px] px-6 py-2 bg-white border-2 border-rb-gray text-rb-gray rounded-full text-sm font-semibold hover:border-red-500 hover:text-red-600 transition disabled:opacity-50"
               >
                 {loading ? 'Disabling...' : 'Disable Notifications'}
               </button>
@@ -363,9 +366,8 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
         </div>
       </div>
 
-      {/* Always Available Toggle - Only for listeners */}
-      {isListener && (
-        <div className="mt-4 p-4 bg-white rounded-lg border border-gray-200">
+      {/* Always Available Toggle - Peer Support Model */}
+      <div className="mt-4 p-4 bg-white rounded-lg border border-gray-200">
           {!isPWA && (
             <div className="bg-yellow-50 border-l-4 border-yellow-500 p-3 rounded mb-3">
               <Body16 className="text-sm text-yellow-800">
@@ -390,13 +392,18 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
                   !isSubscribed ? 'text-gray-400' : 'text-gray-900 cursor-pointer'
                 }`}
               >
-                ⚡ Always Available Mode
+                ⚡ Always Available to Listen
               </label>
               <Body16 className="text-sm text-gray-600 mt-1">
-                Stay marked as "Available" even when the app is in the background. You'll receive push notifications when someone needs support.
+                When you're marked as "Available to Listen", this keeps you online indefinitely. You'll receive push notifications when someone needs support, even when the app is closed.
                 {!isSubscribed && (
                   <span className="block mt-1 text-amber-600 font-medium">
                     Enable push notifications above to use this feature.
+                  </span>
+                )}
+                {profile?.role_state !== 'available' && (
+                  <span className="block mt-1 text-amber-600 font-medium">
+                    💡 Switch to "Available to Listen" mode on your dashboard to enable this.
                   </span>
                 )}
               </Body16>
@@ -406,12 +413,11 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
           {alwaysAvailable && isSubscribed && (
             <div className="bg-green-50 border-l-4 border-green-500 p-3 rounded mt-3">
               <Body16 className="text-sm text-green-800">
-                ✅ <strong>Always Available is ON:</strong> You will stay marked as available indefinitely. You'll get notified when someone needs support, even if the app is closed.
+                ✅ <strong>Always Available to Listen is ON:</strong> When you mark yourself as "Available to Listen", you'll stay online indefinitely. You'll get notified when someone needs support, even if the app is closed.
               </Body16>
             </div>
           )}
         </div>
-      )}
 
       {/* Instructions Modal */}
       <NotificationInstructionsModal

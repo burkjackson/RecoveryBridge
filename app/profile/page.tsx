@@ -8,6 +8,7 @@ import AvatarUpload from '@/components/AvatarUpload'
 import Modal from '@/components/Modal'
 import { SkeletonProfile } from '@/components/Skeleton'
 import Footer from '@/components/Footer'
+import NotificationSettings from '@/components/NotificationSettings'
 import type { Profile } from '@/lib/types/database'
 
 export default function ProfilePage() {
@@ -440,6 +441,14 @@ export default function ProfilePage() {
               </Body18>
             )}
           </div>
+        </div>
+
+        {/* Notification Settings */}
+        <div className="mt-6">
+          <NotificationSettings 
+            profile={profile}
+            onProfileUpdate={(updatedProfile) => setProfile(updatedProfile)}
+          />
         </div>
 
         {/* Delete Account */}
