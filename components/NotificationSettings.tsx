@@ -106,6 +106,8 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
             endpoint: subscription.endpoint,
             keys: subscription.keys,
           },
+        }, {
+          onConflict: 'user_id'
         })
 
         if (dbError) {
