@@ -131,11 +131,19 @@ export default function DashboardPage() {
 
   async function loadProfile() {
     try {
-      const { data: { user } } = await supabase.auth.getUser()
+      // Use getSession() instead of getUser() for better browser navigation support
+      const { data: { session } } = await supabase.auth.getSession()
+      let user = session?.user
 
       if (!user) {
-        router.push('/login')
-        return
+        // Try refreshing the session before redirecting
+        const { data: { session: refreshedSession } } = await supabase.auth.refreshSession()
+        user = refreshedSession?.user
+        
+        if (!user) {
+          router.push('/login')
+          return
+        }
       }
 
       const { data, error } = await supabase
@@ -155,8 +163,9 @@ export default function DashboardPage() {
 
   async function loadActiveSessions() {
     try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.user) return
+      const user = session.user
 
       console.log('👤 Current user ID:', user.id)
 
