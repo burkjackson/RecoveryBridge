@@ -30,6 +30,16 @@ export default function NotificationInstructionsModal({
           </button>
         </div>
 
+        {/* PWA Requirement Alert */}
+        <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded mb-6">
+          <Body18 className="font-semibold text-blue-900 mb-2">
+            📱 PWA Required
+          </Body18>
+          <Body16 className="text-sm text-blue-800">
+            Push notifications only work when RecoveryBridge is <strong>opened as a Progressive Web App (PWA)</strong> from your home screen, not from Safari. Follow the steps below to set it up!
+          </Body16>
+        </div>
+
         <Body16 className="text-gray-600 mb-6">
           Follow these simple steps to get instant notifications when someone needs support:
         </Body16>
@@ -123,10 +133,23 @@ export default function NotificationInstructionsModal({
         {/* Important Note */}
         <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded mb-6">
           <Body18 className="font-semibold text-amber-900 mb-2">
-            Important
+            ⚠️ Important Reminder
           </Body18>
           <Body16 className="text-sm text-amber-800">
-            Notifications <strong>only work when you open RecoveryBridge from your home screen</strong>, not from Safari. Make sure you've completed Step 1 first!
+            Notifications <strong>only work when you open RecoveryBridge as a PWA from your home screen</strong>, not from Safari. If you're reading this in Safari right now, you won't be able to enable notifications until you complete Steps 1 & 2!
+          </Body16>
+        </div>
+
+        {/* Always Available Feature */}
+        <div className="bg-green-50 border-l-4 border-green-500 p-4 rounded mb-6">
+          <Body18 className="font-semibold text-green-900 mb-2">
+            ⚡ Always Available Mode
+          </Body18>
+          <Body16 className="text-sm text-green-800 mb-2">
+            Once you've enabled notifications, <strong>listeners and allies</strong> can turn on "Always Available Mode" to stay marked as available even when the app is closed.
+          </Body16>
+          <Body16 className="text-sm text-green-800">
+            <strong>Requirements:</strong> PWA mode + Push notifications enabled. This feature is only available for listeners/allies, not for people seeking support.
           </Body16>
         </div>
 
