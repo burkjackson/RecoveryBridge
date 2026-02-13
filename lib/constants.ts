@@ -8,8 +8,8 @@ export const TIME = {
   /** How often to send heartbeat signals when available (30 seconds) */
   HEARTBEAT_INTERVAL_MS: 30 * 1000,
 
-  /** Maximum age of heartbeat to consider a listener "available" (2 minutes) */
-  HEARTBEAT_THRESHOLD_MS: 2 * 60 * 1000,
+  /** Maximum age of heartbeat to consider a listener "available" (5 minutes) */
+  HEARTBEAT_THRESHOLD_MS: 5 * 60 * 1000,
 
   /** Time before showing inactivity warning in chat (15 minutes) */
   INACTIVITY_WARNING_MS: 15 * 60 * 1000,
