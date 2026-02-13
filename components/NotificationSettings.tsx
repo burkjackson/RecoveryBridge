@@ -210,12 +210,16 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
   // Only show Always Available for listeners/allies
   const isListener = profile?.user_role === 'ally' || profile?.user_role === 'professional'
 
-  if (!supported) {
+  // Don't show this message if they're already in PWA with notifications enabled
+  if (!supported && !(isPWA && isSubscribed)) {
     return (
-      <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+      <button
+        onClick={() => setShowInstructionsModal(true)}
+        className="w-full p-4 bg-blue-50 rounded-lg border-2 border-blue-200 hover:border-blue-400 hover:bg-blue-100 transition-all text-left"
+      >
         <div className="flex items-start gap-2 mb-3">
           <span className="text-xl">📱</span>
-          <div>
+          <div className="flex-1">
             <Body16 className="font-semibold text-blue-900 mb-2">
               Install as Web App for Notifications
             </Body16>
@@ -230,12 +234,18 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
               <li><strong>5.</strong> Open RecoveryBridge from your home screen icon</li>
               <li><strong>6.</strong> Enable notifications here</li>
             </ol>
-            <Body16 className="text-xs text-blue-700 italic">
-              💡 Notifications won't work in Safari browser - only in the PWA version.
+            <Body16 className="text-xs text-blue-700 font-medium">
+              👆 Tap for detailed instructions
             </Body16>
           </div>
         </div>
-      </div>
+        
+        {/* Instructions Modal */}
+        <NotificationInstructionsModal
+          isOpen={showInstructionsModal}
+          onClose={() => setShowInstructionsModal(false)}
+        />
+      </button>
     )
   }
 
