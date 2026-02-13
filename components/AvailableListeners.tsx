@@ -67,7 +67,7 @@ export default function AvailableListeners() {
 
       // Filter to show only:
       // 1. Users with always_available enabled (stay online indefinitely), OR
-      // 2. Users with recent heartbeat (active in last 2 minutes)
+      // 2. Users with recent heartbeat (active in last 5 minutes)
       const onlineListeners = (data || []).filter(listener => {
         // Always available users are always shown
         if (listener.always_available) {

@@ -92,6 +92,7 @@ export interface PushSubscription {
 export interface ProfileUpdateData {
   role_state?: Profile['role_state']
   last_heartbeat_at?: string
+  always_available?: boolean
   display_name?: string
   bio?: string
   tagline?: string

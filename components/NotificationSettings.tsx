@@ -37,6 +37,13 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
     checkPWAMode()
   }, [])
 
+  // Sync alwaysAvailable state when profile changes
+  useEffect(() => {
+    if (profile) {
+      setAlwaysAvailable(profile.always_available || false)
+    }
+  }, [profile?.always_available])
+
   const checkPWAMode = () => {
     // Check if app is running as PWA
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches
@@ -188,7 +195,7 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
 
       setSuccessMessage(newValue 
         ? 'Always Available mode enabled! You\'ll stay online indefinitely.' 
-        : 'Always Available mode disabled. Normal 2-minute timeout applies.'
+        : 'Always Available mode disabled. Normal 5-minute timeout applies.'
       )
       
       // Clear success message after 5 seconds
