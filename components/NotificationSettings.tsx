@@ -102,9 +102,8 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
 
         const { error: dbError } = await supabase.from('push_subscriptions').upsert({
           user_id: user.id,
-          subscription: subscription,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
+          endpoint: subscription.endpoint,
+          keys: subscription.keys,
         })
 
         if (dbError) {
@@ -282,6 +281,17 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
             </div>
           )}
 
+          {!isPWA && (
+            <div className="mb-3 p-4 bg-amber-50 border-l-4 border-amber-500 rounded">
+              <Body16 className="text-sm text-amber-900 font-semibold mb-2">
+                ⚠️ Install as PWA Required
+              </Body16>
+              <Body16 className="text-sm text-amber-800">
+                Push notifications only work when RecoveryBridge is installed as a Progressive Web App. Please install to your home screen first, then enable notifications.
+              </Body16>
+            </div>
+          )}
+
           {isSubscribed ? (
             <div className="text-center">
               <div className="flex items-center justify-center gap-2 mb-3">
@@ -300,15 +310,20 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
               </button>
             </div>
           ) : (
-            <div className="flex justify-center">
+            <div className="flex flex-col items-center gap-3">
               <button
                 onClick={handleEnableNotifications}
-                disabled={loading || permission === 'denied'}
+                disabled={loading || permission === 'denied' || !isPWA}
                 aria-label={loading ? 'Enabling notifications...' : 'Enable push notifications'}
                 className="min-h-[44px] px-6 py-2.5 bg-gradient-to-r from-[#3B82F6] to-[#2563EB] text-white rounded-full text-sm font-semibold hover:shadow-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? 'Enabling...' : 'Enable Notifications'}
               </button>
+              {!isPWA && (
+                <Body16 className="text-xs text-amber-700 text-center">
+                  Button disabled - install as PWA first
+                </Body16>
+              )}
             </div>
           )}
 
