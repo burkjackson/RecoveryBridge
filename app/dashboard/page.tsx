@@ -317,26 +317,18 @@ export default function DashboardPage() {
         {/* Header */}
         <div className="bg-white rounded-2xl shadow-lg p-6 mb-6 sm:mb-8 border border-rb-gray/10">
           {/* Top Navigation Bar */}
-          <div className="flex flex-wrap justify-between items-center gap-3 mb-6">
-            {/* Left: Logo and Navigation */}
-            <div className="flex items-center gap-2 sm:gap-4">
-              <img
-                src="/logo-icon.png"
-                alt="RecoveryBridge"
-                className="h-10 sm:h-12 w-auto"
-              />
-              <button
-                onClick={() => router.push('/profile')}
-                className="min-h-[44px] px-3 sm:px-6 py-2 sm:py-2.5 bg-gradient-to-r from-rb-blue to-rb-blue-hover text-white rounded-full text-sm font-semibold hover:shadow-lg transition-all whitespace-nowrap"
-              >
-                Profile
-              </button>
-            </div>
+          <div className="flex justify-between items-center mb-6">
+            {/* Left: Logo */}
+            <img
+              src="/logo-icon.png"
+              alt="RecoveryBridge"
+              className="h-10 sm:h-12 w-auto"
+            />
 
             {/* Right: Sign Out */}
             <button
               onClick={handleSignOut}
-              className="min-h-[44px] px-3 sm:px-5 py-2 sm:py-2.5 bg-gray-900 text-white rounded-full text-sm font-semibold hover:bg-gray-800 transition-all whitespace-nowrap"
+              className="min-h-[44px] px-4 sm:px-6 py-2 sm:py-2.5 bg-gray-900 text-white rounded-full text-sm font-semibold hover:bg-gray-800 transition-all whitespace-nowrap"
             >
               Sign Out
             </button>
@@ -361,9 +353,9 @@ export default function DashboardPage() {
           <div className="flex gap-3 pt-4 border-t border-gray-100">
             <button
               onClick={() => router.push('/profile')}
-              className="inline-flex items-center gap-1 min-h-[44px] px-4 py-2 text-sm text-gray-600 hover:text-gray-900 transition"
+              className="min-h-[44px] px-6 py-2.5 bg-gradient-to-r from-rb-blue to-rb-blue-hover text-white rounded-full text-sm font-semibold hover:shadow-lg transition-all"
             >
-              Profile →
+              Profile
             </button>
           </div>
         </div>
