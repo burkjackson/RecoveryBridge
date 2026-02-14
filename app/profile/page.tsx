@@ -198,32 +198,48 @@ export default function ProfilePage() {
     <main id="main-content" className="min-h-screen p-4 sm:p-6" style={{ backgroundColor: '#F8F9FA' }}>
     <div className="max-w-2xl mx-auto">
         {/* Header */}
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <button
-              onClick={() => router.push('/dashboard')}
-              className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-rb-blue transition mb-2"
-            >
-              ← Dashboard
-            </button>
-            <Heading1 className="text-2xl sm:text-3xl mb-1">Profile</Heading1>
-            <Body16 className="text-gray-500 text-sm">Manage your account settings</Body16>
-          </div>
-          <div className="flex gap-2">
-            {profile.is_admin && (
+        <div className="bg-white rounded-2xl shadow-lg p-6 mb-8 border border-rb-gray/10">
+          <div className="flex justify-between items-center">
+            {/* Left: Logo and Navigation */}
+            <div className="flex items-center gap-4">
+              <img
+                src="/logo-icon.png"
+                alt="RecoveryBridge"
+                className="h-12 w-auto"
+              />
+              <div className="flex gap-2">
+                <button
+                  onClick={() => router.push('/dashboard')}
+                  className="min-h-[44px] px-6 py-2.5 bg-gradient-to-r from-rb-blue to-rb-blue-hover text-white rounded-full text-sm font-semibold hover:shadow-lg transition-all transform hover:scale-105"
+                >
+                  Dashboard
+                </button>
+                {profile.is_admin && (
+                  <button
+                    onClick={() => router.push('/admin')}
+                    className="min-h-[44px] px-6 py-2.5 bg-gray-100 text-gray-700 rounded-full text-sm font-semibold hover:bg-gray-200 transition-all"
+                  >
+                    Admin
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Right: Sign Out and SOS */}
+            <div className="flex gap-2">
               <button
-                onClick={() => router.push('/admin')}
-                className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 transition whitespace-nowrap"
+                onClick={() => router.push('/contact')}
+                className="min-h-[44px] px-6 py-2.5 bg-red-600 text-white rounded-full text-sm font-semibold hover:bg-red-700 transition-all transform hover:scale-105"
               >
-                Admin
+                🆘 SOS
               </button>
-            )}
-            <button
-              onClick={handleSignOut}
-              className="px-5 py-2 text-sm bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition whitespace-nowrap"
-            >
-              Sign Out
-            </button>
+              <button
+                onClick={handleSignOut}
+                className="min-h-[44px] px-6 py-2.5 bg-gray-900 text-white rounded-full text-sm font-semibold hover:bg-gray-800 transition-all"
+              >
+                Sign Out
+              </button>
+            </div>
           </div>
         </div>
 

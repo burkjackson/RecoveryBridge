@@ -315,21 +315,39 @@ export default function DashboardPage() {
     <main id="main-content" className="min-h-screen p-4 sm:p-6" style={{ backgroundColor: '#F8F9FA' }}>
       <div className="max-w-6xl mx-auto">
         {/* Header */}
-        <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-8 mb-6 sm:mb-8 border border-rb-gray/10">
-          {/* Logo and Sign Out Button - Top */}
-          <div className="flex justify-between items-center mb-3">
-            <img
-              src="/logo-icon.png"
-              alt="RecoveryBridge Icon"
-              className="ml-24"
-              style={{ width: '200px' }}
-            />
-            <button
-              onClick={handleSignOut}
-              className="min-h-[44px] px-6 py-2.5 text-sm bg-gradient-to-r from-rb-blue to-rb-blue-hover text-white rounded-full hover:shadow-lg transition-all transform hover:scale-105 whitespace-nowrap"
-            >
-              Sign Out
-            </button>
+        <div className="bg-white rounded-2xl shadow-lg p-6 mb-6 sm:mb-8 border border-rb-gray/10">
+          {/* Top Navigation Bar */}
+          <div className="flex justify-between items-center mb-6">
+            {/* Left: Logo and Navigation */}
+            <div className="flex items-center gap-4">
+              <img
+                src="/logo-icon.png"
+                alt="RecoveryBridge"
+                className="h-12 w-auto"
+              />
+              <button
+                onClick={() => router.push('/profile')}
+                className="min-h-[44px] px-6 py-2.5 bg-gradient-to-r from-rb-blue to-rb-blue-hover text-white rounded-full text-sm font-semibold hover:shadow-lg transition-all transform hover:scale-105"
+              >
+                Profile
+              </button>
+            </div>
+
+            {/* Right: SOS and Sign Out */}
+            <div className="flex gap-2">
+              <button
+                onClick={() => router.push('/contact')}
+                className="min-h-[44px] px-6 py-2.5 bg-red-600 text-white rounded-full text-sm font-semibold hover:bg-red-700 transition-all transform hover:scale-105"
+              >
+                🆘 SOS
+              </button>
+              <button
+                onClick={handleSignOut}
+                className="min-h-[44px] px-6 py-2.5 bg-gray-900 text-white rounded-full text-sm font-semibold hover:bg-gray-800 transition-all"
+              >
+                Sign Out
+              </button>
+            </div>
           </div>
 
           {/* Welcome Section */}
