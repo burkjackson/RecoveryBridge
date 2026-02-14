@@ -90,6 +90,15 @@ export default function NotificationInstructionsModal({
             </div>
 
             <div className="flex items-start gap-3">
+              <div className="w-6 h-6 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0 mt-1">
+                <span className="text-xs text-amber-600 font-bold">⚠️</span>
+              </div>
+              <Body16 className="text-gray-700">
+                <strong className="text-amber-700">IMPORTANT:</strong> Make sure <strong className="text-amber-700">"Open as Web App"</strong> is turned <strong className="text-green-600">ON</strong> (green toggle). This is required for notifications!
+              </Body16>
+            </div>
+
+            <div className="flex items-start gap-3">
               <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0 mt-1">
                 <span className="text-xs text-blue-600 font-bold">d</span>
               </div>
