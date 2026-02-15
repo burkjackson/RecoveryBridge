@@ -430,13 +430,13 @@ export default function DashboardPage() {
           </button>
         </div>
 
+        {/* Available Listeners */}
+        <AvailableListeners />
+
         {/* Notification Settings */}
         <div className="mb-4 sm:mb-6">
           <NotificationSettings profile={profile} onProfileUpdate={setProfile} />
         </div>
-
-        {/* Available Listeners */}
-        <AvailableListeners />
 
         {/* Active Sessions */}
         {activeSessions.length > 0 && (
