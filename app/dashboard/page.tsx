@@ -391,7 +391,7 @@ export default function DashboardPage() {
             aria-pressed={profile?.role_state === 'available'}
             className={`p-8 rounded-2xl text-center transition-all duration-300 transform hover:scale-[1.02] hover:-translate-y-1 ${
               profile?.role_state === 'available'
-                ? 'bg-blue-50 border-4 border-blue-500 shadow-lg shadow-blue-500/50 animate-pulse-glow'
+                ? 'bg-blue-50 border-4 border-blue-500 shadow-lg shadow-blue-500/50 animate-pulse-glow-blue'
                 : 'bg-white border-4 border-blue-500 shadow-md hover:shadow-xl'
             }`}
             style={profile?.role_state === 'available' ? {
@@ -416,7 +416,7 @@ export default function DashboardPage() {
             aria-pressed={profile?.role_state === 'requesting'}
             className={`p-8 rounded-2xl text-center transition-all duration-300 transform hover:scale-[1.02] hover:-translate-y-1 ${
               profile?.role_state === 'requesting'
-                ? 'bg-purple-50 border-4 border-purple-500 shadow-lg shadow-purple-500/50 animate-pulse-glow'
+                ? 'bg-purple-50 border-4 border-purple-500 shadow-lg shadow-purple-500/50 animate-pulse-glow-purple'
                 : 'bg-white border-4 border-purple-500 shadow-md hover:shadow-xl'
             }`}
             style={profile?.role_state === 'requesting' ? {
