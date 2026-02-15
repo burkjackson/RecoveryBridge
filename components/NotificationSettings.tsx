@@ -30,11 +30,13 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [alwaysAvailable, setAlwaysAvailable] = useState(profile?.always_available || false)
   const [isPWA, setIsPWA] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
   const supabase = createClient()
 
   useEffect(() => {
     checkNotificationStatus()
     checkPWAMode()
+    checkIfMobile()
   }, [])
 
   // Sync alwaysAvailable state when profile changes
@@ -48,6 +50,12 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
     // Check if app is running as PWA
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches
     setIsPWA(isStandalone)
+  }
+
+  const checkIfMobile = () => {
+    // Check if user is on a mobile device
+    const mobileCheck = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+    setIsMobile(mobileCheck)
   }
 
   async function checkNotificationStatus() {
@@ -308,7 +316,7 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
             </div>
           )}
 
-          {!isPWA && (
+          {!isPWA && isMobile && (
             <div className="mb-3 p-4 bg-amber-50 border-l-4 border-amber-500 rounded">
               <Body16 className="text-sm text-amber-900 font-semibold mb-2">
                 ⚠️ Install as PWA Required
@@ -340,13 +348,13 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
             <div className="flex flex-col items-center gap-3">
               <button
                 onClick={handleEnableNotifications}
-                disabled={loading || permission === 'denied' || !isPWA}
+                disabled={loading || permission === 'denied' || (!isPWA && isMobile)}
                 aria-label={loading ? 'Enabling notifications...' : 'Enable push notifications'}
                 className="min-h-[44px] px-6 py-2.5 bg-gradient-to-r from-[#3B82F6] to-[#2563EB] text-white rounded-full text-sm font-semibold hover:shadow-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? 'Enabling...' : 'Enable Notifications'}
               </button>
-              {!isPWA && (
+              {!isPWA && isMobile && (
                 <Body16 className="text-xs text-amber-700 text-center">
                   Button disabled - install as PWA first
                 </Body16>
@@ -368,7 +376,7 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
 
       {/* Always Available Toggle - Peer Support Model */}
       <div className="mt-4 p-4 bg-white rounded-lg border border-gray-200">
-          {!isPWA && (
+          {!isPWA && isMobile && (
             <div className="bg-yellow-50 border-l-4 border-yellow-500 p-3 rounded mb-3">
               <Body16 className="text-sm text-yellow-800">
                 ⚠️ <strong>Not running as PWA:</strong> Always Available mode only works when RecoveryBridge is opened as a Progressive Web App from your home screen.
