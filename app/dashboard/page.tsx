@@ -371,11 +371,6 @@ export default function DashboardPage() {
           </Body18>
         </div>
 
-        {/* Notification Settings */}
-        <div className="mb-4 sm:mb-6">
-          <NotificationSettings profile={profile} onProfileUpdate={setProfile} />
-        </div>
-
         {/* Error State */}
         {error.show && (
           <ErrorState
@@ -433,6 +428,11 @@ export default function DashboardPage() {
               <Body16 className="text-sm text-purple-600 font-medium">Click to find a listener</Body16>
             )}
           </button>
+        </div>
+
+        {/* Notification Settings */}
+        <div className="mb-4 sm:mb-6">
+          <NotificationSettings profile={profile} onProfileUpdate={setProfile} />
         </div>
 
         {/* Available Listeners */}
