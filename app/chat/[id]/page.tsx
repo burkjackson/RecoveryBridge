@@ -431,10 +431,10 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
               messages.map((message) => (
                 <div
                   key={message.id}
-                  className={`flex ${message.sender_id === currentUserId ? 'justify-end' : 'justify-start'}`}
+                  className={`flex ${message.sender_id === currentUserId ? 'justify-end animate-slide-in-right' : 'justify-start animate-slide-in-left'}`}
                 >
                   <div
-                    className={`max-w-[70%] sm:max-w-md px-4 py-3 rounded-lg ${
+                    className={`max-w-[70%] sm:max-w-md px-4 py-3 rounded-2xl shadow-md ${
                       message.sender_id === currentUserId
                         ? 'bg-rb-blue text-white'
                         : 'bg-gray-800 text-white'

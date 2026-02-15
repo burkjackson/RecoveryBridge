@@ -389,16 +389,19 @@ export default function DashboardPage() {
             onClick={() => setRoleState(profile?.role_state === 'available' ? 'offline' : 'available')}
             aria-label={profile?.role_state === 'available' ? 'You are currently available to listen. Click to go offline' : 'Make yourself available to listen and support others'}
             aria-pressed={profile?.role_state === 'available'}
-            className={`p-8 rounded-xl text-center transition-all transform hover:scale-[1.02] shadow-sm hover:shadow-md ${
+            className={`p-8 rounded-2xl text-center transition-all duration-300 transform hover:scale-[1.02] hover:-translate-y-1 ${
               profile?.role_state === 'available'
-                ? 'bg-blue-50 border-4 border-blue-500'
-                : 'bg-white border-4 border-blue-500'
+                ? 'bg-blue-50 border-4 border-blue-500 shadow-lg shadow-blue-500/50 animate-pulse-glow'
+                : 'bg-white border-4 border-blue-500 shadow-md hover:shadow-xl'
             }`}
+            style={profile?.role_state === 'available' ? {
+              boxShadow: '0 10px 25px -5px rgba(59, 130, 246, 0.3), 0 8px 10px -6px rgba(59, 130, 246, 0.3)'
+            } : {}}
           >
             <Body18 className="font-bold text-blue-600 mb-2 text-lg">I'm Here To Listen</Body18>
             <Body16 className="text-gray-600 text-sm mb-4">Offer support and connection to others</Body16>
             {profile?.role_state === 'available' ? (
-              <div className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-100 rounded-lg">
+              <div className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-100 rounded-xl">
                 <span className="w-2 h-2 bg-blue-600 rounded-full animate-pulse"></span>
                 <Body16 className="text-sm text-blue-700 font-semibold" aria-live="polite">You're Available</Body16>
               </div>
@@ -411,16 +414,19 @@ export default function DashboardPage() {
             onClick={() => setRoleState(profile?.role_state === 'requesting' ? 'offline' : 'requesting')}
             aria-label={profile?.role_state === 'requesting' ? 'You are currently looking for support. Click to cancel' : 'Request support and connect with an available listener'}
             aria-pressed={profile?.role_state === 'requesting'}
-            className={`p-8 rounded-xl text-center transition-all transform hover:scale-[1.02] shadow-sm hover:shadow-md ${
+            className={`p-8 rounded-2xl text-center transition-all duration-300 transform hover:scale-[1.02] hover:-translate-y-1 ${
               profile?.role_state === 'requesting'
-                ? 'bg-purple-50 border-4 border-purple-500'
-                : 'bg-white border-4 border-purple-500'
+                ? 'bg-purple-50 border-4 border-purple-500 shadow-lg shadow-purple-500/50 animate-pulse-glow'
+                : 'bg-white border-4 border-purple-500 shadow-md hover:shadow-xl'
             }`}
+            style={profile?.role_state === 'requesting' ? {
+              boxShadow: '0 10px 25px -5px rgba(168, 85, 247, 0.3), 0 8px 10px -6px rgba(168, 85, 247, 0.3)'
+            } : {}}
           >
             <Body18 className="font-bold text-purple-600 mb-2 text-lg">I Need Support</Body18>
             <Body16 className="text-gray-600 text-sm mb-4">Connect with someone who understands</Body16>
             {profile?.role_state === 'requesting' ? (
-              <div className="flex items-center justify-center gap-2 px-4 py-2 bg-purple-100 rounded-lg">
+              <div className="flex items-center justify-center gap-2 px-4 py-2 bg-purple-100 rounded-xl">
                 <span className="w-2 h-2 bg-purple-600 rounded-full animate-pulse"></span>
                 <Body16 className="text-sm text-purple-700 font-semibold" aria-live="polite">Finding Listener...</Body16>
               </div>
