@@ -442,10 +442,10 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                     role="article"
                     aria-label={`Message from ${message.sender_id === currentUserId ? 'you' : otherUserName}`}
                   >
-                    <Body16 className="text-white">
+                    <Body16 className="!text-white">
                       {message.content}
                     </Body16>
-                    <p className="text-xs mt-1 text-white/80">
+                    <p className="text-xs mt-1 !text-white/80">
                       {new Date(message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </p>
                   </div>
