@@ -280,6 +280,11 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
     )
   }
 
+  // Don't show notification settings on desktop at all
+  if (!isMobile) {
+    return null
+  }
+
   return (
     <div className="p-4 bg-gradient-to-br from-blue-50 to-purple-50 rounded-lg border border-blue-200">
       <div className="flex items-start gap-3 mb-3">
