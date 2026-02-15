@@ -437,15 +437,15 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                     className={`max-w-[70%] sm:max-w-md px-4 py-3 rounded-lg ${
                       message.sender_id === currentUserId
                         ? 'bg-rb-blue text-white'
-                        : 'bg-white border border-gray-200'
+                        : 'bg-gray-800 text-white'
                     }`}
                     role="article"
                     aria-label={`Message from ${message.sender_id === currentUserId ? 'you' : otherUserName}`}
                   >
-                    <Body16 className={message.sender_id === currentUserId ? 'text-white' : 'text-gray-900'}>
+                    <Body16 className="text-white">
                       {message.content}
                     </Body16>
-                    <p className={`text-xs mt-1 ${message.sender_id === currentUserId ? 'text-white/80' : 'text-gray-500'}`}>
+                    <p className="text-xs mt-1 text-white/80">
                       {new Date(message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </p>
                   </div>

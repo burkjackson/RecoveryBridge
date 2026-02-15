@@ -409,14 +409,6 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
               </Body16>
             </div>
           </div>
-
-          {alwaysAvailable && isSubscribed && (
-            <div className="bg-green-50 border-l-4 border-green-500 p-3 rounded mt-3">
-              <Body16 className="text-sm text-green-800">
-                ✅ <strong>Always Available to Listen is ON:</strong> When you mark yourself as "Available to Listen", you'll stay online indefinitely. You'll get notified when someone needs support, even if the app is closed.
-              </Body16>
-            </div>
-          )}
         </div>
 
       {/* Instructions Modal */}
