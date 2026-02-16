@@ -187,14 +187,14 @@ export default function SignupPage() {
           isOpen={showSuccessModal}
           onClose={() => {
             setShowSuccessModal(false)
-            router.push('/onboarding')
+            router.push('/dashboard')
           }}
           title="Welcome to RecoveryBridge! 🎉"
           confirmText="Get Started"
           confirmStyle="success"
         >
           <p className="text-lg">
-            Your account has been created successfully! Let's get you set up.
+            Your account has been created successfully! You're all set.
           </p>
         </Modal>
       </main>
