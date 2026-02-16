@@ -137,10 +137,9 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
       // Check if user is blocked
       const { data: blockCheck } = await supabase
         .from('user_blocks')
-        .select('id, reason, block_type')
+        .select('id, reason')
         .eq('user_id', user.id)
-        .eq('is_active', true)
-        .single()
+        .maybeSingle()
 
       if (blockCheck) {
         setBlockModal({ show: true, reason: blockCheck.reason })

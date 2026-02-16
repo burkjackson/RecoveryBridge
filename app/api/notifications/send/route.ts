@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
 
     // Prepare notification payload
     const payload = JSON.stringify({
-      title: '🆘 Someone Needs Support',
+      title: '🤝 Someone Needs Support',
       body: `${seekerName} is looking for a listener right now.`,
       icon: '/icon-192.png',
       badge: '/icon-192.png',
