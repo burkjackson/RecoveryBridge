@@ -189,9 +189,8 @@ export default function ListenersPage() {
                         <Body18 className="font-bold text-[#2D3436]">{listener.display_name}</Body18>
                         <span className="w-2 h-2 bg-[#3B82F6] rounded-full animate-pulse" aria-label="Available"></span>
                       </div>
-                      <div className="flex items-center gap-1 mb-2">
-                        <span className="text-sm" role="img" aria-label="Role">🎯</span>
-                        <Body16 className="text-sm text-rb-gray">
+                      <div className="mb-2">
+                        <Body16 className="text-sm text-rb-gray italic">
                           {listener.user_role === 'person_in_recovery' && 'Person in Recovery'}
                           {listener.user_role === 'professional' && 'Allies for Long-Term Recovery'}
                           {listener.user_role === 'ally' && 'Recovery Support (Legacy)'}
