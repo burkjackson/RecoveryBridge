@@ -29,7 +29,12 @@ export default function LoginPage() {
 
       router.push('/dashboard')
     } catch (error: any) {
-      setError(error.message)
+      // Handle email confirmation error specifically
+      if (error.message?.toLowerCase().includes('email not confirmed')) {
+        setError('Your account is pending confirmation. Please contact support or try signing up again with a new email.')
+      } else {
+        setError(error.message)
+      }
     } finally {
       setLoading(false)
     }
