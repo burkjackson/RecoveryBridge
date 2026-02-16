@@ -28,7 +28,6 @@ export default function SignupPage() {
         email,
         password,
         options: {
-          emailRedirectTo: undefined, // Disable email confirmation
           data: {
             display_name: displayName,
           },
