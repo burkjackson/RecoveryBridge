@@ -21,8 +21,16 @@ export default function OnboardingPage() {
     checkUser()
   }, [])
 
-  async function checkUser() {
+  async function checkUser(retryCount = 0) {
     const { data: { user } } = await supabase.auth.getUser()
+
+    // If no user and this is first attempt, wait and retry once
+    // This handles the case where session cookies are still syncing after signup
+    if (!user && retryCount === 0) {
+      await new Promise(resolve => setTimeout(resolve, 300))
+      return checkUser(1)
+    }
+
     if (!user) {
       router.push('/login')
       return

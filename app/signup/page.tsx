@@ -188,8 +188,10 @@ export default function SignupPage() {
         {/* Success Modal */}
         <Modal
           isOpen={showSuccessModal}
-          onClose={() => {
+          onClose={async () => {
             setShowSuccessModal(false)
+            // Give session cookies a moment to fully sync before navigation
+            await new Promise(resolve => setTimeout(resolve, 200))
             router.push('/onboarding')
           }}
           title="Welcome to RecoveryBridge! 🎉"
