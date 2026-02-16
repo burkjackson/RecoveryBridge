@@ -31,10 +31,10 @@ export default function Home() {
                   What is RecoveryBridge?
                 </h2>
                 <p className="text-base sm:text-lg text-slate-600 text-center mb-6 leading-relaxed">
-                  RecoveryBridge is a <strong>safe space for people in recovery</strong> to find and build meaningful connections. Whether you're recovering from substance abuse, behavioral addictions, or supporting someone in their journey, you're not alone.
+                  RecoveryBridge is a <strong>peer-to-peer chat platform</strong> connecting people in recovery with real-time support. Whether you're recovering from substance abuse, behavioral addictions, or supporting someone in their journey, you can instantly connect with people who understand.
                 </p>
                 <p className="text-base text-slate-600 text-center leading-relaxed">
-                  We provide a judgment-free platform where you can share your experiences, offer support, and connect with others who truly understand what recovery means.
+                  Connect through <strong>private one-on-one chats</strong> where you can share your story, receive encouragement, or be there for someone else—all in a safe, judgment-free space. When you need someone who truly gets it, we're here—peer to peer, person to person.
                 </p>
               </div>
             </div>
