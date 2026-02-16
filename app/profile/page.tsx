@@ -343,7 +343,7 @@ export default function ProfilePage() {
               </div>
             ) : (
               <Body16 className="text-gray-700 leading-relaxed italic">
-                "{profile.tagline || 'Available to listen'}"
+                "{profile.tagline || 'Person in Recovery'}"
               </Body16>
             )}
           </div>
