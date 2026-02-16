@@ -79,8 +79,7 @@ export default function ListenersPage() {
         .from('user_blocks')
         .select('id, reason')
         .eq('user_id', user.id)
-        .eq('is_active', true)
-        .single()
+        .maybeSingle()
 
       if (blockCheck) {
         setBlockModal({ show: true, reason: blockCheck.reason })
