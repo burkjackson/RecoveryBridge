@@ -38,10 +38,13 @@ export async function POST(request: NextRequest) {
     }
 
     // Find all available listeners (excluding the person requesting support)
+    // Include both:
+    // 1. Users currently in "available" state
+    // 2. Users with "always_available" enabled (should receive notifications anytime)
     const { data: listeners, error: listenersError } = await supabase
       .from('profiles')
-      .select('id, display_name')
-      .eq('role_state', 'available')
+      .select('id, display_name, role_state, always_available')
+      .or('role_state.eq.available,always_available.eq.true')
       .neq('id', seekerId)
 
     if (listenersError) throw listenersError

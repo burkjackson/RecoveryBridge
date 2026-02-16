@@ -39,12 +39,27 @@ export default function ListenersPage() {
 
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, display_name, avatar_url, user_role, bio')
-        .eq('role_state', 'available')
+        .select('id, display_name, avatar_url, user_role, bio, always_available, last_heartbeat_at')
+        .or('role_state.eq.available,always_available.eq.true')
         .neq('id', user.id)
 
       if (error) throw error
-      setListeners(data || [])
+
+      // Filter to show only online listeners:
+      // 1. Users with always_available enabled (stay online indefinitely), OR
+      // 2. Users with recent heartbeat (active in last 5 minutes)
+      const heartbeatThreshold = new Date(Date.now() - 5 * 60 * 1000).toISOString()
+      const onlineListeners = (data || []).filter(listener => {
+        if (listener.always_available) {
+          return true
+        }
+        if (!listener.last_heartbeat_at) {
+          return false
+        }
+        return listener.last_heartbeat_at >= heartbeatThreshold
+      })
+
+      setListeners(onlineListeners)
     } catch (error) {
       console.error('Error loading listeners:', error)
     } finally {

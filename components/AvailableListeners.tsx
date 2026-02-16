@@ -27,6 +27,8 @@ export default function AvailableListeners() {
     loadAvailableListeners()
 
     // Subscribe to real-time updates
+    // Remove the filter to catch all profile updates (role_state OR always_available changes)
+    // The client-side filtering in loadAvailableListeners() handles showing only relevant users
     const channel = supabase
       .channel('available-listeners-changes')
       .on(
@@ -34,8 +36,7 @@ export default function AvailableListeners() {
         {
           event: 'UPDATE',
           schema: 'public',
-          table: 'profiles',
-          filter: 'role_state=eq.available'
+          table: 'profiles'
         },
         () => {
           loadAvailableListeners()
