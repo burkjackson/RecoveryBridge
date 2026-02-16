@@ -113,6 +113,7 @@ export const config = {
     '/chat/:path*',
     '/profile/:path*',
     '/admin/:path*',
-    '/listeners/:path*'
+    '/listeners/:path*',
+    '/onboarding/:path*'
   ]
 }

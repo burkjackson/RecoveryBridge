@@ -37,8 +37,12 @@ export default function SignupPage() {
 
       if (error) throw error
 
-      // Show success message and redirect to login
-      if (data.user) {
+      // Ensure session is established before showing modal
+      if (data.user && data.session) {
+        setShowSuccessModal(true)
+      } else if (data.user) {
+        // Session should exist for signUp, but proceed anyway
+        console.warn('User created but no session returned')
         setShowSuccessModal(true)
       }
     } catch (error: any) {
@@ -187,14 +191,14 @@ export default function SignupPage() {
           isOpen={showSuccessModal}
           onClose={() => {
             setShowSuccessModal(false)
-            router.push('/dashboard')
+            router.push('/onboarding')
           }}
           title="Welcome to RecoveryBridge! 🎉"
           confirmText="Get Started"
           confirmStyle="success"
         >
           <p className="text-lg">
-            Your account has been created successfully! You're all set.
+            Your account has been created successfully! Let's get you set up.
           </p>
         </Modal>
       </main>
