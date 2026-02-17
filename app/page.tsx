@@ -164,7 +164,7 @@ export default function Home() {
                   <li className="flex flex-col items-center text-center">
                     <span className="text-5xl mb-3" role="img" aria-label="Handshake">🤝</span>
                     <strong className="text-slate-600 mb-2 text-lg">Allies for Long-Term Recovery</strong>
-                    <p className="text-sm text-slate-600 leading-relaxed">Giving back by offering support to others on their journey</p>
+                    <p className="text-sm text-slate-600 leading-relaxed">Professional advocates giving back by offering support to others on their journey</p>
                   </li>
                 </ul>
               </div>
