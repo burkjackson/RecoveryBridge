@@ -31,10 +31,10 @@ export default function Home() {
                   What is RecoveryBridge?
                 </h2>
                 <p className="text-base sm:text-lg text-slate-600 text-center mb-6 leading-relaxed">
-                  RecoveryBridge is a <strong>peer-to-peer chat platform</strong> connecting people in recovery with real-time support. Whether you're recovering from substance abuse, behavioral addictions, or supporting someone in their journey, you can instantly connect with people who understand.
+                  Recovery is hard. Some days are harder than others. RecoveryBridge is a <strong>peer-to-peer support platform</strong> built for the moments when you need to talk to someone who truly gets it—not a hotline, not a therapist, but a real person who has walked a similar road in their own recovery and is ready to listen.
                 </p>
                 <p className="text-base text-slate-600 text-center leading-relaxed">
-                  Connect through <strong>private one-on-one chats</strong> where you can share your story, receive encouragement, or be there for someone else—all in a safe, judgment-free space. When you need someone who truly gets it, we're here—peer to peer, person to person.
+                  Through <strong>private, one-on-one chat-based conversations</strong>, you can speak freely—about the struggles, the setbacks, the small victories, and everything in between. No judgment. No pressure. Just genuine human connection in a space designed to hold your story with care.
                 </p>
               </div>
             </div>
@@ -53,6 +53,30 @@ export default function Home() {
               >
                 Log In
               </button>
+            </div>
+
+            {/* Mission Statement Card */}
+            <div className="max-w-3xl mx-auto mb-12">
+              <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl p-8 shadow-lg border-2 border-blue-200">
+                <h2 className="text-2xl sm:text-3xl font-bold text-slate-600 mb-6 text-center">
+                  Our Mission
+                </h2>
+                <p className="text-base text-slate-600 text-center mb-4 leading-relaxed">
+                  We believe that <strong>connection is the antidote to addiction</strong> and that we do not heal in isolation.
+                  RecoveryBridge exists to create a space where your story matters, your struggles are valid, and your
+                  progress—no matter how small—deserves celebration.
+                </p>
+                <p className="text-base text-slate-600 text-center mb-4 leading-relaxed">
+                  Every conversation here is built on empathy, respect, and the shared understanding that healing takes courage.
+                  We're here to remind you that <strong>you are worth saving</strong>, that recovery is stronger together,
+                  and that showing up—even on the hardest days—is an act of bravery.
+                </p>
+                <p className="text-base text-slate-600 text-center leading-relaxed">
+                  This is not just an app. It's a community of people who understand that recovery isn't linear,
+                  that every journey looks different, and that sometimes the most powerful thing we can do is simply listen
+                  with compassion and be present for one another.
+                </p>
+              </div>
             </div>
 
             {/* How It Works */}
@@ -139,18 +163,6 @@ export default function Home() {
                     <p className="text-sm text-slate-600 leading-relaxed">Giving back by offering support to others on their journey</p>
                   </li>
                 </ul>
-              </div>
-            </div>
-
-            {/* Mission Statement Card */}
-            <div className="max-w-3xl mx-auto mb-12">
-              <div className="bg-gradient-to-r from-slate-100 to-slate-50 rounded-2xl p-8 shadow-lg border-2 border-slate-200">
-                <p className="text-lg sm:text-xl text-slate-600 font-semibold text-center mb-4 italic">
-                  "We do not heal in isolation"
-                </p>
-                <p className="text-base text-slate-600 text-center leading-relaxed">
-                  RecoveryBridge is a safe, supportive space where people in recovery can connect with listeners who understand the journey. Whether you're here to offer support or seek it, you're part of a compassionate community working to make the world a better place in recovery.
-                </p>
               </div>
             </div>
 
