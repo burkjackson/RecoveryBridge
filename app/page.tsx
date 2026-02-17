@@ -40,18 +40,22 @@ export default function Home() {
             </div>
 
             {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
+            <div className="grid sm:grid-cols-2 gap-4 max-w-2xl mx-auto mb-12">
               <button
                 onClick={() => router.push('/signup')}
-                className="min-h-[44px] px-10 py-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-2xl font-semibold hover:shadow-2xl hover:shadow-blue-500/50 transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 text-base sm:text-lg shadow-lg"
+                className="p-8 rounded-2xl text-center transition-all duration-300 transform hover:scale-[1.02] hover:-translate-y-1 bg-white border-4 border-blue-500 shadow-md hover:shadow-xl"
               >
-                Get Started
+                <div className="text-3xl mb-3">🌱</div>
+                <div className="font-bold text-blue-600 text-lg mb-2">Get Started</div>
+                <div className="text-gray-500 text-sm">Create your free account and join the community</div>
               </button>
               <button
                 onClick={() => router.push('/login')}
-                className="min-h-[44px] px-10 py-4 border-2 border-blue-400 text-blue-600 rounded-2xl font-semibold hover:bg-blue-500 hover:text-white hover:border-blue-500 transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 text-base sm:text-lg bg-white shadow-lg hover:shadow-2xl hover:shadow-blue-500/30"
+                className="p-8 rounded-2xl text-center transition-all duration-300 transform hover:scale-[1.02] hover:-translate-y-1 bg-white border-4 border-purple-500 shadow-md hover:shadow-xl"
               >
-                Log In
+                <div className="text-3xl mb-3">💙</div>
+                <div className="font-bold text-purple-600 text-lg mb-2">Log In</div>
+                <div className="text-gray-500 text-sm">Welcome back — your community is here</div>
               </button>
             </div>
 
