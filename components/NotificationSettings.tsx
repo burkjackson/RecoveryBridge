@@ -29,6 +29,7 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
   const [error, setError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [alwaysAvailable, setAlwaysAvailable] = useState(profile?.always_available || false)
+  const [showAlwaysAvailableInfo, setShowAlwaysAvailableInfo] = useState(false)
   const [isPWA, setIsPWA] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
   const supabase = createClient()
@@ -399,27 +400,38 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
               className="mt-1 h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
             />
             <div className="flex-1">
-              <label
-                htmlFor="alwaysAvailable"
-                className={`block font-medium ${
-                  !isSubscribed ? 'text-gray-400' : 'text-gray-900 cursor-pointer'
-                }`}
-              >
-                ⚡ Always Available to Listen
-              </label>
-              <Body16 className="text-sm text-gray-600 mt-1">
-                When you're marked as "Available to Listen", this keeps you online indefinitely. You'll receive push notifications when someone needs support, even when the app is closed.
-                {!isSubscribed && (
-                  <span className="block mt-1 text-amber-600 font-medium">
-                    Enable push notifications above to use this feature.
-                  </span>
-                )}
-                {profile?.role_state !== 'available' && (
-                  <span className="block mt-1 text-amber-600 font-medium">
-                    💡 Switch to "Available to Listen" mode on your dashboard to enable this.
-                  </span>
-                )}
-              </Body16>
+              <div className="flex items-center justify-between">
+                <label
+                  htmlFor="alwaysAvailable"
+                  className={`block font-medium ${
+                    !isSubscribed ? 'text-gray-400' : 'text-gray-900 cursor-pointer'
+                  }`}
+                >
+                  Always Available to Listen
+                </label>
+                <button
+                  onClick={() => setShowAlwaysAvailableInfo(!showAlwaysAvailableInfo)}
+                  className="text-gray-500 text-sm flex items-center gap-1 hover:text-gray-700 transition-colors"
+                  type="button"
+                >
+                  <span>{showAlwaysAvailableInfo ? '▲' : '▼'}</span>
+                </button>
+              </div>
+              {!isSubscribed && (
+                <Body16 className="text-sm text-amber-600 font-medium mt-1">
+                  Enable push notifications above to use this feature.
+                </Body16>
+              )}
+              {isSubscribed && profile?.role_state !== 'available' && (
+                <Body16 className="text-sm text-amber-600 font-medium mt-1">
+                  Switch to "Available to Listen" mode on your dashboard to enable this.
+                </Body16>
+              )}
+              {showAlwaysAvailableInfo && (
+                <Body16 className="text-sm text-gray-600 mt-2">
+                  When you're marked as "Available to Listen", this keeps you online indefinitely. You'll receive push notifications when someone needs support, even when the app is closed.
+                </Body16>
+              )}
             </div>
           </div>
         </div>
