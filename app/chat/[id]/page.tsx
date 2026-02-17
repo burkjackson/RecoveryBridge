@@ -195,6 +195,12 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
 
       if (error) throw error
       setMessages(data || [])
+      // Seed inactivity timer from last message timestamp so opening an
+      // existing chat doesn't trigger a premature inactivity warning
+      if (data && data.length > 0) {
+        const lastMsg = data[data.length - 1]
+        setLastActivityTime(new Date(lastMsg.created_at).getTime())
+      }
     } catch (error) {
       console.error('Error loading messages:', error)
     }

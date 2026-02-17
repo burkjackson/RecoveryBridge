@@ -16,7 +16,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify the token and get user
-    const token = authHeader.replace('Bearer ', '')
+    const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null
+    if (!token) {
+      return NextResponse.json({ error: 'Invalid authorization header' }, { status: 401 })
+    }
     const { data: { user }, error: authError } = await supabase.auth.getUser(token)
 
     if (authError || !user) {

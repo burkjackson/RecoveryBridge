@@ -16,7 +16,10 @@ export async function POST(request: NextRequest) {
 
     // Check for secret key first (for cron jobs or manual triggers)
     if (secretKey) {
-      const validSecret = process.env.CLEANUP_SECRET_KEY || 'dev-secret-key-change-in-production'
+      const validSecret = process.env.CLEANUP_SECRET_KEY
+      if (!validSecret) {
+        return NextResponse.json({ error: 'Server misconfiguration' }, { status: 500 })
+      }
       if (secretKey !== validSecret) {
         return NextResponse.json({ error: 'Invalid secret key' }, { status: 401 })
       }

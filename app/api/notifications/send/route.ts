@@ -6,7 +6,7 @@ export async function POST(request: NextRequest) {
   try {
     // Configure VAPID keys for web push (at runtime, not build time)
     webpush.setVapidDetails(
-      'mailto:burk.jackson@gmail.com',
+      process.env.VAPID_SUBJECT || 'mailto:support@recoverybridge.com',
       process.env.VAPID_PUBLIC_KEY!,
       process.env.VAPID_PRIVATE_KEY!
     )
@@ -23,7 +23,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const token = authHeader.replace('Bearer ', '')
+    const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null
+    if (!token) {
+      return NextResponse.json({ error: 'Invalid authorization header' }, { status: 401 })
+    }
     const { data: { user }, error: authError } = await supabase.auth.getUser(token)
 
     if (authError || !user) {
@@ -80,7 +83,7 @@ export async function POST(request: NextRequest) {
       body: `${seekerName} is looking for a listener right now.`,
       icon: '/icon-192.png',
       badge: '/icon-192.png',
-      tag: 'support-request',
+      tag: `support-request-${seekerId}`,
       requireInteraction: true,
       data: {
         url: '/dashboard',

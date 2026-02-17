@@ -162,34 +162,26 @@ export default function DashboardPage() {
       if (!session?.user) return
       const user = session.user
 
-      // Get active sessions
+      // Get active sessions with both users' display names in a single query
       const { data: sessions, error } = await supabase
         .from('sessions')
-        .select('*')
+        .select(`
+          id, status, created_at, listener_id, seeker_id,
+          listener:profiles!sessions_listener_id_fkey(id, display_name),
+          seeker:profiles!sessions_seeker_id_fkey(id, display_name)
+        `)
         .eq('status', 'active')
         .or(`listener_id.eq.${user.id},seeker_id.eq.${user.id}`)
 
       if (error) throw error
 
-      // Get other user's names for each session
-      const sessionsWithNames = await Promise.all(
-        (sessions || []).map(async (session) => {
-          const otherUserId = session.listener_id === user.id
-            ? session.seeker_id
-            : session.listener_id
-
-          const { data: otherUser } = await supabase
-            .from('profiles')
-            .select('display_name')
-            .eq('id', otherUserId)
-            .single()
-
-          return {
-            ...session,
-            otherUserName: otherUser?.display_name || 'User'
-          }
-        })
-      )
+      const sessionsWithNames = (sessions || []).map((session: any) => {
+        const otherUser = session.listener_id === user.id ? session.seeker : session.listener
+        return {
+          ...session,
+          otherUserName: otherUser?.display_name || 'User'
+        }
+      })
 
       setActiveSessions(sessionsWithNames)
     } catch (error) {
@@ -238,6 +230,7 @@ export default function DashboardPage() {
 
       if (error) throw error
 
+      // Only update local state after DB confirms — prevents stale UI on failure
       setProfile({ ...profile, role_state: newState })
 
       // If going offline, end all active sessions

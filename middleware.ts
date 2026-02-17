@@ -85,6 +85,13 @@ export async function middleware(request: NextRequest) {
     }
   }
 
+  // Protect onboarding routes
+  if (request.nextUrl.pathname.startsWith('/onboarding')) {
+    if (!user) {
+      return NextResponse.redirect(new URL('/signup', request.url))
+    }
+  }
+
   // Protect admin routes - requires authentication AND admin role
   if (request.nextUrl.pathname.startsWith('/admin')) {
     if (!user) {

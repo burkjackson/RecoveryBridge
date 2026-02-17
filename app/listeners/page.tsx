@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import { TIME } from '@/lib/constants'
 import { Heading1, Body16, Body18 } from '@/components/ui/Typography'
 import Modal from '@/components/Modal'
 import { SkeletonListenerCard } from '@/components/Skeleton'
@@ -27,6 +28,7 @@ export default function ListenersPage() {
   const [errorModal, setErrorModal] = useState({ show: false, message: '' })
   const [previewProfile, setPreviewProfile] = useState<Listener | null>(null)
   const [previewModal, setPreviewModal] = useState(false)
+  const isConnecting = useRef(false)
   const router = useRouter()
   const supabase = createClient()
 
@@ -52,8 +54,8 @@ export default function ListenersPage() {
 
       // Filter to show only online listeners:
       // 1. Users with always_available enabled (stay online indefinitely), OR
-      // 2. Users with recent heartbeat (active in last 5 minutes)
-      const heartbeatThreshold = new Date(Date.now() - 5 * 60 * 1000).toISOString()
+      // 2. Users with recent heartbeat (within HEARTBEAT_THRESHOLD_MS, default 1 hour)
+      const heartbeatThreshold = new Date(Date.now() - TIME.HEARTBEAT_THRESHOLD_MS).toISOString()
       const onlineListeners = (data || []).filter(listener => {
         if (listener.always_available) {
           return true
@@ -73,6 +75,8 @@ export default function ListenersPage() {
   }
 
   async function connectWithListener(listenerId: string) {
+    if (isConnecting.current) return
+    isConnecting.current = true
     setConnecting(listenerId)
 
     try {
@@ -114,6 +118,7 @@ export default function ListenersPage() {
       setErrorModal({ show: true, message: error.message || 'An unexpected error occurred' })
     } finally {
       setConnecting(null)
+      isConnecting.current = false
     }
   }
 
