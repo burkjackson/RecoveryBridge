@@ -257,7 +257,7 @@ export default function OnboardingPage() {
               >
                 <Body18 className="font-bold text-gray-900 mb-1">Allies for Long-Term Recovery</Body18>
                 <Body16 className="text-gray-600 text-sm">
-                  Giving back by offering support to others on their journey.
+                  A professional advocate giving back by offering support to others on their journey.
                 </Body16>
               </button>
             </div>
