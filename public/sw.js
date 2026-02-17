@@ -1,7 +1,7 @@
 // RecoveryBridge Service Worker for Push Notifications
 // This enables background notifications even when the browser tab is closed
 
-const CACHE_NAME = 'recoverybridge-v1'
+const CACHE_NAME = 'recoverybridge-v2'
 
 // Install event - cache essential resources
 self.addEventListener('install', (event) => {
