@@ -21,19 +21,19 @@ export default function Footer({ className = '' }: FooterProps) {
           </p>
         </div>
 
-        {/* Beta Feedback Button */}
+        {/* Support Us Button */}
         <div className="text-center mb-6">
           <a
-            href="https://docs.google.com/forms/d/1FTmTnABHwsP1VpDg-RAtLUpAIv9S3ZaSOoK-ldjX9to/viewform"
+            href="https://ko-fi.com/recoverybridge"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 px-6 py-3 bg-rb-blue text-white font-semibold rounded-full hover:bg-[#6B8DA1] transition shadow-md"
           >
-            <span className="text-lg" role="img" aria-label="Feedback">💭</span>
-            <span>Share Beta Feedback</span>
+            <span className="text-lg" role="img" aria-label="Heart">💙</span>
+            <span>Please Support Us</span>
           </a>
           <p className="text-xs text-rb-gray mt-2">
-            Help us improve RecoveryBridge! Your feedback shapes our future.
+            RecoveryBridge is free for everyone. Your support keeps it that way.
           </p>
         </div>
 
@@ -66,6 +66,13 @@ export default function Footer({ className = '' }: FooterProps) {
               className="min-h-[44px] inline-flex items-center hover:text-rb-blue transition"
             >
               Contact Us
+            </a>
+            <span className="text-gray-300 hidden sm:inline">•</span>
+            <a
+              href="/donate"
+              className="min-h-[44px] inline-flex items-center gap-1 hover:text-rb-blue transition font-semibold text-rb-blue"
+            >
+              <span role="img" aria-label="Heart">💙</span> Support Us
             </a>
           </div>
         </div>
