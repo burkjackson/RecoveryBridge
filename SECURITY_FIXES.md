@@ -105,7 +105,7 @@ await fetch('/api/heartbeat', {
 ```typescript
 // Before: Hardcoded key
 applicationServerKey: urlBase64ToUint8Array(
-  'BMLJXYKAITvXj0qK63T4TVWtPn4hissUN5VrPPlV-_AVB4NwwzRe_vudHDRkV0pHq2ZBGcG-vY8tEIZWQ7buINM'
+  '[REDACTED - key rotated Feb 16, 2026]'
 )
 
 // After: Environment variable
@@ -193,10 +193,11 @@ Add these to both `.env.local` (local development) and Vercel environment variab
 # Supabase Service Role Key (get from Supabase Project Settings > API)
 SUPABASE_SERVICE_ROLE_KEY=your_service_role_key_here
 
-# VAPID Keys (already configured, but documenting for completeness)
-VAPID_PUBLIC_KEY=BMLJXYKAITvXj0qK63T4TVWtPn4hissUN5VrPPlV-_AVB4NwwzRe_vudHDRkV0pHq2ZBGcG-vY8tEIZWQ7buINM
-VAPID_PRIVATE_KEY=x8B9U4oma3k8uYv_BCflHP6JFi-cxU1zkqqKOhUTOmM
-NEXT_PUBLIC_VAPID_PUBLIC_KEY=BMLJXYKAITvXj0qK63T4TVWtPn4hissUN5VrPPlV-_AVB4NwwzRe_vudHDRkV0pHq2ZBGcG-vY8tEIZWQ7buINM
+# VAPID Keys - generate fresh keys with: npx web-push generate-vapid-keys
+# Keys rotated Feb 16, 2026 after exposure in this doc. Never commit real keys.
+VAPID_PUBLIC_KEY=your_vapid_public_key_here
+VAPID_PRIVATE_KEY=your_vapid_private_key_here
+NEXT_PUBLIC_VAPID_PUBLIC_KEY=your_vapid_public_key_here
 ```
 
 ---
