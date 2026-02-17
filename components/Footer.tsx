@@ -27,7 +27,7 @@ export default function Footer({ className = '' }: FooterProps) {
             href="https://ko-fi.com/recoverybridge"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-rb-blue text-white font-semibold rounded-full hover:bg-[#6B8DA1] transition shadow-md"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-blue-500 text-white font-semibold rounded-full hover:bg-blue-600 transition shadow-md"
           >
             <span>Please Support Us</span>
           </a>
@@ -80,7 +80,7 @@ export default function Footer({ className = '' }: FooterProps) {
               href="/donate"
               className="min-h-[44px] inline-flex items-center gap-1 hover:text-rb-blue transition font-semibold text-rb-blue"
             >
-              <span role="img" aria-label="Heart">💙</span> Support Us
+              Support Us
             </a>
           </div>
         </div>
