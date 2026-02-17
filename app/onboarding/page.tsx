@@ -182,12 +182,9 @@ export default function OnboardingPage() {
                 className="w-full flex items-center justify-between p-4 rounded-lg bg-green-50 border border-green-200 hover:bg-green-100 transition-all text-left"
                 aria-expanded={showStandards}
               >
-                <div className="flex items-center gap-3">
-                  <span className="text-xl" role="img" aria-label="Shield">🛡️</span>
-                  <div>
-                    <Body18 className="font-semibold text-green-900">Our Community Standards</Body18>
-                    <Body16 className="text-green-700 text-sm">How we treat each other here</Body16>
-                  </div>
+                <div>
+                  <Body18 className="font-semibold text-green-900">Our Community Standards</Body18>
+                  <Body16 className="text-green-700 text-sm">How we treat each other here</Body16>
                 </div>
                 <span className="text-green-700 font-bold text-lg">{showStandards ? '▲' : '▼'}</span>
               </button>
@@ -196,19 +193,16 @@ export default function OnboardingPage() {
                 <div className="mt-2 border border-green-200 rounded-lg overflow-hidden">
                   <div className="bg-white divide-y divide-gray-100">
                     {[
-                      { icon: '💙', title: 'Lead with Compassion', text: "Everyone here is doing their best. Approach every conversation with empathy — your kindness can be someone's lifeline today." },
-                      { icon: '🔒', title: 'Honor Sacred Trust', text: "What's shared here is sacred. Protect each other's stories and privacy as if they were your own." },
-                      { icon: '🎉', title: 'Celebrate Every Step', text: "Recovery isn't linear. Meet people where they are with encouragement, not advice. Your role is to listen, not to fix." },
-                      { icon: '🚨', title: 'Safety First', text: "If you or someone else is in crisis, call 988 or 911 immediately. RecoveryBridge is peer support — not emergency care." },
-                      { icon: '🌱', title: 'Practice Self-Care', text: "You can't pour from an empty cup. It's okay to set boundaries and take breaks. That's part of recovery too." },
-                      { icon: '🤝', title: 'Protect Our Community', text: "If something feels wrong, report it. You're not causing trouble — you're keeping this space safe for everyone." },
-                    ].map(({ icon, title, text }) => (
-                      <div key={title} className="flex gap-3 p-4">
-                        <span className="text-xl flex-shrink-0" role="img" aria-label={title}>{icon}</span>
-                        <div>
-                          <Body16 className="font-semibold text-gray-900 mb-1">{title}</Body16>
-                          <Body16 className="text-gray-600 text-sm leading-relaxed">{text}</Body16>
-                        </div>
+                      { title: 'Lead with Compassion', text: "Everyone here is doing their best. Approach every conversation with empathy — your kindness can be someone's lifeline today." },
+                      { title: 'Honor Sacred Trust', text: "What's shared here is sacred. Protect each other's stories and privacy as if they were your own." },
+                      { title: 'Celebrate Every Step', text: "Recovery isn't linear. Meet people where they are with encouragement, not advice. Your role is to listen, not to fix." },
+                      { title: 'Safety First', text: "If you or someone else is in crisis, call 988 or 911 immediately. RecoveryBridge is peer support — not emergency care." },
+                      { title: 'Practice Self-Care', text: "You can't pour from an empty cup. It's okay to set boundaries and take breaks. That's part of recovery too." },
+                      { title: 'Protect Our Community', text: "If something feels wrong, report it. You're not causing trouble — you're keeping this space safe for everyone." },
+                    ].map(({ title, text }) => (
+                      <div key={title} className="p-4">
+                        <p className="font-bold text-gray-900 mb-1 text-base">{title}</p>
+                        <Body16 className="text-gray-600 text-sm leading-relaxed">{text}</Body16>
                       </div>
                     ))}
                   </div>
