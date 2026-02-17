@@ -14,6 +14,9 @@ interface Listener {
   avatar_url: string | null
   user_role: string | null
   bio: string | null
+  tagline: string | null
+  always_available: boolean
+  last_heartbeat_at: string | null
 }
 
 export default function ListenersPage() {
@@ -22,6 +25,8 @@ export default function ListenersPage() {
   const [connecting, setConnecting] = useState<string | null>(null)
   const [blockModal, setBlockModal] = useState({ show: false, reason: '' })
   const [errorModal, setErrorModal] = useState({ show: false, message: '' })
+  const [previewProfile, setPreviewProfile] = useState<Listener | null>(null)
+  const [previewModal, setPreviewModal] = useState(false)
   const router = useRouter()
   const supabase = createClient()
 
@@ -39,7 +44,7 @@ export default function ListenersPage() {
 
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, display_name, avatar_url, user_role, bio, always_available, last_heartbeat_at')
+        .select('id, display_name, avatar_url, user_role, bio, tagline, always_available, last_heartbeat_at')
         .or('role_state.eq.available,always_available.eq.true')
         .neq('id', user.id)
 
@@ -200,6 +205,15 @@ export default function ListenersPage() {
                           {listener.bio}
                         </Body16>
                       )}
+                      <button
+                        onClick={() => {
+                          setPreviewProfile(listener)
+                          setPreviewModal(true)
+                        }}
+                        className="mt-2 text-sm text-rb-blue hover:text-rb-blue-hover font-medium transition underline underline-offset-2"
+                      >
+                        View Profile
+                      </button>
                     </div>
 
                     {/* Connect Button */}
@@ -275,6 +289,75 @@ export default function ListenersPage() {
               </p>
             )}
           </div>
+        </Modal>
+
+        {/* Profile Preview Modal */}
+        <Modal
+          isOpen={previewModal}
+          onClose={() => setPreviewModal(false)}
+          title={previewProfile ? `${previewProfile.display_name}'s Profile` : 'Profile'}
+          confirmText="Connect"
+          cancelText="Close"
+          confirmStyle="primary"
+          onConfirm={() => {
+            setPreviewModal(false)
+            if (previewProfile) connectWithListener(previewProfile.id)
+          }}
+        >
+          {previewProfile && (
+            <div className="space-y-4">
+              {/* Avatar */}
+              <div className="flex justify-center">
+                {previewProfile.avatar_url ? (
+                  <img
+                    src={previewProfile.avatar_url}
+                    alt={previewProfile.display_name}
+                    className="w-24 h-24 rounded-full object-cover border-4 border-rb-blue shadow-lg"
+                  />
+                ) : (
+                  <div className="w-24 h-24 rounded-full bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center border-4 border-rb-blue shadow-lg">
+                    <span className="text-5xl" role="img" aria-label="User">👤</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Role */}
+              {previewProfile.user_role && (
+                <div className="text-center">
+                  <Body16 className="text-sm text-rb-gray italic">
+                    {previewProfile.user_role === 'person_in_recovery' && 'Person in Recovery'}
+                    {previewProfile.user_role === 'professional' && 'Allies for Long-Term Recovery'}
+                    {previewProfile.user_role === 'ally' && 'Recovery Support (Legacy)'}
+                  </Body16>
+                </div>
+              )}
+
+              {/* Tagline */}
+              {previewProfile.tagline && (
+                <div className="bg-blue-50 rounded-lg p-4 border-l-4 border-rb-blue">
+                  <Body16 className="text-gray-700 italic text-center">
+                    &ldquo;{previewProfile.tagline}&rdquo;
+                  </Body16>
+                </div>
+              )}
+
+              {/* Bio */}
+              {previewProfile.bio ? (
+                <div>
+                  <Body18 className="font-semibold text-gray-900 mb-2">About</Body18>
+                  <Body16 className="text-gray-700 leading-relaxed">
+                    {previewProfile.bio}
+                  </Body16>
+                </div>
+              ) : (
+                <div className="text-center py-4">
+                  <Body16 className="text-gray-500 italic">
+                    {previewProfile.display_name} hasn&apos;t added a bio yet.
+                  </Body16>
+                </div>
+              )}
+            </div>
+          )}
         </Modal>
     </main>
   )

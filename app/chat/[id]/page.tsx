@@ -49,6 +49,10 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   const [sendError, setSendError] = useState(false)
   const [endSessionError, setEndSessionError] = useState(false)
 
+  // Track when the OTHER user ends the session
+  const [sessionEndedByOther, setSessionEndedByOther] = useState(false)
+  const isEndingSession = useRef(false) // true when THIS user triggered endSession
+
   // Inactivity tracking
   const [lastActivityTime, setLastActivityTime] = useState(Date.now())
   const inactivityWarningTime = TIME.INACTIVITY_WARNING_MS
@@ -198,7 +202,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
 
   function subscribeToMessages() {
     const channel = supabase
-      .channel(`messages:${sessionId}`)
+      .channel(`session-and-messages:${sessionId}`)
       .on(
         'postgres_changes',
         {
@@ -209,6 +213,24 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
         },
         (payload) => {
           setMessages((current) => [...current, payload.new as Message])
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'sessions',
+          filter: `id=eq.${sessionId}`
+        },
+        (payload) => {
+          const updatedSession = payload.new as Session
+          setSession(updatedSession)
+          // If this user didn't trigger the end, the other party ended the session
+          if (updatedSession.status === 'ended' && !isEndingSession.current) {
+            setSessionEndedByOther(true)
+            setTimeout(() => router.push('/dashboard'), 4000)
+          }
         }
       )
       .subscribe()
@@ -251,6 +273,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
     if (!confirm('Are you sure you want to end this session?')) return
 
     try {
+      isEndingSession.current = true // Mark that THIS user is ending the session
       const { error } = await supabase
         .from('sessions')
         .update({ status: 'ended', ended_at: new Date().toISOString() })
@@ -260,6 +283,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
       router.push('/dashboard')
     } catch (error) {
       console.error('Error ending session:', error)
+      isEndingSession.current = false
       setEndSessionError(true)
     }
   }
@@ -426,6 +450,15 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
               }}
               retryText="Try Ending Again"
             />
+          </div>
+        )}
+
+        {/* Session ended by other party */}
+        {sessionEndedByOther && (
+          <div className="bg-amber-50 border-b border-amber-200 px-4 py-3 text-center">
+            <p className="text-amber-800 font-medium text-sm">
+              {otherUserName} has ended this session. Returning to dashboard...
+            </p>
           </div>
         )}
 
