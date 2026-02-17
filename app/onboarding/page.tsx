@@ -296,7 +296,7 @@ export default function OnboardingPage() {
             {/* Privacy reminder */}
             <div className="mb-6 p-4 bg-purple-50 border-l-4 border-purple-500 rounded">
               <Body16 className="text-purple-900 text-sm">
-                <strong>Privacy tip:</strong> If you wish to remain anonymous, please be mindful when choosing your username and profile picture.
+                <strong>Privacy tip:</strong> If you wish to remain anonymous, please be mindful when choosing your username, profile picture, and filling out your bio.
               </Body16>
             </div>
 
