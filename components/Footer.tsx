@@ -29,7 +29,6 @@ export default function Footer({ className = '' }: FooterProps) {
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 px-6 py-3 bg-rb-blue text-white font-semibold rounded-full hover:bg-[#6B8DA1] transition shadow-md"
           >
-            <span className="text-lg" role="img" aria-label="Heart">💙</span>
             <span>Please Support Us</span>
           </a>
           <p className="text-xs text-rb-gray mt-2">
