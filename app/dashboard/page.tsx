@@ -474,14 +474,6 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* Bio Display */}
-        {profile?.bio && (
-          <div className="bg-white rounded-lg p-6 shadow-sm mb-6">
-            <Body18 className="font-semibold text-gray-900 mb-3">About You</Body18>
-            <Body16 className="text-gray-700 leading-relaxed">{profile.bio}</Body16>
-          </div>
-        )}
-
         {/* Footer */}
         <Footer />
       </div>

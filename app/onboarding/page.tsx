@@ -145,10 +145,33 @@ export default function OnboardingPage() {
               you're part of a compassionate community working to make the world a better place in recovery.
             </Body16>
             <div className="bg-blue-50 rounded-lg p-6 mb-8 border-l-4 border-rb-blue">
-              <Body18 className="font-bold text-gray-900 mb-2">Our Mission</Body18>
-              <Body16 className="text-gray-600">
-                We believe recovery is stronger together. Every conversation here is built on empathy,
-                respect, and the shared understanding that healing takes courage.
+              <Body18 className="font-bold text-gray-900 mb-3">Our Mission</Body18>
+              <Body16 className="text-gray-700 mb-4 leading-relaxed">
+                We believe that <strong>connection is the antidote to addiction</strong> and that we do not heal in isolation.
+                RecoveryBridge exists to create a space where your story matters, your struggles are valid, and your
+                progress—no matter how small—deserves celebration.
+              </Body16>
+              <Body16 className="text-gray-700 mb-4 leading-relaxed">
+                Every conversation here is built on empathy, respect, and the shared understanding that healing takes courage.
+                We're here to remind you that <strong>you are worth saving</strong>, that recovery is stronger together,
+                and that showing up—even on the hardest days—is an act of bravery.
+              </Body16>
+              <Body16 className="text-gray-600 leading-relaxed">
+                This is not just an app. It's a community of people who understand that recovery isn't linear,
+                that every journey looks different, and that sometimes the most powerful thing we can do is simply listen
+                with compassion and be present for one another.
+              </Body16>
+            </div>
+            <div className="bg-amber-50 rounded-lg p-6 mb-8 border-l-4 border-amber-400">
+              <Body18 className="font-bold text-gray-900 mb-2">Age Requirement</Body18>
+              <Body16 className="text-gray-700 mb-3">
+                RecoveryBridge is designed for adults 18 years and older. By continuing,
+                you confirm that you meet this age requirement.
+              </Body16>
+              <Body16 className="text-gray-600 text-sm">
+                If you're under 18 and need support, we encourage you to reach out to
+                age-appropriate resources like the <strong>Teen Line</strong> (text TEEN to 839863)
+                or the <strong>988 Suicide & Crisis Lifeline</strong> which serves all ages.
               </Body16>
             </div>
             <button

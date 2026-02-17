@@ -30,6 +30,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   const [session, setSession] = useState<Session | null>(null)
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [otherUserName, setOtherUserName] = useState('')
+  const [otherUserProfile, setOtherUserProfile] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
   const [sessionId, setSessionId] = useState<string | null>(null)
@@ -42,6 +43,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   const [reportSuccessModal, setReportSuccessModal] = useState(false)
   const [reportErrorModal, setReportErrorModal] = useState(false)
   const [inactivityModal, setInactivityModal] = useState(false)
+  const [profileModal, setProfileModal] = useState(false)
 
   // Error states
   const [sendError, setSendError] = useState(false)
@@ -162,12 +164,13 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
 
       const { data: profileData } = await supabase
         .from('profiles')
-        .select('display_name')
+        .select('display_name, bio, user_role, avatar_url, tagline')
         .eq('id', otherUserId)
         .single()
 
       if (profileData) {
         setOtherUserName(profileData.display_name)
+        setOtherUserProfile(profileData)
       }
     } catch (error) {
       console.error('Error loading session:', error)
@@ -355,7 +358,19 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
         <div className="bg-white border-b border-gray-200 p-4 sm:p-6">
           <div className="max-w-4xl mx-auto flex justify-between items-center">
             <div>
-              <Body18 className="font-bold text-gray-900 mb-1">Chat with {otherUserName}</Body18>
+              <div className="flex items-center gap-2 mb-1">
+                <Body18 className="font-bold text-gray-900">Chat with {otherUserName}</Body18>
+                <button
+                  onClick={() => setProfileModal(true)}
+                  aria-label={`View ${otherUserName}'s profile`}
+                  className="min-h-[32px] min-w-[32px] p-1.5 text-gray-400 hover:text-rb-blue hover:bg-blue-50 rounded-full transition-all"
+                  title="View profile"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </button>
+              </div>
               <div className="flex flex-wrap items-center gap-2">
                 <div className="flex items-center gap-1.5">
                   {session?.status === 'active' ? (
@@ -587,6 +602,72 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
               Send a message or click "I'm Still Here" to keep the conversation going.
             </p>
           </div>
+        </Modal>
+
+        {/* Profile Modal */}
+        <Modal
+          isOpen={profileModal}
+          onClose={() => setProfileModal(false)}
+          title={`${otherUserName}'s Profile`}
+          confirmText="Close"
+          confirmStyle="primary"
+        >
+          {otherUserProfile && (
+            <div className="space-y-4">
+              {/* Avatar */}
+              {otherUserProfile.avatar_url ? (
+                <div className="flex justify-center">
+                  <img
+                    src={otherUserProfile.avatar_url}
+                    alt={otherUserName}
+                    className="w-24 h-24 rounded-full object-cover border-4 border-rb-blue shadow-lg"
+                  />
+                </div>
+              ) : (
+                <div className="flex justify-center">
+                  <div className="w-24 h-24 rounded-full bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center border-4 border-rb-blue shadow-lg">
+                    <span className="text-5xl" role="img" aria-label="User">👤</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Role */}
+              {otherUserProfile.user_role && (
+                <div className="text-center">
+                  <Body16 className="text-sm text-rb-gray italic">
+                    {otherUserProfile.user_role === 'person_in_recovery' && 'Person in Recovery'}
+                    {otherUserProfile.user_role === 'professional' && 'Allies for Long-Term Recovery'}
+                    {otherUserProfile.user_role === 'ally' && 'Recovery Support (Legacy)'}
+                  </Body16>
+                </div>
+              )}
+
+              {/* Tagline */}
+              {otherUserProfile.tagline && (
+                <div className="bg-blue-50 rounded-lg p-4 border-l-4 border-rb-blue">
+                  <Body16 className="text-gray-700 italic text-center">
+                    "{otherUserProfile.tagline}"
+                  </Body16>
+                </div>
+              )}
+
+              {/* Bio */}
+              {otherUserProfile.bio ? (
+                <div>
+                  <Body18 className="font-semibold text-gray-900 mb-2">About</Body18>
+                  <Body16 className="text-gray-700 leading-relaxed">
+                    {otherUserProfile.bio}
+                  </Body16>
+                </div>
+              ) : (
+                <div className="text-center py-4">
+                  <Body16 className="text-gray-500 italic">
+                    {otherUserName} hasn't added a bio yet.
+                  </Body16>
+                </div>
+              )}
+            </div>
+          )}
         </Modal>
       </main>
     </>
