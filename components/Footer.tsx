@@ -68,6 +68,15 @@ export default function Footer({ className = '' }: FooterProps) {
             </a>
             <span className="text-gray-300 hidden sm:inline">•</span>
             <a
+              href="https://docs.google.com/forms/d/1FTmTnABHwsP1VpDg-RAtLUpAIv9S3ZaSOoK-ldjX9to/viewform"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="min-h-[44px] inline-flex items-center hover:text-rb-blue transition"
+            >
+              Share Feedback
+            </a>
+            <span className="text-gray-300 hidden sm:inline">•</span>
+            <a
               href="/donate"
               className="min-h-[44px] inline-flex items-center gap-1 hover:text-rb-blue transition font-semibold text-rb-blue"
             >
