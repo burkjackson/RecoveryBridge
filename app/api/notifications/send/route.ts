@@ -2,6 +2,21 @@ import { NextRequest, NextResponse } from 'next/server'
 import webpush from 'web-push'
 import { createClient } from '@supabase/supabase-js'
 
+// Simple in-memory rate limiter: max 3 requests per user per 60 seconds
+const RATE_LIMIT_WINDOW_MS = 60 * 1000
+const RATE_LIMIT_MAX = 3
+const rateLimitMap = new Map<string, number[]>()
+
+function isRateLimited(userId: string): boolean {
+  const now = Date.now()
+  const timestamps = rateLimitMap.get(userId) || []
+  const recent = timestamps.filter((t) => now - t < RATE_LIMIT_WINDOW_MS)
+  if (recent.length >= RATE_LIMIT_MAX) return true
+  recent.push(now)
+  rateLimitMap.set(userId, recent)
+  return false
+}
+
 export async function POST(request: NextRequest) {
   try {
     if (!process.env.VAPID_SUBJECT || !process.env.VAPID_PUBLIC_KEY || !process.env.VAPID_PRIVATE_KEY) {
@@ -35,6 +50,11 @@ export async function POST(request: NextRequest) {
 
     if (authError || !user) {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
+    }
+
+    // Rate limit check
+    if (isRateLimited(user.id)) {
+      return NextResponse.json({ error: 'Too many requests. Please wait before trying again.' }, { status: 429 })
     }
 
     // Parse and validate request body

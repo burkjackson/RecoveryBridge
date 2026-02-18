@@ -8,31 +8,8 @@ import Modal from '@/components/Modal'
 import { SkeletonChatMessage } from '@/components/Skeleton'
 import ErrorState from '@/components/ErrorState'
 import { PrivacyBadge } from '@/components/Footer'
-import { TIME, CONVERSATION_STARTERS, REACTIONS } from '@/lib/constants'
-
-interface Message {
-  id: string
-  sender_id: string
-  content: string
-  created_at: string
-  read_at: string | null
-}
-
-interface Session {
-  id: string
-  listener_id: string
-  seeker_id: string
-  status: string
-  created_at: string
-  ended_at: string | null
-}
-
-interface Reaction {
-  id: string
-  message_id: string
-  user_id: string
-  reaction: 'heart' | 'hug' | 'pray'
-}
+import { TIME, VALIDATION, CONVERSATION_STARTERS, REACTIONS } from '@/lib/constants'
+import type { ChatMessage as Message, Session, MessageReaction as Reaction } from '@/lib/types/database'
 
 export default function ChatPage({ params }: { params: Promise<{ id: string }> }) {
   const [messages, setMessages] = useState<Message[]>([])
@@ -56,6 +33,15 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   const [profileModal, setProfileModal] = useState(false)
   const [feedbackModal, setFeedbackModal] = useState(false)
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false)
+
+  // Report flow modal state
+  const [reportModal, setReportModal] = useState(false)
+  const [reportStep, setReportStep] = useState<'reason' | 'details' | 'confirm'>('reason')
+  const [reportReason, setReportReason] = useState('')
+  const [reportDetails, setReportDetails] = useState('')
+
+  // End session confirmation
+  const [endSessionConfirmModal, setEndSessionConfirmModal] = useState(false)
 
   // Error states
   const [sendError, setSendError] = useState(false)
@@ -83,6 +69,9 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   // Track which messages we've already sent read receipts for to avoid re-render loops
   const markedAsReadRef = useRef<Set<string>>(new Set())
 
+  // Track message count so scrollToBottom only fires on new messages (not read_at updates)
+  const prevMessageCountRef = useRef(0)
+
   useEffect(() => {
     params.then(({ id }) => setSessionId(id))
   }, [params])
@@ -103,7 +92,10 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   }, [session, currentUserId])
 
   useEffect(() => {
-    scrollToBottom()
+    if (messages.length > prevMessageCountRef.current) {
+      scrollToBottom()
+    }
+    prevMessageCountRef.current = messages.length
   }, [messages])
 
   // Mark received messages as read when they appear
@@ -218,7 +210,6 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
       }
     } catch (error) {
       console.error('Error loading session:', error)
-      alert('Session not found')
       router.push('/dashboard')
     } finally {
       setLoading(false)
@@ -481,7 +472,9 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
 
   async function sendMessage(e: React.FormEvent) {
     e.preventDefault()
-    if (!newMessage.trim() || !currentUserId || sending) return
+    const trimmed = newMessage.trim()
+    if (!trimmed || !currentUserId || sending) return
+    if (trimmed.length > VALIDATION.MAX_MESSAGE_LENGTH) return
 
     setSending(true)
     try {
@@ -491,7 +484,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
           {
             session_id: sessionId,
             sender_id: currentUserId,
-            content: newMessage.trim()
+            content: trimmed
           }
         ])
 
@@ -509,8 +502,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   }
 
   async function endSession() {
-    if (!confirm('Are you sure you want to end this session?')) return
-
+    setEndSessionConfirmModal(false)
     try {
       isEndingSession.current = true // Mark that THIS user is ending the session
       const { error } = await supabase
@@ -552,31 +544,24 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
     router.push('/dashboard')
   }
 
-  async function reportUser() {
-    const reasons = [
-      'Inappropriate behavior',
-      'Harassment or bullying',
-      'Spam or scam',
-      'Sharing harmful content',
-      'Other safety concern'
-    ]
+  const REPORT_REASONS = [
+    'Inappropriate behavior',
+    'Harassment or bullying',
+    'Spam or scam',
+    'Sharing harmful content',
+    'Other safety concern'
+  ]
 
-    const reason = prompt(`Report ${otherUserName}?\n\nSelect a reason:\n${reasons.map((r, i) => `${i + 1}. ${r}`).join('\n')}\n\nEnter 1-5:`)
+  function openReportModal() {
+    setReportReason('')
+    setReportDetails('')
+    setReportStep('reason')
+    setReportModal(true)
+  }
 
-    if (!reason || !['1', '2', '3', '4', '5'].includes(reason)) return
-
-    const description = prompt('Please provide additional details (optional):')
-
-    // Two-factor confirmation: user must type "report" to confirm
-    const confirmation = prompt('To confirm this report, please type "report" exactly (without quotes):')
-
-    if (confirmation !== 'report') {
-      alert('Report cancelled. The confirmation text did not match.')
-      return
-    }
-
+  async function submitReport() {
     try {
-      if (!session) return
+      if (!session || !reportReason) return
 
       const otherUserId = session.listener_id === currentUserId
         ? session.seeker_id
@@ -588,16 +573,18 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
           reporter_id: currentUserId,
           reported_user_id: otherUserId,
           session_id: sessionId,
-          reason: reasons[parseInt(reason) - 1],
-          description: description || null,
+          reason: reportReason,
+          description: reportDetails.trim() || null,
           status: 'pending'
         }])
 
       if (error) throw error
 
+      setReportModal(false)
       setReportSuccessModal(true)
     } catch (error) {
       console.error('Error submitting report:', error)
+      setReportModal(false)
       setReportErrorModal(true)
     }
   }
@@ -688,14 +675,14 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
             {session?.status === 'active' ? (
               <div className="flex gap-2">
                 <button
-                  onClick={reportUser}
+                  onClick={openReportModal}
                   aria-label="Report user"
                   className="min-h-[44px] px-4 py-2 text-sm bg-amber-500 hover:bg-amber-600 text-white rounded-lg transition-all font-semibold"
                 >
                   Report
                 </button>
                 <button
-                  onClick={endSession}
+                  onClick={() => setEndSessionConfirmModal(true)}
                   aria-label="End session"
                   className="min-h-[44px] px-4 py-2 text-sm bg-red-600 hover:bg-red-700 text-white rounded-lg transition-all font-semibold"
                 >
@@ -907,39 +894,47 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
         {/* Message Input */}
         {session?.status === 'active' && (
           <div className="bg-white border-t border-gray-200 p-4">
-            <form onSubmit={sendMessage} className="max-w-4xl mx-auto flex gap-2" aria-label="Send message">
-              <label htmlFor="message-input" className="sr-only">Type your message</label>
-              <input
-                id="message-input"
-                type="text"
-                value={newMessage}
-                onChange={(e) => {
-                  setNewMessage(e.target.value)
-                  if (e.target.value.trim()) broadcastTyping()
-                }}
-                placeholder="Type a message..."
-                className="flex-1 px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rb-blue focus:border-transparent transition-all"
-                disabled={sending}
-                aria-label="Message text"
-              />
-              <button
-                type="submit"
-                disabled={!newMessage.trim() || sending}
-                aria-label={sending ? "Sending message..." : "Send message"}
-                className="min-h-[44px] px-6 py-3 rounded-lg font-semibold bg-gray-900 text-white hover:bg-gray-800 disabled:opacity-50 transition-all"
-              >
-                {sending ? (
-                  <span className="flex items-center gap-2">
-                    <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Sending...
-                  </span>
-                ) : (
-                  'Send'
-                )}
-              </button>
+            <form onSubmit={sendMessage} className="max-w-4xl mx-auto" aria-label="Send message">
+              <div className="flex gap-2">
+                <label htmlFor="message-input" className="sr-only">Type your message</label>
+                <input
+                  id="message-input"
+                  type="text"
+                  value={newMessage}
+                  onChange={(e) => {
+                    setNewMessage(e.target.value)
+                    if (e.target.value.trim()) broadcastTyping()
+                  }}
+                  maxLength={VALIDATION.MAX_MESSAGE_LENGTH}
+                  placeholder="Type a message..."
+                  className="flex-1 px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rb-blue focus:border-transparent transition-all"
+                  disabled={sending}
+                  aria-label="Message text"
+                />
+                <button
+                  type="submit"
+                  disabled={!newMessage.trim() || sending}
+                  aria-label={sending ? "Sending message..." : "Send message"}
+                  className="min-h-[44px] px-6 py-3 rounded-lg font-semibold bg-gray-900 text-white hover:bg-gray-800 disabled:opacity-50 transition-all"
+                >
+                  {sending ? (
+                    <span className="flex items-center gap-2">
+                      <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Sending...
+                    </span>
+                  ) : (
+                    'Send'
+                  )}
+                </button>
+              </div>
+              {newMessage.length > VALIDATION.MAX_MESSAGE_LENGTH * 0.9 && (
+                <p className={`text-xs mt-1 text-right ${newMessage.length >= VALIDATION.MAX_MESSAGE_LENGTH ? 'text-red-500' : 'text-gray-400'}`}>
+                  {newMessage.length}/{VALIDATION.MAX_MESSAGE_LENGTH}
+                </p>
+              )}
             </form>
           </div>
         )}
@@ -1004,6 +999,136 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
               This might be a temporary connection issue. Please try again in a moment, or contact support if the problem continues.
             </p>
           </div>
+        </Modal>
+
+        {/* Report Flow Modal */}
+        {reportModal && (
+          <div
+            role="dialog"
+            aria-labelledby="report-modal-title"
+            aria-modal="true"
+            className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4"
+            onClick={() => setReportModal(false)}
+          >
+            <div
+              className="bg-white rounded-2xl p-6 sm:p-8 max-w-md w-full shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-start justify-between mb-4">
+                <h2 id="report-modal-title" className="text-xl font-bold text-gray-900">
+                  {reportStep === 'reason' && `Report ${otherUserName}`}
+                  {reportStep === 'details' && 'Additional Details'}
+                  {reportStep === 'confirm' && 'Confirm Report'}
+                </h2>
+                <button
+                  onClick={() => setReportModal(false)}
+                  className="text-gray-400 hover:text-gray-600 text-2xl leading-none"
+                  aria-label="Close"
+                >
+                  &times;
+                </button>
+              </div>
+
+              {reportStep === 'reason' && (
+                <div>
+                  <p className="text-sm text-gray-600 mb-4">Select a reason for your report:</p>
+                  <div className="space-y-2">
+                    {REPORT_REASONS.map((reason) => (
+                      <button
+                        key={reason}
+                        onClick={() => {
+                          setReportReason(reason)
+                          setReportStep('details')
+                        }}
+                        className="w-full text-left px-4 py-3 rounded-lg border border-gray-200 hover:border-rb-blue hover:bg-blue-50 transition-all text-sm font-medium min-h-[44px]"
+                      >
+                        {reason}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {reportStep === 'details' && (
+                <div>
+                  <p className="text-sm text-gray-600 mb-1">
+                    Reason: <span className="font-medium">{reportReason}</span>
+                  </p>
+                  <p className="text-sm text-gray-500 mb-3">Add any additional details (optional):</p>
+                  <textarea
+                    value={reportDetails}
+                    onChange={(e) => setReportDetails(e.target.value)}
+                    placeholder="Describe what happened..."
+                    rows={3}
+                    maxLength={500}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-rb-blue focus:border-transparent resize-none"
+                  />
+                  <div className="flex gap-3 mt-4">
+                    <button
+                      onClick={() => setReportStep('reason')}
+                      className="flex-1 min-h-[44px] px-4 py-2 rounded-lg border-2 border-gray-200 text-gray-700 font-semibold hover:bg-gray-50 transition-all text-sm"
+                    >
+                      Back
+                    </button>
+                    <button
+                      onClick={() => setReportStep('confirm')}
+                      className="flex-1 min-h-[44px] px-4 py-2 rounded-lg bg-amber-500 text-white font-semibold hover:bg-amber-600 transition-all text-sm"
+                    >
+                      Continue
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {reportStep === 'confirm' && (
+                <div>
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4">
+                    <p className="text-sm font-medium text-amber-800 mb-1">You are about to report {otherUserName}</p>
+                    <p className="text-sm text-amber-700">Reason: {reportReason}</p>
+                    {reportDetails.trim() && (
+                      <p className="text-sm text-amber-700 mt-1">Details: {reportDetails.trim()}</p>
+                    )}
+                  </div>
+                  <p className="text-sm text-gray-600 mb-4">
+                    Our team will review this report. False reports may result in action against your account.
+                  </p>
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => setReportStep('details')}
+                      className="flex-1 min-h-[44px] px-4 py-2 rounded-lg border-2 border-gray-200 text-gray-700 font-semibold hover:bg-gray-50 transition-all text-sm"
+                    >
+                      Back
+                    </button>
+                    <button
+                      onClick={submitReport}
+                      className="flex-1 min-h-[44px] px-4 py-2 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700 transition-all text-sm"
+                    >
+                      Submit Report
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* End Session Confirmation Modal */}
+        <Modal
+          isOpen={endSessionConfirmModal}
+          onClose={() => setEndSessionConfirmModal(false)}
+          title="End Session?"
+          type="confirm"
+          confirmText="End Session"
+          cancelText="Keep Chatting"
+          confirmStyle="danger"
+          onConfirm={endSession}
+        >
+          <p className="text-gray-700 mb-2">
+            Are you sure you want to end this conversation?
+          </p>
+          <p className="text-sm text-gray-500">
+            You&apos;ll have a chance to leave feedback after ending.
+          </p>
         </Modal>
 
         {/* Inactivity Warning Modal */}
