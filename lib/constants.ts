@@ -78,8 +78,8 @@ export const VALIDATION = {
   /** Maximum bio length */
   MAX_BIO_LENGTH: 500,
 
-  /** Maximum tagline length */
-  MAX_TAGLINE_LENGTH: 100,
+  /** Maximum tagline length (matches SQL CHECK constraint) */
+  MAX_TAGLINE_LENGTH: 60,
 } as const
 
 // Specialty tags for listener matching & discovery

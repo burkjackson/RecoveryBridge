@@ -4,11 +4,15 @@ import { createClient } from '@supabase/supabase-js'
 
 export async function POST(request: NextRequest) {
   try {
+    if (!process.env.VAPID_SUBJECT || !process.env.VAPID_PUBLIC_KEY || !process.env.VAPID_PRIVATE_KEY) {
+      return NextResponse.json({ error: 'Push notification configuration missing' }, { status: 500 })
+    }
+
     // Configure VAPID keys for web push (at runtime, not build time)
     webpush.setVapidDetails(
-      process.env.VAPID_SUBJECT!,
-      process.env.VAPID_PUBLIC_KEY!,
-      process.env.VAPID_PRIVATE_KEY!
+      process.env.VAPID_SUBJECT,
+      process.env.VAPID_PUBLIC_KEY,
+      process.env.VAPID_PRIVATE_KEY
     )
 
     // Create Supabase client with service role for server-side access
@@ -33,12 +37,32 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
     }
 
-    const { seekerName, seekerId } = await request.json()
+    // Parse and validate request body
+    let seekerId: string
+    try {
+      const body = await request.json()
+      seekerId = body.seekerId
+    } catch {
+      return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
+    }
+
+    if (typeof seekerId !== 'string') {
+      return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
+    }
 
     // Verify that the seekerId matches the authenticated user
     if (seekerId !== user.id) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
+
+    // Fetch seekerName from the database (don't trust client-provided value)
+    const { data: seekerProfile } = await supabase
+      .from('profiles')
+      .select('display_name')
+      .eq('id', user.id)
+      .single()
+
+    const seekerName = seekerProfile?.display_name || 'Someone'
 
     // Find all available listeners (excluding the person requesting support)
     // Include both:
@@ -92,40 +116,38 @@ export async function POST(request: NextRequest) {
     })
 
     // Send notifications to all available listeners
+    let successCount = 0
     const notificationPromises = subscriptions.map(async (sub) => {
       try {
         await webpush.sendNotification(sub.subscription, payload)
-        return { success: true, userId: sub.user_id }
-      } catch (error: any) {
-        console.error(`Failed to send notification to user ${sub.user_id}:`, error)
+        successCount++
+      } catch (error: unknown) {
+        const statusCode = (error as { statusCode?: number })?.statusCode
+        console.error(`Failed to send notification to subscription ${sub.id}:`, error)
 
-        // If subscription is invalid (410 Gone), remove it from database
-        if (error.statusCode === 410) {
+        // If subscription is invalid (4xx), remove just THIS subscription record
+        if (statusCode && statusCode >= 400 && statusCode < 500) {
           await supabase
             .from('push_subscriptions')
             .delete()
-            .eq('user_id', sub.user_id)
+            .eq('id', sub.id)
         }
-
-        return { success: false, userId: sub.user_id, error: error.message }
       }
     })
 
-    const results = await Promise.all(notificationPromises)
-    const successCount = results.filter(r => r.success).length
+    await Promise.all(notificationPromises)
 
     return NextResponse.json({
       success: true,
       message: `Notifications sent to ${successCount} listener(s)`,
       notified: successCount,
       total: subscriptions.length,
-      results
     })
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error sending notifications:', error)
     return NextResponse.json(
-      { success: false, error: error.message },
+      { success: false, error: 'Failed to send notifications' },
       { status: 500 }
     )
   }

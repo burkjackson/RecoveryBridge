@@ -23,7 +23,7 @@ interface Session {
   listener_id: string
   seeker_id: string
   status: string
-  started_at: string
+  created_at: string
   ended_at: string | null
 }
 
@@ -46,7 +46,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   const [sessionId, setSessionId] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
-  const supabase = createClient()
+  const [supabase] = useState(() => createClient())
 
   // Modal states
   const [blockModal, setBlockModal] = useState({ show: false, reason: '' })
@@ -79,6 +79,9 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   // --- V2: Reactions ---
   const [reactions, setReactions] = useState<Reaction[]>([])
   const [reactionPickerMessageId, setReactionPickerMessageId] = useState<string | null>(null)
+
+  // Track which messages we've already sent read receipts for to avoid re-render loops
+  const markedAsReadRef = useRef<Set<string>>(new Set())
 
   useEffect(() => {
     params.then(({ id }) => setSessionId(id))
@@ -270,12 +273,15 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   // --- V2: Mark unread received messages as read ---
   async function markMessagesAsRead() {
     const unreadFromOther = messages.filter(
-      (m) => m.sender_id !== currentUserId && !m.read_at
+      (m) => m.sender_id !== currentUserId && !m.read_at && !markedAsReadRef.current.has(m.id)
     )
     if (unreadFromOther.length === 0) return
 
     const now = new Date().toISOString()
     const ids = unreadFromOther.map((m) => m.id)
+
+    // Mark in ref immediately to prevent duplicate calls
+    ids.forEach((id) => markedAsReadRef.current.add(id))
 
     try {
       await supabase
@@ -298,6 +304,8 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
       })
     } catch (error) {
       console.error('Error marking messages as read:', error)
+      // Remove from ref on failure so they can be retried
+      ids.forEach((id) => markedAsReadRef.current.delete(id))
     }
   }
 
@@ -315,7 +323,11 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
         (payload) => {
           const newMsg = payload.new as Record<string, unknown>
           if (newMsg.id && newMsg.sender_id && newMsg.content && newMsg.created_at) {
-            setMessages((current) => [...current, newMsg as unknown as Message])
+            setMessages((current) => {
+              // Deduplicate: skip if message already exists
+              if (current.some((m) => m.id === newMsg.id)) return current
+              return [...current, newMsg as unknown as Message]
+            })
             // Clear typing indicator when a message arrives from the other user
             if (newMsg.sender_id !== currentUserId) {
               setIsOtherTyping(false)
@@ -344,7 +356,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
           }
         }
       )
-      // --- V2: Reactions realtime ---
+      // --- V2: Reactions realtime (filtered + deduplicated) ---
       .on(
         'postgres_changes',
         {
@@ -355,7 +367,16 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
         (payload) => {
           if (payload.eventType === 'INSERT') {
             const newReaction = payload.new as unknown as Reaction
-            setReactions((prev) => [...prev, newReaction])
+            // Only add if it belongs to a message in this session and isn't a duplicate
+            setMessages((currentMsgs) => {
+              if (currentMsgs.some((m) => m.id === newReaction.message_id)) {
+                setReactions((prev) => {
+                  if (prev.some((r) => r.id === newReaction.id)) return prev
+                  return [...prev, newReaction]
+                })
+              }
+              return currentMsgs // don't modify messages
+            })
           } else if (payload.eventType === 'DELETE') {
             const oldReaction = payload.old as { id?: string }
             if (oldReaction.id) {
@@ -431,7 +452,10 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
           .single()
 
         if (error) throw error
-        if (data) setReactions((prev) => [...prev, data as Reaction])
+        if (data) setReactions((prev) => {
+          if (prev.some((r) => r.id === (data as Reaction).id)) return prev
+          return [...prev, data as Reaction]
+        })
       }
     } catch (error) {
       console.error('Error toggling reaction:', error)
@@ -443,7 +467,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   // --- V2: Session duration helper ---
   function getSessionDuration(): string {
     if (!session) return ''
-    const start = new Date(session.started_at).getTime()
+    const start = new Date(session.created_at).getTime()
     const end = session.ended_at ? new Date(session.ended_at).getTime() : Date.now()
     const diffMs = end - start
     const mins = Math.floor(diffMs / 60000)
@@ -724,20 +748,26 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
           <div className="max-w-4xl mx-auto space-y-3">
             {messages.length === 0 ? (
               /* --- V2: Conversation Starters --- */
-              <div className="bg-white rounded-lg p-6 shadow-sm">
-                <Body16 className="text-gray-500 text-center mb-4">Start the conversation with a prompt:</Body16>
-                <div className="flex flex-wrap gap-2 justify-center">
-                  {CONVERSATION_STARTERS.map((starter) => (
-                    <button
-                      key={starter}
-                      onClick={() => setNewMessage(starter)}
-                      className="px-4 py-2.5 bg-blue-50 text-rb-blue border border-blue-200 rounded-full text-sm font-medium hover:bg-blue-100 hover:border-blue-300 transition-all min-h-[44px]"
-                    >
-                      {starter}
-                    </button>
-                  ))}
+              session?.status === 'active' ? (
+                <div className="bg-white rounded-lg p-6 shadow-sm">
+                  <Body16 className="text-gray-500 text-center mb-4">Start the conversation with a prompt:</Body16>
+                  <div className="flex flex-wrap gap-2 justify-center">
+                    {CONVERSATION_STARTERS.map((starter) => (
+                      <button
+                        key={starter}
+                        onClick={() => setNewMessage(starter)}
+                        className="px-4 py-2.5 bg-blue-50 text-rb-blue border border-blue-200 rounded-full text-sm font-medium hover:bg-blue-100 hover:border-blue-300 transition-all min-h-[44px]"
+                      >
+                        {starter}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className="bg-white rounded-lg p-8 text-center shadow-sm">
+                  <Body16 className="text-gray-600">No messages in this session.</Body16>
+                </div>
+              )
             ) : (
               messages.map((message) => {
                 const isOwn = message.sender_id === currentUserId
