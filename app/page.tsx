@@ -40,22 +40,18 @@ export default function Home() {
             </div>
 
             {/* CTA Buttons */}
-            <div className="grid sm:grid-cols-2 gap-4 max-w-2xl mx-auto mb-12">
+            <div className="flex justify-center gap-4 mb-12">
               <button
                 onClick={() => router.push('/signup')}
-                className="p-8 rounded-2xl text-center transition-all duration-300 transform hover:scale-[1.02] hover:-translate-y-1 bg-white border-4 border-blue-500 shadow-md hover:shadow-xl"
+                className="w-36 py-5 rounded-xl text-center transition-all duration-300 transform hover:scale-[1.02] hover:-translate-y-1 bg-white border-2 border-blue-500 shadow-md hover:shadow-xl"
               >
-                <div className="text-3xl mb-3">🌱</div>
-                <div className="font-bold text-blue-600 text-lg mb-2">Get Started</div>
-                <div className="text-gray-500 text-sm">Create your free account and join the community</div>
+                <div className="font-bold text-blue-600 text-base">Get Started</div>
               </button>
               <button
                 onClick={() => router.push('/login')}
-                className="p-8 rounded-2xl text-center transition-all duration-300 transform hover:scale-[1.02] hover:-translate-y-1 bg-white border-4 border-purple-500 shadow-md hover:shadow-xl"
+                className="w-36 py-5 rounded-xl text-center transition-all duration-300 transform hover:scale-[1.02] hover:-translate-y-1 bg-white border-2 border-purple-500 shadow-md hover:shadow-xl"
               >
-                <div className="text-3xl mb-3">💙</div>
-                <div className="font-bold text-purple-600 text-lg mb-2">Log In</div>
-                <div className="text-gray-500 text-sm">Welcome back — your community is here</div>
+                <div className="font-bold text-purple-600 text-base">Log In</div>
               </button>
             </div>
 
