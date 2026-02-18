@@ -9,7 +9,7 @@ import { TIME } from '@/lib/constants'
 interface Listener {
   id: string
   display_name: string
-  bio: string
+  bio: string | null
   tagline: string | null
   avatar_url: string | null
   user_role: string
@@ -89,7 +89,7 @@ export default function AvailableListeners() {
     }
   }
 
-  function getDisplayMessage(tagline: string | null, bio: string): string {
+  function getDisplayMessage(tagline: string | null, bio: string | null): string {
     // Use tagline if available
     if (tagline && tagline.trim()) {
       return tagline

@@ -49,6 +49,7 @@ export default function ListenersPage() {
         .select('id, display_name, avatar_url, user_role, bio, tagline, always_available, last_heartbeat_at')
         .or('role_state.eq.available,always_available.eq.true')
         .neq('id', user.id)
+        .limit(100)
 
       if (error) throw error
 
