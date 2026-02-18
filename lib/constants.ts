@@ -127,6 +127,11 @@ export const REACTIONS = [
   { key: 'heart', emoji: '\u2764\uFE0F', label: 'Heart' },
   { key: 'hug', emoji: '\uD83E\uDD17', label: 'Hug' },
   { key: 'pray', emoji: '\uD83D\uDE4F', label: 'Prayer hands' },
+  { key: 'strong', emoji: '\uD83D\uDCAA', label: 'Strength' },
+  { key: 'sparkles', emoji: '\u2728', label: 'Sparkles' },
+  { key: 'thumbsup', emoji: '\uD83D\uDC4D', label: 'Thumbs up' },
+  { key: 'clap', emoji: '\uD83D\uDC4F', label: 'Clapping' },
+  { key: 'blue_heart', emoji: '\uD83D\uDC99', label: 'Blue heart' },
 ] as const
 
 // Export a helper to get time ago in minutes

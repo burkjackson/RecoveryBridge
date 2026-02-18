@@ -103,7 +103,7 @@ export interface MessageReaction {
   id: string
   message_id: string
   user_id: string
-  reaction: 'heart' | 'hug' | 'pray'
+  reaction: 'heart' | 'hug' | 'pray' | 'strong' | 'sparkles' | 'thumbsup' | 'clap' | 'blue_heart'
   created_at: string
 }
 

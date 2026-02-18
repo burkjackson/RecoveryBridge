@@ -1,363 +1,129 @@
 # RecoveryBridge - Status and Changes Document
-**Last Updated:** February 15, 2025
-**Branch:** `claude/sleepy-knuth`
-**Deployment Status:** ✅ Pushed to GitHub, ⏳ Deploying to Vercel
+**Last Updated:** February 17, 2026
+**Branch:** `claude/distracted-agnesi` (merged to `main`)
+**Deployment Status:** Deployed to production
 
 ---
 
-## 🎯 Recent Changes Summary
+## Current State
 
-### Push Notifications - UX Improvements
-**Status:** ✅ Committed, ⏳ Deploying
+All V2 features from the first two phases are complete and deployed. All code review issues (critical, high, and medium priority) have been addressed.
 
-Changed the notification emoji from an alarming SOS symbol to a supportive handshake:
-- **Before:** 🆘 Someone Needs Support
-- **After:** 🤝 Someone Needs Support
+### V2 Features Shipped
 
-**Why:** User feedback indicated the SOS emoji felt too dramatic/alarming for the supportive nature of the app.
+#### Feature #1: Listener Matching & Discovery
+- Specialty tags on listener profiles (up to 5 per listener)
+- Tag-based filtering on the listeners page
+- 18 recovery-appropriate specialty categories
 
-**Files Modified:**
-- `app/api/notifications/send/route.ts` (line 79)
+#### Feature #2: Better Chat Experience
+- **Conversation Starters** — ice-breaker prompts when a chat has 0 messages
+- **Session Summary** — duration + message count in the feedback modal
+- **Typing Indicators** — "X is typing..." with animated dots (Supabase Broadcast, no DB writes)
+- **Read Receipts** — single check (sent) / double check (read) on own messages
+- **Quick Reactions** — heart, hug, prayer hands on messages (new `message_reactions` table)
 
----
+### Code Review Fixes (All Complete)
 
-### Chat 406 Error Fix
-**Status:** ✅ Committed, ⏳ Deploying
+#### Critical / High Priority
+- JWT validation on notification endpoint (server-side auth, not client-provided names)
+- Supabase client created once per page load (not on every render)
+- Race condition fix: session loads only after auth resolves
+- Heartbeat cleanup on unmount
+- Rate limiting on `/api/notifications/send` (3 req/user/60s)
 
-**Problem:** Users were seeing 406 (Not Acceptable) errors when trying to access chat pages. The error occurred because the code was querying for database columns that don't exist in the `user_blocks` table.
-
-**Solution:**
-- Removed query for non-existent `block_type` column
-- Removed filter for non-existent `is_active` column
-- Changed `.single()` to `.maybeSingle()` to handle cases where no block exists
-
-**Files Modified:**
-- `app/chat/[id]/page.tsx` (lines 138-143)
-
-**Before:**
-```typescript
-const { data: blockCheck } = await supabase
-  .from('user_blocks')
-  .select('id, reason, block_type')
-  .eq('user_id', user.id)
-  .eq('is_active', true)
-  .single()
-```
-
-**After:**
-```typescript
-const { data: blockCheck } = await supabase
-  .from('user_blocks')
-  .select('id, reason')
-  .eq('user_id', user.id)
-  .maybeSingle()
-```
+#### Medium Priority
+- `scrollToBottom` only fires on new messages, not `read_at` updates
+- Message length limit (2000 chars) with character counter
+- Replaced all `alert()`/`prompt()`/`confirm()` with modal dialogs
+  - Report flow: 3-step modal (reason -> details -> confirm)
+  - End session: confirmation modal
+- Shared types imported from `lib/types/database.ts` (removed duplicated interfaces from chat page)
+- Real-time listener list updates via Supabase `postgres_changes` subscription
 
 ---
 
-### Listener Profile UI Cleanup
-**Status:** ✅ Committed, ⏳ Deploying
+## Key Commits (Most Recent First)
 
-**Changes:**
-1. Removed 🎯 (bullseye) emoji from listener profile cards
-2. Made role text italic for better visual hierarchy
-
-**Files Modified:**
-- `app/listeners/page.tsx` (lines 192-198)
-
-**Before:**
-```typescript
-<div className="flex items-center gap-1 mb-2">
-  <span className="text-sm" role="img" aria-label="Role">🎯</span>
-  <Body16 className="text-sm text-rb-gray">
-    {listener.user_role === 'person_in_recovery' && 'Person in Recovery'}
-    {listener.user_role === 'professional' && 'Allies for Long-Term Recovery'}
-    {listener.user_role === 'ally' && 'Recovery Support (Legacy)'}
-  </Body16>
-</div>
 ```
-
-**After:**
-```typescript
-<div className="mb-2">
-  <Body16 className="text-sm text-rb-gray italic">
-    {listener.user_role === 'person_in_recovery' && 'Person in Recovery'}
-    {listener.user_role === 'professional' && 'Allies for Long-Term Recovery'}
-    {listener.user_role === 'ally' && 'Recovery Support (Legacy)'}
-  </Body16>
-</div>
+05eada9 - Fix medium-priority issues from code review
+d505efe - Fix critical security and reliability issues from code review
+8245ccf - Add Better Chat Experience (V2 Feature #2)
+9344b23 - Fix notification click opening dashboard instead of listeners page
+dae00f4 - Fix build failure: JSX syntax error and Sentry config guards
+478d5e1 - Add Listener Matching & Discovery (V2 Feature #1)
+3c9e12c - Fix security, type safety, accessibility, and performance issues
 ```
 
 ---
 
-## 🔧 Push Notifications Setup - COMPLETED
-
-### Environment Variables (Vercel)
-**Status:** ✅ Configured and Deployed
-
-The following environment variables are now properly configured:
-- `VAPID_PUBLIC_KEY` - Public key for web push notifications
-- `VAPID_PRIVATE_KEY` - Private key for web push notifications
-- `NEXT_PUBLIC_VAPID_PUBLIC_KEY` - Client-side accessible public key
-- `SUPABASE_SERVICE_ROLE_KEY` - Server-side Supabase access
-- `NEXT_PUBLIC_SUPABASE_URL` - Supabase project URL
-
-**VAPID Keys Generated:**
-```
-Public:  BPUVUW6O9Xq8xecTOWm-ZKoqqymj9q9CG4D43fiPvD6ChkWz_g9YqjZ5pHYEz_EGcLUBLlW0Vhxja44eBaC2rMs
-Private: L11JQnk6cw59H3I2AJxcxMKj54NgTpeCkksNA0CfPks
-```
-
-### Database Schema
-**Status:** ✅ Migration Run
-
-Created `push_subscriptions` table with:
-- `id` (UUID, primary key)
-- `user_id` (UUID, foreign key to profiles)
-- `subscription` (JSONB, stores push subscription data)
-- `created_at` (timestamp)
-- RLS policies for user privacy
-
-### Push Notification Workflow
-**Status:** ✅ Working End-to-End
-
-1. User enables notifications on dashboard
-2. Browser requests permission
-3. Service worker subscribes to push notifications
-4. Subscription saved to `push_subscriptions` table
-5. When someone clicks "I Need Support":
-   - API queries for available listeners
-   - Includes users with `role_state = 'available'` OR `always_available = true`
-   - Sends push notifications to all matching listeners
-   - Cleans up invalid subscriptions (410 errors)
-
-### "Always Available" Feature
-**Status:** ✅ Implemented and Working
-
-Users can now enable "Always Available" mode which:
-- Sends them notifications even when their status is not "Available to Listen"
-- Useful for users who want to receive all support requests
-- Checkbox added to notification settings UI
-- Properly queries both `role_state='available'` and `always_available=true` users
-
----
-
-## 📝 Git Commit History
-
-### Recent Commits (Pushed to GitHub)
-```
-c63e10c - Clean up listener profile UI
-  - Removed 🎯 emoji from profile cards
-  - Made role text italic
-
-93d2cd4 - Improve notification UX and fix chat block check
-  - Changed notification emoji from 🆘 to 🤝
-  - Fixed 406 errors in chat by removing non-existent column queries
-  - Changed .single() to .maybeSingle() for block checks
-```
-
----
-
-## 🚀 Deployment Status
-
-### Current Branch
-- **Local Branch:** `claude/sleepy-knuth`
-- **Remote:** Pushed to GitHub (commits `93d2cd4..c63e10c`)
-- **Status:** ⏳ Deploying to Vercel
-
-### What's Being Deployed
-1. Notification emoji change (🆘 → 🤝)
-2. Chat 406 error fix
-3. Listener profile UI improvements
-
-### Post-Deployment Testing Checklist
-Once Vercel shows "Ready":
-
-- [ ] **Test Notifications:**
-  - Phone: Set status to "Available to Listen" with notifications ON
-  - Incognito browser: Log in as test user, click "I Need Support"
-  - Verify notification shows: "🤝 Someone Needs Support"
-
-- [ ] **Test Chat:**
-  - Navigate to `/chat/[id]` page
-  - Verify no 406 errors in browser console
-  - Confirm chat loads successfully
-
-- [ ] **Test Listener Profiles:**
-  - Navigate to `/listeners` page
-  - Verify no 🎯 emoji appears on profile cards
-  - Verify role text appears in italics
-
----
-
-## 🐛 Issues Fixed
-
-### 1. VAPID Key Validation Error
-**Problem:** `Error: Vapid public key must be a URL safe Base 64 (without "=")`
-
-**Root Cause:** Extra space in VAPID_PUBLIC_KEY environment variable
-
-**Solution:**
-- Regenerated VAPID keys using `npx web-push generate-vapid-keys --json`
-- Removed extra space from environment variable
-- Updated all 3 VAPID-related env vars in Vercel
-
-**Status:** ✅ Fixed
-
----
-
-### 2. Notifications Not Reaching Phone
-**Problem:** API returned 200 but no notification appeared on phone
-
-**Root Cause:** Old push subscription was invalid after VAPID keys were regenerated
-
-**Solution:** User disabled/re-enabled notifications in app to create fresh subscription with new keys
-
-**Status:** ✅ Fixed
-
----
-
-### 3. Chat 406 Errors
-**Problem:** 406 (Not Acceptable) errors when loading chat pages
-
-**Root Cause:** Code queried for `block_type` and `is_active` columns that don't exist in database
-
-**Solution:** Removed non-existent column queries, changed `.single()` to `.maybeSingle()`
-
-**Status:** ✅ Fixed, ⏳ Deploying
-
----
-
-## 📋 Configuration Constants
-
-### Time Thresholds (lib/constants.ts)
-- `HEARTBEAT_INTERVAL_MS`: 30 seconds (how often to send heartbeat)
-- `HEARTBEAT_THRESHOLD_MS`: 1 hour (max age for "available" listener)
-- `INACTIVITY_WARNING_MS`: 15 minutes (when to show warning in chat)
-- `INACTIVITY_AUTO_CLOSE_MS`: 5 minutes (auto-close after warning)
-- `CLEANUP_NO_MESSAGES_MS`: 10 minutes (close sessions with no messages)
-- `CLEANUP_INACTIVE_MS`: 30 minutes (close inactive sessions)
-
-### Notification Settings
-- **Emoji:** 🤝 (handshake)
-- **Title:** "Someone Needs Support"
-- **Body:** "[Name] is looking for a listener right now."
-- **Icon:** `/icon-192.png`
-- **Badge:** `/icon-192.png`
-- **Tag:** `support-request`
-- **Require Interaction:** `true`
-
----
-
-## 🔍 Key Files Reference
-
-### Push Notification System
-- `app/api/notifications/send/route.ts` - Server-side API endpoint for sending notifications
-- `lib/pushNotifications.ts` - Client-side utilities for subscription management
-- `lib/env.ts` - Environment variable validation
-- `public/sw.js` - Service worker for background notifications
-- `public/manifest.json` - PWA manifest configuration
-
-### Chat System
-- `app/chat/[id]/page.tsx` - Individual chat page
-- `app/chat/[id]/ChatInterface.tsx` - Chat UI component
-
-### Dashboard & Profiles
-- `app/dashboard/page.tsx` - Main dashboard
-- `app/listeners/page.tsx` - Available listeners page
-- `components/NotificationSettings.tsx` - Notification enable/disable UI
-
-### Configuration
-- `lib/constants.ts` - Application-wide constants and thresholds
-- `lib/env.ts` - Environment variable validation
-
----
-
-## 📚 Technical Notes
-
-### Web Push Notification Flow
-1. Client requests notification permission
-2. Service worker subscribes to push using VAPID public key
-3. Subscription object contains: `endpoint`, `keys.p256dh`, `keys.auth`
-4. Subscription stored in Supabase `push_subscriptions` table
-5. Server uses VAPID private key to send notifications via `web-push` library
-6. Service worker receives push event and displays notification
-7. User clicks notification → opens app at `/dashboard`
-
-### VAPID Key Format
-- Must be URL-safe Base64 (RFC 4648 Section 5)
-- No padding (`=` characters)
-- Uses `-` instead of `+`
-- Uses `_` instead of `/`
-- Generated with: `npx web-push generate-vapid-keys --json`
-
-### iOS PWA Requirements
-- Must be added to home screen via Share → "Add to Home Screen"
-- Push notifications only work in standalone PWA mode on iOS
-- `NotificationSettings.tsx` shows special instructions for iOS users
-
----
-
-## 🎯 Next Steps
-
-### Immediate (After Deployment Completes)
-1. Verify handshake emoji appears in production notifications
-2. Confirm chat loads without 406 errors
-3. Check listener profile UI displays correctly
-
-### Future Enhancements (Not Started)
-- [ ] Add notification sound customization
-- [ ] Implement notification batching for multiple support requests
-- [ ] Add "Do Not Disturb" schedule for notifications
-- [ ] Create admin dashboard for monitoring notification delivery rates
-- [ ] Add push notification analytics (delivery rate, click-through rate)
-
----
-
-## 📞 Support & Resources
-
-### Documentation
-- [Web Push Notifications Guide](https://web.dev/push-notifications-overview/)
-- [VAPID Keys Explained](https://blog.mozilla.org/services/2016/08/23/sending-vapid-identified-webpush-notifications-via-mozillas-push-service/)
-- [Service Workers](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API)
-- [iOS PWA Support](https://developer.apple.com/videos/play/wwdc2020/10120/)
-
-### Setup Guide
-Full setup instructions available in: `PUSH-NOTIFICATIONS-SETUP.md`
-
----
-
-## 🔐 Security Notes
-
-### Environment Variables
-- VAPID private key must remain secret (server-side only)
-- VAPID public key can be exposed (client-side accessible)
-- Service role key must never be exposed to client
-
-### RLS Policies
-- Users can only read/write their own push subscriptions
-- `user_blocks` table has RLS enabled
-- All Supabase queries use authenticated user context
-
----
-
-## 📊 Current Stats
+## Architecture Overview
+
+### Key Files
+
+| File | Purpose |
+|------|---------|
+| `app/chat/[id]/page.tsx` | Core chat page (~1280 lines) — messages, typing, reactions, read receipts, modals |
+| `app/listeners/page.tsx` | Listener discovery — tag filtering, real-time updates |
+| `app/dashboard/page.tsx` | Main dashboard — status toggle, heartbeat, notification settings |
+| `app/api/notifications/send/route.ts` | Push notification API — rate limited, JWT-authenticated |
+| `lib/constants.ts` | Centralized constants — timeouts, validation limits, tags, reactions |
+| `lib/types/database.ts` | Shared TypeScript interfaces for all DB tables |
+| `lib/pushNotifications.ts` | Client-side push subscription management |
+| `public/sw.js` | Service worker for background push notifications |
 
 ### Database Tables
-- `profiles` - User profiles and status
-- `push_subscriptions` - Web push subscriptions
-- `user_blocks` - User blocking relationships
-- `chat_sessions` - Active chat sessions
-- `chat_messages` - Chat message history
 
-### Active Features
-- ✅ User authentication (Supabase Auth)
-- ✅ Push notifications (web-push)
-- ✅ Real-time chat (Supabase Realtime)
-- ✅ PWA support (manifest + service worker)
-- ✅ "Always Available" mode for listeners
-- ✅ Automatic session cleanup
-- ✅ Heartbeat system for availability tracking
+| Table | Purpose |
+|-------|---------|
+| `profiles` | User profiles, role_state, always_available, tags |
+| `sessions` | Chat sessions (listener_id, seeker_id, status) |
+| `messages` | Chat messages with `read_at` for read receipts |
+| `message_reactions` | Heart/hug/pray reactions on messages |
+| `push_subscriptions` | Web push subscription storage |
+| `reports` | User reports with status tracking |
+| `user_blocks` | User blocking (temporary/permanent) |
+| `admin_logs` | Admin action audit trail |
+| `session_feedback` | Post-session helpful/not helpful feedback |
+
+### Real-time Channels
+
+1. **Chat messages** — `postgres_changes` on `messages` table (filtered by session_id)
+2. **Typing indicators** — Supabase Broadcast (no DB writes)
+3. **Read receipts** — Broadcast for instant UI updates + DB write for persistence
+4. **Reactions** — `postgres_changes` on `message_reactions` table
+5. **Listener list** — `postgres_changes` on `profiles` table (role_state/availability changes)
+
+### Time Constants (`lib/constants.ts`)
+
+| Constant | Value | Purpose |
+|----------|-------|---------|
+| `HEARTBEAT_INTERVAL_MS` | 30s | How often to ping availability |
+| `HEARTBEAT_THRESHOLD_MS` | 1 hour | Max heartbeat age for "available" |
+| `INACTIVITY_WARNING_MS` | 15 min | Warning before auto-close |
+| `INACTIVITY_AUTO_CLOSE_MS` | 5 min | Auto-close after warning |
+| `TYPING_TIMEOUT_MS` | 2s | Clear "typing" indicator |
+| `TYPING_THROTTLE_MS` | 500ms | Min interval between typing events |
+| `MAX_MESSAGE_LENGTH` | 2000 | Chat message character limit |
+
+---
+
+## Known Pre-existing Issues
+
+1. **`next lint` broken** — `TypeError: mod.nextLint is not a function` with Node v24.13.0. Framework-level incompatibility, not our code.
+2. **Admin page type error** — `Property 'getUser' does not exist on type 'SupabaseAuthClient'` in `app/admin/page.tsx`. Intermittent — builds succeed most of the time. May need Supabase client library update.
+3. **Sentry ETIMEDOUT** — Occasional timeout during build trace collection. Network issue only, doesn't affect build output.
+
+---
+
+## What's Next (Potential V2 Features)
+
+These are candidates from the V2 roadmap — not yet started:
+
+- **Enhanced Dashboard & Session Management** — session history, better status controls
+- **Trust & Safety** — admin tools, moderation improvements
+- **Onboarding & Education** — guided first-time experience
+- **Performance & Polish** — loading states, error boundaries, offline support
 
 ---
 
