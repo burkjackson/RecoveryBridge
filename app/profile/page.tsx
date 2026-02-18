@@ -535,7 +535,6 @@ export default function ProfilePage() {
               </div>
             )}
           </div>
-        </div>
 
         {/* Notification Settings */}
         <div className="mt-6">
