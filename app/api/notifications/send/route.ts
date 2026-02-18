@@ -6,7 +6,7 @@ export async function POST(request: NextRequest) {
   try {
     // Configure VAPID keys for web push (at runtime, not build time)
     webpush.setVapidDetails(
-      process.env.VAPID_SUBJECT || 'mailto:support@recoverybridge.com',
+      process.env.VAPID_SUBJECT!,
       process.env.VAPID_PUBLIC_KEY!,
       process.env.VAPID_PRIVATE_KEY!
     )

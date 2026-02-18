@@ -104,7 +104,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
 
   // Inactivity warning and auto-close
   useEffect(() => {
-    if (session?.status !== 'active') return
+    if (!session || session.status !== 'active') return
 
     const checkInactivity = setInterval(() => {
       const timeSinceLastActivity = Date.now() - lastActivityTime
@@ -218,7 +218,10 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
           filter: `session_id=eq.${sessionId}`
         },
         (payload) => {
-          setMessages((current) => [...current, payload.new as Message])
+          const newMsg = payload.new as Record<string, unknown>
+          if (newMsg.id && newMsg.sender_id && newMsg.content && newMsg.created_at) {
+            setMessages((current) => [...current, newMsg as unknown as Message])
+          }
         }
       )
       .on(
@@ -230,12 +233,15 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
           filter: `id=eq.${sessionId}`
         },
         (payload) => {
-          const updatedSession = payload.new as Session
-          setSession(updatedSession)
-          // If this user didn't trigger the end, the other party ended the session
-          if (updatedSession.status === 'ended' && !isEndingSession.current) {
-            setSessionEndedByOther(true)
-            setTimeout(() => router.push('/dashboard'), 4000)
+          const updatedSession = payload.new as Record<string, unknown>
+          if (updatedSession.id && updatedSession.listener_id && updatedSession.seeker_id && updatedSession.status) {
+            const typedSession = updatedSession as unknown as Session
+            setSession(typedSession)
+            // If this user didn't trigger the end, the other party ended the session
+            if (typedSession.status === 'ended' && !isEndingSession.current) {
+              setSessionEndedByOther(true)
+              setTimeout(() => router.push('/dashboard'), 4000)
+            }
           }
         }
       )

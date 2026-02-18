@@ -45,8 +45,10 @@ export const env = {
     'VAPID_PRIVATE_KEY'
   ),
 
-  // Optional: Cleanup secret key (defaults to dev key if not provided)
-  CLEANUP_SECRET_KEY: process.env.CLEANUP_SECRET_KEY || 'dev-secret-key-change-in-production',
+  // Cleanup secret key — required in production, falls back to dev key only in development
+  CLEANUP_SECRET_KEY: process.env.NODE_ENV === 'production'
+    ? validateEnvString(process.env.CLEANUP_SECRET_KEY, 'CLEANUP_SECRET_KEY')
+    : (process.env.CLEANUP_SECRET_KEY || 'dev-secret-key-change-in-production'),
 } as const
 
 // Export a function to safely access environment variables
@@ -54,18 +56,3 @@ export function getEnv<K extends keyof typeof env>(key: K): typeof env[K] {
   return env[key]
 }
 
-// Helper for runtime checks
-export function checkEnvInProduction() {
-  if (process.env.NODE_ENV === 'production') {
-    // Warn if using dev defaults in production
-    if (env.CLEANUP_SECRET_KEY === 'dev-secret-key-change-in-production') {
-      console.warn('⚠️  WARNING: Using default CLEANUP_SECRET_KEY in production!')
-    }
-  }
-}
-
-// Run production checks immediately
-if (typeof window === 'undefined') {
-  // Only run on server-side
-  checkEnvInProduction()
-}

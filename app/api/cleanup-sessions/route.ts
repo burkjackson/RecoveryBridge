@@ -40,7 +40,8 @@ export async function POST(request: NextRequest) {
       }, { status: 401 })
     }
 
-    console.log('🧹 Starting session cleanup...')
+    const isDev = process.env.NODE_ENV !== 'production'
+    if (isDev) console.log('Starting session cleanup...')
 
     // Get all active sessions
     const { data: activeSessions, error: sessionsError } = await supabase
@@ -54,7 +55,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (!activeSessions || activeSessions.length === 0) {
-      console.log('✅ No active sessions to clean up')
+      if (isDev) console.log('No active sessions to clean up')
       return NextResponse.json({
         success: true,
         message: 'No sessions to clean up',
@@ -62,7 +63,7 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    console.log(`📊 Found ${activeSessions.length} active sessions`)
+    if (isDev) console.log(`Found ${activeSessions.length} active sessions`)
 
     const now = new Date()
     const sessionsToClose: string[] = []
@@ -101,7 +102,7 @@ export async function POST(request: NextRequest) {
                           (lastMessageTimestamp && minutesSinceLastActivity > TIME_MINUTES.CLEANUP_INACTIVE)
 
       if (shouldClose) {
-        console.log(`⏱️  Session ${session.id}: ${minutesSinceLastActivity.toFixed(1)} minutes inactive - will close`)
+        if (isDev) console.log(`Session ${session.id}: ${minutesSinceLastActivity.toFixed(1)} minutes inactive - will close`)
         sessionsToClose.push(session.id)
       }
     }
@@ -121,7 +122,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Failed to close sessions' }, { status: 500 })
       }
 
-      console.log(`✅ Closed ${sessionsToClose.length} stale session(s)`)
+      if (isDev) console.log(`Closed ${sessionsToClose.length} stale session(s)`)
 
       return NextResponse.json({
         success: true,
@@ -131,7 +132,7 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    console.log('✅ No stale sessions found')
+    if (isDev) console.log('No stale sessions found')
     return NextResponse.json({
       success: true,
       message: 'No stale sessions to close',

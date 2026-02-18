@@ -145,6 +145,7 @@ export default function AdminPage() {
           reported_user:profiles!reports_reported_user_id_fkey(display_name)
         `)
         .order('created_at', { ascending: false })
+        .limit(100)
 
       if (error) throw error
       setReports(data || [])
@@ -196,6 +197,7 @@ export default function AdminPage() {
         .from('profiles')
         .select('*')
         .order('created_at', { ascending: false })
+        .limit(200)
 
       if (error) throw error
       setUsers(data || [])
