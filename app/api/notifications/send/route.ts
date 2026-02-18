@@ -130,7 +130,7 @@ export async function POST(request: NextRequest) {
       tag: `support-request-${seekerId}`,
       requireInteraction: true,
       data: {
-        url: '/listeners',
+        url: '/dashboard',
         seekerId: seekerId
       }
     })
