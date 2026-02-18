@@ -44,6 +44,8 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   const [reportErrorModal, setReportErrorModal] = useState(false)
   const [inactivityModal, setInactivityModal] = useState(false)
   const [profileModal, setProfileModal] = useState(false)
+  const [feedbackModal, setFeedbackModal] = useState(false)
+  const [feedbackSubmitted, setFeedbackSubmitted] = useState(false)
 
   // Error states
   const [sendError, setSendError] = useState(false)
@@ -90,8 +92,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
 
       if (error) throw error
       setInactivityModal(false)
-      alert('This session was closed due to inactivity.')
-      router.push('/dashboard')
+      setFeedbackModal(true)
     } catch (error) {
       console.error('Error ending session:', error)
     }
@@ -240,7 +241,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
             // If this user didn't trigger the end, the other party ended the session
             if (typedSession.status === 'ended' && !isEndingSession.current) {
               setSessionEndedByOther(true)
-              setTimeout(() => router.push('/dashboard'), 4000)
+              setFeedbackModal(true)
             }
           }
         }
@@ -292,12 +293,37 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
         .eq('id', sessionId)
 
       if (error) throw error
-      router.push('/dashboard')
+      setFeedbackModal(true)
     } catch (error) {
       console.error('Error ending session:', error)
       isEndingSession.current = false
       setEndSessionError(true)
     }
+  }
+
+  async function submitFeedback(helpful: boolean) {
+    if (!session || !currentUserId) return
+    setFeedbackSubmitted(true)
+
+    const otherUserId = currentUserId === session.listener_id ? session.seeker_id : session.listener_id
+
+    try {
+      await supabase.from('session_feedback').insert({
+        session_id: session.id,
+        from_user_id: currentUserId,
+        to_user_id: otherUserId,
+        helpful,
+      })
+    } catch (error) {
+      console.error('Error submitting feedback:', error)
+    }
+
+    setTimeout(() => router.push('/dashboard'), 1000)
+  }
+
+  function skipFeedback() {
+    setFeedbackModal(false)
+    router.push('/dashboard')
   }
 
   async function reportUser() {
@@ -465,11 +491,11 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
           </div>
         )}
 
-        {/* Session ended by other party */}
-        {sessionEndedByOther && (
+        {/* Session ended by other party (shown when feedback modal not yet displayed) */}
+        {sessionEndedByOther && !feedbackModal && (
           <div className="bg-amber-50 border-b border-amber-200 px-4 py-3 text-center">
             <p className="text-amber-800 font-medium text-sm">
-              {otherUserName} has ended this session. Returning to dashboard...
+              {otherUserName} has ended this session.
             </p>
           </div>
         )}
@@ -714,6 +740,55 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
             </div>
           )}
         </Modal>
+
+        {/* Session Feedback Modal */}
+        {feedbackModal && (
+          <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl p-6 sm:p-8 max-w-sm w-full shadow-2xl text-center">
+              {feedbackSubmitted ? (
+                <div className="py-4">
+                  <span className="text-5xl block mb-3">🙏</span>
+                  <Body18 className="font-bold text-gray-900 mb-2">Thank you!</Body18>
+                  <Body16 className="text-gray-600">Your feedback helps our community.</Body16>
+                  <Body16 className="text-gray-400 text-sm mt-2">Returning to dashboard...</Body16>
+                </div>
+              ) : (
+                <>
+                  <span className="text-5xl block mb-3">💬</span>
+                  <Body18 className="font-bold text-gray-900 mb-2">Session Ended</Body18>
+                  {sessionEndedByOther && (
+                    <Body16 className="text-amber-700 text-sm mb-2">
+                      {otherUserName} ended this session.
+                    </Body16>
+                  )}
+                  <Body16 className="text-gray-600 mb-6">
+                    Was this conversation helpful?
+                  </Body16>
+                  <div className="flex gap-3 justify-center mb-4">
+                    <button
+                      onClick={() => submitFeedback(true)}
+                      className="min-h-[44px] flex-1 px-5 py-3 bg-green-50 border-2 border-green-200 text-green-700 rounded-xl font-semibold hover:bg-green-100 hover:border-green-300 transition-all text-lg"
+                    >
+                      👍 Yes
+                    </button>
+                    <button
+                      onClick={() => submitFeedback(false)}
+                      className="min-h-[44px] flex-1 px-5 py-3 bg-gray-50 border-2 border-gray-200 text-gray-600 rounded-xl font-semibold hover:bg-gray-100 hover:border-gray-300 transition-all text-lg"
+                    >
+                      👎 No
+                    </button>
+                  </div>
+                  <button
+                    onClick={skipFeedback}
+                    className="text-sm text-gray-400 hover:text-gray-600 transition"
+                  >
+                    Skip
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        )}
       </main>
     </>
   )
