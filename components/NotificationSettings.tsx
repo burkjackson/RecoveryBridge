@@ -382,14 +382,6 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
 
       {/* Always Available Toggle - Peer Support Model */}
       <div className="mt-4 p-4 bg-white rounded-lg border border-gray-200">
-          {!isPWA && isMobile && (
-            <div className="bg-yellow-50 border-l-4 border-yellow-500 p-3 rounded mb-3">
-              <Body16 className="text-sm text-yellow-800">
-                ⚠️ <strong>Not running as PWA:</strong> Always Available mode only works when RecoveryBridge is opened as a Progressive Web App from your home screen.
-              </Body16>
-            </div>
-          )}
-          
           <div className="flex items-start space-x-3">
             <input
               type="checkbox"
@@ -413,24 +405,39 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
                   onClick={() => setShowAlwaysAvailableInfo(!showAlwaysAvailableInfo)}
                   className="text-gray-500 text-sm flex items-center gap-1 hover:text-gray-700 transition-colors"
                   type="button"
+                  aria-expanded={showAlwaysAvailableInfo}
+                  aria-label="Toggle Always Available details"
                 >
                   <span>{showAlwaysAvailableInfo ? '▲' : '▼'}</span>
                 </button>
               </div>
-              {!isSubscribed && (
-                <Body16 className="text-sm text-amber-600 font-medium mt-1">
-                  Enable push notifications above to use this feature.
-                </Body16>
-              )}
-              {isSubscribed && profile?.role_state !== 'available' && (
-                <Body16 className="text-sm text-amber-600 font-medium mt-1">
-                  Switch to "Available to Listen" mode on your dashboard to enable this.
-                </Body16>
-              )}
+
+              {/* Collapsible dropdown content */}
               {showAlwaysAvailableInfo && (
-                <Body16 className="text-sm text-gray-600 mt-2">
-                  When you're marked as "Available to Listen", this keeps you online indefinitely. You'll receive push notifications when someone needs support, even when the app is closed.
-                </Body16>
+                <div className="mt-3 space-y-2">
+                  <Body16 className="text-sm text-gray-600">
+                    When you're marked as "Available to Listen", this keeps you online indefinitely. You'll receive push notifications when someone needs support, even when the app is closed.
+                  </Body16>
+
+                  {!isPWA && isMobile && (
+                    <div className="bg-yellow-50 border-l-4 border-yellow-500 p-3 rounded">
+                      <Body16 className="text-sm text-yellow-800">
+                        ⚠️ <strong>Not running as PWA:</strong> Always Available mode only works when RecoveryBridge is opened as a Progressive Web App from your home screen.
+                      </Body16>
+                    </div>
+                  )}
+
+                  {!isSubscribed && (
+                    <Body16 className="text-sm text-amber-600 font-medium">
+                      Enable push notifications above to use this feature.
+                    </Body16>
+                  )}
+                  {isSubscribed && profile?.role_state !== 'available' && (
+                    <Body16 className="text-sm text-amber-600 font-medium">
+                      Switch to "Available to Listen" mode on your dashboard to enable this.
+                    </Body16>
+                  )}
+                </div>
               )}
             </div>
           </div>
