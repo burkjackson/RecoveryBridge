@@ -90,6 +90,15 @@ export interface PushSubscription {
   created_at: string
 }
 
+export interface SessionFeedback {
+  id: string
+  session_id: string
+  from_user_id: string
+  to_user_id: string
+  helpful: boolean
+  created_at: string
+}
+
 // Type for profile update operations
 export interface ProfileUpdateData {
   role_state?: Profile['role_state']
@@ -141,6 +150,11 @@ export type Database = {
         Row: PushSubscription
         Insert: Omit<PushSubscription, 'id' | 'created_at'>
         Update: Partial<Omit<PushSubscription, 'id' | 'created_at'>>
+      }
+      session_feedback: {
+        Row: SessionFeedback
+        Insert: Omit<SessionFeedback, 'id' | 'created_at'>
+        Update: Partial<Omit<SessionFeedback, 'id' | 'created_at'>>
       }
     }
   }

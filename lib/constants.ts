@@ -77,6 +77,33 @@ export const VALIDATION = {
   MAX_TAGLINE_LENGTH: 100,
 } as const
 
+// Specialty tags for listener matching & discovery
+export const SPECIALTY_TAGS = [
+  'Early Recovery',
+  'Long-Term Recovery',
+  'Relapse Prevention',
+  'Grief & Loss',
+  'Family Issues',
+  'Trauma',
+  'Anxiety & Depression',
+  'Substance Use',
+  'Alcohol',
+  'Codependency',
+  'Self-Care',
+  'Spirituality',
+  'Career & Purpose',
+  'Relationships',
+  'Parenting in Recovery',
+  'Veterans',
+  'LGBTQ+',
+  'Young Adults',
+] as const
+
+export type SpecialtyTag = typeof SPECIALTY_TAGS[number]
+
+// Maximum number of tags a listener can select
+export const MAX_SPECIALTY_TAGS = 5
+
 // Export a helper to get time ago in minutes
 export function getMinutesAgo(timestamp: string | Date): number {
   const date = typeof timestamp === 'string' ? new Date(timestamp) : timestamp

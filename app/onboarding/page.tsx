@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { Heading1, Body16, Body18 } from '@/components/ui/Typography'
+import TagSelector from '@/components/TagSelector'
 
 export default function OnboardingPage() {
   const [step, setStep] = useState(1)
@@ -11,6 +12,7 @@ export default function OnboardingPage() {
   const [displayName, setDisplayName] = useState('')
   const [bio, setBio] = useState('')
   const [userRole, setUserRole] = useState('')
+  const [tags, setTags] = useState<string[]>([])
   const [agreedToGuidelines, setAgreedToGuidelines] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -90,6 +92,7 @@ export default function OnboardingPage() {
           bio,
           user_role: userRole,
           role_state: 'offline',
+          tags: tags.length > 0 ? tags : null,
         })
         .eq('id', userId)
 
@@ -276,6 +279,20 @@ export default function OnboardingPage() {
               <Body16 className="mt-2 text-gray-500 text-sm italic">
                 This appears on your profile and helps others connect with you.
               </Body16>
+            </div>
+
+            {/* Specialty Tags */}
+            <div className="mb-8">
+              <label className="block mb-2 text-sm font-medium text-gray-700">
+                Specialty Tags <span className="text-gray-400 font-normal">(optional)</span>
+              </label>
+              <Body16 className="text-gray-500 text-sm mb-3">
+                Select topics you relate to or can offer support with. This helps match you with the right people.
+              </Body16>
+              <TagSelector
+                selectedTags={tags}
+                onChange={setTags}
+              />
             </div>
 
             {error && (

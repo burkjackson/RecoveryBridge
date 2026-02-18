@@ -9,6 +9,7 @@ import Modal from '@/components/Modal'
 import { SkeletonProfile } from '@/components/Skeleton'
 import Footer from '@/components/Footer'
 import NotificationSettings from '@/components/NotificationSettings'
+import TagSelector from '@/components/TagSelector'
 import type { Profile } from '@/lib/types/database'
 
 export default function ProfilePage() {
@@ -18,6 +19,9 @@ export default function ProfilePage() {
   const [editValue, setEditValue] = useState('')
   const [saving, setSaving] = useState(false)
   const [errorModal, setErrorModal] = useState({ show: false, message: '' })
+  const [editingTags, setEditingTags] = useState(false)
+  const [pendingTags, setPendingTags] = useState<string[]>([])
+  const [savingTags, setSavingTags] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [deleteConfirmText, setDeleteConfirmText] = useState('')
   const [deleting, setDeleting] = useState(false)
@@ -92,6 +96,26 @@ export default function ProfilePage() {
   function cancelEditing() {
     setEditingField(null)
     setEditValue('')
+  }
+
+  async function handleSaveTags() {
+    if (!profile) return
+    setSavingTags(true)
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ tags: pendingTags })
+        .eq('id', profile.id)
+
+      if (error) throw error
+      setProfile({ ...profile, tags: pendingTags })
+      setEditingTags(false)
+    } catch (error) {
+      console.error('Error saving tags:', error)
+      setErrorModal({ show: true, message: 'We couldn\'t save your tags right now. Please try again.' })
+    } finally {
+      setSavingTags(false)
+    }
   }
 
   async function handleSignOut() {
@@ -447,6 +471,68 @@ export default function ProfilePage() {
                 {profile.user_role === 'ally' && 'Recovery Support (Legacy)'}
                 {!profile.user_role && 'Not set'}
               </Body18>
+            )}
+          </div>
+        </div>
+
+          {/* Specialty Tags */}
+          <div className="bg-white rounded-lg shadow-sm p-5 hover:shadow-md transition-all">
+            <div className="flex justify-between items-center mb-2">
+              <Body16 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Specialty Tags</Body16>
+              {!editingTags && (
+                <button
+                  onClick={() => {
+                    setPendingTags(profile.tags || [])
+                    setEditingTags(true)
+                  }}
+                  className="text-gray-400 hover:text-rb-blue transition"
+                  aria-label="Edit specialty tags"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                  </svg>
+                </button>
+              )}
+            </div>
+            {editingTags ? (
+              <div className="space-y-3">
+                <Body16 className="text-sm text-gray-600">
+                  Select topics you can help with. This helps seekers find the right listener.
+                </Body16>
+                <TagSelector
+                  selectedTags={pendingTags}
+                  onChange={setPendingTags}
+                />
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleSaveTags}
+                    disabled={savingTags}
+                    className="px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800 disabled:opacity-50 transition-all"
+                  >
+                    {savingTags ? 'Saving...' : 'Save'}
+                  </button>
+                  <button
+                    onClick={() => setEditingTags(false)}
+                    className="px-4 py-2 border border-gray-200 rounded-lg text-sm font-medium hover:bg-gray-50 transition"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div>
+                {profile.tags && profile.tags.length > 0 ? (
+                  <div className="flex flex-wrap gap-1.5">
+                    {profile.tags.map(tag => (
+                      <span key={tag} className="px-2.5 py-1 rounded-full text-xs font-medium bg-rb-blue/10 text-rb-blue">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <Body16 className="text-gray-500 italic text-sm">No specialty tags set</Body16>
+                )}
+              </div>
             )}
           </div>
         </div>

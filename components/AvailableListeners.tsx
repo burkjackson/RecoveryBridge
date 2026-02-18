@@ -11,6 +11,7 @@ interface Listener {
   display_name: string
   bio: string | null
   tagline: string | null
+  tags: string[] | null
   avatar_url: string | null
   user_role: string
   always_available: boolean
@@ -59,7 +60,7 @@ export default function AvailableListeners() {
 
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, display_name, bio, tagline, avatar_url, user_role, last_heartbeat_at, always_available')
+        .select('id, display_name, bio, tagline, tags, avatar_url, user_role, last_heartbeat_at, always_available')
         .eq('role_state', 'available')
         .neq('id', user?.id || '') // Exclude current user
 
@@ -197,6 +198,18 @@ export default function AvailableListeners() {
               <Body16 className="text-sm text-gray-600 truncate">
                 {getDisplayMessage(listener.tagline, listener.bio)}
               </Body16>
+              {listener.tags && listener.tags.length > 0 && (
+                <div className="flex flex-wrap gap-1 mt-1">
+                  {listener.tags.slice(0, 3).map(tag => (
+                    <span key={tag} className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-rb-blue/10 text-rb-blue">
+                      {tag}
+                    </span>
+                  ))}
+                  {listener.tags.length > 3 && (
+                    <span className="text-[10px] text-gray-400">+{listener.tags.length - 3}</span>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Online indicator */}
