@@ -8,13 +8,14 @@ import Modal from '@/components/Modal'
 import { SkeletonChatMessage } from '@/components/Skeleton'
 import ErrorState from '@/components/ErrorState'
 import { PrivacyBadge } from '@/components/Footer'
-import { TIME } from '@/lib/constants'
+import { TIME, CONVERSATION_STARTERS, REACTIONS } from '@/lib/constants'
 
 interface Message {
   id: string
   sender_id: string
   content: string
   created_at: string
+  read_at: string | null
 }
 
 interface Session {
@@ -22,6 +23,15 @@ interface Session {
   listener_id: string
   seeker_id: string
   status: string
+  started_at: string
+  ended_at: string | null
+}
+
+interface Reaction {
+  id: string
+  message_id: string
+  user_id: string
+  reaction: 'heart' | 'hug' | 'pray'
 }
 
 export default function ChatPage({ params }: { params: Promise<{ id: string }> }) {
@@ -60,6 +70,16 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   const inactivityWarningTime = TIME.INACTIVITY_WARNING_MS
   const autoCloseTime = TIME.INACTIVITY_AUTO_CLOSE_MS
 
+  // --- V2: Typing indicators ---
+  const [isOtherTyping, setIsOtherTyping] = useState(false)
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const lastTypingSentRef = useRef(0)
+  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null)
+
+  // --- V2: Reactions ---
+  const [reactions, setReactions] = useState<Reaction[]>([])
+  const [reactionPickerMessageId, setReactionPickerMessageId] = useState<string | null>(null)
+
   useEffect(() => {
     params.then(({ id }) => setSessionId(id))
   }, [params])
@@ -73,6 +93,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   useEffect(() => {
     if (session && currentUserId) {
       loadMessages()
+      loadReactions()
       const cleanup = subscribeToMessages()
       return cleanup
     }
@@ -81,6 +102,21 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   useEffect(() => {
     scrollToBottom()
   }, [messages])
+
+  // Mark received messages as read when they appear
+  useEffect(() => {
+    if (messages.length > 0 && currentUserId && session?.status === 'active') {
+      markMessagesAsRead()
+    }
+  }, [messages, currentUserId])
+
+  // Close reaction picker when tapping outside
+  useEffect(() => {
+    if (!reactionPickerMessageId) return
+    function handleClick() { setReactionPickerMessageId(null) }
+    document.addEventListener('click', handleClick)
+    return () => document.removeEventListener('click', handleClick)
+  }, [reactionPickerMessageId])
 
   // Define callbacks BEFORE useEffects that use them
   const endSessionDueToInactivity = useCallback(async () => {
@@ -207,6 +243,64 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
     }
   }
 
+  // --- V2: Load reactions for this session's messages ---
+  async function loadReactions() {
+    try {
+      // Get all message IDs for this session, then load their reactions
+      const { data: msgs } = await supabase
+        .from('messages')
+        .select('id')
+        .eq('session_id', sessionId)
+
+      if (!msgs || msgs.length === 0) return
+
+      const messageIds = msgs.map((m) => m.id)
+      const { data, error } = await supabase
+        .from('message_reactions')
+        .select('*')
+        .in('message_id', messageIds)
+
+      if (error) throw error
+      setReactions(data || [])
+    } catch (error) {
+      console.error('Error loading reactions:', error)
+    }
+  }
+
+  // --- V2: Mark unread received messages as read ---
+  async function markMessagesAsRead() {
+    const unreadFromOther = messages.filter(
+      (m) => m.sender_id !== currentUserId && !m.read_at
+    )
+    if (unreadFromOther.length === 0) return
+
+    const now = new Date().toISOString()
+    const ids = unreadFromOther.map((m) => m.id)
+
+    try {
+      await supabase
+        .from('messages')
+        .update({ read_at: now })
+        .in('id', ids)
+
+      // Update local state immediately
+      setMessages((prev) =>
+        prev.map((m) =>
+          ids.includes(m.id) ? { ...m, read_at: now } : m
+        )
+      )
+
+      // Broadcast read event so sender sees checkmarks update instantly
+      channelRef.current?.send({
+        type: 'broadcast',
+        event: 'read',
+        payload: { reader_id: currentUserId, message_ids: ids },
+      })
+    } catch (error) {
+      console.error('Error marking messages as read:', error)
+    }
+  }
+
   function subscribeToMessages() {
     const channel = supabase
       .channel(`session-and-messages:${sessionId}`)
@@ -222,6 +316,10 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
           const newMsg = payload.new as Record<string, unknown>
           if (newMsg.id && newMsg.sender_id && newMsg.content && newMsg.created_at) {
             setMessages((current) => [...current, newMsg as unknown as Message])
+            // Clear typing indicator when a message arrives from the other user
+            if (newMsg.sender_id !== currentUserId) {
+              setIsOtherTyping(false)
+            }
           }
         }
       )
@@ -246,11 +344,115 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
           }
         }
       )
+      // --- V2: Reactions realtime ---
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'message_reactions',
+        },
+        (payload) => {
+          if (payload.eventType === 'INSERT') {
+            const newReaction = payload.new as unknown as Reaction
+            setReactions((prev) => [...prev, newReaction])
+          } else if (payload.eventType === 'DELETE') {
+            const oldReaction = payload.old as { id?: string }
+            if (oldReaction.id) {
+              setReactions((prev) => prev.filter((r) => r.id !== oldReaction.id))
+            }
+          }
+        }
+      )
+      // --- V2: Typing indicator broadcast ---
+      .on('broadcast', { event: 'typing' }, (payload) => {
+        const data = payload.payload as { user_id?: string }
+        if (data.user_id && data.user_id !== currentUserId) {
+          setIsOtherTyping(true)
+          // Clear after timeout
+          if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current)
+          typingTimeoutRef.current = setTimeout(() => {
+            setIsOtherTyping(false)
+          }, TIME.TYPING_TIMEOUT_MS)
+        }
+      })
+      // --- V2: Read receipt broadcast ---
+      .on('broadcast', { event: 'read' }, (payload) => {
+        const data = payload.payload as { reader_id?: string; message_ids?: string[] }
+        if (data.reader_id && data.reader_id !== currentUserId && data.message_ids) {
+          const now = new Date().toISOString()
+          setMessages((prev) =>
+            prev.map((m) =>
+              data.message_ids!.includes(m.id) ? { ...m, read_at: now } : m
+            )
+          )
+        }
+      })
       .subscribe()
 
+    channelRef.current = channel
+
     return () => {
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current)
       supabase.removeChannel(channel)
     }
+  }
+
+  // --- V2: Broadcast typing event (throttled) ---
+  function broadcastTyping() {
+    const now = Date.now()
+    if (now - lastTypingSentRef.current < TIME.TYPING_THROTTLE_MS) return
+    lastTypingSentRef.current = now
+
+    channelRef.current?.send({
+      type: 'broadcast',
+      event: 'typing',
+      payload: { user_id: currentUserId },
+    })
+  }
+
+  // --- V2: Toggle reaction on a message ---
+  async function toggleReaction(messageId: string, reactionKey: string) {
+    if (!currentUserId) return
+
+    const existing = reactions.find(
+      (r) => r.message_id === messageId && r.user_id === currentUserId && r.reaction === reactionKey
+    )
+
+    try {
+      if (existing) {
+        await supabase.from('message_reactions').delete().eq('id', existing.id)
+        setReactions((prev) => prev.filter((r) => r.id !== existing.id))
+      } else {
+        const { data, error } = await supabase
+          .from('message_reactions')
+          .insert({ message_id: messageId, user_id: currentUserId, reaction: reactionKey })
+          .select()
+          .single()
+
+        if (error) throw error
+        if (data) setReactions((prev) => [...prev, data as Reaction])
+      }
+    } catch (error) {
+      console.error('Error toggling reaction:', error)
+    }
+
+    setReactionPickerMessageId(null)
+  }
+
+  // --- V2: Session duration helper ---
+  function getSessionDuration(): string {
+    if (!session) return ''
+    const start = new Date(session.started_at).getTime()
+    const end = session.ended_at ? new Date(session.ended_at).getTime() : Date.now()
+    const diffMs = end - start
+    const mins = Math.floor(diffMs / 60000)
+    if (mins < 1) return 'Less than a minute'
+    if (mins === 1) return '1 minute'
+    if (mins < 60) return `${mins} minutes`
+    const hrs = Math.floor(mins / 60)
+    const remainMins = mins % 60
+    return remainMins > 0 ? `${hrs}h ${remainMins}m` : `${hrs}h`
   }
 
   async function sendMessage(e: React.FormEvent) {
@@ -378,6 +580,18 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
 
   function scrollToBottom() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }
+
+  // Helper: get reactions grouped for a specific message
+  function getReactionsForMessage(messageId: string) {
+    const msgReactions = reactions.filter((r) => r.message_id === messageId)
+    const grouped: Record<string, { count: number; byMe: boolean }> = {}
+    for (const r of msgReactions) {
+      if (!grouped[r.reaction]) grouped[r.reaction] = { count: 0, byMe: false }
+      grouped[r.reaction].count++
+      if (r.user_id === currentUserId) grouped[r.reaction].byMe = true
+    }
+    return grouped
   }
 
   if (loading) {
@@ -509,34 +723,137 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
         >
           <div className="max-w-4xl mx-auto space-y-3">
             {messages.length === 0 ? (
-              <div className="bg-white rounded-lg p-8 text-center shadow-sm">
-                <Body16 className="text-gray-600">No messages yet. Say hello!</Body16>
+              /* --- V2: Conversation Starters --- */
+              <div className="bg-white rounded-lg p-6 shadow-sm">
+                <Body16 className="text-gray-500 text-center mb-4">Start the conversation with a prompt:</Body16>
+                <div className="flex flex-wrap gap-2 justify-center">
+                  {CONVERSATION_STARTERS.map((starter) => (
+                    <button
+                      key={starter}
+                      onClick={() => setNewMessage(starter)}
+                      className="px-4 py-2.5 bg-blue-50 text-rb-blue border border-blue-200 rounded-full text-sm font-medium hover:bg-blue-100 hover:border-blue-300 transition-all min-h-[44px]"
+                    >
+                      {starter}
+                    </button>
+                  ))}
+                </div>
               </div>
             ) : (
-              messages.map((message) => (
-                <div
-                  key={message.id}
-                  className={`flex ${message.sender_id === currentUserId ? 'justify-end animate-slide-in-right' : 'justify-start animate-slide-in-left'}`}
-                >
+              messages.map((message) => {
+                const isOwn = message.sender_id === currentUserId
+                const msgReactions = getReactionsForMessage(message.id)
+                const hasReactions = Object.keys(msgReactions).length > 0
+
+                return (
                   <div
-                    className={`max-w-[70%] sm:max-w-md px-4 py-3 rounded-2xl shadow-md ${
-                      message.sender_id === currentUserId
-                        ? 'bg-rb-blue text-white'
-                        : 'bg-gray-800 text-white'
-                    }`}
-                    role="article"
-                    aria-label={`Message from ${message.sender_id === currentUserId ? 'you' : otherUserName}`}
+                    key={message.id}
+                    className={`flex ${isOwn ? 'justify-end animate-slide-in-right' : 'justify-start animate-slide-in-left'}`}
                   >
-                    <Body16 className="!text-white">
-                      {message.content}
-                    </Body16>
-                    <p className="text-xs mt-1 !text-white/80">
-                      {new Date(message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </p>
+                    <div className="relative max-w-[70%] sm:max-w-md">
+                      <div
+                        className={`px-4 py-3 rounded-2xl shadow-md ${
+                          isOwn
+                            ? 'bg-rb-blue text-white'
+                            : 'bg-gray-800 text-white'
+                        }`}
+                        role="article"
+                        aria-label={`Message from ${isOwn ? 'you' : otherUserName}`}
+                        onDoubleClick={(e) => {
+                          e.stopPropagation()
+                          setReactionPickerMessageId(
+                            reactionPickerMessageId === message.id ? null : message.id
+                          )
+                        }}
+                      >
+                        <Body16 className="!text-white">
+                          {message.content}
+                        </Body16>
+                        <div className="flex items-center justify-end gap-1 mt-1">
+                          <p className="text-xs !text-white/80">
+                            {new Date(message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </p>
+                          {/* --- V2: Read receipt checkmarks (own messages only) --- */}
+                          {isOwn && (
+                            <span className="text-xs ml-0.5" aria-label={message.read_at ? 'Read' : 'Sent'}>
+                              {message.read_at ? (
+                                // Double check — read
+                                <svg width="16" height="11" viewBox="0 0 16 11" fill="none" className="inline-block">
+                                  <path d="M1 5.5L4.5 9L11 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                                  <path d="M5 5.5L8.5 9L15 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                                </svg>
+                              ) : (
+                                // Single check — sent
+                                <svg width="12" height="11" viewBox="0 0 12 11" fill="none" className="inline-block">
+                                  <path d="M1 5.5L4.5 9L11 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" opacity="0.7" />
+                                </svg>
+                              )}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* --- V2: Reaction picker popover --- */}
+                      {reactionPickerMessageId === message.id && (
+                        <div
+                          className={`absolute ${isOwn ? 'right-0' : 'left-0'} -top-12 bg-white rounded-full shadow-lg border border-gray-200 flex gap-1 p-1.5 z-10`}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {REACTIONS.map((r) => (
+                            <button
+                              key={r.key}
+                              onClick={() => toggleReaction(message.id, r.key)}
+                              className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full hover:bg-gray-100 transition-all text-xl"
+                              aria-label={r.label}
+                              title={r.label}
+                            >
+                              {r.emoji}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* --- V2: Reaction pills below message --- */}
+                      {hasReactions && (
+                        <div className={`flex gap-1 mt-1 ${isOwn ? 'justify-end' : 'justify-start'}`}>
+                          {REACTIONS.filter((r) => msgReactions[r.key]).map((r) => (
+                            <button
+                              key={r.key}
+                              onClick={() => toggleReaction(message.id, r.key)}
+                              className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs border transition-all ${
+                                msgReactions[r.key].byMe
+                                  ? 'bg-blue-50 border-blue-300 text-blue-700'
+                                  : 'bg-gray-50 border-gray-200 text-gray-600'
+                              }`}
+                              aria-label={`${r.label} ${msgReactions[r.key].count}`}
+                            >
+                              <span>{r.emoji}</span>
+                              <span>{msgReactions[r.key].count}</span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )
+              })
+            )}
+
+            {/* --- V2: Typing indicator --- */}
+            {isOtherTyping && (
+              <div className="flex justify-start animate-slide-in-left">
+                <div className="bg-gray-800 text-white px-4 py-3 rounded-2xl shadow-md">
+                  <div className="flex items-center gap-2">
+                    <Body16 className="!text-white/80 text-sm">{otherUserName} is typing</Body16>
+                    <span className="typing-dots">
+                      <span className="dot" />
+                      <span className="dot" />
+                      <span className="dot" />
+                    </span>
                   </div>
                 </div>
-              ))
+              </div>
             )}
+
             <div ref={messagesEndRef} />
 
             {/* Send Error */}
@@ -566,7 +883,10 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                 id="message-input"
                 type="text"
                 value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
+                onChange={(e) => {
+                  setNewMessage(e.target.value)
+                  if (e.target.value.trim()) broadcastTyping()
+                }}
                 placeholder="Type a message..."
                 className="flex-1 px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rb-blue focus:border-transparent transition-all"
                 disabled={sending}
@@ -761,6 +1081,16 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                       {otherUserName} ended this session.
                     </Body16>
                   )}
+
+                  {/* --- V2: Session Summary Card --- */}
+                  <div className="bg-gray-50 rounded-lg p-3 mb-4 text-sm text-gray-600">
+                    <div className="flex items-center justify-center gap-4">
+                      <span>Duration: {getSessionDuration()}</span>
+                      <span className="text-gray-300">|</span>
+                      <span>{messages.length} message{messages.length !== 1 ? 's' : ''}</span>
+                    </div>
+                  </div>
+
                   <Body16 className="text-gray-600 mb-6">
                     Was this conversation helpful?
                   </Body16>
