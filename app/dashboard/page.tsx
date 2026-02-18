@@ -9,6 +9,7 @@ import ErrorState from '@/components/ErrorState'
 import Footer from '@/components/Footer'
 import NotificationSettings from '@/components/NotificationSettings'
 import AvailableListeners from '@/components/AvailableListeners'
+import PeopleSeeking from '@/components/PeopleSeeking'
 import type { Profile, SessionWithUserName, ProfileUpdateData } from '@/lib/types/database'
 import { TIME } from '@/lib/constants'
 
@@ -428,6 +429,14 @@ export default function DashboardPage() {
             )}
           </button>
         </div>
+
+        {/* People Seeking Support - only visible to available listeners */}
+        {profile && (
+          <PeopleSeeking
+            currentUserId={profile.id}
+            currentRoleState={profile.role_state}
+          />
+        )}
 
         {/* Available Listeners */}
         <AvailableListeners />
