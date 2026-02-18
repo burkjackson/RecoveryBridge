@@ -36,7 +36,7 @@ self.addEventListener('push', (event) => {
     tag: 'recoverybridge-notification',
     requireInteraction: true,
     data: {
-      url: '/dashboard'
+      url: '/listeners'
     }
   }
 
@@ -48,8 +48,8 @@ self.addEventListener('push', (event) => {
         ...notificationData,
         ...data,
         data: {
-          url: data.url || '/dashboard',
-          sessionId: data.sessionId
+          url: data.data?.url || data.url || '/listeners',
+          seekerId: data.data?.seekerId || data.seekerId
         }
       }
     } catch (e) {
@@ -68,7 +68,7 @@ self.addEventListener('notificationclick', (event) => {
 
   event.notification.close()
 
-  const urlToOpen = event.notification.data?.url || '/dashboard'
+  const urlToOpen = event.notification.data?.url || '/listeners'
 
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
