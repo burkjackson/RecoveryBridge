@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { Heading1, Body16, Body18 } from '@/components/ui/Typography'
@@ -18,8 +18,14 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
   const [activeSessions, setActiveSessions] = useState<SessionWithUserName[]>([])
   const [error, setError] = useState<{ show: boolean; message: string; action?: () => void }>({ show: false, message: '' })
+  const profileRef = useRef<Profile | null>(null)
   const router = useRouter()
   const supabase = createClient()
+
+  // Keep profileRef in sync for use in realtime callbacks
+  useEffect(() => {
+    profileRef.current = profile
+  }, [profile])
 
   useEffect(() => {
     loadProfile()
@@ -36,8 +42,17 @@ export default function DashboardPage() {
           schema: 'public',
           table: 'sessions'
         },
-        () => {
+        (payload) => {
           loadActiveSessions()
+          // Auto-navigate seeker to chat when a listener connects with them
+          const newSession = payload.new as Record<string, unknown>
+          if (
+            profileRef.current?.role_state === 'requesting' &&
+            newSession.seeker_id === profileRef.current?.id &&
+            newSession.status === 'active'
+          ) {
+            router.push(`/chat/${newSession.id}`)
+          }
         }
       )
       .on(
@@ -240,12 +255,12 @@ export default function DashboardPage() {
       }
 
       // If requesting support, send notifications to available listeners
+      // Seeker stays on dashboard — auto-navigates to chat when a listener connects
       if (newState === 'requesting') {
         try {
           const { data: { session } } = await supabase.auth.getSession()
           if (!session) {
             console.error('No session found for notification')
-            router.push('/listeners')
             return
           }
 
@@ -262,13 +277,11 @@ export default function DashboardPage() {
           })
 
           const result = await response.json()
-          // Notifications sent successfully
+          // Notifications sent successfully — seeker waits on dashboard
         } catch (notifError) {
           console.error('Failed to send notifications:', notifError)
           // Don't block the user flow if notifications fail
         }
-
-        router.push('/listeners')
       }
     } catch (error) {
       console.error('Error updating role state:', error)
