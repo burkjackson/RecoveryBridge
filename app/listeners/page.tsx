@@ -31,8 +31,9 @@ export default function ListenersPage() {
   const [previewProfile, setPreviewProfile] = useState<Listener | null>(null)
   const [previewModal, setPreviewModal] = useState(false)
   const isConnecting = useRef(false)
+  const currentUserIdRef = useRef<string | null>(null)
   const router = useRouter()
-  const supabase = createClient()
+  const [supabase] = useState(() => createClient())
 
   // Filter state
   const [searchQuery, setSearchQuery] = useState('')
@@ -44,6 +45,34 @@ export default function ListenersPage() {
     loadAvailableListeners()
   }, [])
 
+  // Real-time: refresh listener list when profiles change (role_state, heartbeat, etc.)
+  useEffect(() => {
+    const channel = supabase
+      .channel('listeners-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'profiles',
+        },
+        (payload) => {
+          const updated = payload.new as Record<string, unknown>
+          // Skip updates from the current user
+          if (updated.id === currentUserIdRef.current) return
+          // Refresh the list when a listener's availability changes
+          if ('role_state' in payload.old || 'always_available' in payload.old || 'last_heartbeat_at' in payload.old) {
+            loadAvailableListeners()
+          }
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [supabase])
+
   async function loadAvailableListeners() {
     try {
       const { data: { user } } = await supabase.auth.getUser()
@@ -51,6 +80,7 @@ export default function ListenersPage() {
         router.push('/login')
         return
       }
+      currentUserIdRef.current = user.id
 
       // Load current user's tags for "recommended" matching
       const { data: myProfile } = await supabase

@@ -80,6 +80,9 @@ export const VALIDATION = {
 
   /** Maximum tagline length (matches SQL CHECK constraint) */
   MAX_TAGLINE_LENGTH: 60,
+
+  /** Maximum chat message length */
+  MAX_MESSAGE_LENGTH: 2000,
 } as const
 
 // Specialty tags for listener matching & discovery

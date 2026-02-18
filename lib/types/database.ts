@@ -22,9 +22,8 @@ export interface Session {
   listener_id: string
   seeker_id: string
   status: 'active' | 'ended'
-  started_at: string
   ended_at: string | null
-  created_at?: string
+  created_at: string
   updated_at?: string
 }
 
