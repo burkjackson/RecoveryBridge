@@ -25,6 +25,11 @@ export const TIME = {
 
   /** Session cleanup: Close sessions with no activity after this time (30 minutes) */
   CLEANUP_INACTIVE_MS: 30 * 60 * 1000,
+  /** Debounce time before "stopped typing" indicator clears (2 seconds) */
+  TYPING_TIMEOUT_MS: 2 * 1000,
+
+  /** Minimum interval between typing broadcast events (500ms) */
+  TYPING_THROTTLE_MS: 500,
 } as const
 
 // Convert time constants to minutes for easier reference
@@ -103,6 +108,23 @@ export type SpecialtyTag = typeof SPECIALTY_TAGS[number]
 
 // Maximum number of tags a listener can select
 export const MAX_SPECIALTY_TAGS = 5
+
+// Conversation starter prompts for new chat sessions
+export const CONVERSATION_STARTERS = [
+  "How are you feeling today?",
+  "What's been on your mind lately?",
+  "Is there something specific you'd like to talk about?",
+  "How has your recovery journey been going?",
+  "What's one thing you're grateful for today?",
+  "Is there anything you'd like support with right now?",
+] as const
+
+// Quick reactions for chat messages (recovery-context appropriate)
+export const REACTIONS = [
+  { key: 'heart', emoji: '\u2764\uFE0F', label: 'Heart' },
+  { key: 'hug', emoji: '\uD83E\uDD17', label: 'Hug' },
+  { key: 'pray', emoji: '\uD83D\uDE4F', label: 'Prayer hands' },
+] as const
 
 // Export a helper to get time ago in minutes
 export function getMinutesAgo(timestamp: string | Date): number {

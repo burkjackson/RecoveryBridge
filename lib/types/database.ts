@@ -38,6 +38,7 @@ export interface ChatMessage {
   sender_id: string
   content: string
   created_at: string
+  read_at: string | null
 }
 
 export interface Report {
@@ -99,6 +100,14 @@ export interface SessionFeedback {
   created_at: string
 }
 
+export interface MessageReaction {
+  id: string
+  message_id: string
+  user_id: string
+  reaction: 'heart' | 'hug' | 'pray'
+  created_at: string
+}
+
 // Type for profile update operations
 export interface ProfileUpdateData {
   role_state?: Profile['role_state']
@@ -155,6 +164,11 @@ export type Database = {
         Row: SessionFeedback
         Insert: Omit<SessionFeedback, 'id' | 'created_at'>
         Update: Partial<Omit<SessionFeedback, 'id' | 'created_at'>>
+      }
+      message_reactions: {
+        Row: MessageReaction
+        Insert: Omit<MessageReaction, 'id' | 'created_at'>
+        Update: Partial<Omit<MessageReaction, 'id' | 'created_at'>>
       }
     }
   }
