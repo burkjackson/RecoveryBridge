@@ -29,6 +29,7 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
   const [error, setError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [alwaysAvailable, setAlwaysAvailable] = useState(profile?.always_available || false)
+  const [showAlwaysAvailableInfo, setShowAlwaysAvailableInfo] = useState(false)
   const [isPWA, setIsPWA] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
   const supabase = createClient()
@@ -381,14 +382,6 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
 
       {/* Always Available Toggle - Peer Support Model */}
       <div className="mt-4 p-4 bg-white rounded-lg border border-gray-200">
-          {!isPWA && isMobile && (
-            <div className="bg-yellow-50 border-l-4 border-yellow-500 p-3 rounded mb-3">
-              <Body16 className="text-sm text-yellow-800">
-                ⚠️ <strong>Not running as PWA:</strong> Always Available mode only works when RecoveryBridge is opened as a Progressive Web App from your home screen.
-              </Body16>
-            </div>
-          )}
-          
           <div className="flex items-start space-x-3">
             <input
               type="checkbox"
@@ -399,27 +392,53 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
               className="mt-1 h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
             />
             <div className="flex-1">
-              <label
-                htmlFor="alwaysAvailable"
-                className={`block font-medium ${
-                  !isSubscribed ? 'text-gray-400' : 'text-gray-900 cursor-pointer'
-                }`}
-              >
-                ⚡ Always Available to Listen
-              </label>
-              <Body16 className="text-sm text-gray-600 mt-1">
-                When you're marked as "Available to Listen", this keeps you online indefinitely. You'll receive push notifications when someone needs support, even when the app is closed.
-                {!isSubscribed && (
-                  <span className="block mt-1 text-amber-600 font-medium">
-                    Enable push notifications above to use this feature.
-                  </span>
-                )}
-                {profile?.role_state !== 'available' && (
-                  <span className="block mt-1 text-amber-600 font-medium">
-                    💡 Switch to "Available to Listen" mode on your dashboard to enable this.
-                  </span>
-                )}
-              </Body16>
+              <div className="flex items-center justify-between">
+                <label
+                  htmlFor="alwaysAvailable"
+                  className={`block font-medium ${
+                    !isSubscribed ? 'text-gray-400' : 'text-gray-900 cursor-pointer'
+                  }`}
+                >
+                  Always Available to Listen
+                </label>
+                <button
+                  onClick={() => setShowAlwaysAvailableInfo(!showAlwaysAvailableInfo)}
+                  className="text-gray-500 text-sm flex items-center gap-1 hover:text-gray-700 transition-colors"
+                  type="button"
+                  aria-expanded={showAlwaysAvailableInfo}
+                  aria-label="Toggle Always Available details"
+                >
+                  <span>{showAlwaysAvailableInfo ? '▲' : '▼'}</span>
+                </button>
+              </div>
+
+              {/* Collapsible dropdown content */}
+              {showAlwaysAvailableInfo && (
+                <div className="mt-3 space-y-2">
+                  <Body16 className="text-sm text-gray-600">
+                    When you're marked as "Available to Listen", this keeps you online indefinitely. You'll receive push notifications when someone needs support, even when the app is closed.
+                  </Body16>
+
+                  {!isPWA && isMobile && (
+                    <div className="bg-yellow-50 border-l-4 border-yellow-500 p-3 rounded">
+                      <Body16 className="text-sm text-yellow-800">
+                        ⚠️ <strong>Not running as PWA:</strong> Always Available mode only works when RecoveryBridge is opened as a Progressive Web App from your home screen.
+                      </Body16>
+                    </div>
+                  )}
+
+                  {!isSubscribed && (
+                    <Body16 className="text-sm text-amber-600 font-medium">
+                      Enable push notifications above to use this feature.
+                    </Body16>
+                  )}
+                  {isSubscribed && profile?.role_state !== 'available' && (
+                    <Body16 className="text-sm text-amber-600 font-medium">
+                      Switch to "Available to Listen" mode on your dashboard to enable this.
+                    </Body16>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>
