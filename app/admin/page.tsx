@@ -231,30 +231,26 @@ export default function AdminPage() {
     }
   }
 
+  async function adminFetch(body: object) {
+    const { data: { session } } = await supabase.auth.getSession()
+    const response = await fetch('/api/admin/actions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session?.access_token}`,
+      },
+      body: JSON.stringify(body),
+    })
+    if (!response.ok) {
+      const data = await response.json()
+      throw new Error(data.error || 'Request failed')
+    }
+    return response.json()
+  }
+
   async function updateReportStatus(reportId: string, status: string, notes?: string) {
     try {
-      const { data: { user } } = await supabase.auth.getUser()
-
-      const { error } = await supabase
-        .from('reports')
-        .update({
-          status,
-          resolved_at: new Date().toISOString(),
-          resolved_by: user?.id,
-          resolution_notes: notes
-        })
-        .eq('id', reportId)
-
-      if (error) throw error
-
-      // Log the action
-      await supabase.from('admin_logs').insert([{
-        admin_id: user?.id,
-        action_type: 'report_updated',
-        target_report_id: reportId,
-        details: { status, notes }
-      }])
-
+      await adminFetch({ action: 'update_report', reportId, status, notes })
       loadReports()
     } catch (error) {
       console.error('Error updating report:', error)
@@ -264,40 +260,7 @@ export default function AdminPage() {
 
   async function blockUser(userId: string, reason: string, blockType: 'temporary' | 'permanent') {
     try {
-      const { data: { user } } = await supabase.auth.getUser()
-
-      const expiresAt = blockType === 'temporary'
-        ? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() // 7 days
-        : null
-
-      const { error } = await supabase
-        .from('user_blocks')
-        .insert([{
-          user_id: userId,
-          blocked_by: user?.id,
-          reason,
-          block_type: blockType,
-          expires_at: expiresAt,
-          is_active: true
-        }])
-
-      if (error) throw error
-
-      // Log the action
-      await supabase.from('admin_logs').insert([{
-        admin_id: user?.id,
-        action_type: 'user_blocked',
-        target_user_id: userId,
-        details: { reason, block_type: blockType }
-      }])
-
-      // End all active sessions for this user
-      await supabase
-        .from('sessions')
-        .update({ status: 'ended', ended_at: new Date().toISOString() })
-        .or(`listener_id.eq.${userId},seeker_id.eq.${userId}`)
-        .eq('status', 'active')
-
+      await adminFetch({ action: 'block_user', userId, reason, blockType })
       loadBlocks()
       setSuccessModal({ show: true, message: 'User has been blocked successfully.' })
       setBlockModal({ show: false, userId: '', userName: '', fromReport: false, reportId: '' })
@@ -310,22 +273,7 @@ export default function AdminPage() {
 
   async function unblockUser(blockId: string) {
     try {
-      const { data: { user } } = await supabase.auth.getUser()
-
-      const { error } = await supabase
-        .from('user_blocks')
-        .update({ is_active: false })
-        .eq('id', blockId)
-
-      if (error) throw error
-
-      // Log the action
-      await supabase.from('admin_logs').insert([{
-        admin_id: user?.id,
-        action_type: 'user_unblocked',
-        details: { block_id: blockId }
-      }])
-
+      await adminFetch({ action: 'unblock_user', blockId })
       loadBlocks()
       setSuccessModal({ show: true, message: 'User has been unblocked successfully.' })
       setUnblockModal({ show: false, blockId: '', userName: '' })
@@ -337,22 +285,7 @@ export default function AdminPage() {
 
   async function endSession(sessionId: string) {
     try {
-      const { data: { user } } = await supabase.auth.getUser()
-
-      const { error } = await supabase
-        .from('sessions')
-        .update({ status: 'ended', ended_at: new Date().toISOString() })
-        .eq('id', sessionId)
-
-      if (error) throw error
-
-      // Log the action
-      await supabase.from('admin_logs').insert([{
-        admin_id: user?.id,
-        action_type: 'session_ended',
-        target_session_id: sessionId
-      }])
-
+      await adminFetch({ action: 'end_session', sessionId })
       loadSessions()
       setSuccessModal({ show: true, message: 'Session has been ended successfully.' })
       setEndSessionModal({ show: false, sessionId: '', participants: '' })
@@ -385,23 +318,21 @@ export default function AdminPage() {
 
     // Proceed with deletion
     try {
-      const { data: { user } } = await supabase.auth.getUser()
+      const { data: { session } } = await supabase.auth.getSession()
 
-      // Log the action before deletion
-      await supabase.from('admin_logs').insert([{
-        admin_id: user?.id,
-        action_type: 'user_deleted',
-        target_user_id: userId,
-        details: { display_name: displayName }
-      }])
+      const response = await fetch('/api/admin/delete-user', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`,
+        },
+        body: JSON.stringify({ targetUserId: userId }),
+      })
 
-      // Delete the user (cascades to sessions, messages, etc.)
-      const { error } = await supabase
-        .from('profiles')
-        .delete()
-        .eq('id', userId)
-
-      if (error) throw error
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || 'Failed to delete user')
+      }
 
       setSuccessModal({ show: true, message: `User ${displayName} has been permanently deleted.` })
       setDeleteUserModal({ show: false, step: 1, userId: '', displayName: '', confirmName: '' })
