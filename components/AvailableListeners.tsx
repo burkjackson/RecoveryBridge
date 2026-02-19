@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Body16, Body18 } from '@/components/ui/Typography'
 import ErrorState from '@/components/ErrorState'
+import Modal from '@/components/Modal'
 import { TIME } from '@/lib/constants'
 
 interface Listener {
@@ -18,10 +19,15 @@ interface Listener {
   last_heartbeat_at: string | null
 }
 
-export default function AvailableListeners() {
+interface AvailableListenersProps {
+  onCountChange?: (count: number) => void
+}
+
+export default function AvailableListeners({ onCountChange }: AvailableListenersProps) {
   const [listeners, setListeners] = useState<Listener[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [profilePreview, setProfilePreview] = useState<Listener | null>(null)
   const supabase = createClient()
 
   useEffect(() => {
@@ -82,6 +88,7 @@ export default function AvailableListeners() {
       })
 
       setListeners(onlineListeners)
+      onCountChange?.(onlineListeners.length)
     } catch (err) {
       console.error('Error loading available listeners:', err)
       setError('We couldn\'t load available listeners right now. Please check your connection and try again.')
@@ -166,9 +173,11 @@ export default function AvailableListeners() {
 
       <div className="space-y-2">
         {listeners.map((listener) => (
-          <div
+          <button
             key={listener.id}
-            className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-all"
+            onClick={() => setProfilePreview(listener)}
+            aria-label={`View ${listener.display_name}'s profile`}
+            className="w-full flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-all text-left"
           >
             {/* Avatar */}
             {listener.avatar_url ? (
@@ -216,7 +225,7 @@ export default function AvailableListeners() {
             <div className="flex-shrink-0">
               <div className="w-2 h-2 bg-green-500 rounded-full"></div>
             </div>
-          </div>
+          </button>
         ))}
       </div>
 
@@ -225,6 +234,67 @@ export default function AvailableListeners() {
           Click <strong>"I Need Support"</strong> above to connect with an available listener
         </Body16>
       </div>
+
+      {/* Profile Preview Modal */}
+      {profilePreview && (
+        <Modal
+          isOpen={!!profilePreview}
+          onClose={() => setProfilePreview(null)}
+          title={profilePreview.display_name}
+          confirmText="Close"
+          confirmStyle="primary"
+        >
+          <div className="space-y-4">
+            {/* Avatar + status */}
+            <div className="flex items-center gap-3">
+              {profilePreview.avatar_url ? (
+                <img
+                  src={profilePreview.avatar_url}
+                  alt={profilePreview.display_name}
+                  className="w-14 h-14 rounded-full object-cover flex-shrink-0"
+                />
+              ) : (
+                <div className="w-14 h-14 rounded-full bg-rb-blue flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
+                  {profilePreview.display_name.charAt(0).toUpperCase()}
+                </div>
+              )}
+              <div>
+                {profilePreview.tagline && (
+                  <p className="text-sm italic text-gray-600">"{profilePreview.tagline}"</p>
+                )}
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                  <span className="text-xs text-green-600 font-medium">
+                    Available to listen{profilePreview.always_available ? ' · Always Available ⚡' : ''}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Bio */}
+            {profilePreview.bio && (
+              <div>
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">About</p>
+                <p className="text-sm text-gray-700">{profilePreview.bio}</p>
+              </div>
+            )}
+
+            {/* Tags */}
+            {profilePreview.tags && profilePreview.tags.length > 0 && (
+              <div>
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Specialties</p>
+                <div className="flex flex-wrap gap-2">
+                  {profilePreview.tags.map(tag => (
+                    <span key={tag} className="px-2.5 py-1 rounded-full text-xs font-medium bg-rb-blue/10 text-rb-blue">
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </Modal>
+      )}
     </div>
   )
 }
