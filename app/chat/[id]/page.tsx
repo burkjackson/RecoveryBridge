@@ -1286,9 +1286,9 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                   </div>
                   <button
                     onClick={skipFeedback}
-                    className="text-sm text-gray-400 hover:text-gray-600 transition"
+                    className="min-h-[44px] w-full px-4 py-2.5 bg-gray-100 border-2 border-gray-200 text-gray-500 rounded-xl font-semibold hover:bg-gray-200 hover:border-gray-300 transition-all text-sm"
                   >
-                    Skip
+                    Skip Feedback
                   </button>
                 </>
               )}
