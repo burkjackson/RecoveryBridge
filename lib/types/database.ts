@@ -105,6 +105,27 @@ export interface SessionFeedback {
   created_at: string
 }
 
+export interface UserFavorite {
+  id: string
+  user_id: string
+  favorite_user_id: string
+  created_at: string
+}
+
+export interface FavoriteWithProfile extends UserFavorite {
+  favorite_profile: {
+    display_name: string
+    bio: string | null
+    tagline: string | null
+    avatar_url: string | null
+    role_state: 'available' | 'requesting' | 'offline' | null
+    always_available: boolean
+    last_heartbeat_at: string | null
+    tags: string[] | null
+    user_role: string | null
+  }
+}
+
 export interface MessageReaction {
   id: string
   message_id: string
@@ -175,6 +196,11 @@ export type Database = {
         Row: SessionFeedback
         Insert: Omit<SessionFeedback, 'id' | 'created_at'>
         Update: Partial<Omit<SessionFeedback, 'id' | 'created_at'>>
+      }
+      user_favorites: {
+        Row: UserFavorite
+        Insert: Omit<UserFavorite, 'id' | 'created_at'>
+        Update: never
       }
       message_reactions: {
         Row: MessageReaction

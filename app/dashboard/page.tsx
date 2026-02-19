@@ -10,7 +10,7 @@ import Footer from '@/components/Footer'
 import NotificationSettings from '@/components/NotificationSettings'
 import AvailableListeners from '@/components/AvailableListeners'
 import PeopleSeeking from '@/components/PeopleSeeking'
-import type { Profile, SessionWithUserName, ProfileUpdateData } from '@/lib/types/database'
+import type { Profile, SessionWithUserName, ProfileUpdateData, FavoriteWithProfile } from '@/lib/types/database'
 import { TIME, NOTIFICATION } from '@/lib/constants'
 
 export default function DashboardPage() {
@@ -19,6 +19,8 @@ export default function DashboardPage() {
   const [activeSessions, setActiveSessions] = useState<SessionWithUserName[]>([])
   const [recentSessions, setRecentSessions] = useState<SessionWithUserName[]>([])
   const [availableListenerCount, setAvailableListenerCount] = useState(0)
+  const [favorites, setFavorites] = useState<FavoriteWithProfile[]>([])
+  const [connectingFavorite, setConnectingFavorite] = useState<string | null>(null)
   const [error, setError] = useState<{ show: boolean; message: string; action?: () => void }>({ show: false, message: '' })
   const profileRef = useRef<Profile | null>(null)
   const lastNotifyTimestampRef = useRef<number>(0)
@@ -47,6 +49,7 @@ export default function DashboardPage() {
     loadProfile()
     loadActiveSessions()
     loadRecentSessions()
+    loadFavorites()
     cleanupStaleSessions() // Clean up abandoned sessions in the background
 
     // Subscribe to new sessions
@@ -316,6 +319,62 @@ export default function DashboardPage() {
     }
   }
 
+  async function loadFavorites() {
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.user) return
+
+      const { data, error } = await supabase
+        .from('user_favorites')
+        .select(`
+          id,
+          user_id,
+          favorite_user_id,
+          created_at,
+          favorite_profile:profiles!user_favorites_favorite_user_id_fkey(
+            display_name,
+            bio,
+            tagline,
+            avatar_url,
+            role_state,
+            always_available,
+            last_heartbeat_at,
+            tags,
+            user_role
+          )
+        `)
+        .eq('user_id', session.user.id)
+        .order('created_at', { ascending: false })
+
+      if (error) throw error
+      setFavorites((data || []) as FavoriteWithProfile[])
+    } catch (error) {
+      console.error('Error loading favorites:', error)
+    }
+  }
+
+  async function connectWithFavorite(favoriteUserId: string) {
+    if (connectingFavorite || !profile) return
+    setConnectingFavorite(favoriteUserId)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.user) return
+
+      const { data: newSession, error } = await supabase
+        .from('sessions')
+        .insert([{ listener_id: favoriteUserId, seeker_id: profile.id, status: 'active' }])
+        .select()
+        .single()
+
+      if (error) throw error
+      router.push(`/chat/${newSession.id}`)
+    } catch (error) {
+      console.error('Error connecting with favorite:', error)
+    } finally {
+      setConnectingFavorite(null)
+    }
+  }
+
   async function endAllActiveSessions() {
     if (!profile) return
 
@@ -394,7 +453,8 @@ export default function DashboardPage() {
               'Authorization': `Bearer ${session.access_token}`
             },
             body: JSON.stringify({
-              seekerId: profile.id
+              seekerId: profile.id,
+              favoriteListenerIds: favorites.map(f => f.favorite_user_id)
             })
           })
 
@@ -582,6 +642,63 @@ export default function DashboardPage() {
           </button>
         </div>
 
+        {/* My Favorites */}
+        {favorites.length > 0 && (
+          <div className="bg-white rounded-lg p-5 shadow-sm mb-6">
+            <div className="flex items-center gap-2 mb-4">
+              <span className="text-amber-400 text-lg">⭐</span>
+              <Body18 className="font-semibold text-gray-900">My Favorites</Body18>
+            </div>
+            <div className="space-y-2">
+              {favorites.map(fav => {
+                const fp = fav.favorite_profile
+                const heartbeatThreshold = new Date(Date.now() - TIME.HEARTBEAT_THRESHOLD_MS).toISOString()
+                const isOnline = fp.always_available || (
+                  fp.last_heartbeat_at !== null &&
+                  fp.role_state === 'available' &&
+                  fp.last_heartbeat_at >= heartbeatThreshold
+                )
+                return (
+                  <div key={fav.id} className="flex items-center gap-3 p-3 bg-amber-50/40 border border-amber-100 rounded-lg">
+                    {/* Avatar */}
+                    {fp.avatar_url ? (
+                      <img src={fp.avatar_url} alt={fp.display_name}
+                        className="w-10 h-10 rounded-full object-cover flex-shrink-0" />
+                    ) : (
+                      <div className="w-10 h-10 rounded-full bg-rb-blue flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                        {fp.display_name.charAt(0).toUpperCase()}
+                      </div>
+                    )}
+
+                    {/* Info */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <Body16 className="font-semibold text-gray-900 truncate">{fp.display_name}</Body16>
+                        <span className={`w-2 h-2 rounded-full flex-shrink-0 ${isOnline ? 'bg-green-500' : 'bg-gray-300'}`}></span>
+                      </div>
+                      <Body16 className="text-sm text-gray-500">
+                        {isOnline ? 'Available now' : 'Offline'}
+                      </Body16>
+                    </div>
+
+                    {/* Connect — only when seeker is requesting and favorite is online */}
+                    {profile?.role_state === 'requesting' && isOnline && (
+                      <button
+                        onClick={() => connectWithFavorite(fav.favorite_user_id)}
+                        disabled={connectingFavorite === fav.favorite_user_id}
+                        aria-label={`Connect with ${fp.display_name}`}
+                        className="min-h-[44px] px-4 py-2 bg-rb-blue text-white rounded-lg text-sm font-semibold hover:bg-rb-blue-hover transition-all flex-shrink-0 disabled:opacity-50"
+                      >
+                        {connectingFavorite === fav.favorite_user_id ? 'Connecting...' : 'Connect'}
+                      </button>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
         {/* People Seeking Support - only visible to available listeners */}
         {profile && (
           <PeopleSeeking
@@ -591,7 +708,7 @@ export default function DashboardPage() {
         )}
 
         {/* Available Listeners */}
-        <AvailableListeners onCountChange={setAvailableListenerCount} />
+        <AvailableListeners onCountChange={setAvailableListenerCount} currentUserId={profile?.id} />
 
         {/* Notification Settings */}
         <div className="mb-4 sm:mb-6">

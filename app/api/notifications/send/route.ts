@@ -94,10 +94,12 @@ export async function POST(request: NextRequest) {
     // Parse and validate request body
     let seekerId: string
     let isRenotification = false
+    let clientFavoriteIds: string[] = []
     try {
       const body = await request.json()
       seekerId = body.seekerId
       isRenotification = body.isRenotification === true
+      clientFavoriteIds = Array.isArray(body.favoriteListenerIds) ? body.favoriteListenerIds : []
     } catch {
       return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
     }
@@ -168,47 +170,83 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // Prepare notification payload (different text for re-notifications)
-    const payload = JSON.stringify({
-      title: isRenotification
-        ? '⏳ Someone\'s Still Waiting'
-        : '🤝 Someone Needs Support',
-      body: isRenotification
-        ? `${seekerName} has been waiting 2+ minutes. Can you help?`
-        : `${seekerName} is looking for a listener right now.`,
-      icon: '/icon-192.png',
-      badge: '/icon-192.png',
-      tag: `support-request-${seekerId}`,
-      requireInteraction: true,
-      data: {
-        url: '/dashboard',
-        seekerId: seekerId
-      }
-    })
+    // Server-side verify favorite listener IDs (never trust client list)
+    let verifiedFavoriteIds = new Set<string>()
+    if (clientFavoriteIds.length > 0) {
+      const { data: favRows } = await supabase
+        .from('user_favorites')
+        .select('favorite_user_id')
+        .eq('user_id', seekerId)
+        .in('favorite_user_id', clientFavoriteIds)
+      verifiedFavoriteIds = new Set((favRows || []).map((r: { favorite_user_id: string }) => r.favorite_user_id))
+    }
 
-    // Send push notifications to all available listeners
+    // Split subscriptions into favorites and general batches
+    const favoriteSubscriptions = subscriptions.filter(sub => verifiedFavoriteIds.has(sub.user_id))
+    const generalSubscriptions = subscriptions.filter(sub => !verifiedFavoriteIds.has(sub.user_id))
+
+    // Helper to build notification payload
+    function buildPayload(isFavorite: boolean) {
+      return JSON.stringify({
+        title: isFavorite
+          ? '⭐ Someone you know needs support'
+          : isRenotification
+            ? '⏳ Someone\'s Still Waiting'
+            : '🤝 Someone Needs Support',
+        body: isRenotification
+          ? `${seekerName} has been waiting 2+ minutes. Can you help?`
+          : `${seekerName} is looking for a listener right now.`,
+        icon: '/icon-192.png',
+        badge: '/icon-192.png',
+        tag: `support-request-${seekerId}`,
+        requireInteraction: true,
+        data: {
+          url: '/dashboard',
+          seekerId: seekerId
+        }
+      })
+    }
+
+    // Helper to send a batch of subscriptions
+    async function sendBatch(subs: typeof subscriptions, isFavorite: boolean) {
+      const payload = buildPayload(isFavorite)
+      let count = 0
+      const successUserIds = new Set<string>()
+      await Promise.all(subs.map(async (sub) => {
+        try {
+          await webpush.sendNotification(sub.subscription, payload)
+          count++
+          successUserIds.add(sub.user_id)
+        } catch (error: unknown) {
+          const statusCode = (error as { statusCode?: number })?.statusCode
+          console.error(`Failed to send notification to subscription ${sub.id}:`, error)
+          if (statusCode && statusCode >= 400 && statusCode < 500) {
+            await supabase.from('push_subscriptions').delete().eq('id', sub.id)
+          }
+        }
+      }))
+      return { count, successUserIds }
+    }
+
+    // Batch 1: Favorites first (with personalized title)
     let pushSuccessCount = 0
     const pushSuccessUserIds = new Set<string>()
-    const notificationPromises = subscriptions.map(async (sub) => {
-      try {
-        await webpush.sendNotification(sub.subscription, payload)
-        pushSuccessCount++
-        pushSuccessUserIds.add(sub.user_id)
-      } catch (error: unknown) {
-        const statusCode = (error as { statusCode?: number })?.statusCode
-        console.error(`Failed to send notification to subscription ${sub.id}:`, error)
 
-        // If subscription is invalid (4xx), remove just THIS subscription record
-        if (statusCode && statusCode >= 400 && statusCode < 500) {
-          await supabase
-            .from('push_subscriptions')
-            .delete()
-            .eq('id', sub.id)
-        }
+    if (favoriteSubscriptions.length > 0) {
+      const { count, successUserIds } = await sendBatch(favoriteSubscriptions, true)
+      pushSuccessCount += count
+      successUserIds.forEach(id => pushSuccessUserIds.add(id))
+    }
+
+    // Batch 2: General listeners (4-second delay if favorites were notified)
+    if (generalSubscriptions.length > 0) {
+      if (favoriteSubscriptions.length > 0) {
+        await new Promise(r => setTimeout(r, 4000))
       }
-    })
-
-    await Promise.all(notificationPromises)
+      const { count, successUserIds } = await sendBatch(generalSubscriptions, false)
+      pushSuccessCount += count
+      successUserIds.forEach(id => pushSuccessUserIds.add(id))
+    }
 
     // SMS fallback: disabled until Twilio verification is complete
     // TODO: Uncomment when Twilio account is verified
