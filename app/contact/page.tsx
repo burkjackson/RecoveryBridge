@@ -21,7 +21,7 @@ export default function ContactPage() {
     setSubmitting(true)
 
     // Create mailto link with form data
-    const mailtoLink = `mailto:recoverybridgeapp@gmail.com?subject=${encodeURIComponent(formData.subject)}&body=${encodeURIComponent(
+    const mailtoLink = `mailto:admin@recoverybridge.app?subject=${encodeURIComponent(formData.subject)}&body=${encodeURIComponent(
       `Name: ${formData.name}\nEmail: ${formData.email}\n\nMessage:\n${formData.message}`
     )}`
 
@@ -92,7 +92,7 @@ export default function ContactPage() {
         {/* Contact Info */}
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
           <Body16 className="mb-2">
-            <strong>📧 Email:</strong> recoverybridgeapp@gmail.com
+            <strong>📧 Email:</strong> admin@recoverybridge.app
           </Body16>
           <Body16 className="text-sm text-rb-gray">
             We typically respond within 24-48 hours. For urgent safety concerns, please use our crisis resources or contact emergency services.
