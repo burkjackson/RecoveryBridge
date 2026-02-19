@@ -30,6 +30,7 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [alwaysAvailable, setAlwaysAvailable] = useState(profile?.always_available || false)
   const [showAlwaysAvailableInfo, setShowAlwaysAvailableInfo] = useState(false)
+  const [expanded, setExpanded] = useState(false)
   const [isPWA, setIsPWA] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
   const supabase = createClient()
@@ -287,15 +288,35 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
   }
 
   return (
-    <div className="p-4 bg-gradient-to-br from-blue-50 to-purple-50 rounded-lg border border-blue-200">
-      <div className="flex items-start gap-3 mb-3">
-        <span className="text-2xl">🔔</span>
-        <div className="flex-1">
-          <Body16 className="font-semibold text-[#2D3436] mb-1">
-            Push Notifications
-          </Body16>
+    <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-lg border border-blue-200 overflow-hidden">
+      {/* Collapsible Header — always visible */}
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="w-full flex items-center justify-between p-4 text-left hover:bg-blue-50/50 transition-colors"
+        aria-expanded={expanded}
+        aria-label="Toggle Push Notifications settings"
+      >
+        <div className="flex items-center gap-3">
+          <span className="text-2xl">🔔</span>
+          <div>
+            <Body16 className="font-semibold text-[#2D3436]">Push Notifications</Body16>
+            <Body16 className="text-xs text-rb-gray">
+              {isSubscribed ? (
+                <span className="text-green-700 font-medium">✓ Enabled{alwaysAvailable ? ' · Always Available' : ''}</span>
+              ) : (
+                'Not enabled'
+              )}
+            </Body16>
+          </div>
+        </div>
+        <span className="text-gray-400 text-sm flex-shrink-0">{expanded ? '▲' : '▼'}</span>
+      </button>
+
+      {/* Collapsible Body */}
+      {expanded && (
+        <div className="px-4 pb-4">
           <Body16 className="text-sm text-rb-gray mb-3">
-            Get notified when someone needs support, even when RecoveryBridge isn't open.
+            Get notified when someone needs support, even when RecoveryBridge isn&apos;t open.
           </Body16>
 
           {permission === 'denied' && (
@@ -377,71 +398,71 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
               How do I enable notifications on iPhone?
             </button>
           </div>
-        </div>
-      </div>
 
-      {/* Always Available Toggle - Peer Support Model */}
-      <div className="mt-4 p-4 bg-white rounded-lg border border-gray-200">
-          <div className="flex items-start space-x-3">
-            <input
-              type="checkbox"
-              id="alwaysAvailable"
-              checked={alwaysAvailable}
-              onChange={toggleAlwaysAvailable}
-              disabled={loading || !isSubscribed}
-              className="mt-1 h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-            />
-            <div className="flex-1">
-              <div className="flex items-center justify-between">
-                <label
-                  htmlFor="alwaysAvailable"
-                  className={`block font-medium ${
-                    !isSubscribed ? 'text-gray-400' : 'text-gray-900 cursor-pointer'
-                  }`}
-                >
-                  Always Available to Listen
-                </label>
-                <button
-                  onClick={() => setShowAlwaysAvailableInfo(!showAlwaysAvailableInfo)}
-                  className="text-gray-500 text-sm flex items-center gap-1 hover:text-gray-700 transition-colors"
-                  type="button"
-                  aria-expanded={showAlwaysAvailableInfo}
-                  aria-label="Toggle Always Available details"
-                >
-                  <span>{showAlwaysAvailableInfo ? '▲' : '▼'}</span>
-                </button>
-              </div>
-
-              {/* Collapsible dropdown content */}
-              {showAlwaysAvailableInfo && (
-                <div className="mt-3 space-y-2">
-                  <Body16 className="text-sm text-gray-600">
-                    When you're marked as "Available to Listen", this keeps you online indefinitely. You'll receive push notifications when someone needs support, even when the app is closed.
-                  </Body16>
-
-                  {!isPWA && isMobile && (
-                    <div className="bg-yellow-50 border-l-4 border-yellow-500 p-3 rounded">
-                      <Body16 className="text-sm text-yellow-800">
-                        ⚠️ <strong>Not running as PWA:</strong> Always Available mode only works when RecoveryBridge is opened as a Progressive Web App from your home screen.
-                      </Body16>
-                    </div>
-                  )}
-
-                  {!isSubscribed && (
-                    <Body16 className="text-sm text-amber-600 font-medium">
-                      Enable push notifications above to use this feature.
-                    </Body16>
-                  )}
-                  {isSubscribed && profile?.role_state !== 'available' && (
-                    <Body16 className="text-sm text-amber-600 font-medium">
-                      Switch to "Available to Listen" mode on your dashboard to enable this.
-                    </Body16>
-                  )}
+          {/* Always Available Toggle - Peer Support Model */}
+          <div className="mt-4 p-4 bg-white rounded-lg border border-gray-200">
+            <div className="flex items-start space-x-3">
+              <input
+                type="checkbox"
+                id="alwaysAvailable"
+                checked={alwaysAvailable}
+                onChange={toggleAlwaysAvailable}
+                disabled={loading || !isSubscribed}
+                className="mt-1 h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              />
+              <div className="flex-1">
+                <div className="flex items-center justify-between">
+                  <label
+                    htmlFor="alwaysAvailable"
+                    className={`block font-medium ${
+                      !isSubscribed ? 'text-gray-400' : 'text-gray-900 cursor-pointer'
+                    }`}
+                  >
+                    Always Available to Listen
+                  </label>
+                  <button
+                    onClick={() => setShowAlwaysAvailableInfo(!showAlwaysAvailableInfo)}
+                    className="text-gray-500 text-sm flex items-center gap-1 hover:text-gray-700 transition-colors"
+                    type="button"
+                    aria-expanded={showAlwaysAvailableInfo}
+                    aria-label="Toggle Always Available details"
+                  >
+                    <span>{showAlwaysAvailableInfo ? '▲' : '▼'}</span>
+                  </button>
                 </div>
-              )}
+
+                {/* Collapsible dropdown content */}
+                {showAlwaysAvailableInfo && (
+                  <div className="mt-3 space-y-2">
+                    <Body16 className="text-sm text-gray-600">
+                      When you&apos;re marked as &quot;Available to Listen&quot;, this keeps you online indefinitely. You&apos;ll receive push notifications when someone needs support, even when the app is closed.
+                    </Body16>
+
+                    {!isPWA && isMobile && (
+                      <div className="bg-yellow-50 border-l-4 border-yellow-500 p-3 rounded">
+                        <Body16 className="text-sm text-yellow-800">
+                          ⚠️ <strong>Not running as PWA:</strong> Always Available mode only works when RecoveryBridge is opened as a Progressive Web App from your home screen.
+                        </Body16>
+                      </div>
+                    )}
+
+                    {!isSubscribed && (
+                      <Body16 className="text-sm text-amber-600 font-medium">
+                        Enable push notifications above to use this feature.
+                      </Body16>
+                    )}
+                    {isSubscribed && profile?.role_state !== 'available' && (
+                      <Body16 className="text-sm text-amber-600 font-medium">
+                        Switch to &quot;Available to Listen&quot; mode on your dashboard to enable this.
+                      </Body16>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
+      )}
 
       {/* Instructions Modal */}
       <NotificationInstructionsModal
