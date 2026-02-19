@@ -40,13 +40,14 @@ export async function POST(request: NextRequest) {
 
     // Update last_heartbeat_at timestamp
     // Allow updates for users who are either:
-    // 1. Currently in "available" state, OR
-    // 2. Have "always_available" enabled (need heartbeat for online status)
+    // 1. Currently in "available" state (listeners), OR
+    // 2. Currently in "requesting" state (seekers), OR
+    // 3. Have "always_available" enabled (need heartbeat for online status)
     const { error } = await supabase
       .from('profiles')
       .update({ last_heartbeat_at: new Date().toISOString() })
       .eq('id', userId)
-      .or('role_state.eq.available,always_available.eq.true')
+      .or('role_state.eq.available,role_state.eq.requesting,always_available.eq.true')
 
     if (error) {
       console.error('Heartbeat update error:', error)
