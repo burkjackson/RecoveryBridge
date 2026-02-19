@@ -113,14 +113,24 @@ export type SpecialtyTag = typeof SPECIALTY_TAGS[number]
 export const MAX_SPECIALTY_TAGS = 5
 
 // Conversation starter prompts for new chat sessions
-export const CONVERSATION_STARTERS = [
-  "How are you feeling today?",
-  "What's been on your mind lately?",
-  "Is there something specific you'd like to talk about?",
-  "How has your recovery journey been going?",
-  "What's one thing you're grateful for today?",
-  "Is there anything you'd like support with right now?",
-] as const
+export const CONVERSATION_STARTERS = {
+  seeker: [
+    "I've been having a tough day and could use someone to talk to.",
+    "I'm struggling with cravings right now.",
+    "I just need someone to listen for a bit.",
+    "I've been feeling really alone lately.",
+    "Something happened today and I need to process it.",
+    "I'm not sure where to start, but I know I need support.",
+  ],
+  listener: [
+    "Hey, I'm here for you. How are you feeling right now?",
+    "Thanks for reaching out. What's on your mind today?",
+    "I'm glad you're here. Is there something specific you'd like to talk about?",
+    "Welcome — this is a safe space. Take your time.",
+    "I'm listening whenever you're ready to share.",
+    "How has your day been going?",
+  ],
+} as const
 
 // Quick reactions for chat messages (recovery-context appropriate)
 export const REACTIONS = [
