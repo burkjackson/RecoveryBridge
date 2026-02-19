@@ -44,10 +44,9 @@ export default function DashboardPage() {
         },
         (payload) => {
           loadActiveSessions()
-          // Auto-navigate seeker to chat when a listener connects with them
+          // Auto-navigate to chat when someone creates a session with me as seeker
           const newSession = payload.new as Record<string, unknown>
           if (
-            profileRef.current?.role_state === 'requesting' &&
             newSession.seeker_id === profileRef.current?.id &&
             newSession.status === 'active'
           ) {
