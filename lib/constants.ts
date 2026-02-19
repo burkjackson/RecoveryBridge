@@ -31,8 +31,8 @@ export const TIME = {
   /** Minimum interval between typing broadcast events (500ms) */
   TYPING_THROTTLE_MS: 500,
 
-  /** Delay before re-notifying listeners that a seeker is still waiting (5 minutes) */
-  RENOTIFY_DELAY_MS: 5 * 60 * 1000,
+  /** Delay before re-notifying listeners that a seeker is still waiting (2 minutes) */
+  RENOTIFY_DELAY_MS: 2 * 60 * 1000,
 } as const
 
 // Re-notification tracking constants
