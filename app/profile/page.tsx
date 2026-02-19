@@ -35,6 +35,9 @@ export default function ProfilePage() {
   const [savingSms, setSavingSms] = useState(false)
   const [smsSuccess, setSmsSuccess] = useState<string | null>(null)
   const [smsError, setSmsError] = useState<string | null>(null)
+  const [emailNotificationsEnabled, setEmailNotificationsEnabled] = useState(false)
+  const [savingEmail, setSavingEmail] = useState(false)
+  const [emailSuccess, setEmailSuccess] = useState<string | null>(null)
   const [favorites, setFavorites] = useState<FavoriteWithProfile[]>([])
   const [favoritesLoading, setFavoritesLoading] = useState(false)
   const [favoritesExpanded, setFavoritesExpanded] = useState(false)
@@ -47,13 +50,14 @@ export default function ProfilePage() {
     loadFavorites()
   }, [])
 
-  // Sync SMS state when profile loads
+  // Sync SMS and email state when profile loads
   useEffect(() => {
     if (profile) {
       setPhoneNumber(profile.phone_number || '')
       setSmsEnabled(profile.sms_notifications_enabled || false)
+      setEmailNotificationsEnabled(profile.email_notifications_enabled || false)
     }
-  }, [profile?.phone_number, profile?.sms_notifications_enabled])
+  }, [profile?.phone_number, profile?.sms_notifications_enabled, profile?.email_notifications_enabled])
 
   async function loadProfile() {
     try {
@@ -188,6 +192,32 @@ export default function ProfilePage() {
       setSmsError('Failed to save SMS settings. Please check your phone number format and try again.')
     } finally {
       setSavingSms(false)
+    }
+  }
+
+  async function handleSaveEmailNotifications(enabled: boolean) {
+    if (!profile) return
+    setSavingEmail(true)
+    setEmailSuccess(null)
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .update({ email_notifications_enabled: enabled })
+        .eq('id', profile.id)
+        .select()
+        .single()
+
+      if (error) throw error
+      if (data) setProfile(data)
+      setEmailNotificationsEnabled(enabled)
+      setEmailSuccess(enabled ? 'Email notifications enabled.' : 'Email notifications disabled.')
+      setTimeout(() => setEmailSuccess(null), 4000)
+    } catch (err) {
+      console.error('Error saving email notification setting:', err)
+      // Roll back the toggle visually
+      setEmailNotificationsEnabled(!enabled)
+    } finally {
+      setSavingEmail(false)
     }
   }
 
@@ -668,6 +698,52 @@ export default function ProfilePage() {
             profile={profile}
             onProfileUpdate={(updatedProfile) => setProfile(updatedProfile)}
           />
+        </div>
+
+        {/* Email Notifications */}
+        <div className="mt-4 bg-white rounded-lg shadow-sm p-5">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-xl">✉️</span>
+            <Body16 className="font-semibold text-gray-900">Email Notifications</Body16>
+          </div>
+          <Body16 className="text-sm text-gray-600 mb-4">
+            Get an email when someone needs support and push notifications can&apos;t reach you. Your email address is never shared with other users.
+          </Body16>
+
+          {emailSuccess && (
+            <div className="mb-3 p-3 bg-green-50 border-l-4 border-green-500 rounded">
+              <Body16 className="text-sm text-green-700">{emailSuccess}</Body16>
+            </div>
+          )}
+
+          <div className="flex items-center justify-between">
+            <label htmlFor="email-notifications" className="text-sm font-medium text-gray-700 cursor-pointer select-none">
+              Receive email notification fallbacks
+            </label>
+            <button
+              id="email-notifications"
+              role="switch"
+              aria-checked={emailNotificationsEnabled}
+              onClick={() => {
+                const next = !emailNotificationsEnabled
+                setEmailNotificationsEnabled(next)
+                handleSaveEmailNotifications(next)
+              }}
+              disabled={savingEmail}
+              className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-rb-blue focus:ring-offset-2 disabled:opacity-50 ${
+                emailNotificationsEnabled ? 'bg-rb-blue' : 'bg-gray-200'
+              }`}
+            >
+              <span
+                className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                  emailNotificationsEnabled ? 'translate-x-5' : 'translate-x-0'
+                }`}
+              />
+            </button>
+          </div>
+          <Body16 className="text-xs text-gray-500 mt-2 italic">
+            Emails are sent from RecoveryBridge — you must opt in here to receive them.
+          </Body16>
         </div>
 
         {/* My Favorites */}

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import webpush from 'web-push'
 import { createClient } from '@supabase/supabase-js'
+import { sendSupportRequestEmail } from '@/lib/email'
 // TODO: Re-enable when Twilio verification is complete
 // import { sendSMS } from '@/lib/sms'
 
@@ -128,7 +129,7 @@ export async function POST(request: NextRequest) {
     // 2. Users with "always_available" enabled (should receive notifications anytime)
     const { data: listeners, error: listenersError } = await supabase
       .from('profiles')
-      .select('id, display_name, role_state, always_available, quiet_hours_enabled, quiet_hours_start, quiet_hours_end, quiet_hours_timezone, phone_number, sms_notifications_enabled')
+      .select('id, display_name, email, email_notifications_enabled, role_state, always_available, quiet_hours_enabled, quiet_hours_start, quiet_hours_end, quiet_hours_timezone, phone_number, sms_notifications_enabled')
       .or('role_state.eq.available,always_available.eq.true')
       .neq('id', seekerId)
 
@@ -162,13 +163,7 @@ export async function POST(request: NextRequest) {
 
     if (subError) throw subError
 
-    if (!subscriptions || subscriptions.length === 0) {
-      return NextResponse.json({
-        success: true,
-        message: 'No listeners have notifications enabled',
-        notified: 0
-      })
-    }
+    const activeSubs = subscriptions || []
 
     // Server-side verify favorite listener IDs (never trust client list)
     let verifiedFavoriteIds = new Set<string>()
@@ -182,8 +177,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Split subscriptions into favorites and general batches
-    const favoriteSubscriptions = subscriptions.filter(sub => verifiedFavoriteIds.has(sub.user_id))
-    const generalSubscriptions = subscriptions.filter(sub => !verifiedFavoriteIds.has(sub.user_id))
+    const favoriteSubscriptions = activeSubs.filter(sub => verifiedFavoriteIds.has(sub.user_id))
+    const generalSubscriptions = activeSubs.filter(sub => !verifiedFavoriteIds.has(sub.user_id))
 
     // Helper to build notification payload
     function buildPayload(isFavorite: boolean) {
@@ -208,7 +203,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Helper to send a batch of subscriptions
-    async function sendBatch(subs: typeof subscriptions, isFavorite: boolean) {
+    async function sendBatch(subs: typeof activeSubs, isFavorite: boolean) {
       const payload = buildPayload(isFavorite)
       let count = 0
       const successUserIds = new Set<string>()
@@ -273,13 +268,52 @@ export async function POST(request: NextRequest) {
     }
     */
 
+    // Email fallback: listeners who opted in but didn't receive a push notification
+    let emailCount = 0
+    if (process.env.RESEND_API_KEY) {
+      const emailEligible = activeListeners.filter((l: { id: string; email: string; email_notifications_enabled: boolean }) =>
+        l.email_notifications_enabled &&
+        l.email &&
+        !pushSuccessUserIds.has(l.id)
+      )
+
+      const favEmailListeners = emailEligible.filter((l: { id: string }) => verifiedFavoriteIds.has(l.id))
+      const generalEmailListeners = emailEligible.filter((l: { id: string }) => !verifiedFavoriteIds.has(l.id))
+
+      async function sendEmailBatch(batch: typeof emailEligible, isFavorite: boolean) {
+        const results = await Promise.all(
+          batch.map((l: { email: string; display_name: string }) =>
+            sendSupportRequestEmail({
+              to: l.email,
+              listenerName: l.display_name,
+              seekerName,
+              isFavorite,
+              isRenotification,
+            })
+          )
+        )
+        return results.filter(r => r.success).length
+      }
+
+      if (favEmailListeners.length > 0) {
+        emailCount += await sendEmailBatch(favEmailListeners, true)
+      }
+      if (generalEmailListeners.length > 0) {
+        if (favEmailListeners.length > 0) {
+          await new Promise(r => setTimeout(r, 4000))
+        }
+        emailCount += await sendEmailBatch(generalEmailListeners, false)
+      }
+    }
+
     return NextResponse.json({
       success: true,
-      message: `Notifications sent to ${pushSuccessCount} via push, ${smsCount} via SMS`,
-      notified: pushSuccessCount + smsCount,
+      message: `Notifications sent to ${pushSuccessCount} via push, ${smsCount} via SMS, ${emailCount} via email`,
+      notified: pushSuccessCount + smsCount + emailCount,
       pushCount: pushSuccessCount,
       smsCount,
-      total: subscriptions.length,
+      emailCount,
+      total: activeSubs.length,
     })
 
   } catch (error: unknown) {

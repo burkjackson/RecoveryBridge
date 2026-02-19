@@ -19,6 +19,7 @@ export interface Profile {
   quiet_hours_timezone: string
   phone_number: string | null
   sms_notifications_enabled: boolean
+  email_notifications_enabled: boolean
   created_at?: string
   updated_at?: string
 }
@@ -145,6 +146,7 @@ export interface ProfileUpdateData {
   quiet_hours_timezone?: string
   phone_number?: string | null
   sms_notifications_enabled?: boolean
+  email_notifications_enabled?: boolean
   display_name?: string
   bio?: string
   tagline?: string
