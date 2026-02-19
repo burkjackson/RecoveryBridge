@@ -30,6 +30,21 @@ export const TIME = {
 
   /** Minimum interval between typing broadcast events (500ms) */
   TYPING_THROTTLE_MS: 500,
+
+  /** Delay before re-notifying listeners that a seeker is still waiting (5 minutes) */
+  RENOTIFY_DELAY_MS: 5 * 60 * 1000,
+} as const
+
+// Re-notification tracking constants
+export const NOTIFICATION = {
+  /** Maximum number of re-notification attempts after initial send */
+  MAX_RENOTIFY_COUNT: 3,
+
+  /** SessionStorage key for last notification timestamp */
+  STORAGE_KEY_LAST_NOTIFY: 'rb_last_notify_ts',
+
+  /** SessionStorage key for notification send count */
+  STORAGE_KEY_NOTIFY_COUNT: 'rb_notify_count',
 } as const
 
 // Convert time constants to minutes for easier reference
@@ -54,6 +69,17 @@ export const UI = {
   /** Minimum touch target size for accessibility (px) */
   MIN_TOUCH_TARGET: 44,
 } as const
+
+// US time zones for quiet hours
+export const TIMEZONES = [
+  { value: 'America/New_York', label: 'Eastern (ET)' },
+  { value: 'America/Chicago', label: 'Central (CT)' },
+  { value: 'America/Denver', label: 'Mountain (MT)' },
+  { value: 'America/Los_Angeles', label: 'Pacific (PT)' },
+  { value: 'America/Anchorage', label: 'Alaska (AK)' },
+  { value: 'Pacific/Honolulu', label: 'Hawaii (HI)' },
+  { value: 'America/Phoenix', label: 'Arizona (AZ)' },
+] as const
 
 // API and rate limiting (future use)
 export const API = {

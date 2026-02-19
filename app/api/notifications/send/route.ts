@@ -1,11 +1,44 @@
 import { NextRequest, NextResponse } from 'next/server'
 import webpush from 'web-push'
 import { createClient } from '@supabase/supabase-js'
+import { sendSMS } from '@/lib/sms'
 
 // Simple in-memory rate limiter: max 3 requests per user per 60 seconds
 const RATE_LIMIT_WINDOW_MS = 60 * 1000
 const RATE_LIMIT_MAX = 3
 const rateLimitMap = new Map<string, number[]>()
+
+// Check if a listener is currently in their quiet hours (Do Not Disturb)
+function isInQuietHours(listener: {
+  quiet_hours_enabled: boolean | null
+  quiet_hours_start: string | null
+  quiet_hours_end: string | null
+  quiet_hours_timezone: string | null
+}): boolean {
+  if (!listener.quiet_hours_enabled) return false
+
+  const tz = listener.quiet_hours_timezone || 'America/New_York'
+  const start = listener.quiet_hours_start || '23:00'
+  const end = listener.quiet_hours_end || '07:00'
+
+  // Get current time in the listener's timezone
+  const now = new Date()
+  const timeStr = now.toLocaleTimeString('en-US', {
+    timeZone: tz,
+    hour12: false,
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+
+  // Handle cross-midnight ranges (e.g., 23:00 → 07:00)
+  if (start <= end) {
+    // Same-day range (e.g., 09:00 → 17:00)
+    return timeStr >= start && timeStr < end
+  } else {
+    // Cross-midnight range (e.g., 23:00 → 07:00)
+    return timeStr >= start || timeStr < end
+  }
+}
 
 function isRateLimited(userId: string): boolean {
   const now = Date.now()
@@ -59,9 +92,11 @@ export async function POST(request: NextRequest) {
 
     // Parse and validate request body
     let seekerId: string
+    let isRenotification = false
     try {
       const body = await request.json()
       seekerId = body.seekerId
+      isRenotification = body.isRenotification === true
     } catch {
       return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
     }
@@ -90,7 +125,7 @@ export async function POST(request: NextRequest) {
     // 2. Users with "always_available" enabled (should receive notifications anytime)
     const { data: listeners, error: listenersError } = await supabase
       .from('profiles')
-      .select('id, display_name, role_state, always_available')
+      .select('id, display_name, role_state, always_available, quiet_hours_enabled, quiet_hours_start, quiet_hours_end, quiet_hours_timezone, phone_number, sms_notifications_enabled')
       .or('role_state.eq.available,always_available.eq.true')
       .neq('id', seekerId)
 
@@ -104,8 +139,19 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // Get push subscriptions for all available listeners
-    const listenerIds = listeners.map(l => l.id)
+    // Filter out listeners who are in their quiet hours
+    const activeListeners = listeners.filter(l => !isInQuietHours(l))
+
+    if (activeListeners.length === 0) {
+      return NextResponse.json({
+        success: true,
+        message: 'All listeners are in quiet hours',
+        notified: 0
+      })
+    }
+
+    // Get push subscriptions for all available listeners (excluding those in quiet hours)
+    const listenerIds = activeListeners.map(l => l.id)
     const { data: subscriptions, error: subError } = await supabase
       .from('push_subscriptions')
       .select('*')
@@ -121,10 +167,14 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // Prepare notification payload
+    // Prepare notification payload (different text for re-notifications)
     const payload = JSON.stringify({
-      title: '🤝 Someone Needs Support',
-      body: `${seekerName} is looking for a listener right now.`,
+      title: isRenotification
+        ? '⏳ Someone\'s Still Waiting'
+        : '🤝 Someone Needs Support',
+      body: isRenotification
+        ? `${seekerName} has been waiting 5+ minutes. Can you help?`
+        : `${seekerName} is looking for a listener right now.`,
       icon: '/icon-192.png',
       badge: '/icon-192.png',
       tag: `support-request-${seekerId}`,
@@ -135,12 +185,14 @@ export async function POST(request: NextRequest) {
       }
     })
 
-    // Send notifications to all available listeners
-    let successCount = 0
+    // Send push notifications to all available listeners
+    let pushSuccessCount = 0
+    const pushSuccessUserIds = new Set<string>()
     const notificationPromises = subscriptions.map(async (sub) => {
       try {
         await webpush.sendNotification(sub.subscription, payload)
-        successCount++
+        pushSuccessCount++
+        pushSuccessUserIds.add(sub.user_id)
       } catch (error: unknown) {
         const statusCode = (error as { statusCode?: number })?.statusCode
         console.error(`Failed to send notification to subscription ${sub.id}:`, error)
@@ -157,10 +209,33 @@ export async function POST(request: NextRequest) {
 
     await Promise.all(notificationPromises)
 
+    // SMS fallback: Send SMS to listeners who weren't reached via push but have SMS enabled
+    let smsCount = 0
+    const smsEligibleListeners = activeListeners.filter(l =>
+      l.sms_notifications_enabled &&
+      l.phone_number &&
+      !pushSuccessUserIds.has(l.id)
+    )
+
+    if (smsEligibleListeners.length > 0) {
+      const smsBody = isRenotification
+        ? `RecoveryBridge: ${seekerName} has been waiting 5+ minutes for support. Open the app to connect.`
+        : `RecoveryBridge: ${seekerName} needs support right now. Open the app to connect.`
+
+      const smsPromises = smsEligibleListeners.map(async (listener) => {
+        const sent = await sendSMS(listener.phone_number!, smsBody)
+        if (sent) smsCount++
+      })
+
+      await Promise.all(smsPromises)
+    }
+
     return NextResponse.json({
       success: true,
-      message: `Notifications sent to ${successCount} listener(s)`,
-      notified: successCount,
+      message: `Notifications sent to ${pushSuccessCount} via push, ${smsCount} via SMS`,
+      notified: pushSuccessCount + smsCount,
+      pushCount: pushSuccessCount,
+      smsCount,
       total: subscriptions.length,
     })
 

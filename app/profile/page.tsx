@@ -12,6 +12,11 @@ import NotificationSettings from '@/components/NotificationSettings'
 import TagSelector from '@/components/TagSelector'
 import type { Profile } from '@/lib/types/database'
 
+// E.164 phone number validation (same as lib/sms.ts but client-safe)
+function isValidE164(phone: string): boolean {
+  return /^\+[1-9]\d{1,14}$/.test(phone)
+}
+
 export default function ProfilePage() {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
@@ -25,12 +30,25 @@ export default function ProfilePage() {
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [deleteConfirmText, setDeleteConfirmText] = useState('')
   const [deleting, setDeleting] = useState(false)
+  const [phoneNumber, setPhoneNumber] = useState('')
+  const [smsEnabled, setSmsEnabled] = useState(false)
+  const [savingSms, setSavingSms] = useState(false)
+  const [smsSuccess, setSmsSuccess] = useState<string | null>(null)
+  const [smsError, setSmsError] = useState<string | null>(null)
   const router = useRouter()
   const supabase = createClient()
 
   useEffect(() => {
     loadProfile()
   }, [])
+
+  // Sync SMS state when profile loads
+  useEffect(() => {
+    if (profile) {
+      setPhoneNumber(profile.phone_number || '')
+      setSmsEnabled(profile.sms_notifications_enabled || false)
+    }
+  }, [profile?.phone_number, profile?.sms_notifications_enabled])
 
   async function loadProfile() {
     try {
@@ -115,6 +133,56 @@ export default function ProfilePage() {
       setErrorModal({ show: true, message: 'We couldn\'t save your tags right now. Please try again.' })
     } finally {
       setSavingTags(false)
+    }
+  }
+
+  async function handleSaveSms() {
+    if (!profile) return
+
+    setSavingSms(true)
+    setSmsError(null)
+    setSmsSuccess(null)
+
+    // Validate phone number if SMS is being enabled
+    if (smsEnabled && !phoneNumber.trim()) {
+      setSmsError('Please enter a phone number to enable SMS notifications.')
+      setSavingSms(false)
+      return
+    }
+
+    if (phoneNumber.trim() && !isValidE164(phoneNumber.trim())) {
+      setSmsError('Please enter a valid phone number in E.164 format (e.g., +15551234567).')
+      setSavingSms(false)
+      return
+    }
+
+    try {
+      const updateData: Record<string, unknown> = {
+        phone_number: phoneNumber.trim() || null,
+        sms_notifications_enabled: smsEnabled && !!phoneNumber.trim(),
+      }
+
+      const { data, error } = await supabase
+        .from('profiles')
+        .update(updateData)
+        .eq('id', profile.id)
+        .select()
+        .single()
+
+      if (error) throw error
+
+      if (data) setProfile(data)
+
+      setSmsSuccess(smsEnabled
+        ? 'SMS notifications enabled. You\'ll receive a text when push notifications can\'t reach you.'
+        : 'SMS settings saved.'
+      )
+      setTimeout(() => setSmsSuccess(null), 5000)
+    } catch (error: any) {
+      console.error('Error saving SMS settings:', error)
+      setSmsError('Failed to save SMS settings. Please check your phone number format and try again.')
+    } finally {
+      setSavingSms(false)
     }
   }
 
@@ -538,10 +606,81 @@ export default function ProfilePage() {
 
         {/* Notification Settings */}
         <div className="mt-6">
-          <NotificationSettings 
+          <NotificationSettings
             profile={profile}
             onProfileUpdate={(updatedProfile) => setProfile(updatedProfile)}
           />
+        </div>
+
+        {/* SMS Notifications */}
+        <div className="mt-4 bg-white rounded-lg shadow-sm p-5">
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-xl">💬</span>
+            <Body16 className="font-semibold text-gray-900">SMS Notifications</Body16>
+          </div>
+          <Body16 className="text-sm text-gray-600 mb-4">
+            Get a text message when someone needs support and push notifications can&apos;t reach you.
+          </Body16>
+
+          {smsError && (
+            <div className="mb-3 p-3 bg-red-50 border-l-4 border-red-500 rounded">
+              <Body16 className="text-sm text-red-700">{smsError}</Body16>
+            </div>
+          )}
+
+          {smsSuccess && (
+            <div className="mb-3 p-3 bg-green-50 border-l-4 border-green-500 rounded">
+              <Body16 className="text-sm text-green-700">{smsSuccess}</Body16>
+            </div>
+          )}
+
+          <div className="space-y-3">
+            <div>
+              <label htmlFor="phone-number" className="block text-sm font-medium text-gray-700 mb-1">
+                Phone Number
+              </label>
+              <input
+                id="phone-number"
+                type="tel"
+                value={phoneNumber}
+                onChange={(e) => setPhoneNumber(e.target.value)}
+                placeholder="+15551234567"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500"
+              />
+              <Body16 className="text-xs text-gray-500 mt-1">
+                E.164 format: + country code then number (e.g., +15551234567)
+              </Body16>
+            </div>
+
+            <div className="flex items-center space-x-3">
+              <input
+                type="checkbox"
+                id="sms-enabled"
+                checked={smsEnabled}
+                onChange={(e) => setSmsEnabled(e.target.checked)}
+                disabled={!phoneNumber.trim()}
+                className="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:opacity-50"
+              />
+              <label
+                htmlFor="sms-enabled"
+                className={`text-sm font-medium ${!phoneNumber.trim() ? 'text-gray-400' : 'text-gray-900 cursor-pointer'}`}
+              >
+                Enable SMS fallback notifications
+              </label>
+            </div>
+
+            <Body16 className="text-xs text-gray-500 italic">
+              Your phone number is kept private and never shared with other users.
+            </Body16>
+
+            <button
+              onClick={handleSaveSms}
+              disabled={savingSms}
+              className="min-h-[44px] px-5 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-full text-sm font-semibold hover:shadow-lg transition disabled:opacity-50"
+            >
+              {savingSms ? 'Saving...' : 'Save SMS Settings'}
+            </button>
+          </div>
         </div>
 
         {/* Delete Account */}

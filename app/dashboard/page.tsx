@@ -11,7 +11,7 @@ import NotificationSettings from '@/components/NotificationSettings'
 import AvailableListeners from '@/components/AvailableListeners'
 import PeopleSeeking from '@/components/PeopleSeeking'
 import type { Profile, SessionWithUserName, ProfileUpdateData } from '@/lib/types/database'
-import { TIME } from '@/lib/constants'
+import { TIME, NOTIFICATION } from '@/lib/constants'
 
 export default function DashboardPage() {
   const [profile, setProfile] = useState<Profile | null>(null)
@@ -19,6 +19,8 @@ export default function DashboardPage() {
   const [activeSessions, setActiveSessions] = useState<SessionWithUserName[]>([])
   const [error, setError] = useState<{ show: boolean; message: string; action?: () => void }>({ show: false, message: '' })
   const profileRef = useRef<Profile | null>(null)
+  const lastNotifyTimestampRef = useRef<number>(0)
+  const notifyCountRef = useRef<number>(0)
   const router = useRouter()
   const supabase = createClient()
 
@@ -26,6 +28,18 @@ export default function DashboardPage() {
   useEffect(() => {
     profileRef.current = profile
   }, [profile])
+
+  // Restore re-notification tracking state from sessionStorage on mount
+  useEffect(() => {
+    try {
+      const storedTs = sessionStorage.getItem(NOTIFICATION.STORAGE_KEY_LAST_NOTIFY)
+      const storedCount = sessionStorage.getItem(NOTIFICATION.STORAGE_KEY_NOTIFY_COUNT)
+      if (storedTs) lastNotifyTimestampRef.current = parseInt(storedTs, 10)
+      if (storedCount) notifyCountRef.current = parseInt(storedCount, 10)
+    } catch {
+      // sessionStorage may not be available
+    }
+  }, [])
 
   useEffect(() => {
     loadProfile()
@@ -73,6 +87,7 @@ export default function DashboardPage() {
   }, [])
 
   // Heartbeat system: Send "I'm still here" signal every 30 seconds when available or requesting
+  // Also checks if re-notification is needed when in requesting state
   useEffect(() => {
     if (!profile || (profile.role_state !== 'available' && profile.role_state !== 'requesting')) {
       return
@@ -81,9 +96,12 @@ export default function DashboardPage() {
     // Send initial heartbeat immediately
     sendHeartbeat()
 
-    // Then send heartbeat at regular intervals
+    // Then send heartbeat at regular intervals (and check re-notification for seekers)
     const heartbeatInterval = setInterval(() => {
       sendHeartbeat()
+      if (profileRef.current?.role_state === 'requesting') {
+        checkAndRenotify()
+      }
     }, TIME.HEARTBEAT_INTERVAL_MS)
 
     return () => {
@@ -110,6 +128,62 @@ export default function DashboardPage() {
       })
     } catch (error) {
       console.error('Failed to send heartbeat:', error)
+    }
+  }
+
+  async function checkAndRenotify() {
+    if (!profileRef.current || profileRef.current.role_state !== 'requesting') return
+
+    const now = Date.now()
+    const elapsed = now - lastNotifyTimestampRef.current
+
+    // Not enough time has passed since last notification
+    if (elapsed < TIME.RENOTIFY_DELAY_MS) return
+
+    // Already sent max re-notifications
+    if (notifyCountRef.current >= NOTIFICATION.MAX_RENOTIFY_COUNT) return
+
+    // Check if seeker already has an active session (a listener connected)
+    try {
+      const { data: activeSession } = await supabase
+        .from('sessions')
+        .select('id')
+        .eq('seeker_id', profileRef.current.id)
+        .eq('status', 'active')
+        .limit(1)
+        .maybeSingle()
+
+      if (activeSession) return // Already connected, no need to re-notify
+
+      // Send re-notification
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) return
+
+      await fetch('/api/notifications/send', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({
+          seekerId: profileRef.current.id,
+          isRenotification: true
+        })
+      })
+
+      // Update tracking state
+      lastNotifyTimestampRef.current = now
+      notifyCountRef.current += 1
+
+      // Persist to sessionStorage
+      try {
+        sessionStorage.setItem(NOTIFICATION.STORAGE_KEY_LAST_NOTIFY, String(now))
+        sessionStorage.setItem(NOTIFICATION.STORAGE_KEY_NOTIFY_COUNT, String(notifyCountRef.current))
+      } catch {
+        // sessionStorage may not be available
+      }
+    } catch (error) {
+      console.error('Re-notification check failed:', error)
     }
   }
 
@@ -253,6 +327,18 @@ export default function DashboardPage() {
         await endAllActiveSessions()
       }
 
+      // If leaving requesting state, clear re-notification tracking
+      if (newState !== 'requesting') {
+        lastNotifyTimestampRef.current = 0
+        notifyCountRef.current = 0
+        try {
+          sessionStorage.removeItem(NOTIFICATION.STORAGE_KEY_LAST_NOTIFY)
+          sessionStorage.removeItem(NOTIFICATION.STORAGE_KEY_NOTIFY_COUNT)
+        } catch {
+          // sessionStorage may not be available
+        }
+      }
+
       // If requesting support, send notifications to available listeners
       // Seeker stays on dashboard — auto-navigates to chat when a listener connects
       if (newState === 'requesting') {
@@ -270,13 +356,22 @@ export default function DashboardPage() {
               'Authorization': `Bearer ${session.access_token}`
             },
             body: JSON.stringify({
-              seekerName: profile.display_name,
               seekerId: profile.id
             })
           })
 
           const result = await response.json()
-          // Notifications sent successfully — seeker waits on dashboard
+
+          // Record notification timestamp for re-notification tracking
+          const now = Date.now()
+          lastNotifyTimestampRef.current = now
+          notifyCountRef.current = 0
+          try {
+            sessionStorage.setItem(NOTIFICATION.STORAGE_KEY_LAST_NOTIFY, String(now))
+            sessionStorage.setItem(NOTIFICATION.STORAGE_KEY_NOTIFY_COUNT, '0')
+          } catch {
+            // sessionStorage may not be available
+          }
         } catch (notifError) {
           console.error('Failed to send notifications:', notifError)
           // Don't block the user flow if notifications fail

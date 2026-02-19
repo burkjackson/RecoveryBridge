@@ -13,6 +13,12 @@ export interface Profile {
   is_admin: boolean | null
   last_heartbeat_at: string | null
   always_available: boolean
+  quiet_hours_enabled: boolean
+  quiet_hours_start: string
+  quiet_hours_end: string
+  quiet_hours_timezone: string
+  phone_number: string | null
+  sms_notifications_enabled: boolean
   created_at?: string
   updated_at?: string
 }
@@ -112,6 +118,12 @@ export interface ProfileUpdateData {
   role_state?: Profile['role_state']
   last_heartbeat_at?: string
   always_available?: boolean
+  quiet_hours_enabled?: boolean
+  quiet_hours_start?: string
+  quiet_hours_end?: string
+  quiet_hours_timezone?: string
+  phone_number?: string | null
+  sms_notifications_enabled?: boolean
   display_name?: string
   bio?: string
   tagline?: string
