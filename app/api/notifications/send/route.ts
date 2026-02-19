@@ -59,9 +59,11 @@ export async function POST(request: NextRequest) {
 
     // Parse and validate request body
     let seekerId: string
+    let isRenotification = false
     try {
       const body = await request.json()
       seekerId = body.seekerId
+      isRenotification = body.isRenotification === true
     } catch {
       return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
     }
@@ -121,10 +123,14 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // Prepare notification payload
+    // Prepare notification payload (different text for re-notifications)
     const payload = JSON.stringify({
-      title: '🤝 Someone Needs Support',
-      body: `${seekerName} is looking for a listener right now.`,
+      title: isRenotification
+        ? '⏳ Someone\'s Still Waiting'
+        : '🤝 Someone Needs Support',
+      body: isRenotification
+        ? `${seekerName} has been waiting 5+ minutes. Can you help?`
+        : `${seekerName} is looking for a listener right now.`,
       icon: '/icon-192.png',
       badge: '/icon-192.png',
       tag: `support-request-${seekerId}`,
