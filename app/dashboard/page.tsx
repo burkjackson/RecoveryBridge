@@ -233,9 +233,9 @@ export default function DashboardPage() {
     if (!profile) return
 
     try {
-      // Set heartbeat timestamp when going available
+      // Set heartbeat timestamp when going available or requesting
       const updateData: ProfileUpdateData = { role_state: newState }
-      if (newState === 'available') {
+      if (newState === 'available' || newState === 'requesting') {
         updateData.last_heartbeat_at = new Date().toISOString()
       }
 

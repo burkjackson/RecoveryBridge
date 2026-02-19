@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { Body16, Body18 } from '@/components/ui/Typography'
 import ErrorState from '@/components/ErrorState'
 import Modal from '@/components/Modal'
+import { TIME } from '@/lib/constants'
 
 interface Seeker {
   id: string
@@ -15,6 +16,7 @@ interface Seeker {
   tags: string[] | null
   avatar_url: string | null
   user_role: string | null
+  last_heartbeat_at: string | null
 }
 
 interface PeopleSeekingProps {
@@ -94,7 +96,7 @@ export default function PeopleSeeking({ currentUserId, currentRoleState }: Peopl
       // Get profiles with role_state = 'requesting'
       const { data: requestingProfiles, error: profilesError } = await supabase
         .from('profiles')
-        .select('id, display_name, bio, tagline, tags, avatar_url, user_role')
+        .select('id, display_name, bio, tagline, tags, avatar_url, user_role, last_heartbeat_at')
         .eq('role_state', 'requesting')
         .neq('id', currentUserId)
 
@@ -105,8 +107,20 @@ export default function PeopleSeeking({ currentUserId, currentRoleState }: Peopl
         return
       }
 
+      // Filter out stale requests (no heartbeat within threshold = old/abandoned)
+      const heartbeatThreshold = new Date(Date.now() - TIME.HEARTBEAT_THRESHOLD_MS).toISOString()
+      const freshSeekers = requestingProfiles.filter(s => {
+        if (!s.last_heartbeat_at) return false
+        return s.last_heartbeat_at >= heartbeatThreshold
+      })
+
+      if (freshSeekers.length === 0) {
+        setSeekers([])
+        return
+      }
+
       // Filter out seekers who already have an active session
-      const seekerIds = requestingProfiles.map(s => s.id)
+      const seekerIds = freshSeekers.map(s => s.id)
       const { data: activeSessions } = await supabase
         .from('sessions')
         .select('seeker_id')
@@ -114,7 +128,7 @@ export default function PeopleSeeking({ currentUserId, currentRoleState }: Peopl
         .in('seeker_id', seekerIds)
 
       const connectedSeekerIds = new Set(activeSessions?.map(s => s.seeker_id) || [])
-      const filteredSeekers = requestingProfiles.filter(s => !connectedSeekerIds.has(s.id))
+      const filteredSeekers = freshSeekers.filter(s => !connectedSeekerIds.has(s.id))
 
       setSeekers(filteredSeekers)
     } catch (err) {
