@@ -7,6 +7,38 @@ const RATE_LIMIT_WINDOW_MS = 60 * 1000
 const RATE_LIMIT_MAX = 3
 const rateLimitMap = new Map<string, number[]>()
 
+// Check if a listener is currently in their quiet hours (Do Not Disturb)
+function isInQuietHours(listener: {
+  quiet_hours_enabled: boolean | null
+  quiet_hours_start: string | null
+  quiet_hours_end: string | null
+  quiet_hours_timezone: string | null
+}): boolean {
+  if (!listener.quiet_hours_enabled) return false
+
+  const tz = listener.quiet_hours_timezone || 'America/New_York'
+  const start = listener.quiet_hours_start || '23:00'
+  const end = listener.quiet_hours_end || '07:00'
+
+  // Get current time in the listener's timezone
+  const now = new Date()
+  const timeStr = now.toLocaleTimeString('en-US', {
+    timeZone: tz,
+    hour12: false,
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+
+  // Handle cross-midnight ranges (e.g., 23:00 → 07:00)
+  if (start <= end) {
+    // Same-day range (e.g., 09:00 → 17:00)
+    return timeStr >= start && timeStr < end
+  } else {
+    // Cross-midnight range (e.g., 23:00 → 07:00)
+    return timeStr >= start || timeStr < end
+  }
+}
+
 function isRateLimited(userId: string): boolean {
   const now = Date.now()
   const timestamps = rateLimitMap.get(userId) || []
@@ -92,7 +124,7 @@ export async function POST(request: NextRequest) {
     // 2. Users with "always_available" enabled (should receive notifications anytime)
     const { data: listeners, error: listenersError } = await supabase
       .from('profiles')
-      .select('id, display_name, role_state, always_available')
+      .select('id, display_name, role_state, always_available, quiet_hours_enabled, quiet_hours_start, quiet_hours_end, quiet_hours_timezone')
       .or('role_state.eq.available,always_available.eq.true')
       .neq('id', seekerId)
 
@@ -106,8 +138,19 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // Get push subscriptions for all available listeners
-    const listenerIds = listeners.map(l => l.id)
+    // Filter out listeners who are in their quiet hours
+    const activeListeners = listeners.filter(l => !isInQuietHours(l))
+
+    if (activeListeners.length === 0) {
+      return NextResponse.json({
+        success: true,
+        message: 'All listeners are in quiet hours',
+        notified: 0
+      })
+    }
+
+    // Get push subscriptions for all available listeners (excluding those in quiet hours)
+    const listenerIds = activeListeners.map(l => l.id)
     const { data: subscriptions, error: subError } = await supabase
       .from('push_subscriptions')
       .select('*')

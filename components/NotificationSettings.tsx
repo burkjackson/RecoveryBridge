@@ -13,6 +13,7 @@ import {
 import { Body16 } from '@/components/ui/Typography'
 import NotificationInstructionsModal from '@/components/NotificationInstructionsModal'
 import type { Profile } from '@/lib/types/database'
+import { TIMEZONES } from '@/lib/constants'
 
 interface NotificationSettingsProps {
   profile?: Profile | null
@@ -31,6 +32,11 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
   const [alwaysAvailable, setAlwaysAvailable] = useState(profile?.always_available || false)
   const [showAlwaysAvailableInfo, setShowAlwaysAvailableInfo] = useState(false)
   const [expanded, setExpanded] = useState(false)
+  const [quietHoursEnabled, setQuietHoursEnabled] = useState(profile?.quiet_hours_enabled || false)
+  const [quietHoursStart, setQuietHoursStart] = useState(profile?.quiet_hours_start || '23:00')
+  const [quietHoursEnd, setQuietHoursEnd] = useState(profile?.quiet_hours_end || '07:00')
+  const [quietHoursTimezone, setQuietHoursTimezone] = useState(profile?.quiet_hours_timezone || '')
+  const [quietHoursSaving, setQuietHoursSaving] = useState(false)
   const [isPWA, setIsPWA] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
   const supabase = createClient()
@@ -47,6 +53,20 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
       setAlwaysAvailable(profile.always_available || false)
     }
   }, [profile?.always_available])
+
+  // Sync quiet hours state when profile changes + auto-detect timezone
+  useEffect(() => {
+    if (profile) {
+      setQuietHoursEnabled(profile.quiet_hours_enabled || false)
+      setQuietHoursStart(profile.quiet_hours_start || '23:00')
+      setQuietHoursEnd(profile.quiet_hours_end || '07:00')
+      // Use profile timezone, or auto-detect browser timezone, or fall back to ET
+      const tz = profile.quiet_hours_timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/New_York'
+      // Match to nearest known timezone from our list, or use as-is
+      const matched = TIMEZONES.find(t => t.value === tz)
+      setQuietHoursTimezone(matched ? matched.value : TIMEZONES[0].value)
+    }
+  }, [profile?.quiet_hours_enabled, profile?.quiet_hours_start, profile?.quiet_hours_end, profile?.quiet_hours_timezone])
 
   const checkPWAMode = () => {
     // Check if app is running as PWA
@@ -224,6 +244,44 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
       setError('Failed to update Always Available setting. Please try again.')
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function saveQuietHours() {
+    if (!profile) return
+
+    setQuietHoursSaving(true)
+    setError(null)
+
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .update({
+          quiet_hours_enabled: quietHoursEnabled,
+          quiet_hours_start: quietHoursStart,
+          quiet_hours_end: quietHoursEnd,
+          quiet_hours_timezone: quietHoursTimezone,
+        })
+        .eq('id', profile.id)
+        .select()
+        .single()
+
+      if (error) throw error
+
+      if (onProfileUpdate && data) {
+        onProfileUpdate(data)
+      }
+
+      setSuccessMessage(quietHoursEnabled
+        ? `Quiet hours set: ${quietHoursStart} – ${quietHoursEnd}. No notifications during this time.`
+        : 'Quiet hours disabled. You\'ll receive notifications anytime.'
+      )
+      setTimeout(() => setSuccessMessage(null), 5000)
+    } catch (err: any) {
+      console.error('Error saving quiet hours:', err)
+      setError('Failed to save quiet hours. Please try again.')
+    } finally {
+      setQuietHoursSaving(false)
     }
   }
 
@@ -461,6 +519,76 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
               </div>
             </div>
           </div>
+
+          {/* Quiet Hours (Do Not Disturb) */}
+          {isSubscribed && (
+            <div className="mt-4 p-4 bg-white rounded-lg border border-gray-200">
+              <div className="flex items-start space-x-3">
+                <input
+                  type="checkbox"
+                  id="quietHours"
+                  checked={quietHoursEnabled}
+                  onChange={(e) => setQuietHoursEnabled(e.target.checked)}
+                  disabled={quietHoursSaving}
+                  className="mt-1 h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:opacity-50"
+                />
+                <div className="flex-1">
+                  <label htmlFor="quietHours" className="block font-medium text-gray-900 cursor-pointer">
+                    Quiet Hours
+                  </label>
+                  <Body16 className="text-xs text-gray-500 mt-0.5">
+                    Pause notifications during set hours (e.g., overnight)
+                  </Body16>
+
+                  {quietHoursEnabled && (
+                    <div className="mt-3 space-y-3">
+                      <div className="flex items-center gap-2">
+                        <label htmlFor="qh-start" className="text-sm text-gray-700 w-12">From</label>
+                        <input
+                          id="qh-start"
+                          type="time"
+                          value={quietHoursStart}
+                          onChange={(e) => setQuietHoursStart(e.target.value)}
+                          className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500"
+                        />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <label htmlFor="qh-end" className="text-sm text-gray-700 w-12">Until</label>
+                        <input
+                          id="qh-end"
+                          type="time"
+                          value={quietHoursEnd}
+                          onChange={(e) => setQuietHoursEnd(e.target.value)}
+                          className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500"
+                        />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <label htmlFor="qh-tz" className="text-sm text-gray-700 w-12">Zone</label>
+                        <select
+                          id="qh-tz"
+                          value={quietHoursTimezone}
+                          onChange={(e) => setQuietHoursTimezone(e.target.value)}
+                          className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500 flex-1"
+                        >
+                          {TIMEZONES.map(tz => (
+                            <option key={tz.value} value={tz.value}>{tz.label}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                  )}
+
+                  <button
+                    onClick={saveQuietHours}
+                    disabled={quietHoursSaving}
+                    className="mt-3 min-h-[44px] px-5 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-full text-sm font-semibold hover:shadow-lg transition disabled:opacity-50"
+                  >
+                    {quietHoursSaving ? 'Saving...' : 'Save Quiet Hours'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

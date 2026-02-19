@@ -70,6 +70,17 @@ export const UI = {
   MIN_TOUCH_TARGET: 44,
 } as const
 
+// US time zones for quiet hours
+export const TIMEZONES = [
+  { value: 'America/New_York', label: 'Eastern (ET)' },
+  { value: 'America/Chicago', label: 'Central (CT)' },
+  { value: 'America/Denver', label: 'Mountain (MT)' },
+  { value: 'America/Los_Angeles', label: 'Pacific (PT)' },
+  { value: 'America/Anchorage', label: 'Alaska (AK)' },
+  { value: 'Pacific/Honolulu', label: 'Hawaii (HI)' },
+  { value: 'America/Phoenix', label: 'Arizona (AZ)' },
+] as const
+
 // API and rate limiting (future use)
 export const API = {
   /** Default timeout for API requests (ms) */
