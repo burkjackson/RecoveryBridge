@@ -286,7 +286,8 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
   }
 
   // Don't show this message if they're already in PWA with notifications enabled
-  if (!supported && !(isPWA && isSubscribed)) {
+  // On desktop, push is supported natively so we skip this fallback
+  if (!supported && !(isPWA && isSubscribed) && isMobile) {
     return (
       <>
         <button
@@ -305,13 +306,24 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
             </div>
           </div>
         </button>
-        
+
         {/* Instructions Modal */}
         <NotificationInstructionsModal
           isOpen={showInstructionsModal}
           onClose={() => setShowInstructionsModal(false)}
         />
       </>
+    )
+  }
+
+  // Desktop: push not supported (e.g. Safari on Mac)
+  if (!supported && !isMobile) {
+    return (
+      <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+        <Body16 className="text-sm text-rb-gray">
+          <strong>🔔 Push notifications</strong> aren&apos;t supported in this browser. Try Chrome or Edge for desktop notifications.
+        </Body16>
+      </div>
     )
   }
 
@@ -338,11 +350,6 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
         </div>
       </div>
     )
-  }
-
-  // Don't show notification settings on desktop at all
-  if (!isMobile) {
-    return null
   }
 
   return (
@@ -412,6 +419,14 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
             </div>
           )}
 
+          {!isMobile && (
+            <div className="mb-3 p-3 bg-blue-50 border-l-4 border-blue-400 rounded">
+              <Body16 className="text-sm text-blue-800">
+                🖥️ <strong>Desktop notifications:</strong> Click &quot;Enable Notifications&quot; and allow when your browser prompts you. Notifications will appear even when the tab is in the background.
+              </Body16>
+            </div>
+          )}
+
           {isSubscribed ? (
             <div className="flex flex-col items-center justify-center text-center space-y-3">
               <div className="flex items-center justify-center gap-2">
@@ -433,7 +448,7 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
             <div className="flex flex-col items-center gap-3">
               <button
                 onClick={handleEnableNotifications}
-                disabled={loading || permission === 'denied' || (!isPWA && isMobile)}
+                disabled={loading || permission === 'denied' || (isMobile && !isPWA)}
                 aria-label={loading ? 'Enabling notifications...' : 'Enable push notifications'}
                 className="min-h-[44px] px-6 py-2.5 bg-gradient-to-r from-[#3B82F6] to-[#2563EB] text-white rounded-full text-sm font-semibold hover:shadow-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
@@ -447,15 +462,17 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
             </div>
           )}
 
-          {/* Help Button */}
-          <div className="mt-3 text-center">
-            <button
-              onClick={() => setShowInstructionsModal(true)}
-              className="text-sm text-blue-600 hover:text-blue-800 underline font-medium"
-            >
-              How do I enable notifications on iPhone?
-            </button>
-          </div>
+          {/* Help Button — iOS only */}
+          {isMobile && (
+            <div className="mt-3 text-center">
+              <button
+                onClick={() => setShowInstructionsModal(true)}
+                className="text-sm text-blue-600 hover:text-blue-800 underline font-medium"
+              >
+                How do I enable notifications on iPhone?
+              </button>
+            </div>
+          )}
 
           {/* Always Available Toggle - Peer Support Model */}
           <div className="mt-4 p-4 bg-white rounded-lg border border-gray-200">
