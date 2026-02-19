@@ -126,7 +126,7 @@ export const CONVERSATION_STARTERS = {
     "Hey, I'm here for you. How are you feeling right now?",
     "Thanks for reaching out. What's on your mind today?",
     "I'm glad you're here. Is there something specific you'd like to talk about?",
-    "Welcome — this is a safe space. Take your time.",
+    "Welcome — this is a safe space. Take your time. whats going on?",
     "I'm listening whenever you're ready to share.",
     "How has your day been going?",
   ],
