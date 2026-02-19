@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import webpush from 'web-push'
 import { createClient } from '@supabase/supabase-js'
-import { sendSMS } from '@/lib/sms'
+// TODO: Re-enable when Twilio verification is complete
+// import { sendSMS } from '@/lib/sms'
 
 // Simple in-memory rate limiter: max 3 requests per user per 60 seconds
 const RATE_LIMIT_WINDOW_MS = 60 * 1000
@@ -209,7 +210,10 @@ export async function POST(request: NextRequest) {
 
     await Promise.all(notificationPromises)
 
-    // SMS fallback: Send SMS to listeners who weren't reached via push but have SMS enabled
+    // SMS fallback: disabled until Twilio verification is complete
+    // TODO: Uncomment when Twilio account is verified
+    const smsCount = 0
+    /*
     let smsCount = 0
     const smsEligibleListeners = activeListeners.filter(l =>
       l.sms_notifications_enabled &&
@@ -229,6 +233,7 @@ export async function POST(request: NextRequest) {
 
       await Promise.all(smsPromises)
     }
+    */
 
     return NextResponse.json({
       success: true,

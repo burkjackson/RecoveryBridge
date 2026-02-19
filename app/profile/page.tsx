@@ -612,7 +612,7 @@ export default function ProfilePage() {
           />
         </div>
 
-        {/* SMS Notifications */}
+        {/* SMS Notifications — hidden until Twilio verification is complete
         <div className="mt-4 bg-white rounded-lg shadow-sm p-5">
           <div className="flex items-center gap-2 mb-3">
             <span className="text-xl">💬</span>
@@ -682,6 +682,7 @@ export default function ProfilePage() {
             </button>
           </div>
         </div>
+        */}
 
         {/* Delete Account */}
         <div className="mt-4 flex justify-center">
