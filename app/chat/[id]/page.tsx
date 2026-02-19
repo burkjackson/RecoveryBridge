@@ -739,7 +739,10 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                 <div className="bg-white rounded-lg p-6 shadow-sm">
                   <Body16 className="text-gray-500 text-center mb-4">Start the conversation with a prompt:</Body16>
                   <div className="flex flex-wrap gap-2 justify-center">
-                    {CONVERSATION_STARTERS.map((starter) => (
+                    {(currentUserId === session?.seeker_id
+                      ? CONVERSATION_STARTERS.seeker
+                      : CONVERSATION_STARTERS.listener
+                    ).map((starter) => (
                       <button
                         key={starter}
                         onClick={() => setNewMessage(starter)}
