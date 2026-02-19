@@ -501,6 +501,23 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
     }
   }
 
+  async function sendStarter(text: string) {
+    if (!currentUserId || sending) return
+    setSending(true)
+    try {
+      const { error } = await supabase
+        .from('messages')
+        .insert([{ session_id: sessionId, sender_id: currentUserId, content: text }])
+      if (error) throw error
+      setLastActivityTime(Date.now())
+    } catch (error: any) {
+      console.error('Error sending starter:', error)
+      setSendError(true)
+    } finally {
+      setSending(false)
+    }
+  }
+
   async function endSession() {
     setEndSessionConfirmModal(false)
     try {
@@ -737,7 +754,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
               /* --- V2: Conversation Starters --- */
               session?.status === 'active' ? (
                 <div className="bg-white rounded-lg p-6 shadow-sm">
-                  <Body16 className="text-gray-500 text-center mb-4">Start the conversation with a prompt:</Body16>
+                  <Body16 className="text-gray-500 text-center mb-4">Tap a prompt to start the conversation:</Body16>
                   <div className="flex flex-wrap gap-2 justify-center">
                     {(currentUserId === session?.seeker_id
                       ? CONVERSATION_STARTERS.seeker
@@ -745,8 +762,9 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                     ).map((starter) => (
                       <button
                         key={starter}
-                        onClick={() => setNewMessage(starter)}
-                        className="px-4 py-2.5 bg-blue-50 text-rb-blue border border-blue-200 rounded-full text-sm font-medium hover:bg-blue-100 hover:border-blue-300 transition-all min-h-[44px]"
+                        onClick={() => sendStarter(starter)}
+                        disabled={sending}
+                        className="px-4 py-2.5 bg-blue-50 text-rb-blue border border-blue-200 rounded-full text-sm font-medium hover:bg-blue-100 hover:border-blue-300 transition-all min-h-[44px] disabled:opacity-50"
                       >
                         {starter}
                       </button>
