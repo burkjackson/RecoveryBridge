@@ -31,6 +31,7 @@ export default function PeopleSeeking({ currentUserId, currentRoleState }: Peopl
   const [connecting, setConnecting] = useState<string | null>(null)
   const [blockModal, setBlockModal] = useState({ show: false, reason: '' })
   const [errorModal, setErrorModal] = useState({ show: false, message: '' })
+  const [profilePreview, setProfilePreview] = useState<Seeker | null>(null)
   const isConnecting = useRef(false)
   const router = useRouter()
   const [supabase] = useState(() => createClient())
@@ -279,21 +280,31 @@ export default function PeopleSeeking({ currentUserId, currentRoleState }: Peopl
             key={seeker.id}
             className="flex items-center gap-3 p-3 bg-purple-50/50 rounded-lg hover:bg-purple-50 transition-all"
           >
-            {/* Avatar */}
-            {seeker.avatar_url ? (
-              <img
-                src={seeker.avatar_url}
-                alt={seeker.display_name}
-                className="w-10 h-10 rounded-full object-cover flex-shrink-0"
-              />
-            ) : (
-              <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center text-purple-700 font-bold text-sm flex-shrink-0">
-                {seeker.display_name.charAt(0).toUpperCase()}
-              </div>
-            )}
+            {/* Avatar — click to preview profile */}
+            <button
+              onClick={() => setProfilePreview(seeker)}
+              aria-label={`View ${seeker.display_name}'s profile`}
+              className="flex-shrink-0 rounded-full focus:outline-none focus:ring-2 focus:ring-purple-400"
+            >
+              {seeker.avatar_url ? (
+                <img
+                  src={seeker.avatar_url}
+                  alt={seeker.display_name}
+                  className="w-10 h-10 rounded-full object-cover"
+                />
+              ) : (
+                <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center text-purple-700 font-bold text-sm">
+                  {seeker.display_name.charAt(0).toUpperCase()}
+                </div>
+              )}
+            </button>
 
-            {/* Info */}
-            <div className="flex-1 min-w-0">
+            {/* Info — click to preview profile */}
+            <button
+              onClick={() => setProfilePreview(seeker)}
+              className="flex-1 min-w-0 text-left"
+              aria-label={`View ${seeker.display_name}'s profile`}
+            >
               <div className="flex items-center gap-2">
                 <Body16 className="font-semibold text-gray-900 truncate">
                   {seeker.display_name}
@@ -315,7 +326,7 @@ export default function PeopleSeeking({ currentUserId, currentRoleState }: Peopl
                   )}
                 </div>
               )}
-            </div>
+            </button>
 
             {/* Connect Button */}
             <button
@@ -339,6 +350,72 @@ export default function PeopleSeeking({ currentUserId, currentRoleState }: Peopl
           </div>
         ))}
       </div>
+
+      {/* Profile Preview Modal */}
+      {profilePreview && (
+        <Modal
+          isOpen={!!profilePreview}
+          onClose={() => setProfilePreview(null)}
+          title={profilePreview.display_name}
+          type="confirm"
+          confirmText="Connect"
+          confirmStyle="primary"
+          onConfirm={() => {
+            const id = profilePreview.id
+            setProfilePreview(null)
+            connectWithSeeker(id)
+          }}
+          cancelText="Close"
+        >
+          <div className="space-y-4">
+            {/* Avatar + name */}
+            <div className="flex items-center gap-3">
+              {profilePreview.avatar_url ? (
+                <img
+                  src={profilePreview.avatar_url}
+                  alt={profilePreview.display_name}
+                  className="w-14 h-14 rounded-full object-cover flex-shrink-0"
+                />
+              ) : (
+                <div className="w-14 h-14 rounded-full bg-purple-100 flex items-center justify-center text-purple-700 font-bold text-lg flex-shrink-0">
+                  {profilePreview.display_name.charAt(0).toUpperCase()}
+                </div>
+              )}
+              <div>
+                {profilePreview.tagline && (
+                  <p className="text-sm italic text-gray-600">"{profilePreview.tagline}"</p>
+                )}
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="w-2 h-2 bg-purple-500 rounded-full animate-pulse"></span>
+                  <span className="text-xs text-purple-600 font-medium">Seeking support</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Bio */}
+            {profilePreview.bio && (
+              <div>
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">About</p>
+                <p className="text-sm text-gray-700">{profilePreview.bio}</p>
+              </div>
+            )}
+
+            {/* Tags */}
+            {profilePreview.tags && profilePreview.tags.length > 0 && (
+              <div>
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Topics</p>
+                <div className="flex flex-wrap gap-2">
+                  {profilePreview.tags.map(tag => (
+                    <span key={tag} className="px-2.5 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-700">
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </Modal>
+      )}
 
       {/* Account Blocked Modal */}
       <Modal

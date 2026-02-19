@@ -17,6 +17,8 @@ export default function DashboardPage() {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
   const [activeSessions, setActiveSessions] = useState<SessionWithUserName[]>([])
+  const [recentSessions, setRecentSessions] = useState<SessionWithUserName[]>([])
+  const [availableListenerCount, setAvailableListenerCount] = useState(0)
   const [error, setError] = useState<{ show: boolean; message: string; action?: () => void }>({ show: false, message: '' })
   const profileRef = useRef<Profile | null>(null)
   const lastNotifyTimestampRef = useRef<number>(0)
@@ -44,6 +46,7 @@ export default function DashboardPage() {
   useEffect(() => {
     loadProfile()
     loadActiveSessions()
+    loadRecentSessions()
     cleanupStaleSessions() // Clean up abandoned sessions in the background
 
     // Subscribe to new sessions
@@ -77,6 +80,7 @@ export default function DashboardPage() {
         },
         () => {
           loadActiveSessions()
+          loadRecentSessions()
         }
       )
       .subscribe()
@@ -275,6 +279,40 @@ export default function DashboardPage() {
       setActiveSessions(sessionsWithNames)
     } catch (error) {
       console.error('Error loading sessions:', error)
+    }
+  }
+
+  async function loadRecentSessions() {
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.user) return
+      const user = session.user
+
+      const { data: sessions, error } = await supabase
+        .from('sessions')
+        .select(`
+          id, status, created_at, ended_at, listener_id, seeker_id,
+          listener:profiles!sessions_listener_id_fkey(id, display_name),
+          seeker:profiles!sessions_seeker_id_fkey(id, display_name)
+        `)
+        .eq('status', 'ended')
+        .or(`listener_id.eq.${user.id},seeker_id.eq.${user.id}`)
+        .order('ended_at', { ascending: false })
+        .limit(5)
+
+      if (error) throw error
+
+      const sessionsWithNames = (sessions || []).map((session: any) => {
+        const otherUser = session.listener_id === user.id ? session.seeker : session.listener
+        return {
+          ...session,
+          otherUserName: otherUser?.display_name || 'User'
+        }
+      })
+
+      setRecentSessions(sessionsWithNames)
+    } catch (error) {
+      console.error('Error loading recent sessions:', error)
     }
   }
 
@@ -527,9 +565,16 @@ export default function DashboardPage() {
             <Body18 className="font-bold text-purple-600 mb-2 text-lg">I Need Support</Body18>
             <Body16 className="text-gray-600 text-sm mb-4">Connect with someone who understands</Body16>
             {profile?.role_state === 'requesting' ? (
-              <div className="flex items-center justify-center gap-2 px-4 py-2 bg-purple-100 rounded-xl">
-                <span className="w-2 h-2 bg-purple-600 rounded-full animate-pulse"></span>
-                <Body16 className="text-sm text-purple-700 font-semibold" aria-live="polite">Finding Listener...</Body16>
+              <div className="space-y-2">
+                <div className="flex items-center justify-center gap-2 px-4 py-2 bg-purple-100 rounded-xl">
+                  <span className="w-2 h-2 bg-purple-600 rounded-full animate-pulse"></span>
+                  <Body16 className="text-sm text-purple-700 font-semibold" aria-live="polite">Finding Listener...</Body16>
+                </div>
+                <Body16 className="text-xs text-purple-500" aria-live="polite">
+                  {availableListenerCount > 0
+                    ? `${availableListenerCount} listener${availableListenerCount === 1 ? '' : 's'} available`
+                    : 'Notifying listeners...'}
+                </Body16>
               </div>
             ) : (
               <Body16 className="text-sm text-purple-600 font-medium">Click to find a listener</Body16>
@@ -546,7 +591,7 @@ export default function DashboardPage() {
         )}
 
         {/* Available Listeners */}
-        <AvailableListeners />
+        <AvailableListeners onCountChange={setAvailableListenerCount} />
 
         {/* Notification Settings */}
         <div className="mb-4 sm:mb-6">
@@ -579,6 +624,45 @@ export default function DashboardPage() {
                   </div>
                 </button>
               ))}
+            </div>
+          </div>
+        )}
+
+        {/* Recent Sessions */}
+        {recentSessions.length > 0 && (
+          <div className="bg-white rounded-lg p-6 shadow-sm mb-8">
+            <Body18 className="font-semibold text-gray-900 mb-4">Recent Conversations</Body18>
+            <div className="space-y-2" role="list" aria-label="Recent chat sessions">
+              {recentSessions.map((session) => {
+                const endedAt = session.ended_at ? new Date(session.ended_at) : null
+                const startedAt = new Date(session.created_at)
+                const durationMs = endedAt ? endedAt.getTime() - startedAt.getTime() : null
+                const durationMin = durationMs !== null ? Math.round(durationMs / 60000) : null
+                const dateLabel = endedAt
+                  ? endedAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                  : ''
+                return (
+                  <div
+                    key={session.id}
+                    role="listitem"
+                    className="w-full p-4 bg-gray-50 rounded-lg"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <Body16 className="font-medium text-gray-900 mb-0.5">
+                          {session.otherUserName}
+                        </Body16>
+                        <Body16 className="text-sm text-gray-500">
+                          {dateLabel}{durationMin !== null && durationMin > 0 ? ` · ${durationMin} min` : ''}
+                        </Body16>
+                      </div>
+                      <span className="px-2 py-1 text-xs rounded-full bg-gray-200 text-gray-500 font-medium">
+                        Ended
+                      </span>
+                    </div>
+                  </div>
+                )
+              })}
             </div>
           </div>
         )}

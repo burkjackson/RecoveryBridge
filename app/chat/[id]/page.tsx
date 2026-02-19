@@ -951,11 +951,15 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                   )}
                 </button>
               </div>
-              {newMessage.length > VALIDATION.MAX_MESSAGE_LENGTH * 0.9 && (
-                <p className={`text-xs mt-1 text-right ${newMessage.length >= VALIDATION.MAX_MESSAGE_LENGTH ? 'text-red-500' : 'text-gray-400'}`}>
-                  {newMessage.length}/{VALIDATION.MAX_MESSAGE_LENGTH}
-                </p>
-              )}
+              <p className={`text-xs mt-1 text-right transition-colors ${
+                newMessage.length >= VALIDATION.MAX_MESSAGE_LENGTH
+                  ? 'text-red-500 font-semibold'
+                  : newMessage.length > VALIDATION.MAX_MESSAGE_LENGTH * 0.9
+                  ? 'text-amber-500'
+                  : 'text-gray-300'
+              }`}>
+                {newMessage.length}/{VALIDATION.MAX_MESSAGE_LENGTH}
+              </p>
             </form>
           </div>
         )}
