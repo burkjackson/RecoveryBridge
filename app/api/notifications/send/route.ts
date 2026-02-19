@@ -174,7 +174,7 @@ export async function POST(request: NextRequest) {
         ? '⏳ Someone\'s Still Waiting'
         : '🤝 Someone Needs Support',
       body: isRenotification
-        ? `${seekerName} has been waiting 5+ minutes. Can you help?`
+        ? `${seekerName} has been waiting 2+ minutes. Can you help?`
         : `${seekerName} is looking for a listener right now.`,
       icon: '/icon-192.png',
       badge: '/icon-192.png',
@@ -223,7 +223,7 @@ export async function POST(request: NextRequest) {
 
     if (smsEligibleListeners.length > 0) {
       const smsBody = isRenotification
-        ? `RecoveryBridge: ${seekerName} has been waiting 5+ minutes for support. Open the app to connect.`
+        ? `RecoveryBridge: ${seekerName} has been waiting 2+ minutes for support. Open the app to connect.`
         : `RecoveryBridge: ${seekerName} needs support right now. Open the app to connect.`
 
       const smsPromises = smsEligibleListeners.map(async (listener) => {
