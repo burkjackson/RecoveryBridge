@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import webpush from 'web-push'
 import { createClient } from '@supabase/supabase-js'
+import { sendSMS } from '@/lib/sms'
 
 // Simple in-memory rate limiter: max 3 requests per user per 60 seconds
 const RATE_LIMIT_WINDOW_MS = 60 * 1000
@@ -124,7 +125,7 @@ export async function POST(request: NextRequest) {
     // 2. Users with "always_available" enabled (should receive notifications anytime)
     const { data: listeners, error: listenersError } = await supabase
       .from('profiles')
-      .select('id, display_name, role_state, always_available, quiet_hours_enabled, quiet_hours_start, quiet_hours_end, quiet_hours_timezone')
+      .select('id, display_name, role_state, always_available, quiet_hours_enabled, quiet_hours_start, quiet_hours_end, quiet_hours_timezone, phone_number, sms_notifications_enabled')
       .or('role_state.eq.available,always_available.eq.true')
       .neq('id', seekerId)
 
@@ -184,12 +185,14 @@ export async function POST(request: NextRequest) {
       }
     })
 
-    // Send notifications to all available listeners
-    let successCount = 0
+    // Send push notifications to all available listeners
+    let pushSuccessCount = 0
+    const pushSuccessUserIds = new Set<string>()
     const notificationPromises = subscriptions.map(async (sub) => {
       try {
         await webpush.sendNotification(sub.subscription, payload)
-        successCount++
+        pushSuccessCount++
+        pushSuccessUserIds.add(sub.user_id)
       } catch (error: unknown) {
         const statusCode = (error as { statusCode?: number })?.statusCode
         console.error(`Failed to send notification to subscription ${sub.id}:`, error)
@@ -206,10 +209,33 @@ export async function POST(request: NextRequest) {
 
     await Promise.all(notificationPromises)
 
+    // SMS fallback: Send SMS to listeners who weren't reached via push but have SMS enabled
+    let smsCount = 0
+    const smsEligibleListeners = activeListeners.filter(l =>
+      l.sms_notifications_enabled &&
+      l.phone_number &&
+      !pushSuccessUserIds.has(l.id)
+    )
+
+    if (smsEligibleListeners.length > 0) {
+      const smsBody = isRenotification
+        ? `RecoveryBridge: ${seekerName} has been waiting 5+ minutes for support. Open the app to connect.`
+        : `RecoveryBridge: ${seekerName} needs support right now. Open the app to connect.`
+
+      const smsPromises = smsEligibleListeners.map(async (listener) => {
+        const sent = await sendSMS(listener.phone_number!, smsBody)
+        if (sent) smsCount++
+      })
+
+      await Promise.all(smsPromises)
+    }
+
     return NextResponse.json({
       success: true,
-      message: `Notifications sent to ${successCount} listener(s)`,
-      notified: successCount,
+      message: `Notifications sent to ${pushSuccessCount} via push, ${smsCount} via SMS`,
+      notified: pushSuccessCount + smsCount,
+      pushCount: pushSuccessCount,
+      smsCount,
       total: subscriptions.length,
     })
 
