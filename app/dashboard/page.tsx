@@ -72,9 +72,9 @@ export default function DashboardPage() {
     }
   }, [])
 
-  // Heartbeat system: Send "I'm still here" signal every 30 seconds when available
+  // Heartbeat system: Send "I'm still here" signal every 30 seconds when available or requesting
   useEffect(() => {
-    if (!profile || profile.role_state !== 'available') {
+    if (!profile || (profile.role_state !== 'available' && profile.role_state !== 'requesting')) {
       return
     }
 
@@ -92,7 +92,7 @@ export default function DashboardPage() {
   }, [profile?.role_state])
 
   async function sendHeartbeat() {
-    if (!profile || profile.role_state !== 'available') {
+    if (!profile || (profile.role_state !== 'available' && profile.role_state !== 'requesting')) {
       return
     }
 

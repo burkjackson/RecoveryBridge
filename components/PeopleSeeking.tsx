@@ -35,9 +35,17 @@ export default function PeopleSeeking({ currentUserId, currentRoleState }: Peopl
   const router = useRouter()
   const [supabase] = useState(() => createClient())
 
+  // Load on mount and whenever role state changes
   useEffect(() => {
     if (currentRoleState === 'available') {
       loadPeopleSeeking()
+
+      // Also poll every 15 seconds as a fallback in case realtime events are missed
+      const pollInterval = setInterval(() => {
+        loadPeopleSeeking()
+      }, 15000)
+
+      return () => clearInterval(pollInterval)
     }
   }, [currentRoleState])
 
