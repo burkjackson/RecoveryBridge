@@ -103,7 +103,15 @@ export interface SessionFeedback {
   from_user_id: string
   to_user_id: string
   helpful: boolean
+  thank_you_note: string | null
   created_at: string
+}
+
+export interface ThankYouNoteWithSender extends SessionFeedback {
+  sender_profile: {
+    display_name: string
+    avatar_url: string | null
+  }
 }
 
 export interface UserFavorite {

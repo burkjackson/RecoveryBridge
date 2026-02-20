@@ -33,6 +33,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   const [profileModal, setProfileModal] = useState(false)
   const [feedbackModal, setFeedbackModal] = useState(false)
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false)
+  const [thankYouNote, setThankYouNote] = useState('')
 
   // Favorites
   const [favoriteStep, setFavoriteStep] = useState(false)
@@ -556,6 +557,8 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
     setFeedbackSubmitted(true)
 
     const otherUserId = currentUserId === session.listener_id ? session.seeker_id : session.listener_id
+    const isSeeker = currentUserId === session.seeker_id
+    const note = isSeeker && thankYouNote.trim() ? thankYouNote.trim() : null
 
     try {
       await supabase.from('session_feedback').insert({
@@ -563,6 +566,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
         from_user_id: currentUserId,
         to_user_id: otherUserId,
         helpful,
+        ...(note ? { thank_you_note: note } : {}),
       })
     } catch (error) {
       console.error('Error submitting feedback:', error)
@@ -1341,9 +1345,33 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                     </div>
                   </div>
 
-                  <Body16 className="text-gray-600 mb-6">
+                  <Body16 className="text-gray-600 mb-4">
                     Was this conversation helpful?
                   </Body16>
+
+                  {/* Thank-you note — only visible to seekers */}
+                  {session && currentUserId === session.seeker_id && (
+                    <div className="mb-4 text-left">
+                      <label htmlFor="thank-you-note" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
+                        💌 Leave a note for your listener <span className="font-normal normal-case">(optional)</span>
+                      </label>
+                      <textarea
+                        id="thank-you-note"
+                        value={thankYouNote}
+                        onChange={e => setThankYouNote(e.target.value.slice(0, 300))}
+                        placeholder="Your support really meant a lot to me..."
+                        rows={3}
+                        className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-rb-blue/40 focus:border-rb-blue transition"
+                      />
+                      <p className={`text-xs text-right mt-0.5 ${
+                        thankYouNote.length >= 300 ? 'text-red-500' :
+                        thankYouNote.length >= 250 ? 'text-amber-500' : 'text-gray-400'
+                      }`}>
+                        {thankYouNote.length} / 300
+                      </p>
+                    </div>
+                  )}
+
                   <div className="flex gap-3 justify-center mb-4">
                     <button
                       onClick={() => submitFeedback(true)}
