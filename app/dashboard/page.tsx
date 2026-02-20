@@ -23,6 +23,7 @@ export default function DashboardPage() {
   const [connectingFavorite, setConnectingFavorite] = useState<string | null>(null)
   const [error, setError] = useState<{ show: boolean; message: string; action?: () => void }>({ show: false, message: '' })
   const [nudgeDismissed, setNudgeDismissed] = useState(false)
+  const [showOfflineConfirm, setShowOfflineConfirm] = useState(false)
   const profileRef = useRef<Profile | null>(null)
   const lastNotifyTimestampRef = useRef<number>(0)
   const notifyCountRef = useRef<number>(0)
@@ -400,6 +401,33 @@ export default function DashboardPage() {
     router.push('/')
   }
 
+  // Called when listener clicks the "I'm Here To Listen" button.
+  // If they're available and want to go offline, check if any seekers are waiting first.
+  async function handleListenerToggle() {
+    if (profile?.role_state === 'available') {
+      // Check for seekers currently in requesting state
+      try {
+        const { count } = await supabase
+          .from('profiles')
+          .select('id', { count: 'exact', head: true })
+          .eq('role_state', 'requesting')
+          .neq('id', profile.id)
+
+        if (count && count > 0) {
+          // Seekers are waiting — ask the listener to confirm before going offline
+          setShowOfflineConfirm(true)
+          return
+        }
+      } catch {
+        // If the check fails, allow the toggle to proceed normally
+      }
+
+      setRoleState('offline')
+    } else {
+      setRoleState('available')
+    }
+  }
+
   async function setRoleState(newState: Profile['role_state']) {
     if (!profile) return
 
@@ -612,7 +640,7 @@ export default function DashboardPage() {
         {/* Role Buttons */}
         <div className="grid sm:grid-cols-2 gap-4 mb-8" role="group" aria-label="Choose your current role">
           <button
-            onClick={() => setRoleState(profile?.role_state === 'available' ? 'offline' : 'available')}
+            onClick={handleListenerToggle}
             aria-label={profile?.role_state === 'available' ? 'You are currently available to listen. Click to go offline' : 'Make yourself available to listen and support others'}
             aria-pressed={profile?.role_state === 'available'}
             className={`p-8 rounded-2xl text-center transition-all duration-300 transform hover:scale-[1.02] hover:-translate-y-1 ${
@@ -814,6 +842,58 @@ export default function DashboardPage() {
         {/* Footer */}
         <Footer />
       </div>
+
+      {/* Offline Confirmation Modal */}
+      {showOfflineConfirm && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="offline-confirm-title"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+        >
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/40"
+            onClick={() => setShowOfflineConfirm(false)}
+            aria-hidden="true"
+          />
+
+          {/* Modal card */}
+          <div className="relative bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6">
+            <div className="text-center mb-5">
+              <span className="text-4xl block mb-3" aria-hidden="true">🙏</span>
+              <h2 id="offline-confirm-title" className="text-lg font-bold text-gray-900 mb-2">
+                Someone is waiting for support
+              </h2>
+              <p className="text-sm text-gray-600 leading-relaxed">
+                There are people looking for a listener right now. Are you sure you want to go offline?
+              </p>
+            </div>
+
+            <div className="flex flex-col gap-3">
+              {/* Primary: stay available */}
+              <button
+                onClick={() => setShowOfflineConfirm(false)}
+                className="min-h-[48px] w-full px-6 py-3 bg-rb-blue hover:bg-rb-blue-hover text-white rounded-full text-sm font-semibold transition-colors"
+                autoFocus
+              >
+                Stay Available
+              </button>
+
+              {/* Secondary: go offline anyway */}
+              <button
+                onClick={() => {
+                  setShowOfflineConfirm(false)
+                  setRoleState('offline')
+                }}
+                className="min-h-[48px] w-full px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full text-sm font-semibold transition-colors"
+              >
+                Go Offline Anyway
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   )
 }
