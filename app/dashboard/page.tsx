@@ -10,7 +10,7 @@ import Footer from '@/components/Footer'
 import NotificationSettings from '@/components/NotificationSettings'
 import AvailableListeners from '@/components/AvailableListeners'
 import PeopleSeeking from '@/components/PeopleSeeking'
-import type { Profile, SessionWithUserName, ProfileUpdateData } from '@/lib/types/database'
+import type { Profile, SessionWithUserName, ProfileUpdateData, FavoriteWithProfile } from '@/lib/types/database'
 import { TIME, NOTIFICATION } from '@/lib/constants'
 
 export default function DashboardPage() {
@@ -19,7 +19,11 @@ export default function DashboardPage() {
   const [activeSessions, setActiveSessions] = useState<SessionWithUserName[]>([])
   const [recentSessions, setRecentSessions] = useState<SessionWithUserName[]>([])
   const [availableListenerCount, setAvailableListenerCount] = useState(0)
+  const [favorites, setFavorites] = useState<FavoriteWithProfile[]>([])
+  const [connectingFavorite, setConnectingFavorite] = useState<string | null>(null)
   const [error, setError] = useState<{ show: boolean; message: string; action?: () => void }>({ show: false, message: '' })
+  const [nudgeDismissed, setNudgeDismissed] = useState(false)
+  const [showOfflineConfirm, setShowOfflineConfirm] = useState(false)
   const profileRef = useRef<Profile | null>(null)
   const lastNotifyTimestampRef = useRef<number>(0)
   const notifyCountRef = useRef<number>(0)
@@ -47,6 +51,7 @@ export default function DashboardPage() {
     loadProfile()
     loadActiveSessions()
     loadRecentSessions()
+    loadFavorites()
     cleanupStaleSessions() // Clean up abandoned sessions in the background
 
     // Subscribe to new sessions
@@ -316,6 +321,62 @@ export default function DashboardPage() {
     }
   }
 
+  async function loadFavorites() {
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.user) return
+
+      const { data, error } = await supabase
+        .from('user_favorites')
+        .select(`
+          id,
+          user_id,
+          favorite_user_id,
+          created_at,
+          favorite_profile:profiles!user_favorites_favorite_user_id_fkey(
+            display_name,
+            bio,
+            tagline,
+            avatar_url,
+            role_state,
+            always_available,
+            last_heartbeat_at,
+            tags,
+            user_role
+          )
+        `)
+        .eq('user_id', session.user.id)
+        .order('created_at', { ascending: false })
+
+      if (error) throw error
+      setFavorites((data || []) as FavoriteWithProfile[])
+    } catch (error) {
+      console.error('Error loading favorites:', error)
+    }
+  }
+
+  async function connectWithFavorite(favoriteUserId: string) {
+    if (connectingFavorite || !profile) return
+    setConnectingFavorite(favoriteUserId)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.user) return
+
+      const { data: newSession, error } = await supabase
+        .from('sessions')
+        .insert([{ listener_id: favoriteUserId, seeker_id: profile.id, status: 'active' }])
+        .select()
+        .single()
+
+      if (error) throw error
+      router.push(`/chat/${newSession.id}`)
+    } catch (error) {
+      console.error('Error connecting with favorite:', error)
+    } finally {
+      setConnectingFavorite(null)
+    }
+  }
+
   async function endAllActiveSessions() {
     if (!profile) return
 
@@ -338,6 +399,33 @@ export default function DashboardPage() {
     await endAllActiveSessions()
     await supabase.auth.signOut()
     router.push('/')
+  }
+
+  // Called when listener clicks the "I'm Here To Listen" button.
+  // If they're available and want to go offline, check if any seekers are waiting first.
+  async function handleListenerToggle() {
+    if (profile?.role_state === 'available') {
+      // Check for seekers currently in requesting state
+      try {
+        const { count } = await supabase
+          .from('profiles')
+          .select('id', { count: 'exact', head: true })
+          .eq('role_state', 'requesting')
+          .neq('id', profile.id)
+
+        if (count && count > 0) {
+          // Seekers are waiting — ask the listener to confirm before going offline
+          setShowOfflineConfirm(true)
+          return
+        }
+      } catch {
+        // If the check fails, allow the toggle to proceed normally
+      }
+
+      setRoleState('offline')
+    } else {
+      setRoleState('available')
+    }
   }
 
   async function setRoleState(newState: Profile['role_state']) {
@@ -394,7 +482,8 @@ export default function DashboardPage() {
               'Authorization': `Bearer ${session.access_token}`
             },
             body: JSON.stringify({
-              seekerId: profile.id
+              seekerId: profile.id,
+              favoriteListenerIds: favorites.map(f => f.favorite_user_id)
             })
           })
 
@@ -499,6 +588,32 @@ export default function DashboardPage() {
           </div>
         </div>
 
+        {/* Onboarding Nudge Banner */}
+        {!nudgeDismissed && profile && (!profile.user_role || !profile.bio) && (
+          <div className="mb-6 flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl p-4 shadow-sm">
+            <span className="text-2xl flex-shrink-0" aria-hidden="true">✏️</span>
+            <div className="flex-1 min-w-0">
+              <Body16 className="font-semibold text-amber-900 text-sm">Finish setting up your profile</Body16>
+              <Body16 className="text-amber-800 text-sm mt-0.5">Choose your role and add a bio so others can find and connect with you.</Body16>
+              <button
+                onClick={() => router.push('/onboarding')}
+                className="mt-3 min-h-[44px] inline-flex items-center gap-1 px-5 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-full text-sm font-semibold transition-colors"
+              >
+                Complete Setup →
+              </button>
+            </div>
+            <button
+              onClick={() => setNudgeDismissed(true)}
+              aria-label="Dismiss"
+              className="min-h-[44px] min-w-[44px] flex items-center justify-center text-amber-600 hover:text-amber-900 transition-colors flex-shrink-0 -mt-1 -mr-1"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+              </svg>
+            </button>
+          </div>
+        )}
+
         {/* Role Display */}
         <div className="bg-white rounded-lg p-5 shadow-sm mb-6">
           <Body16 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Your Role</Body16>
@@ -525,7 +640,7 @@ export default function DashboardPage() {
         {/* Role Buttons */}
         <div className="grid sm:grid-cols-2 gap-4 mb-8" role="group" aria-label="Choose your current role">
           <button
-            onClick={() => setRoleState(profile?.role_state === 'available' ? 'offline' : 'available')}
+            onClick={handleListenerToggle}
             aria-label={profile?.role_state === 'available' ? 'You are currently available to listen. Click to go offline' : 'Make yourself available to listen and support others'}
             aria-pressed={profile?.role_state === 'available'}
             className={`p-8 rounded-2xl text-center transition-all duration-300 transform hover:scale-[1.02] hover:-translate-y-1 ${
@@ -582,6 +697,63 @@ export default function DashboardPage() {
           </button>
         </div>
 
+        {/* My Favorites */}
+        {favorites.length > 0 && (
+          <div className="bg-white rounded-lg p-5 shadow-sm mb-6">
+            <div className="flex items-center gap-2 mb-4">
+              <span className="text-amber-400 text-lg">⭐</span>
+              <Body18 className="font-semibold text-gray-900">My Favorites</Body18>
+            </div>
+            <div className="space-y-2">
+              {favorites.map(fav => {
+                const fp = fav.favorite_profile
+                const heartbeatThreshold = new Date(Date.now() - TIME.HEARTBEAT_THRESHOLD_MS).toISOString()
+                const isOnline = fp.always_available || (
+                  fp.last_heartbeat_at !== null &&
+                  fp.role_state === 'available' &&
+                  fp.last_heartbeat_at >= heartbeatThreshold
+                )
+                return (
+                  <div key={fav.id} className="flex items-center gap-3 p-3 bg-amber-50/40 border border-amber-100 rounded-lg">
+                    {/* Avatar */}
+                    {fp.avatar_url ? (
+                      <img src={fp.avatar_url} alt={fp.display_name}
+                        className="w-10 h-10 rounded-full object-cover flex-shrink-0" />
+                    ) : (
+                      <div className="w-10 h-10 rounded-full bg-rb-blue flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                        {fp.display_name.charAt(0).toUpperCase()}
+                      </div>
+                    )}
+
+                    {/* Info */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <Body16 className="font-semibold text-gray-900 truncate">{fp.display_name}</Body16>
+                        <span className={`w-2 h-2 rounded-full flex-shrink-0 ${isOnline ? 'bg-green-500' : 'bg-gray-300'}`}></span>
+                      </div>
+                      <Body16 className="text-sm text-gray-500">
+                        {isOnline ? 'Available now' : 'Offline'}
+                      </Body16>
+                    </div>
+
+                    {/* Connect — only when seeker is requesting and favorite is online */}
+                    {profile?.role_state === 'requesting' && isOnline && (
+                      <button
+                        onClick={() => connectWithFavorite(fav.favorite_user_id)}
+                        disabled={connectingFavorite === fav.favorite_user_id}
+                        aria-label={`Connect with ${fp.display_name}`}
+                        className="min-h-[44px] px-4 py-2 bg-rb-blue text-white rounded-lg text-sm font-semibold hover:bg-rb-blue-hover transition-all flex-shrink-0 disabled:opacity-50"
+                      >
+                        {connectingFavorite === fav.favorite_user_id ? 'Connecting...' : 'Connect'}
+                      </button>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
         {/* People Seeking Support - only visible to available listeners */}
         {profile && (
           <PeopleSeeking
@@ -591,7 +763,7 @@ export default function DashboardPage() {
         )}
 
         {/* Available Listeners */}
-        <AvailableListeners onCountChange={setAvailableListenerCount} />
+        <AvailableListeners onCountChange={setAvailableListenerCount} currentUserId={profile?.id} />
 
         {/* Notification Settings */}
         <div className="mb-4 sm:mb-6">
@@ -670,6 +842,58 @@ export default function DashboardPage() {
         {/* Footer */}
         <Footer />
       </div>
+
+      {/* Offline Confirmation Modal */}
+      {showOfflineConfirm && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="offline-confirm-title"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+        >
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/40"
+            onClick={() => setShowOfflineConfirm(false)}
+            aria-hidden="true"
+          />
+
+          {/* Modal card */}
+          <div className="relative bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6">
+            <div className="text-center mb-5">
+              <span className="text-4xl block mb-3" aria-hidden="true">🙏</span>
+              <h2 id="offline-confirm-title" className="text-lg font-bold text-gray-900 mb-2">
+                Someone is waiting for support
+              </h2>
+              <p className="text-sm text-gray-600 leading-relaxed">
+                There are people looking for a listener right now. Are you sure you want to go offline?
+              </p>
+            </div>
+
+            <div className="flex flex-col gap-3">
+              {/* Primary: stay available */}
+              <button
+                onClick={() => setShowOfflineConfirm(false)}
+                className="min-h-[48px] w-full px-6 py-3 bg-rb-blue hover:bg-rb-blue-hover text-white rounded-full text-sm font-semibold transition-colors"
+                autoFocus
+              >
+                Stay Available
+              </button>
+
+              {/* Secondary: go offline anyway */}
+              <button
+                onClick={() => {
+                  setShowOfflineConfirm(false)
+                  setRoleState('offline')
+                }}
+                className="min-h-[48px] w-full px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full text-sm font-semibold transition-colors"
+              >
+                Go Offline Anyway
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   )
 }

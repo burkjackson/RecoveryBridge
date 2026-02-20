@@ -21,21 +21,23 @@ interface Listener {
 
 interface AvailableListenersProps {
   onCountChange?: (count: number) => void
+  currentUserId?: string
 }
 
-export default function AvailableListeners({ onCountChange }: AvailableListenersProps) {
+export default function AvailableListeners({ onCountChange, currentUserId }: AvailableListenersProps) {
   const [listeners, setListeners] = useState<Listener[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [profilePreview, setProfilePreview] = useState<Listener | null>(null)
+  const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set())
+  const [hasSharedSession, setHasSharedSession] = useState<Set<string>>(new Set())
+  const [togglingFavorite, setTogglingFavorite] = useState<string | null>(null)
   const supabase = createClient()
 
   useEffect(() => {
     loadAvailableListeners()
 
     // Subscribe to real-time updates
-    // Remove the filter to catch all profile updates (role_state OR always_available changes)
-    // The client-side filtering in loadAvailableListeners() handles showing only relevant users
     const channel = supabase
       .channel('available-listeners-changes')
       .on(
@@ -54,12 +56,13 @@ export default function AvailableListeners({ onCountChange }: AvailableListeners
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [])
+  }, [currentUserId])
 
   async function loadAvailableListeners() {
     try {
-      setError(null) // Clear any previous errors
+      setError(null)
       const { data: { user } } = await supabase.auth.getUser()
+      const userId = currentUserId || user?.id
 
       // Calculate timestamp for heartbeat threshold
       const heartbeatThreshold = new Date(Date.now() - TIME.HEARTBEAT_THRESHOLD_MS).toISOString()
@@ -68,27 +71,62 @@ export default function AvailableListeners({ onCountChange }: AvailableListeners
         .from('profiles')
         .select('id, display_name, bio, tagline, tags, avatar_url, user_role, last_heartbeat_at, always_available')
         .eq('role_state', 'available')
-        .neq('id', user?.id || '') // Exclude current user
+        .neq('id', userId || '')
 
       if (error) throw error
 
-      // Filter to show only:
-      // 1. Users with always_available enabled (stay online indefinitely), OR
-      // 2. Users with recent heartbeat (active in last 5 minutes)
+      // Filter to active listeners only
       const onlineListeners = (data || []).filter(listener => {
-        // Always available users are always shown
-        if (listener.always_available) {
-          return true
-        }
-        // Otherwise, check if heartbeat is recent
-        if (!listener.last_heartbeat_at) {
-          return false
-        }
+        if (listener.always_available) return true
+        if (!listener.last_heartbeat_at) return false
         return listener.last_heartbeat_at >= heartbeatThreshold
       })
 
-      setListeners(onlineListeners)
-      onCountChange?.(onlineListeners.length)
+      // Load favorites and shared session history
+      let favIds = new Set<string>()
+      let sharedIds = new Set<string>()
+
+      if (userId && onlineListeners.length > 0) {
+        // Fetch current favorites
+        const { data: favData } = await supabase
+          .from('user_favorites')
+          .select('favorite_user_id')
+          .eq('user_id', userId)
+
+        favIds = new Set((favData || []).map(f => f.favorite_user_id))
+        setFavoriteIds(favIds)
+
+        // Fetch shared ended sessions with visible listeners
+        const listenerIds = onlineListeners.map(l => l.id)
+        const { data: sessionData } = await supabase
+          .from('sessions')
+          .select('listener_id, seeker_id')
+          .eq('status', 'ended')
+          .or(
+            listenerIds
+              .map(id =>
+                `and(listener_id.eq.${id},seeker_id.eq.${userId}),and(seeker_id.eq.${id},listener_id.eq.${userId})`
+              )
+              .join(',')
+          )
+
+        ;(sessionData || []).forEach(s => {
+          if (s.listener_id === userId) sharedIds.add(s.seeker_id)
+          else sharedIds.add(s.listener_id)
+        })
+        setHasSharedSession(sharedIds)
+      }
+
+      // Sort: favorites first, then alphabetically
+      const sorted = [...onlineListeners].sort((a, b) => {
+        const aFav = favIds.has(a.id) ? 0 : 1
+        const bFav = favIds.has(b.id) ? 0 : 1
+        if (aFav !== bFav) return aFav - bFav
+        return a.display_name.localeCompare(b.display_name)
+      })
+
+      setListeners(sorted)
+      onCountChange?.(sorted.length)
     } catch (err) {
       console.error('Error loading available listeners:', err)
       setError('We couldn\'t load available listeners right now. Please check your connection and try again.')
@@ -97,15 +135,52 @@ export default function AvailableListeners({ onCountChange }: AvailableListeners
     }
   }
 
+  async function toggleFavorite(listenerId: string) {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user || togglingFavorite) return
+
+    setTogglingFavorite(listenerId)
+    const isFav = favoriteIds.has(listenerId)
+
+    // Optimistic update
+    setFavoriteIds(prev => {
+      const next = new Set(prev)
+      if (isFav) next.delete(listenerId)
+      else next.add(listenerId)
+      return next
+    })
+
+    try {
+      if (isFav) {
+        await supabase
+          .from('user_favorites')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('favorite_user_id', listenerId)
+      } else {
+        await supabase
+          .from('user_favorites')
+          .insert({ user_id: user.id, favorite_user_id: listenerId })
+      }
+      // Re-load to apply sort
+      loadAvailableListeners()
+    } catch (err) {
+      // Roll back optimistic update
+      setFavoriteIds(prev => {
+        const next = new Set(prev)
+        if (isFav) next.add(listenerId)
+        else next.delete(listenerId)
+        return next
+      })
+      console.error('Error toggling favorite:', err)
+    } finally {
+      setTogglingFavorite(null)
+    }
+  }
+
   function getDisplayMessage(tagline: string | null, bio: string | null): string {
-    // Use tagline if available
-    if (tagline && tagline.trim()) {
-      return tagline
-    }
-    // Fall back to bio excerpt
-    if (!bio || bio.trim() === '') {
-      return 'Available to listen'
-    }
+    if (tagline && tagline.trim()) return tagline
+    if (!bio || bio.trim() === '') return 'Available to listen'
     return bio.length > 60 ? bio.substring(0, 60) + '...' : bio
   }
 
@@ -198,6 +273,9 @@ export default function AvailableListeners({ onCountChange }: AvailableListeners
                 <Body16 className="font-semibold text-gray-900 truncate">
                   {listener.display_name}
                 </Body16>
+                {favoriteIds.has(listener.id) && (
+                  <span className="text-amber-400 flex-shrink-0" title="Favorited" aria-label="Favorited">⭐</span>
+                )}
                 {listener.always_available && (
                   <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 flex-shrink-0">
                     ⚡
@@ -290,6 +368,31 @@ export default function AvailableListeners({ onCountChange }: AvailableListeners
                     </span>
                   ))}
                 </div>
+              </div>
+            )}
+
+            {/* Favorite toggle — only for people you've had a past session with */}
+            {hasSharedSession.has(profilePreview.id) && (
+              <div className="pt-3 border-t border-gray-100">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    toggleFavorite(profilePreview.id)
+                  }}
+                  disabled={togglingFavorite === profilePreview.id}
+                  className={`min-h-[44px] w-full px-4 py-2.5 rounded-xl font-semibold text-sm transition-all ${
+                    favoriteIds.has(profilePreview.id)
+                      ? 'bg-amber-50 border-2 border-amber-200 text-amber-800 hover:bg-amber-100'
+                      : 'bg-gray-50 border-2 border-gray-200 text-gray-600 hover:bg-gray-100'
+                  }`}
+                >
+                  {togglingFavorite === profilePreview.id
+                    ? 'Saving...'
+                    : favoriteIds.has(profilePreview.id)
+                      ? '⭐ Remove from favorites'
+                      : '☆ Save to favorites'
+                  }
+                </button>
               </div>
             )}
           </div>

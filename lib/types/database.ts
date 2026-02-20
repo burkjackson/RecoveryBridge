@@ -19,6 +19,7 @@ export interface Profile {
   quiet_hours_timezone: string
   phone_number: string | null
   sms_notifications_enabled: boolean
+  email_notifications_enabled: boolean
   created_at?: string
   updated_at?: string
 }
@@ -102,7 +103,36 @@ export interface SessionFeedback {
   from_user_id: string
   to_user_id: string
   helpful: boolean
+  thank_you_note: string | null
   created_at: string
+}
+
+export interface ThankYouNoteWithSender extends SessionFeedback {
+  sender_profile: {
+    display_name: string
+    avatar_url: string | null
+  }
+}
+
+export interface UserFavorite {
+  id: string
+  user_id: string
+  favorite_user_id: string
+  created_at: string
+}
+
+export interface FavoriteWithProfile extends UserFavorite {
+  favorite_profile: {
+    display_name: string
+    bio: string | null
+    tagline: string | null
+    avatar_url: string | null
+    role_state: 'available' | 'requesting' | 'offline' | null
+    always_available: boolean
+    last_heartbeat_at: string | null
+    tags: string[] | null
+    user_role: string | null
+  }
 }
 
 export interface MessageReaction {
@@ -124,6 +154,7 @@ export interface ProfileUpdateData {
   quiet_hours_timezone?: string
   phone_number?: string | null
   sms_notifications_enabled?: boolean
+  email_notifications_enabled?: boolean
   display_name?: string
   bio?: string
   tagline?: string
@@ -175,6 +206,11 @@ export type Database = {
         Row: SessionFeedback
         Insert: Omit<SessionFeedback, 'id' | 'created_at'>
         Update: Partial<Omit<SessionFeedback, 'id' | 'created_at'>>
+      }
+      user_favorites: {
+        Row: UserFavorite
+        Insert: Omit<UserFavorite, 'id' | 'created_at'>
+        Update: never
       }
       message_reactions: {
         Row: MessageReaction

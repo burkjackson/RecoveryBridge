@@ -33,6 +33,13 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   const [profileModal, setProfileModal] = useState(false)
   const [feedbackModal, setFeedbackModal] = useState(false)
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false)
+  const [thankYouNote, setThankYouNote] = useState('')
+
+  // Favorites
+  const [favoriteStep, setFavoriteStep] = useState(false)
+  const [favoriteAdded, setFavoriteAdded] = useState(false)
+  const [favoriteSaving, setFavoriteSaving] = useState(false)
+  const [alreadyFavorited, setAlreadyFavorited] = useState(false)
 
   // Report flow modal state
   const [reportModal, setReportModal] = useState(false)
@@ -208,6 +215,15 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
         setOtherUserName(profileData.display_name)
         setOtherUserProfile(profileData)
       }
+
+      // Check if this person is already a favorite
+      const { data: existingFav } = await supabase
+        .from('user_favorites')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('favorite_user_id', otherUserId)
+        .maybeSingle()
+      if (existingFav) setAlreadyFavorited(true)
     } catch (error) {
       console.error('Error loading session:', error)
       router.push('/dashboard')
@@ -541,6 +557,8 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
     setFeedbackSubmitted(true)
 
     const otherUserId = currentUserId === session.listener_id ? session.seeker_id : session.listener_id
+    const isSeeker = currentUserId === session.seeker_id
+    const note = isSeeker && thankYouNote.trim() ? thankYouNote.trim() : null
 
     try {
       await supabase.from('session_feedback').insert({
@@ -548,12 +566,35 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
         from_user_id: currentUserId,
         to_user_id: otherUserId,
         helpful,
+        ...(note ? { thank_you_note: note } : {}),
       })
     } catch (error) {
       console.error('Error submitting feedback:', error)
     }
 
-    setTimeout(() => router.push('/dashboard'), 1000)
+    // Show thank-you briefly, then transition to favorite prompt
+    setTimeout(() => {
+      setFeedbackSubmitted(false)
+      setFavoriteStep(true)
+    }, 1200)
+  }
+
+  async function addFavorite() {
+    if (!session || !currentUserId || favoriteSaving) return
+    setFavoriteSaving(true)
+    const otherUserId = currentUserId === session.listener_id ? session.seeker_id : session.listener_id
+    setFavoriteAdded(true) // optimistic
+    try {
+      await supabase.from('user_favorites').insert({
+        user_id: currentUserId,
+        favorite_user_id: otherUserId,
+      })
+    } catch {
+      setFavoriteAdded(false) // roll back on error
+    } finally {
+      setFavoriteSaving(false)
+      setTimeout(() => router.push('/dashboard'), 800)
+    }
   }
 
   function skipFeedback() {
@@ -1250,7 +1291,40 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                   <span className="text-5xl block mb-3">🙏</span>
                   <Body18 className="font-bold text-gray-900 mb-2">Thank you!</Body18>
                   <Body16 className="text-gray-600">Your feedback helps our community.</Body16>
-                  <Body16 className="text-gray-400 text-sm mt-2">Returning to dashboard...</Body16>
+                  <Body16 className="text-gray-400 text-sm mt-2">One more thing...</Body16>
+                </div>
+              ) : favoriteStep ? (
+                <div className="py-2">
+                  <span className="text-5xl block mb-3">⭐</span>
+                  <Body18 className="font-bold text-gray-900 mb-2">
+                    Save {otherUserName}?
+                  </Body18>
+                  <Body16 className="text-gray-600 mb-6">
+                    Add them to your favorites so you can find them quickly next time.
+                  </Body16>
+
+                  {alreadyFavorited || favoriteAdded ? (
+                    <div className="py-3">
+                      <Body16 className="text-amber-700 font-semibold">⭐ Already in your favorites!</Body16>
+                      <Body16 className="text-gray-400 text-sm mt-1">Returning to dashboard...</Body16>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <button
+                        onClick={addFavorite}
+                        disabled={favoriteSaving}
+                        className="min-h-[44px] w-full px-5 py-3 bg-amber-50 border-2 border-amber-300 text-amber-800 rounded-xl font-semibold hover:bg-amber-100 hover:border-amber-400 transition-all text-lg disabled:opacity-50"
+                      >
+                        {favoriteSaving ? 'Saving...' : '⭐ Yes, save to favorites'}
+                      </button>
+                      <button
+                        onClick={() => router.push('/dashboard')}
+                        className="min-h-[44px] w-full px-4 py-2.5 bg-gray-100 border-2 border-gray-200 text-gray-500 rounded-xl font-semibold hover:bg-gray-200 transition-all text-sm"
+                      >
+                        Not now
+                      </button>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <>
@@ -1271,9 +1345,33 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                     </div>
                   </div>
 
-                  <Body16 className="text-gray-600 mb-6">
+                  <Body16 className="text-gray-600 mb-4">
                     Was this conversation helpful?
                   </Body16>
+
+                  {/* Thank-you note — only visible to seekers */}
+                  {session && currentUserId === session.seeker_id && (
+                    <div className="mb-4 text-left">
+                      <label htmlFor="thank-you-note" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
+                        💌 Leave a note for your listener <span className="font-normal normal-case">(optional)</span>
+                      </label>
+                      <textarea
+                        id="thank-you-note"
+                        value={thankYouNote}
+                        onChange={e => setThankYouNote(e.target.value.slice(0, 300))}
+                        placeholder="Your support really meant a lot to me..."
+                        rows={3}
+                        className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-rb-blue/40 focus:border-rb-blue transition"
+                      />
+                      <p className={`text-xs text-right mt-0.5 ${
+                        thankYouNote.length >= 300 ? 'text-red-500' :
+                        thankYouNote.length >= 250 ? 'text-amber-500' : 'text-gray-400'
+                      }`}>
+                        {thankYouNote.length} / 300
+                      </p>
+                    </div>
+                  )}
+
                   <div className="flex gap-3 justify-center mb-4">
                     <button
                       onClick={() => submitFeedback(true)}

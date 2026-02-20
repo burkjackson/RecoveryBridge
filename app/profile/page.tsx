@@ -10,7 +10,7 @@ import { SkeletonProfile } from '@/components/Skeleton'
 import Footer from '@/components/Footer'
 import NotificationSettings from '@/components/NotificationSettings'
 import TagSelector from '@/components/TagSelector'
-import type { Profile } from '@/lib/types/database'
+import type { Profile, FavoriteWithProfile, ThankYouNoteWithSender } from '@/lib/types/database'
 
 // E.164 phone number validation (same as lib/sms.ts but client-safe)
 function isValidE164(phone: string): boolean {
@@ -35,20 +35,33 @@ export default function ProfilePage() {
   const [savingSms, setSavingSms] = useState(false)
   const [smsSuccess, setSmsSuccess] = useState<string | null>(null)
   const [smsError, setSmsError] = useState<string | null>(null)
+  const [emailNotificationsEnabled, setEmailNotificationsEnabled] = useState(false)
+  const [savingEmail, setSavingEmail] = useState(false)
+  const [emailSuccess, setEmailSuccess] = useState<string | null>(null)
+  const [favorites, setFavorites] = useState<FavoriteWithProfile[]>([])
+  const [favoritesLoading, setFavoritesLoading] = useState(false)
+  const [favoritesExpanded, setFavoritesExpanded] = useState(false)
+  const [removingFavorite, setRemovingFavorite] = useState<string | null>(null)
+  const [thankYouNotes, setThankYouNotes] = useState<ThankYouNoteWithSender[]>([])
+  const [notesLoading, setNotesLoading] = useState(false)
+  const [notesExpanded, setNotesExpanded] = useState(false)
   const router = useRouter()
   const supabase = createClient()
 
   useEffect(() => {
     loadProfile()
+    loadFavorites()
+    loadThankYouNotes()
   }, [])
 
-  // Sync SMS state when profile loads
+  // Sync SMS and email state when profile loads
   useEffect(() => {
     if (profile) {
       setPhoneNumber(profile.phone_number || '')
       setSmsEnabled(profile.sms_notifications_enabled || false)
+      setEmailNotificationsEnabled(profile.email_notifications_enabled || false)
     }
-  }, [profile?.phone_number, profile?.sms_notifications_enabled])
+  }, [profile?.phone_number, profile?.sms_notifications_enabled, profile?.email_notifications_enabled])
 
   async function loadProfile() {
     try {
@@ -183,6 +196,119 @@ export default function ProfilePage() {
       setSmsError('Failed to save SMS settings. Please check your phone number format and try again.')
     } finally {
       setSavingSms(false)
+    }
+  }
+
+  async function handleSaveEmailNotifications(enabled: boolean) {
+    if (!profile) return
+    setSavingEmail(true)
+    setEmailSuccess(null)
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .update({ email_notifications_enabled: enabled })
+        .eq('id', profile.id)
+        .select()
+        .single()
+
+      if (error) throw error
+      if (data) setProfile(data)
+      setEmailNotificationsEnabled(enabled)
+      setEmailSuccess(enabled ? 'Email notifications enabled.' : 'Email notifications disabled.')
+      setTimeout(() => setEmailSuccess(null), 4000)
+    } catch (err) {
+      console.error('Error saving email notification setting:', err)
+      // Roll back the toggle visually
+      setEmailNotificationsEnabled(!enabled)
+    } finally {
+      setSavingEmail(false)
+    }
+  }
+
+  async function loadFavorites() {
+    try {
+      setFavoritesLoading(true)
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      const { data, error } = await supabase
+        .from('user_favorites')
+        .select(`
+          id,
+          user_id,
+          favorite_user_id,
+          created_at,
+          favorite_profile:profiles!user_favorites_favorite_user_id_fkey(
+            display_name, bio, tagline, avatar_url, role_state,
+            always_available, last_heartbeat_at, tags, user_role
+          )
+        `)
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+
+      if (error) throw error
+      setFavorites((data as unknown as FavoriteWithProfile[]) || [])
+    } catch (err) {
+      console.error('Error loading favorites:', err)
+    } finally {
+      setFavoritesLoading(false)
+    }
+  }
+
+  async function loadThankYouNotes() {
+    try {
+      setNotesLoading(true)
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      const { data, error } = await supabase
+        .from('session_feedback')
+        .select(`
+          id,
+          session_id,
+          from_user_id,
+          to_user_id,
+          helpful,
+          thank_you_note,
+          created_at,
+          sender_profile:profiles!session_feedback_from_user_id_fkey(
+            display_name, avatar_url
+          )
+        `)
+        .eq('to_user_id', user.id)
+        .not('thank_you_note', 'is', null)
+        .order('created_at', { ascending: false })
+        .limit(20)
+
+      if (error) throw error
+      setThankYouNotes((data as unknown as ThankYouNoteWithSender[]) || [])
+    } catch (err) {
+      console.error('Error loading thank-you notes:', err)
+    } finally {
+      setNotesLoading(false)
+    }
+  }
+
+  async function handleRemoveFavorite(favoriteId: string, favoriteUserId: string) {
+    if (removingFavorite) return
+    setRemovingFavorite(favoriteId)
+
+    // Optimistic removal
+    setFavorites(prev => prev.filter(f => f.id !== favoriteId))
+
+    try {
+      const { error } = await supabase
+        .from('user_favorites')
+        .delete()
+        .eq('id', favoriteId)
+
+      if (error) throw error
+    } catch (err) {
+      console.error('Error removing favorite:', err)
+      // Roll back
+      loadFavorites()
+    } finally {
+      setRemovingFavorite(null)
     }
   }
 
@@ -612,6 +738,150 @@ export default function ProfilePage() {
           />
         </div>
 
+        {/* Email Notifications */}
+        <div className="mt-4 bg-white rounded-lg shadow-sm p-5">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-xl">✉️</span>
+            <Body16 className="font-semibold text-gray-900">Email Notifications</Body16>
+          </div>
+          <Body16 className="text-sm text-gray-600 mb-4">
+            Get an email when someone needs support and push notifications can&apos;t reach you. Your email address is never shared with other users.
+          </Body16>
+
+          {emailSuccess && (
+            <div className="mb-3 p-3 bg-green-50 border-l-4 border-green-500 rounded">
+              <Body16 className="text-sm text-green-700">{emailSuccess}</Body16>
+            </div>
+          )}
+
+          <div className="flex items-center justify-between">
+            <label htmlFor="email-notifications" className="text-sm font-medium text-gray-700 cursor-pointer select-none">
+              Receive email notification fallbacks
+            </label>
+            <button
+              id="email-notifications"
+              role="switch"
+              aria-checked={emailNotificationsEnabled}
+              onClick={() => {
+                const next = !emailNotificationsEnabled
+                setEmailNotificationsEnabled(next)
+                handleSaveEmailNotifications(next)
+              }}
+              disabled={savingEmail}
+              className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-rb-blue focus:ring-offset-2 disabled:opacity-50 ${
+                emailNotificationsEnabled ? 'bg-rb-blue' : 'bg-gray-200'
+              }`}
+            >
+              <span
+                className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                  emailNotificationsEnabled ? 'translate-x-5' : 'translate-x-0'
+                }`}
+              />
+            </button>
+          </div>
+          <Body16 className="text-xs text-gray-500 mt-2 italic">
+            Emails are sent from RecoveryBridge — you must opt in here to receive them.
+          </Body16>
+        </div>
+
+        {/* My Favorites */}
+        <div className="mt-4 bg-white rounded-lg shadow-sm overflow-hidden">
+          <button
+            onClick={() => setFavoritesExpanded(prev => !prev)}
+            className="w-full flex items-center justify-between p-5 text-left hover:bg-gray-50 transition-colors"
+            aria-expanded={favoritesExpanded}
+          >
+            <div className="flex items-center gap-2">
+              <span className="text-xl">⭐</span>
+              <Body16 className="font-semibold text-gray-900">My Favorites</Body16>
+              {!favoritesLoading && (
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                  {favorites.length}
+                </span>
+              )}
+            </div>
+            <span className={`text-gray-400 transition-transform duration-200 ${favoritesExpanded ? 'rotate-180' : ''}`}>
+              ▼
+            </span>
+          </button>
+
+          {favoritesExpanded && (
+            <div className="border-t border-gray-100 px-5 pb-5 pt-4">
+              {favoritesLoading ? (
+                <div className="space-y-3">
+                  {[1, 2].map(i => (
+                    <div key={i} className="flex items-center gap-3 animate-pulse">
+                      <div className="w-10 h-10 rounded-full bg-gray-200 flex-shrink-0"></div>
+                      <div className="flex-1">
+                        <div className="h-4 bg-gray-200 rounded w-28 mb-2"></div>
+                        <div className="h-3 bg-gray-200 rounded w-40"></div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : favorites.length === 0 ? (
+                <div className="text-center py-4">
+                  <p className="text-sm text-gray-500">No favorites yet</p>
+                  <p className="text-xs text-gray-400 mt-1">
+                    After a session ends you can save people you'd like to connect with again.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {favorites.map(fav => (
+                    <div key={fav.id} className="flex items-center gap-3">
+                      {/* Avatar */}
+                      {fav.favorite_profile.avatar_url ? (
+                        <img
+                          src={fav.favorite_profile.avatar_url}
+                          alt={fav.favorite_profile.display_name}
+                          className="w-10 h-10 rounded-full object-cover flex-shrink-0"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 rounded-full bg-rb-blue flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                          {fav.favorite_profile.display_name.charAt(0).toUpperCase()}
+                        </div>
+                      )}
+
+                      {/* Info */}
+                      <div className="flex-1 min-w-0">
+                        <Body16 className="font-semibold text-gray-900 truncate text-sm">
+                          {fav.favorite_profile.display_name}
+                        </Body16>
+                        {fav.favorite_profile.tagline ? (
+                          <p className="text-xs text-gray-500 truncate italic">&quot;{fav.favorite_profile.tagline}&quot;</p>
+                        ) : fav.favorite_profile.bio ? (
+                          <p className="text-xs text-gray-500 truncate">
+                            {fav.favorite_profile.bio.length > 50
+                              ? fav.favorite_profile.bio.substring(0, 50) + '...'
+                              : fav.favorite_profile.bio}
+                          </p>
+                        ) : null}
+                      </div>
+
+                      {/* Remove button */}
+                      <button
+                        onClick={() => handleRemoveFavorite(fav.id, fav.favorite_user_id)}
+                        disabled={removingFavorite === fav.id}
+                        aria-label={`Remove ${fav.favorite_profile.display_name} from favorites`}
+                        className="min-h-[44px] min-w-[44px] flex items-center justify-center text-gray-400 hover:text-red-500 transition-colors flex-shrink-0 disabled:opacity-40"
+                      >
+                        {removingFavorite === fav.id ? (
+                          <span className="text-xs text-gray-400">...</span>
+                        ) : (
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                            <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                          </svg>
+                        )}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
         {/* SMS Notifications — hidden until Twilio verification is complete
         <div className="mt-4 bg-white rounded-lg shadow-sm p-5">
           <div className="flex items-center gap-2 mb-3">
@@ -683,6 +953,86 @@ export default function ProfilePage() {
           </div>
         </div>
         */}
+
+        {/* Thank-You Notes */}
+        <div className="mt-4 bg-white rounded-lg shadow-sm overflow-hidden">
+          <button
+            onClick={() => setNotesExpanded(prev => !prev)}
+            className="w-full flex items-center justify-between p-5 text-left hover:bg-gray-50 transition-colors"
+            aria-expanded={notesExpanded}
+          >
+            <div className="flex items-center gap-2">
+              <span className="text-xl">💌</span>
+              <Body16 className="font-semibold text-gray-900">Thank-You Notes</Body16>
+              {!notesLoading && (
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-pink-100 text-pink-800">
+                  {thankYouNotes.length}
+                </span>
+              )}
+            </div>
+            <span className={`text-gray-400 transition-transform duration-200 ${notesExpanded ? 'rotate-180' : ''}`}>
+              ▼
+            </span>
+          </button>
+
+          {notesExpanded && (
+            <div className="border-t border-gray-100 px-5 pb-5 pt-4">
+              {notesLoading ? (
+                <div className="space-y-4">
+                  {[1, 2].map(i => (
+                    <div key={i} className="flex items-start gap-3 animate-pulse">
+                      <div className="w-8 h-8 rounded-full bg-gray-200 flex-shrink-0 mt-0.5" />
+                      <div className="flex-1 space-y-1.5">
+                        <div className="h-3 bg-gray-200 rounded w-24" />
+                        <div className="h-3 bg-gray-200 rounded w-full" />
+                        <div className="h-3 bg-gray-200 rounded w-3/4" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : thankYouNotes.length === 0 ? (
+                <div className="text-center py-4">
+                  <p className="text-sm text-gray-500">No thank-you notes yet</p>
+                  <p className="text-xs text-gray-400 mt-1">Notes from people you&apos;ve supported will appear here.</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {thankYouNotes.map(note => {
+                    const daysAgo = Math.floor((Date.now() - new Date(note.created_at).getTime()) / (1000 * 60 * 60 * 24))
+                    const relativeDate = daysAgo === 0 ? 'Today' : daysAgo === 1 ? 'Yesterday' : `${daysAgo} days ago`
+                    const initials = note.sender_profile.display_name.charAt(0).toUpperCase()
+
+                    return (
+                      <div key={note.id} className="flex items-start gap-3">
+                        {/* Avatar */}
+                        {note.sender_profile.avatar_url ? (
+                          <img
+                            src={note.sender_profile.avatar_url}
+                            alt={note.sender_profile.display_name}
+                            className="w-8 h-8 rounded-full object-cover flex-shrink-0 mt-0.5"
+                          />
+                        ) : (
+                          <div className="w-8 h-8 rounded-full bg-rb-blue flex items-center justify-center text-white text-xs font-bold flex-shrink-0 mt-0.5">
+                            {initials}
+                          </div>
+                        )}
+
+                        {/* Note content */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-baseline gap-2 flex-wrap">
+                            <Body16 className="text-sm font-semibold text-gray-900">{note.sender_profile.display_name}</Body16>
+                            <span className="text-xs text-gray-400">{relativeDate}</span>
+                          </div>
+                          <p className="text-sm text-gray-700 mt-0.5 italic">&ldquo;{note.thank_you_note}&rdquo;</p>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
 
         {/* Delete Account */}
         <div className="mt-4 flex justify-center">
