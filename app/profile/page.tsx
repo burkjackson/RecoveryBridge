@@ -640,7 +640,7 @@ export default function ProfilePage() {
                 >
                   <option value="">Select your role...</option>
                   <option value="person_in_recovery">Person in Recovery</option>
-                  <option value="professional">Allies for Long-Term Recovery</option>
+                  <option value="professional">Allies in Long-Term Recovery</option>
                 </select>
                 <div className="flex gap-2">
                   <button
@@ -661,7 +661,7 @@ export default function ProfilePage() {
             ) : (
               <Body18 className="text-gray-900">
                 {profile.user_role === 'person_in_recovery' && 'Person in Recovery'}
-                {profile.user_role === 'professional' && 'Allies for Long-Term Recovery'}
+                {profile.user_role === 'professional' && 'Allies in Long-Term Recovery'}
                 {profile.user_role === 'ally' && 'Recovery Support (Legacy)'}
                 {!profile.user_role && 'Not set'}
               </Body18>

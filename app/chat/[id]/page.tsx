@@ -1248,7 +1248,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                 <div className="text-center">
                   <Body16 className="text-sm text-rb-gray italic">
                     {otherUserProfile.user_role === 'person_in_recovery' && 'Person in Recovery'}
-                    {otherUserProfile.user_role === 'professional' && 'Allies for Long-Term Recovery'}
+                    {otherUserProfile.user_role === 'professional' && 'Allies in Long-Term Recovery'}
                     {otherUserProfile.user_role === 'ally' && 'Recovery Support (Legacy)'}
                   </Body16>
                 </div>
