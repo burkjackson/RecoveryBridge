@@ -626,7 +626,7 @@ export default function DashboardPage() {
           <Body16 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Your Role</Body16>
           <Body18 className="text-gray-900">
             {profile?.user_role === 'person_in_recovery' && 'Person in Recovery'}
-            {profile?.user_role === 'professional' && 'Allies for Long-Term Recovery'}
+            {profile?.user_role === 'professional' && 'Allies in Long-Term Recovery'}
             {profile?.user_role === 'ally' && 'Recovery Support (Legacy)'}
             {!profile?.user_role && 'Not set'}
           </Body18>

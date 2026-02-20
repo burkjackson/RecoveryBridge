@@ -217,7 +217,7 @@ export default function OnboardingPage() {
                     : 'border border-gray-200 hover:border-rb-blue'
                 }`}
               >
-                <Body18 className="font-bold text-gray-900 mb-1">Allies for Long-Term Recovery</Body18>
+                <Body18 className="font-bold text-gray-900 mb-1">Allies in Long-Term Recovery</Body18>
                 <Body16 className="text-gray-600 text-sm">
                   A professional advocate giving back by offering support to others on their journey.
                 </Body16>

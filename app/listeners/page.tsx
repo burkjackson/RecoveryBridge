@@ -429,7 +429,7 @@ export default function ListenersPage() {
                         <div className="flex items-center gap-2 mb-2">
                           <Body16 className="text-sm text-rb-gray italic">
                             {listener.user_role === 'person_in_recovery' && 'Person in Recovery'}
-                            {listener.user_role === 'professional' && 'Allies for Long-Term Recovery'}
+                            {listener.user_role === 'professional' && 'Allies in Long-Term Recovery'}
                             {listener.user_role === 'ally' && 'Recovery Support (Legacy)'}
                           </Body16>
                           {(listener.helpful_count || 0) > 0 && (
@@ -582,7 +582,7 @@ export default function ListenersPage() {
                 {previewProfile.user_role && (
                   <Body16 className="text-sm text-rb-gray italic">
                     {previewProfile.user_role === 'person_in_recovery' && 'Person in Recovery'}
-                    {previewProfile.user_role === 'professional' && 'Allies for Long-Term Recovery'}
+                    {previewProfile.user_role === 'professional' && 'Allies in Long-Term Recovery'}
                     {previewProfile.user_role === 'ally' && 'Recovery Support (Legacy)'}
                   </Body16>
                 )}
