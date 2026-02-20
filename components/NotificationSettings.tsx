@@ -39,6 +39,7 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
   const [quietHoursSaving, setQuietHoursSaving] = useState(false)
   const [isPWA, setIsPWA] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
+  const [platform, setPlatform] = useState<'ios' | 'android' | 'desktop'>('desktop')
   const supabase = createClient()
 
   useEffect(() => {
@@ -75,9 +76,14 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
   }
 
   const checkIfMobile = () => {
-    // Check if user is on a mobile device
-    const mobileCheck = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+    const ua = navigator.userAgent
+    const isIOS = /iPad|iPhone|iPod/.test(ua)
+    const isAndroid = /Android/.test(ua)
+    const mobileCheck = isIOS || isAndroid || /webOS|BlackBerry|IEMobile|Opera Mini/i.test(ua)
     setIsMobile(mobileCheck)
+    if (isIOS) setPlatform('ios')
+    else if (isAndroid) setPlatform('android')
+    else setPlatform('desktop')
   }
 
   async function checkNotificationStatus() {
@@ -298,7 +304,7 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
             <span className="text-lg">📱</span>
             <div className="flex-1">
               <Body16 className="text-sm font-semibold text-blue-900">
-                Install as Web App for Notifications
+                {platform === 'android' ? 'Install as App for Notifications' : 'Install as Web App for Notifications'}
               </Body16>
               <Body16 className="text-xs text-blue-700">
                 Tap for setup instructions →
@@ -311,6 +317,7 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
         <NotificationInstructionsModal
           isOpen={showInstructionsModal}
           onClose={() => setShowInstructionsModal(false)}
+          platform={platform}
         />
       </>
     )
@@ -462,14 +469,16 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
             </div>
           )}
 
-          {/* Help Button — iOS only */}
+          {/* Help Button — mobile only */}
           {isMobile && (
             <div className="mt-3 text-center">
               <button
                 onClick={() => setShowInstructionsModal(true)}
                 className="text-sm text-blue-600 hover:text-blue-800 underline font-medium"
               >
-                How do I enable notifications on iPhone?
+                {platform === 'ios'
+                  ? 'How do I enable notifications on iPhone?'
+                  : 'How do I enable notifications on Android?'}
               </button>
             </div>
           )}
