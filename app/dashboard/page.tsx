@@ -22,6 +22,7 @@ export default function DashboardPage() {
   const [favorites, setFavorites] = useState<FavoriteWithProfile[]>([])
   const [connectingFavorite, setConnectingFavorite] = useState<string | null>(null)
   const [error, setError] = useState<{ show: boolean; message: string; action?: () => void }>({ show: false, message: '' })
+  const [nudgeDismissed, setNudgeDismissed] = useState(false)
   const profileRef = useRef<Profile | null>(null)
   const lastNotifyTimestampRef = useRef<number>(0)
   const notifyCountRef = useRef<number>(0)
@@ -558,6 +559,32 @@ export default function DashboardPage() {
             </button>
           </div>
         </div>
+
+        {/* Onboarding Nudge Banner */}
+        {!nudgeDismissed && profile && (!profile.user_role || !profile.bio) && (
+          <div className="mb-6 flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl p-4 shadow-sm">
+            <span className="text-2xl flex-shrink-0" aria-hidden="true">✏️</span>
+            <div className="flex-1 min-w-0">
+              <Body16 className="font-semibold text-amber-900 text-sm">Finish setting up your profile</Body16>
+              <Body16 className="text-amber-800 text-sm mt-0.5">Choose your role and add a bio so others can find and connect with you.</Body16>
+              <button
+                onClick={() => router.push('/onboarding')}
+                className="mt-3 min-h-[44px] inline-flex items-center gap-1 px-5 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-full text-sm font-semibold transition-colors"
+              >
+                Complete Setup →
+              </button>
+            </div>
+            <button
+              onClick={() => setNudgeDismissed(true)}
+              aria-label="Dismiss"
+              className="min-h-[44px] min-w-[44px] flex items-center justify-center text-amber-600 hover:text-amber-900 transition-colors flex-shrink-0 -mt-1 -mr-1"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+              </svg>
+            </button>
+          </div>
+        )}
 
         {/* Role Display */}
         <div className="bg-white rounded-lg p-5 shadow-sm mb-6">
