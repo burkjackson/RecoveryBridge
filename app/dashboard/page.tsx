@@ -349,7 +349,13 @@ export default function DashboardPage() {
         .order('created_at', { ascending: false })
 
       if (error) throw error
-      setFavorites((data || []) as FavoriteWithProfile[])
+      const normalized = (data || []).map((row: any) => ({
+        ...row,
+        favorite_profile: Array.isArray(row.favorite_profile)
+          ? row.favorite_profile[0]
+          : row.favorite_profile,
+      }))
+      setFavorites(normalized as unknown as FavoriteWithProfile[])
     } catch (error) {
       console.error('Error loading favorites:', error)
     }
