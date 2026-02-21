@@ -46,6 +46,7 @@ interface Session {
 interface User {
   id: string
   display_name: string
+  email: string
   user_role: string
   role_state: string
   created_at: string
@@ -55,12 +56,14 @@ interface User {
 export default function AdminPage() {
   const [loading, setLoading] = useState(true)
   const [isAdmin, setIsAdmin] = useState(false)
-  const [activeTab, setActiveTab] = useState<'reports' | 'blocks' | 'sessions' | 'users'>('reports')
+  const [activeTab, setActiveTab] = useState<'reports' | 'blocks' | 'sessions' | 'users' | 'signups'>('reports')
 
   const [reports, setReports] = useState<Report[]>([])
   const [blocks, setBlocks] = useState<UserBlock[]>([])
   const [sessions, setSessions] = useState<Session[]>([])
   const [users, setUsers] = useState<User[]>([])
+  const [signups, setSignups] = useState<User[]>([])
+  const [copiedId, setCopiedId] = useState<string | null>(null)
 
   // Modal states
   const [errorModal, setErrorModal] = useState({ show: false, message: '' })
@@ -133,6 +136,7 @@ export default function AdminPage() {
     if (activeTab === 'blocks') await loadBlocks()
     if (activeTab === 'sessions') await loadSessions()
     if (activeTab === 'users') await loadUsers()
+    if (activeTab === 'signups') await loadSignups()
   }
 
   async function loadReports() {
@@ -206,6 +210,24 @@ export default function AdminPage() {
     }
   }
 
+  async function loadSignups() {
+    try {
+      const thirtyDaysAgo = new Date()
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, display_name, email, user_role, role_state, created_at, is_admin')
+        .gte('created_at', thirtyDaysAgo.toISOString())
+        .order('created_at', { ascending: false })
+        .limit(100)
+
+      if (error) throw error
+      setSignups(data || [])
+    } catch (error) {
+      console.error('Error loading sign-ups:', error)
+    }
+  }
+
   function subscribeToUpdates() {
     const channel = supabase
       .channel('admin-updates')
@@ -224,10 +246,25 @@ export default function AdminPage() {
         { event: '*', schema: 'public', table: 'sessions' },
         () => { if (activeTab === 'sessions') loadSessions() }
       )
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'profiles' },
+        () => { if (activeTab === 'signups') loadSignups() }
+      )
       .subscribe()
 
     return () => {
       supabase.removeChannel(channel)
+    }
+  }
+
+  async function copyEmail(userId: string, email: string) {
+    try {
+      await navigator.clipboard.writeText(email)
+      setCopiedId(userId)
+      setTimeout(() => setCopiedId(null), 2000)
+    } catch {
+      // fallback: select text
     }
   }
 
@@ -437,6 +474,16 @@ export default function AdminPage() {
           >
             👥 Users
           </button>
+          <button
+            onClick={() => setActiveTab('signups')}
+            className={`px-4 py-2 rounded-lg whitespace-nowrap ${
+              activeTab === 'signups'
+                ? 'bg-rb-blue text-white'
+                : 'bg-white text-[#2D3436] hover:bg-gray-50'
+            }`}
+          >
+            🆕 Sign-Ups
+          </button>
         </div>
 
         {/* Content */}
@@ -644,6 +691,88 @@ export default function AdminPage() {
                   </div>
                 ))}
               </div>
+            </div>
+          )}
+
+          {/* Sign-Ups Tab */}
+          {activeTab === 'signups' && (
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <Body18>Recent Sign-Ups — Last 30 Days ({signups.length})</Body18>
+                {signups.length > 0 && (
+                  <button
+                    onClick={() => {
+                      const allEmails = signups
+                        .filter(u => u.email)
+                        .map(u => u.email)
+                        .join(', ')
+                      navigator.clipboard.writeText(allEmails)
+                      setCopiedId('all')
+                      setTimeout(() => setCopiedId(null), 2000)
+                    }}
+                    className="min-h-[44px] px-4 py-2 text-sm bg-rb-blue-light text-rb-blue rounded-lg hover:bg-rb-blue hover:text-white transition"
+                  >
+                    {copiedId === 'all' ? '✓ Copied all emails!' : '📋 Copy all emails'}
+                  </button>
+                )}
+              </div>
+
+              {signups.length === 0 ? (
+                <Body16 className="text-rb-gray">No sign-ups in the last 30 days.</Body16>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-gray-200 text-left">
+                        <th className="pb-3 pr-4 font-semibold text-rb-dark">Name</th>
+                        <th className="pb-3 pr-4 font-semibold text-rb-dark">Email</th>
+                        <th className="pb-3 pr-4 font-semibold text-rb-dark hidden sm:table-cell">Role</th>
+                        <th className="pb-3 font-semibold text-rb-dark hidden md:table-cell">Joined</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {signups.map((user) => (
+                        <tr key={user.id} className="hover:bg-gray-50">
+                          <td className="py-3 pr-4">
+                            <span className="font-medium text-rb-dark">{user.display_name}</span>
+                            {user.is_admin && (
+                              <span className="ml-2 px-1.5 py-0.5 bg-purple-100 text-purple-800 text-xs rounded">Admin</span>
+                            )}
+                          </td>
+                          <td className="py-3 pr-4">
+                            <div className="flex items-center gap-2">
+                              <span className="text-rb-gray font-mono text-xs break-all">
+                                {user.email || '—'}
+                              </span>
+                              {user.email && (
+                                <button
+                                  onClick={() => copyEmail(user.id, user.email)}
+                                  className="shrink-0 px-2 py-1 text-xs rounded bg-gray-100 hover:bg-rb-blue hover:text-white transition"
+                                  title="Copy email"
+                                >
+                                  {copiedId === user.id ? '✓' : '📋'}
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                          <td className="py-3 pr-4 hidden sm:table-cell text-rb-gray">
+                            {user.user_role === 'person_in_recovery' ? 'Person in Recovery'
+                              : user.user_role === 'professional' ? 'Allies in Long-Term Recovery'
+                              : user.user_role === 'ally' ? 'Recovery Support'
+                              : <span className="italic text-gray-400">Not set</span>}
+                          </td>
+                          <td className="py-3 hidden md:table-cell text-rb-gray text-xs">
+                            {new Date(user.created_at).toLocaleString('en-US', {
+                              month: 'short', day: 'numeric', year: 'numeric',
+                              hour: 'numeric', minute: '2-digit', hour12: true,
+                            })}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           )}
         </div>

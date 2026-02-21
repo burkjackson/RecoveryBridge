@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import nodemailer from 'nodemailer'
 
 const ADMIN_EMAIL = process.env.ADMIN_NOTIFICATION_EMAIL || ''
 const WEBHOOK_SECRET = process.env.SUPABASE_WEBHOOK_SECRET || ''
@@ -47,8 +46,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: true }, { status: 200 })
     }
 
-    if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
-      console.warn('[new-user] Gmail credentials not set — skipping email')
+    if (!process.env.RESEND_API_KEY) {
+      console.warn('[new-user] RESEND_API_KEY not set — skipping email')
       return NextResponse.json({ success: true }, { status: 200 })
     }
 
@@ -58,29 +57,40 @@ export async function POST(request: NextRequest) {
       hour: 'numeric', minute: '2-digit', hour12: true,
     })
 
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: process.env.GMAIL_USER,
-        pass: process.env.GMAIL_APP_PASSWORD,
+    const roleLabel = getRoleLabel(record.user_role)
+
+    // Use Resend REST API directly — no SDK needed
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
       },
+      body: JSON.stringify({
+        // While your domain DNS is propagating, send from Resend's default address
+        // Once DNS is verified, change to: 'RecoveryBridge <notifications@recoverybridge.app>'
+        from: 'RecoveryBridge <onboarding@resend.dev>',
+        to: [ADMIN_EMAIL],
+        subject: `🎉 New sign-up: ${record.display_name}`,
+        text: [
+          'New RecoveryBridge sign-up!',
+          '',
+          `Name:      ${record.display_name}`,
+          `Email:     ${record.email || 'unknown'}`,
+          `Role:      ${roleLabel}`,
+          `Signed up: ${signedUpDate} ET`,
+          '',
+          `Admin dashboard: https://recoverybridge.app/admin`,
+        ].join('\n'),
+      }),
     })
 
-    await transporter.sendMail({
-      from: `RecoveryBridge <${process.env.GMAIL_USER}>`,
-      to: ADMIN_EMAIL,
-      subject: `🎉 New sign-up: ${record.display_name}`,
-      text: [
-        'New RecoveryBridge sign-up!',
-        '',
-        `Name:      ${record.display_name}`,
-        `Email:     ${record.email || 'unknown'}`,
-        `Role:      ${getRoleLabel(record.user_role)}`,
-        `Signed up: ${signedUpDate} ET`,
-        '',
-        `Admin dashboard: https://recoverybridge.app/admin`,
-      ].join('\n'),
-    })
+    if (!res.ok) {
+      const err = await res.json()
+      console.error('[new-user] Resend error:', err)
+    } else {
+      console.log('[new-user] Admin notification email sent successfully')
+    }
 
     return NextResponse.json({ success: true }, { status: 200 })
   } catch (err) {
