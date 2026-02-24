@@ -64,6 +64,8 @@ export default function AdminPage() {
   const [users, setUsers] = useState<User[]>([])
   const [signups, setSignups] = useState<User[]>([])
   const [copiedId, setCopiedId] = useState<string | null>(null)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [contactedIds, setContactedIds] = useState<Set<string>>(new Set())
 
   // Modal states
   const [errorModal, setErrorModal] = useState({ show: false, message: '' })
@@ -80,6 +82,11 @@ export default function AdminPage() {
 
   useEffect(() => {
     checkAdminAccess()
+    // Load contacted IDs from localStorage
+    try {
+      const stored = localStorage.getItem('rb_contacted_signups')
+      if (stored) setContactedIds(new Set(JSON.parse(stored)))
+    } catch { /* ignore */ }
   }, [])
 
   useEffect(() => {
@@ -88,6 +95,55 @@ export default function AdminPage() {
       subscribeToUpdates()
     }
   }, [isAdmin, activeTab])
+
+  function persistContacted(ids: Set<string>) {
+    try {
+      localStorage.setItem('rb_contacted_signups', JSON.stringify([...ids]))
+    } catch { /* ignore */ }
+  }
+
+  function toggleSelect(id: string) {
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+  }
+
+  function toggleSelectAll() {
+    const allIds = signups.map(u => u.id)
+    const allSelected = allIds.every(id => selectedIds.has(id))
+    setSelectedIds(allSelected ? new Set() : new Set(allIds))
+  }
+
+  function markSelectedContacted() {
+    setContactedIds(prev => {
+      const next = new Set([...prev, ...selectedIds])
+      persistContacted(next)
+      return next
+    })
+    setSelectedIds(new Set())
+  }
+
+  function unmarkContacted(id: string) {
+    setContactedIds(prev => {
+      const next = new Set(prev)
+      next.delete(id)
+      persistContacted(next)
+      return next
+    })
+  }
+
+  function copySelectedEmails() {
+    const emails = signups
+      .filter(u => selectedIds.has(u.id) && u.email)
+      .map(u => u.email)
+      .join(', ')
+    if (!emails) return
+    navigator.clipboard.writeText(emails)
+    setCopiedId('selected')
+    setTimeout(() => setCopiedId(null), 2000)
+  }
 
   async function checkAdminAccess() {
     try {
@@ -697,81 +753,144 @@ export default function AdminPage() {
           {/* Sign-Ups Tab */}
           {activeTab === 'signups' && (
             <div>
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center justify-between mb-3">
                 <Body18>Recent Sign-Ups — Last 30 Days ({signups.length})</Body18>
-                {signups.length > 0 && (
-                  <button
-                    onClick={() => {
-                      const allEmails = signups
-                        .filter(u => u.email)
-                        .map(u => u.email)
-                        .join(', ')
-                      navigator.clipboard.writeText(allEmails)
-                      setCopiedId('all')
-                      setTimeout(() => setCopiedId(null), 2000)
-                    }}
-                    className="min-h-[44px] px-4 py-2 text-sm bg-rb-blue-light text-rb-blue rounded-lg hover:bg-rb-blue hover:text-white transition"
-                  >
-                    {copiedId === 'all' ? '✓ Copied all emails!' : '📋 Copy all emails'}
-                  </button>
-                )}
               </div>
 
               {signups.length === 0 ? (
                 <Body16 className="text-rb-gray">No sign-ups in the last 30 days.</Body16>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-gray-200 text-left">
-                        <th className="pb-3 pr-4 font-semibold text-rb-dark">Name</th>
-                        <th className="pb-3 pr-4 font-semibold text-rb-dark">Email</th>
-                        <th className="pb-3 pr-4 font-semibold text-rb-dark hidden sm:table-cell">Role</th>
-                        <th className="pb-3 font-semibold text-rb-dark hidden md:table-cell">Joined</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100">
-                      {signups.map((user) => (
-                        <tr key={user.id} className="hover:bg-gray-50">
-                          <td className="py-3 pr-4">
-                            <span className="font-medium text-rb-dark">{user.display_name}</span>
-                            {user.is_admin && (
-                              <span className="ml-2 px-1.5 py-0.5 bg-purple-100 text-purple-800 text-xs rounded">Admin</span>
-                            )}
-                          </td>
-                          <td className="py-3 pr-4">
-                            <div className="flex items-center gap-2">
-                              <span className="text-rb-gray font-mono text-xs break-all">
-                                {user.email || '—'}
-                              </span>
-                              {user.email && (
-                                <button
-                                  onClick={() => copyEmail(user.id, user.email)}
-                                  className="shrink-0 px-2 py-1 text-xs rounded bg-gray-100 hover:bg-rb-blue hover:text-white transition"
-                                  title="Copy email"
-                                >
-                                  {copiedId === user.id ? '✓' : '📋'}
-                                </button>
-                              )}
-                            </div>
-                          </td>
-                          <td className="py-3 pr-4 hidden sm:table-cell text-rb-gray">
-                            {user.user_role === 'person_in_recovery' ? 'Person in Recovery'
-                              : user.user_role === 'professional' ? 'Allies in Long-Term Recovery'
-                              : user.user_role === 'ally' ? 'Recovery Support'
-                              : <span className="italic text-gray-400">Not set</span>}
-                          </td>
-                          <td className="py-3 hidden md:table-cell text-rb-gray text-xs">
-                            {new Date(user.created_at).toLocaleString('en-US', {
-                              month: 'short', day: 'numeric', year: 'numeric',
-                              hour: 'numeric', minute: '2-digit', hour12: true,
-                            })}
-                          </td>
+                <>
+                  {/* Action toolbar — shown when rows are selected */}
+                  <div className={`flex flex-wrap items-center gap-2 mb-3 p-3 rounded-lg transition-all ${
+                    selectedIds.size > 0 ? 'bg-rb-blue-light border border-rb-blue/20' : 'bg-gray-50 border border-transparent'
+                  }`}>
+                    <label className="flex items-center gap-2 cursor-pointer select-none min-h-[36px] pr-3 border-r border-gray-200">
+                      <input
+                        type="checkbox"
+                        className="w-4 h-4 rounded accent-rb-blue"
+                        checked={signups.length > 0 && signups.every(u => selectedIds.has(u.id))}
+                        onChange={toggleSelectAll}
+                      />
+                      <span className="text-sm text-rb-gray whitespace-nowrap">
+                        {selectedIds.size > 0 ? `${selectedIds.size} selected` : 'Select all'}
+                      </span>
+                    </label>
+
+                    {selectedIds.size > 0 ? (
+                      <>
+                        <button
+                          onClick={copySelectedEmails}
+                          className="min-h-[36px] px-3 py-1.5 text-sm bg-rb-blue text-white rounded-lg hover:bg-rb-blue-hover transition"
+                        >
+                          {copiedId === 'selected' ? '✓ Copied!' : `📋 Copy ${selectedIds.size} email${selectedIds.size !== 1 ? 's' : ''}`}
+                        </button>
+                        <button
+                          onClick={markSelectedContacted}
+                          className="min-h-[36px] px-3 py-1.5 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+                        >
+                          ✉️ Mark as contacted
+                        </button>
+                        <button
+                          onClick={() => setSelectedIds(new Set())}
+                          className="min-h-[36px] px-3 py-1.5 text-sm text-rb-gray hover:text-rb-dark transition"
+                        >
+                          Clear
+                        </button>
+                      </>
+                    ) : (
+                      <span className="text-xs text-rb-gray">Select users to copy emails or mark as contacted</span>
+                    )}
+                  </div>
+
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-gray-200 text-left">
+                          <th className="pb-3 pr-3 w-8" />
+                          <th className="pb-3 pr-4 font-semibold text-rb-dark">Name</th>
+                          <th className="pb-3 pr-4 font-semibold text-rb-dark">Email</th>
+                          <th className="pb-3 pr-4 font-semibold text-rb-dark hidden sm:table-cell">Role</th>
+                          <th className="pb-3 font-semibold text-rb-dark hidden md:table-cell">Joined</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100">
+                        {signups.map((user) => {
+                          const contacted = contactedIds.has(user.id)
+                          const selected = selectedIds.has(user.id)
+                          return (
+                            <tr
+                              key={user.id}
+                              onClick={() => toggleSelect(user.id)}
+                              className={`cursor-pointer transition-colors ${
+                                selected ? 'bg-rb-blue-light' :
+                                contacted ? 'bg-gray-50 opacity-60' :
+                                'hover:bg-gray-50'
+                              }`}
+                            >
+                              <td className="py-3 pr-3">
+                                <input
+                                  type="checkbox"
+                                  className="w-4 h-4 rounded accent-rb-blue"
+                                  checked={selected}
+                                  onChange={() => toggleSelect(user.id)}
+                                  onClick={e => e.stopPropagation()}
+                                />
+                              </td>
+                              <td className="py-3 pr-4">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <span className={`font-medium ${contacted ? 'text-rb-gray' : 'text-rb-dark'}`}>
+                                    {user.display_name}
+                                  </span>
+                                  {user.is_admin && (
+                                    <span className="px-1.5 py-0.5 bg-purple-100 text-purple-800 text-xs rounded">Admin</span>
+                                  )}
+                                  {contacted && (
+                                    <span
+                                      className="px-1.5 py-0.5 bg-green-100 text-green-700 text-xs rounded cursor-pointer hover:bg-red-100 hover:text-red-700 transition"
+                                      title="Click to undo"
+                                      onClick={e => { e.stopPropagation(); unmarkContacted(user.id) }}
+                                    >
+                                      ✉️ Contacted
+                                    </span>
+                                  )}
+                                </div>
+                              </td>
+                              <td className="py-3 pr-4">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-rb-gray font-mono text-xs break-all">
+                                    {user.email || '—'}
+                                  </span>
+                                  {user.email && (
+                                    <button
+                                      onClick={e => { e.stopPropagation(); copyEmail(user.id, user.email) }}
+                                      className="shrink-0 px-2 py-1 text-xs rounded bg-gray-100 hover:bg-rb-blue hover:text-white transition"
+                                      title="Copy email"
+                                    >
+                                      {copiedId === user.id ? '✓' : '📋'}
+                                    </button>
+                                  )}
+                                </div>
+                              </td>
+                              <td className="py-3 pr-4 hidden sm:table-cell text-rb-gray">
+                                {user.user_role === 'person_in_recovery' ? 'Person in Recovery'
+                                  : user.user_role === 'professional' ? 'Allies in Long-Term Recovery'
+                                  : user.user_role === 'ally' ? 'Recovery Support'
+                                  : <span className="italic text-gray-400">Not set</span>}
+                              </td>
+                              <td className="py-3 hidden md:table-cell text-rb-gray text-xs">
+                                {new Date(user.created_at).toLocaleString('en-US', {
+                                  month: 'short', day: 'numeric', year: 'numeric',
+                                  hour: 'numeric', minute: '2-digit', hour12: true,
+                                })}
+                              </td>
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
               )}
             </div>
           )}
