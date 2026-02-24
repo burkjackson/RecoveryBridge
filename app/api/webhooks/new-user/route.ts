@@ -67,9 +67,7 @@ export async function POST(request: NextRequest) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        // While your domain DNS is propagating, send from Resend's default address
-        // Once DNS is verified, change to: 'RecoveryBridge <notifications@recoverybridge.app>'
-        from: 'RecoveryBridge <onboarding@resend.dev>',
+        from: 'RecoveryBridge <notifications@contact.recoverybridge.app>',
         to: [ADMIN_EMAIL],
         subject: `🎉 New sign-up: ${record.display_name}`,
         text: [

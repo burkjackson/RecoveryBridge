@@ -1,6 +1,6 @@
 import { Resend } from 'resend'
 
-const FROM_ADDRESS = 'RecoveryBridge <notifications@recoverybridge.app>'
+const FROM_ADDRESS = 'RecoveryBridge <notifications@contact.recoverybridge.app>'
 const APP_URL = 'https://recoverybridge.app'
 
 interface SendSupportRequestEmailParams {
