@@ -20,6 +20,7 @@ export interface Profile {
   phone_number: string | null
   sms_notifications_enabled: boolean
   email_notifications_enabled: boolean
+  referral_source: string | null
   created_at?: string
   updated_at?: string
 }

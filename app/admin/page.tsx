@@ -51,6 +51,7 @@ interface User {
   role_state: string
   created_at: string
   is_admin: boolean
+  referral_source: string | null
 }
 
 export default function AdminPage() {
@@ -272,7 +273,7 @@ export default function AdminPage() {
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, display_name, email, user_role, role_state, created_at, is_admin')
+        .select('id, display_name, email, user_role, role_state, created_at, is_admin, referral_source')
         .gte('created_at', thirtyDaysAgo.toISOString())
         .order('created_at', { ascending: false })
         .limit(100)
@@ -811,6 +812,7 @@ export default function AdminPage() {
                           <th className="pb-3 pr-4 font-semibold text-rb-dark">Name</th>
                           <th className="pb-3 pr-4 font-semibold text-rb-dark">Email</th>
                           <th className="pb-3 pr-4 font-semibold text-rb-dark hidden sm:table-cell">Role</th>
+                          <th className="pb-3 pr-4 font-semibold text-rb-dark hidden lg:table-cell">Source</th>
                           <th className="pb-3 font-semibold text-rb-dark hidden md:table-cell">Joined</th>
                         </tr>
                       </thead>
@@ -877,6 +879,17 @@ export default function AdminPage() {
                                   : user.user_role === 'professional' ? 'Allies in Long-Term Recovery'
                                   : user.user_role === 'ally' ? 'Recovery Support'
                                   : <span className="italic text-gray-400">Not set</span>}
+                              </td>
+                              <td className="py-3 pr-4 hidden lg:table-cell text-rb-gray text-xs">
+                                {user.referral_source === 'facebook' ? '👍 Facebook'
+                                  : user.referral_source === 'instagram' ? '📸 Instagram'
+                                  : user.referral_source === 'threads' ? '🧵 Threads'
+                                  : user.referral_source === 'tiktok' ? '🎵 TikTok'
+                                  : user.referral_source === 'website_blog' ? '🌐 Website/Blog'
+                                  : user.referral_source === 'search_engine' ? '🔍 Search Engine'
+                                  : user.referral_source === 'friend_family' ? '🤝 Friend/Family'
+                                  : user.referral_source === 'other' ? '💬 Other'
+                                  : <span className="italic text-gray-300">—</span>}
                               </td>
                               <td className="py-3 hidden md:table-cell text-rb-gray text-xs">
                                 {new Date(user.created_at).toLocaleString('en-US', {
