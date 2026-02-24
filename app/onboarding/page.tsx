@@ -14,6 +14,7 @@ export default function OnboardingPage() {
   const [userRole, setUserRole] = useState('')
   const [tags, setTags] = useState<string[]>([])
   const [agreedToGuidelines, setAgreedToGuidelines] = useState(false)
+  const [referralSource, setReferralSource] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const router = useRouter()
@@ -75,6 +76,9 @@ export default function OnboardingPage() {
         setError('Please agree to the community guidelines')
         return
       }
+      setError('')
+      setStep(5)
+    } else if (step === 5) {
       await completeOnboarding()
     }
   }
@@ -93,6 +97,7 @@ export default function OnboardingPage() {
           user_role: userRole,
           role_state: 'offline',
           tags: tags.length > 0 ? tags : null,
+          referral_source: referralSource || null,
         })
         .eq('id', userId)
 
@@ -122,7 +127,7 @@ export default function OnboardingPage() {
 
           {/* Progress indicator */}
           <div className="flex gap-2 mb-8">
-            {[1, 2, 3, 4].map((s) => (
+            {[1, 2, 3, 4, 5].map((s) => (
               <div
                 key={s}
                 className={`h-2 flex-1 rounded-full transition-all ${
@@ -131,12 +136,12 @@ export default function OnboardingPage() {
                 role="progressbar"
                 aria-valuenow={step}
                 aria-valuemin={1}
-                aria-valuemax={4}
-                aria-label={`Step ${s} of 4`}
+                aria-valuemax={5}
+                aria-label={`Step ${s} of 5`}
               />
             ))}
           </div>
-          <Body16 className="text-center text-gray-500 text-sm mb-8">Step {step} of 4</Body16>
+          <Body16 className="text-center text-gray-500 text-sm mb-8">Step {step} of 5</Body16>
 
         {/* Step 1: Welcome */}
         {step === 1 && (
@@ -398,6 +403,68 @@ export default function OnboardingPage() {
             <div className="flex gap-3">
               <button
                 onClick={() => setStep(3)}
+                className="flex-1 py-3 rounded-lg font-semibold border border-gray-300 text-gray-700 hover:border-gray-400 transition-all"
+              >
+                ← Back
+              </button>
+              <button
+                onClick={handleNext}
+                className="flex-1 bg-gray-900 text-white py-3 rounded-lg font-semibold hover:bg-gray-800 transition-all"
+              >
+                Continue →
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Step 5: How did you hear about us? */}
+        {step === 5 && (
+          <div>
+            <Heading1 className="mb-2 text-center">One last thing!</Heading1>
+            <Body16 className="mb-8 text-center text-gray-600">
+              How did you hear about RecoveryBridge? <span className="text-gray-400">(optional)</span>
+            </Body16>
+
+            {(() => {
+              const options = [
+                { value: 'facebook',      label: '👍 Facebook' },
+                { value: 'instagram',     label: '📸 Instagram' },
+                { value: 'threads',       label: '🧵 Threads' },
+                { value: 'tiktok',        label: '🎵 TikTok' },
+                { value: 'website_blog',  label: '🌐 Website or Blog' },
+                { value: 'search_engine', label: '🔍 Search Engine (Google, etc.)' },
+                { value: 'friend_family', label: '🤝 Friend or Family Member' },
+                { value: 'other',         label: '💬 Other' },
+              ]
+              return (
+                <div className="space-y-3 mb-8">
+                  {options.map(({ value, label }) => (
+                    <label
+                      key={value}
+                      className={`flex items-center gap-4 p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                        referralSource === value
+                          ? 'border-rb-blue bg-blue-50'
+                          : 'border-gray-200 hover:border-rb-blue/50'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="referral_source"
+                        value={value}
+                        checked={referralSource === value}
+                        onChange={() => setReferralSource(value)}
+                        className="w-4 h-4 accent-rb-blue"
+                      />
+                      <Body16 className="font-medium text-gray-800">{label}</Body16>
+                    </label>
+                  ))}
+                </div>
+              )
+            })()}
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setStep(4)}
                 className="flex-1 py-3 rounded-lg font-semibold border border-gray-300 text-gray-700 hover:border-gray-400 transition-all"
               >
                 ← Back
