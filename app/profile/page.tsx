@@ -784,6 +784,35 @@ export default function ProfilePage() {
           </Body16>
         </div>
 
+        {/* Write a Story — shown to professionals, allies, and admins */}
+        {(profile.user_role === 'professional' || profile.user_role === 'ally' || profile.is_admin) && (
+          <div className="mt-4 bg-white rounded-lg shadow-sm p-5">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-[#E8EEF2] flex items-center justify-center text-xl flex-shrink-0">
+                ✍️
+              </div>
+              <div className="flex-1 min-w-0">
+                <Body16 className="font-semibold text-gray-900">Share your story</Body16>
+                <Body16 className="text-xs text-gray-500 mt-0.5">Help others by writing about your experience.</Body16>
+              </div>
+              <div className="flex gap-2 flex-shrink-0">
+                <a
+                  href="https://stories.recoverybridge.app/my"
+                  className="min-h-[36px] px-3 py-2 text-xs font-semibold text-[#5A7A8C] border border-[#5A7A8C] rounded-lg hover:bg-[#5A7A8C]/5 transition"
+                >
+                  My Stories
+                </a>
+                <a
+                  href="https://stories.recoverybridge.app/new"
+                  className="min-h-[36px] px-3 py-2 text-xs font-semibold text-white bg-[#5A7A8C] rounded-lg hover:bg-[#4A6A7C] transition"
+                >
+                  Write
+                </a>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* My Favorites */}
         <div className="mt-4 bg-white rounded-lg shadow-sm overflow-hidden">
           <button

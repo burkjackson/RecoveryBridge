@@ -54,16 +54,32 @@ interface User {
   referral_source: string | null
 }
 
+interface AdminStory {
+  id: string
+  title: string
+  slug: string
+  status: string
+  rejection_note: string | null
+  created_at: string
+  updated_at: string
+  published_at: string | null
+  author: { display_name: string; email: string } | null
+}
+
 export default function AdminPage() {
   const [loading, setLoading] = useState(true)
   const [isAdmin, setIsAdmin] = useState(false)
-  const [activeTab, setActiveTab] = useState<'reports' | 'blocks' | 'sessions' | 'users' | 'signups'>('reports')
+  const [activeTab, setActiveTab] = useState<'reports' | 'blocks' | 'sessions' | 'users' | 'signups' | 'stories'>('reports')
 
   const [reports, setReports] = useState<Report[]>([])
   const [blocks, setBlocks] = useState<UserBlock[]>([])
   const [sessions, setSessions] = useState<Session[]>([])
   const [users, setUsers] = useState<User[]>([])
   const [signups, setSignups] = useState<User[]>([])
+  const [stories, setStories] = useState<AdminStory[]>([])
+  const [storiesFilter, setStoriesFilter] = useState<'pending' | 'all'>('pending')
+  const [rejectingStoryId, setRejectingStoryId] = useState<string | null>(null)
+  const [rejectNote, setRejectNote] = useState('')
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [contactedIds, setContactedIds] = useState<Set<string>>(new Set())
@@ -194,6 +210,7 @@ export default function AdminPage() {
     if (activeTab === 'sessions') await loadSessions()
     if (activeTab === 'users') await loadUsers()
     if (activeTab === 'signups') await loadSignups()
+    if (activeTab === 'stories') await loadStories()
   }
 
   async function loadReports() {
@@ -264,6 +281,24 @@ export default function AdminPage() {
       setUsers(data || [])
     } catch (error) {
       console.error('Error loading users:', error)
+    }
+  }
+
+  async function loadStories() {
+    try {
+      const { data, error } = await supabase
+        .from('blog_posts')
+        .select(`
+          id, title, slug, status, rejection_note, created_at, updated_at, published_at,
+          author:profiles!author_id(display_name, email)
+        `)
+        .order('updated_at', { ascending: false })
+        .limit(100)
+
+      if (error) throw error
+      setStories(data as unknown as AdminStory[] || [])
+    } catch (error) {
+      console.error('Error loading stories:', error)
     }
   }
 
@@ -540,6 +575,16 @@ export default function AdminPage() {
             }`}
           >
             🆕 Sign-Ups
+          </button>
+          <button
+            onClick={() => setActiveTab('stories')}
+            className={`px-4 py-2 rounded-lg whitespace-nowrap ${
+              activeTab === 'stories'
+                ? 'bg-rb-blue text-white'
+                : 'bg-white text-[#2D3436] hover:bg-gray-50'
+            }`}
+          >
+            📝 Stories
           </button>
         </div>
 
@@ -905,6 +950,162 @@ export default function AdminPage() {
                   </div>
                 </>
               )}
+            </div>
+          )}
+          {/* Stories Tab */}
+          {activeTab === 'stories' && (
+            <div>
+              <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
+                <Body18>Stories</Body18>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setStoriesFilter('pending')}
+                    className={`px-3 py-1.5 rounded-lg text-sm font-semibold ${storiesFilter === 'pending' ? 'bg-amber-100 text-amber-800' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                  >
+                    Pending ({stories.filter(s => s.status === 'submitted').length})
+                  </button>
+                  <button
+                    onClick={() => setStoriesFilter('all')}
+                    className={`px-3 py-1.5 rounded-lg text-sm font-semibold ${storiesFilter === 'all' ? 'bg-rb-blue text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                  >
+                    All ({stories.length})
+                  </button>
+                </div>
+              </div>
+
+              {(() => {
+                const filtered = storiesFilter === 'pending'
+                  ? stories.filter(s => s.status === 'submitted')
+                  : stories
+
+                if (filtered.length === 0) {
+                  return (
+                    <div className="text-center py-12">
+                      <p className="text-4xl mb-3">📝</p>
+                      <Body16 className="text-rb-gray">
+                        {storiesFilter === 'pending' ? 'No stories awaiting review.' : 'No stories yet.'}
+                      </Body16>
+                    </div>
+                  )
+                }
+
+                return (
+                  <div className="space-y-3">
+                    {filtered.map((story) => (
+                      <div key={story.id} className="border border-gray-200 rounded-xl p-4">
+                        <div className="flex items-start justify-between gap-3 mb-3">
+                          <div className="flex-1 min-w-0">
+                            <p className="font-semibold text-[#2D3436] truncate">{story.title}</p>
+                            <p className="text-xs text-gray-500 mt-0.5">
+                              by {story.author?.display_name ?? 'Unknown'} ·{' '}
+                              {new Date(story.updated_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                            </p>
+                          </div>
+                          <span className={`flex-shrink-0 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${
+                            story.status === 'published' ? 'bg-green-100 text-green-700' :
+                            story.status === 'submitted' ? 'bg-amber-100 text-amber-700' :
+                            'bg-gray-100 text-gray-600'
+                          }`}>
+                            {story.status === 'submitted' ? 'Pending' : story.status.charAt(0).toUpperCase() + story.status.slice(1)}
+                          </span>
+                        </div>
+
+                        {story.status === 'published' && (
+                          <p className="text-xs text-gray-400 mb-3">
+                            Published {story.published_at ? new Date(story.published_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : ''}
+                            {' · '}
+                            <a href={`https://stories.recoverybridge.app/${story.slug}`} target="_blank" rel="noopener noreferrer" className="text-rb-blue hover:underline">
+                              View ↗
+                            </a>
+                          </p>
+                        )}
+
+                        {/* Reject note input */}
+                        {rejectingStoryId === story.id && (
+                          <div className="mb-3">
+                            <textarea
+                              value={rejectNote}
+                              onChange={(e) => setRejectNote(e.target.value)}
+                              placeholder="Optional: explain what needs to change…"
+                              rows={2}
+                              className="w-full px-3 py-2 border border-amber-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-300 resize-none"
+                            />
+                          </div>
+                        )}
+
+                        <div className="flex flex-wrap gap-2">
+                          {story.status === 'submitted' && (
+                            <>
+                              <button
+                                onClick={async () => {
+                                  try {
+                                    await adminFetch({ action: 'publish_story', storyId: story.id })
+                                    await loadStories()
+                                    setSuccessModal({ show: true, message: `"${story.title}" published successfully.` })
+                                  } catch (err: any) {
+                                    setErrorModal({ show: true, message: err.message })
+                                  }
+                                }}
+                                className="min-h-[36px] px-4 py-1.5 bg-green-500 text-white rounded-lg text-sm hover:bg-green-600 transition font-medium"
+                              >
+                                ✓ Publish
+                              </button>
+                              {rejectingStoryId === story.id ? (
+                                <>
+                                  <button
+                                    onClick={async () => {
+                                      try {
+                                        await adminFetch({ action: 'reject_story', storyId: story.id, rejectionNote: rejectNote })
+                                        setRejectingStoryId(null)
+                                        setRejectNote('')
+                                        await loadStories()
+                                      } catch (err: any) {
+                                        setErrorModal({ show: true, message: err.message })
+                                      }
+                                    }}
+                                    className="min-h-[36px] px-4 py-1.5 bg-red-500 text-white rounded-lg text-sm hover:bg-red-600 transition font-medium"
+                                  >
+                                    Send Back
+                                  </button>
+                                  <button
+                                    onClick={() => { setRejectingStoryId(null); setRejectNote('') }}
+                                    className="min-h-[36px] px-3 py-1.5 text-sm text-gray-500 border border-gray-200 rounded-lg hover:bg-gray-50 transition"
+                                  >
+                                    Cancel
+                                  </button>
+                                </>
+                              ) : (
+                                <button
+                                  onClick={() => setRejectingStoryId(story.id)}
+                                  className="min-h-[36px] px-4 py-1.5 border border-red-200 text-red-500 rounded-lg text-sm hover:bg-red-50 transition font-medium"
+                                >
+                                  Return for Revision
+                                </button>
+                              )}
+                            </>
+                          )}
+                          {story.status === 'published' && (
+                            <button
+                              onClick={async () => {
+                                if (!confirm('Unpublish this story? It will return to draft status.')) return
+                                try {
+                                  await adminFetch({ action: 'unpublish_story', storyId: story.id })
+                                  await loadStories()
+                                } catch (err: any) {
+                                  setErrorModal({ show: true, message: err.message })
+                                }
+                              }}
+                              className="min-h-[36px] px-4 py-1.5 border border-gray-200 text-gray-600 rounded-lg text-sm hover:bg-gray-50 transition"
+                            >
+                              Unpublish
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )
+              })()}
             </div>
           )}
         </div>

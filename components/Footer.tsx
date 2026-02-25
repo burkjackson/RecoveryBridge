@@ -77,6 +77,13 @@ export default function Footer({ className = '' }: FooterProps) {
             </a>
             <span className="text-gray-300 hidden sm:inline">•</span>
             <a
+              href="https://stories.recoverybridge.app"
+              className="min-h-[44px] inline-flex items-center hover:text-rb-blue transition"
+            >
+              Stories
+            </a>
+            <span className="text-gray-300 hidden sm:inline">•</span>
+            <a
               href="/donate"
               className="min-h-[44px] inline-flex items-center gap-1 hover:text-rb-blue transition font-semibold text-rb-blue"
             >
