@@ -5,6 +5,7 @@ import { marked } from 'marked'
 import type { BlogPostWithAuthor } from '@/lib/types/database'
 import { IconWebsite, IconInstagram, IconX, IconLinkedIn, IconThreads, IconYouTube } from '@/components/SocialIcons'
 import { BackToStories } from './BackToStories'
+import { AuthorEditButton } from './AuthorEditButton'
 
 interface Props {
   params: Promise<{ slug: string }>
@@ -78,12 +79,15 @@ export default async function StoryPage({ params }: Props) {
       <header className="bg-[#2D3436] text-white">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
           <BackToStories />
-          <a
-            href="https://recoverybridge.app"
-            className="text-xs text-white/50 hover:text-white/80 transition"
-          >
-            RecoveryBridge
-          </a>
+          <div className="flex items-center gap-3">
+            <AuthorEditButton authorId={typedPost.author_id} postId={typedPost.id} />
+            <a
+              href="https://recoverybridge.app"
+              className="text-xs text-white/50 hover:text-white/80 transition"
+            >
+              RecoveryBridge
+            </a>
+          </div>
         </div>
       </header>
 
