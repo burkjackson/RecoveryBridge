@@ -4,6 +4,7 @@ import type { Metadata } from 'next'
 import { marked } from 'marked'
 import type { BlogPostWithAuthor } from '@/lib/types/database'
 import { IconWebsite, IconInstagram, IconX, IconLinkedIn, IconThreads, IconYouTube } from '@/components/SocialIcons'
+import { BackToStories } from './BackToStories'
 
 interface Props {
   params: Promise<{ slug: string }>
@@ -76,12 +77,7 @@ export default async function StoryPage({ params }: Props) {
       {/* Header */}
       <header className="bg-[#2D3436] text-white">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
-          <a
-            href="/"
-            className="text-sm text-white/70 hover:text-white transition flex items-center gap-1.5"
-          >
-            ← All Stories
-          </a>
+          <BackToStories />
           <a
             href="https://recoverybridge.app"
             className="text-xs text-white/50 hover:text-white/80 transition"
@@ -197,12 +193,7 @@ export default async function StoryPage({ params }: Props) {
 
         {/* Back link */}
         <div className="mt-12 pt-8 border-t border-gray-100">
-          <a
-            href="/"
-            className="inline-flex items-center gap-2 text-sm font-semibold text-[#5A7A8C] hover:text-[#4A6A7C] transition"
-          >
-            ← Back to all stories
-          </a>
+          <BackToStories label="← Back to all stories" variant="article" />
         </div>
       </main>
 
