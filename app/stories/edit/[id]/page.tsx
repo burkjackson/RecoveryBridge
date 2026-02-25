@@ -271,7 +271,7 @@ export default function EditStoryPage() {
                   disabled={uploadingCover}
                   className="w-full h-32 rounded-xl border-2 border-dashed border-gray-200 hover:border-[#5A7A8C] bg-white flex flex-col items-center justify-center gap-2 text-sm text-[#4A5568] hover:text-[#5A7A8C] transition disabled:opacity-50"
                 >
-                  {uploadingCover ? <div className="w-5 h-5 border-2 border-[#5A7A8C] border-t-transparent rounded-full animate-spin" /> : <><span className="text-2xl">🖼️</span><span>Upload a cover photo</span><span className="text-xs text-gray-400">JPG, PNG — up to 8MB · Landscape works best for social sharing</span></>}
+                  {uploadingCover ? <div className="w-5 h-5 border-2 border-[#5A7A8C] border-t-transparent rounded-full animate-spin" /> : <><span className="text-2xl">🖼️</span><span>Upload a cover photo</span><span className="text-xs text-gray-400">JPG, PNG — up to 8MB · Landscape works best for link previews on Facebook &amp; X</span></>}
                 </button>
               )}
               <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleCoverUpload} />

@@ -332,7 +332,7 @@ export default function NewStoryPage() {
                     <>
                       <span className="text-2xl">🖼️</span>
                       <span>Upload a cover photo</span>
-                      <span className="text-xs text-gray-400">JPG, PNG — up to 8MB · Landscape works best for social sharing</span>
+                      <span className="text-xs text-gray-400">JPG, PNG — up to 8MB · Landscape works best for link previews on Facebook &amp; X</span>
                     </>
                   )}
                 </button>
