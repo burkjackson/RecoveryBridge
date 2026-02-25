@@ -37,7 +37,9 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json()
-    const { id, title, excerpt, content, cover_image_url, status } = body
+    const { id, title, excerpt, content, cover_image_url, status,
+            author_website, author_instagram, author_twitter, author_linkedin,
+            author_threads, author_youtube } = body
 
     if (!title || !content) {
       return NextResponse.json({ error: 'Title and content are required' }, { status: 400 })
@@ -69,6 +71,12 @@ export async function POST(request: NextRequest) {
         content: content.trim(),
         cover_image_url: cover_image_url || null,
         status: postStatus,
+        author_website: author_website?.trim() || null,
+        author_instagram: author_instagram?.trim() || null,
+        author_twitter: author_twitter?.trim() || null,
+        author_linkedin: author_linkedin?.trim() || null,
+        author_threads: author_threads?.trim() || null,
+        author_youtube: author_youtube?.trim() || null,
       }
 
       // Clear rejection note when resubmitting
@@ -114,6 +122,10 @@ export async function POST(request: NextRequest) {
           content: content.trim(),
           cover_image_url: cover_image_url || null,
           status: postStatus,
+          author_website: author_website?.trim() || null,
+          author_instagram: author_instagram?.trim() || null,
+          author_twitter: author_twitter?.trim() || null,
+          author_linkedin: author_linkedin?.trim() || null,
         }])
         .select('id, slug')
         .single()

@@ -58,6 +58,7 @@ export default async function StoryPage({ params }: Props) {
     .from('blog_posts')
     .select(`
       id, title, slug, excerpt, content, cover_image_url, published_at, author_id,
+      author_website, author_instagram, author_twitter, author_linkedin, author_threads, author_youtube,
       author:profiles!author_id(display_name, avatar_url, user_role)
     `)
     .eq('slug', slug)
@@ -137,6 +138,49 @@ export default async function StoryPage({ params }: Props) {
             </div>
           </div>
         </div>
+
+        {/* Author social links */}
+        {(typedPost.author_website || typedPost.author_instagram || typedPost.author_twitter ||
+          typedPost.author_linkedin || typedPost.author_threads || typedPost.author_youtube) && (
+          <div className="flex flex-wrap gap-3 py-4 border-b border-gray-100">
+            {typedPost.author_website && (
+              <a href={typedPost.author_website} target="_blank" rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-100 hover:bg-[#E8EEF2] text-xs font-medium text-[#4A5568] transition">
+                🌐 Website
+              </a>
+            )}
+            {typedPost.author_instagram && (
+              <a href={`https://instagram.com/${typedPost.author_instagram}`} target="_blank" rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-100 hover:bg-[#E8EEF2] text-xs font-medium text-[#4A5568] transition">
+                📸 @{typedPost.author_instagram}
+              </a>
+            )}
+            {typedPost.author_twitter && (
+              <a href={`https://x.com/${typedPost.author_twitter}`} target="_blank" rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-100 hover:bg-[#E8EEF2] text-xs font-medium text-[#4A5568] transition">
+                𝕏 @{typedPost.author_twitter}
+              </a>
+            )}
+            {typedPost.author_threads && (
+              <a href={`https://threads.net/@${typedPost.author_threads}`} target="_blank" rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-100 hover:bg-[#E8EEF2] text-xs font-medium text-[#4A5568] transition">
+                🧵 @{typedPost.author_threads}
+              </a>
+            )}
+            {typedPost.author_linkedin && (
+              <a href={typedPost.author_linkedin} target="_blank" rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-100 hover:bg-[#E8EEF2] text-xs font-medium text-[#4A5568] transition">
+                💼 LinkedIn
+              </a>
+            )}
+            {typedPost.author_youtube && (
+              <a href={typedPost.author_youtube} target="_blank" rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-100 hover:bg-[#E8EEF2] text-xs font-medium text-[#4A5568] transition">
+                ▶️ YouTube
+              </a>
+            )}
+          </div>
+        )}
 
         {/* Rendered markdown content */}
         <article
