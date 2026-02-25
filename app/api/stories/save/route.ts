@@ -126,6 +126,8 @@ export async function POST(request: NextRequest) {
           author_instagram: author_instagram?.trim() || null,
           author_twitter: author_twitter?.trim() || null,
           author_linkedin: author_linkedin?.trim() || null,
+          author_threads: author_threads?.trim() || null,
+          author_youtube: author_youtube?.trim() || null,
         }])
         .select('id, slug')
         .single()

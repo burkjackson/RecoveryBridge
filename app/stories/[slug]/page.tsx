@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import { marked } from 'marked'
 import type { BlogPostWithAuthor } from '@/lib/types/database'
+import { IconWebsite, IconInstagram, IconX, IconLinkedIn, IconThreads, IconYouTube } from '@/components/SocialIcons'
 
 interface Props {
   params: Promise<{ slug: string }>
@@ -146,37 +147,43 @@ export default async function StoryPage({ params }: Props) {
             {typedPost.author_website && (
               <a href={typedPost.author_website} target="_blank" rel="noopener noreferrer"
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-100 hover:bg-[#E8EEF2] text-xs font-medium text-[#4A5568] transition">
-                🌐 Website
+                <IconWebsite className="w-3.5 h-3.5 flex-shrink-0" />
+                Website
               </a>
             )}
             {typedPost.author_instagram && (
               <a href={`https://instagram.com/${typedPost.author_instagram}`} target="_blank" rel="noopener noreferrer"
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-100 hover:bg-[#E8EEF2] text-xs font-medium text-[#4A5568] transition">
-                📸 @{typedPost.author_instagram}
+                <IconInstagram className="w-3.5 h-3.5 flex-shrink-0" />
+                @{typedPost.author_instagram}
               </a>
             )}
             {typedPost.author_twitter && (
               <a href={`https://x.com/${typedPost.author_twitter}`} target="_blank" rel="noopener noreferrer"
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-100 hover:bg-[#E8EEF2] text-xs font-medium text-[#4A5568] transition">
-                𝕏 @{typedPost.author_twitter}
+                <IconX className="w-3.5 h-3.5 flex-shrink-0" />
+                @{typedPost.author_twitter}
               </a>
             )}
             {typedPost.author_threads && (
               <a href={`https://threads.net/@${typedPost.author_threads}`} target="_blank" rel="noopener noreferrer"
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-100 hover:bg-[#E8EEF2] text-xs font-medium text-[#4A5568] transition">
-                🧵 @{typedPost.author_threads}
+                <IconThreads className="w-3.5 h-3.5 flex-shrink-0" />
+                @{typedPost.author_threads}
               </a>
             )}
             {typedPost.author_linkedin && (
               <a href={typedPost.author_linkedin} target="_blank" rel="noopener noreferrer"
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-100 hover:bg-[#E8EEF2] text-xs font-medium text-[#4A5568] transition">
-                💼 LinkedIn
+                <IconLinkedIn className="w-3.5 h-3.5 flex-shrink-0" />
+                LinkedIn
               </a>
             )}
             {typedPost.author_youtube && (
               <a href={typedPost.author_youtube} target="_blank" rel="noopener noreferrer"
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-100 hover:bg-[#E8EEF2] text-xs font-medium text-[#4A5568] transition">
-                ▶️ YouTube
+                <IconYouTube className="w-3.5 h-3.5 flex-shrink-0" />
+                YouTube
               </a>
             )}
           </div>
