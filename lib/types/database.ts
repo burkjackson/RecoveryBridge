@@ -159,6 +159,12 @@ export interface BlogPost {
   published_at: string | null
   created_at: string
   updated_at: string
+  author_website: string | null
+  author_instagram: string | null
+  author_twitter: string | null
+  author_linkedin: string | null
+  author_threads: string | null
+  author_youtube: string | null
 }
 
 export interface BlogPostWithAuthor extends BlogPost {
