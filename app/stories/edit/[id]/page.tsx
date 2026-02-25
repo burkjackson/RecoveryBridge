@@ -19,6 +19,7 @@ export default function EditStoryPage() {
 
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
+  const [currentStatus, setCurrentStatus] = useState<'draft' | 'submitted' | 'published'>('draft')
   const [tab, setTab] = useState<Tab>('write')
   const [title, setTitle] = useState('')
   const [excerpt, setExcerpt] = useState('')
@@ -65,6 +66,7 @@ export default function EditStoryPage() {
       setContent(typedPost.content)
       setCoverUrl(typedPost.cover_image_url)
       setSavedSlug(typedPost.slug)
+      setCurrentStatus(typedPost.status)
       setAuthorWebsite(typedPost.author_website ?? '')
       setAuthorInstagram(typedPost.author_instagram ?? '')
       setAuthorTwitter(typedPost.author_twitter ?? '')
@@ -143,6 +145,7 @@ export default function EditStoryPage() {
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Save failed')
       setSavedSlug(data.slug)
+      setCurrentStatus(status)
       setSaveStatus('saved')
       setTimeout(() => setSaveStatus('idle'), 3000)
     } catch (err: unknown) {
@@ -307,12 +310,25 @@ export default function EditStoryPage() {
 
         <div className="mt-6 flex flex-col sm:flex-row gap-3 justify-end">
           <a href="/my" className="px-5 py-2.5 text-sm font-semibold text-[#4A5568] border border-gray-200 rounded-full hover:border-gray-300 transition text-center">My Stories</a>
-          <button onClick={() => handleSave('draft')} disabled={saveStatus === 'saving'} className="px-5 py-2.5 text-sm font-semibold text-[#5A7A8C] border border-[#5A7A8C] rounded-full hover:bg-[#5A7A8C]/5 transition disabled:opacity-50">
-            {saveStatus === 'saving' ? 'Saving…' : 'Save Draft'}
-          </button>
-          <button onClick={() => handleSave('submitted')} disabled={saveStatus === 'saving'} className="px-5 py-2.5 text-sm font-semibold text-white bg-[#5A7A8C] rounded-full hover:bg-[#4A6A7C] transition disabled:opacity-50 shadow-sm">
-            {saveStatus === 'saving' ? 'Saving…' : 'Submit for Review →'}
-          </button>
+          {currentStatus === 'published' ? (
+            <>
+              <button onClick={() => handleSave('draft')} disabled={saveStatus === 'saving'} className="px-5 py-2.5 text-sm font-semibold text-[#4A5568] border border-gray-200 rounded-full hover:border-gray-300 transition disabled:opacity-50">
+                {saveStatus === 'saving' ? 'Saving…' : 'Unpublish to Draft'}
+              </button>
+              <button onClick={() => handleSave('published')} disabled={saveStatus === 'saving'} className="px-5 py-2.5 text-sm font-semibold text-white bg-[#5A7A8C] rounded-full hover:bg-[#4A6A7C] transition disabled:opacity-50 shadow-sm">
+                {saveStatus === 'saving' ? 'Saving…' : '✓ Save Changes'}
+              </button>
+            </>
+          ) : (
+            <>
+              <button onClick={() => handleSave('draft')} disabled={saveStatus === 'saving'} className="px-5 py-2.5 text-sm font-semibold text-[#5A7A8C] border border-[#5A7A8C] rounded-full hover:bg-[#5A7A8C]/5 transition disabled:opacity-50">
+                {saveStatus === 'saving' ? 'Saving…' : 'Save Draft'}
+              </button>
+              <button onClick={() => handleSave('submitted')} disabled={saveStatus === 'saving'} className="px-5 py-2.5 text-sm font-semibold text-white bg-[#5A7A8C] rounded-full hover:bg-[#4A6A7C] transition disabled:opacity-50 shadow-sm">
+                {saveStatus === 'saving' ? 'Saving…' : 'Submit for Review →'}
+              </button>
+            </>
+          )}
         </div>
       </main>
     </div>
