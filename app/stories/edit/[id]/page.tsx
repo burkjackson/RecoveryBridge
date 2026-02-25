@@ -111,7 +111,7 @@ export default function EditStoryPage() {
     }
   }
 
-  async function handleSave(status: 'draft' | 'submitted') {
+  async function handleSave(status: 'draft' | 'submitted' | 'published') {
     if (!title.trim()) { setErrorMsg('Please add a title before saving.'); return }
     if (content.trim().length < MIN_CONTENT) { setErrorMsg(`Content must be at least ${MIN_CONTENT} characters.`); return }
     setErrorMsg('')
