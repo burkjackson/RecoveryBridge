@@ -180,6 +180,31 @@ export default function Home() {
             </div>
 
             {/* Important Notice */}
+            {/* Stories Section */}
+            <div className="max-w-3xl mx-auto mb-12">
+              <div className="bg-gradient-to-br from-[#E8EEF2] to-white rounded-2xl p-8 border border-[#C8D8E4] shadow-lg text-center">
+                <div className="text-5xl mb-4">📖</div>
+                <h2 className="text-xl sm:text-2xl font-bold text-[#2D3436] mb-2">Stories from the Community</h2>
+                <p className="text-sm text-slate-500 leading-relaxed mb-6 max-w-md mx-auto">
+                  Read stories of hope, resilience, and recovery written by people in our community.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                  <a
+                    href="https://stories.recoverybridge.app"
+                    className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#5A7A8C] text-white font-semibold rounded-full hover:bg-[#4A6A7C] transition shadow-md text-sm"
+                  >
+                    Read Stories →
+                  </a>
+                  <a
+                    href="https://stories.recoverybridge.app/new"
+                    className="inline-flex items-center justify-center gap-2 px-6 py-3 border border-[#5A7A8C] text-[#5A7A8C] font-semibold rounded-full hover:bg-[#5A7A8C]/5 transition text-sm"
+                  >
+                    ✍️ Share Your Story
+                  </a>
+                </div>
+              </div>
+            </div>
+
             <div className="bg-gradient-to-br from-orange-50 to-orange-100/50 border-2 border-orange-300 rounded-2xl p-6 max-w-2xl mx-auto shadow-md">
               <p className="text-sm text-slate-600 mb-3 leading-relaxed">
                 <strong className="text-slate-600 text-base">Important:</strong> RecoveryBridge provides peer support, not professional therapy or crisis intervention.

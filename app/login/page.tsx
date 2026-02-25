@@ -157,6 +157,16 @@ export default function LoginPage() {
               </a>
             </Body16>
           </div>
+
+          {/* Stories link */}
+          <div className="mt-4 text-center">
+            <a
+              href="https://stories.recoverybridge.app"
+              className="inline-flex items-center gap-1.5 text-xs text-[#5A7A8C] hover:text-[#4A6A7C] transition"
+            >
+              📖 Read recovery stories from our community →
+            </a>
+          </div>
         </div>
       </div>
     </main>

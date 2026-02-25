@@ -144,6 +144,31 @@ export interface MessageReaction {
   created_at: string
 }
 
+export type BlogPostStatus = 'draft' | 'submitted' | 'published'
+
+export interface BlogPost {
+  id: string
+  author_id: string
+  title: string
+  slug: string
+  excerpt: string | null
+  content: string
+  cover_image_url: string | null
+  status: BlogPostStatus
+  rejection_note: string | null
+  published_at: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface BlogPostWithAuthor extends BlogPost {
+  author: {
+    display_name: string
+    avatar_url: string | null
+    user_role: string | null
+  }
+}
+
 // Type for profile update operations
 export interface ProfileUpdateData {
   role_state?: Profile['role_state']

@@ -166,6 +166,79 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: true })
     }
 
+    if (action === 'publish_story') {
+      const { storyId } = body
+      if (!storyId) {
+        return NextResponse.json({ error: 'storyId required' }, { status: 400 })
+      }
+
+      const { error: publishError } = await supabase
+        .from('blog_posts')
+        .update({
+          status: 'published',
+          published_at: new Date().toISOString(),
+          rejection_note: null,
+        })
+        .eq('id', storyId)
+
+      if (publishError) throw publishError
+
+      await supabase.from('admin_logs').insert([{
+        admin_id: admin.id,
+        action_type: 'story_published',
+        details: { story_id: storyId },
+      }])
+
+      return NextResponse.json({ success: true })
+    }
+
+    if (action === 'reject_story') {
+      const { storyId, rejectionNote } = body
+      if (!storyId) {
+        return NextResponse.json({ error: 'storyId required' }, { status: 400 })
+      }
+
+      const { error: rejectError } = await supabase
+        .from('blog_posts')
+        .update({
+          status: 'draft',
+          rejection_note: rejectionNote ?? null,
+        })
+        .eq('id', storyId)
+
+      if (rejectError) throw rejectError
+
+      await supabase.from('admin_logs').insert([{
+        admin_id: admin.id,
+        action_type: 'story_rejected',
+        details: { story_id: storyId, note: rejectionNote },
+      }])
+
+      return NextResponse.json({ success: true })
+    }
+
+    if (action === 'unpublish_story') {
+      const { storyId } = body
+      if (!storyId) {
+        return NextResponse.json({ error: 'storyId required' }, { status: 400 })
+      }
+
+      const { error: unpublishError } = await supabase
+        .from('blog_posts')
+        .update({ status: 'draft', published_at: null })
+        .eq('id', storyId)
+
+      if (unpublishError) throw unpublishError
+
+      await supabase.from('admin_logs').insert([{
+        admin_id: admin.id,
+        action_type: 'story_unpublished',
+        details: { story_id: storyId },
+      }])
+
+      return NextResponse.json({ success: true })
+    }
+
     return NextResponse.json({ error: 'Unknown action' }, { status: 400 })
   } catch (err: any) {
     console.error('Admin action error:', err)
