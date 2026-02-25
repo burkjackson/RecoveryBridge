@@ -27,10 +27,11 @@ export default async function StoriesPage() {
   const { data: posts, count } = await supabase
     .from('blog_posts')
     .select(`
-      id, title, slug, excerpt, cover_image_url, published_at, author_id, word_count, tags,
+      id, title, slug, excerpt, cover_image_url, published_at, author_id, word_count, tags, is_pinned,
       author:profiles!author_id(display_name, avatar_url, user_role)
     `, { count: 'exact' })
     .eq('status', 'published')
+    .order('is_pinned', { ascending: false })
     .order('published_at', { ascending: false })
     .range(0, PAGE_SIZE - 1)
 

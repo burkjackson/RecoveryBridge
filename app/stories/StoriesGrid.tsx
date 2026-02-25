@@ -91,9 +91,16 @@ export function StoriesGrid({ initialPosts, initialHasMore }: Props) {
             <CoverImage url={posts[0].cover_image_url} title={posts[0].title} />
           </div>
           <div className="p-6 sm:p-8 flex flex-col justify-center">
-            <span className="text-xs font-semibold text-[#5A7A8C] uppercase tracking-wider mb-2">
-              Featured Story
-            </span>
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-xs font-semibold text-[#5A7A8C] uppercase tracking-wider">
+                Featured Story
+              </span>
+              {posts[0].is_pinned && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 text-xs font-semibold">
+                  📌 Pinned
+                </span>
+              )}
+            </div>
             <h2 className="text-xl sm:text-2xl font-bold text-[#2D3436] leading-tight mb-3 group-hover:text-[#5A7A8C] transition">
               {posts[0].title}
             </h2>
@@ -136,6 +143,11 @@ export function StoriesGrid({ initialPosts, initialHasMore }: Props) {
                 <CoverImage url={post.cover_image_url} title={post.title} />
               </div>
               <div className="p-5 flex flex-col flex-1">
+                {post.is_pinned && (
+                  <span className="inline-flex items-center gap-1 mb-1.5 px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 text-xs font-semibold self-start">
+                    📌 Pinned
+                  </span>
+                )}
                 <h3 className="text-base font-bold text-[#2D3436] leading-snug mb-2 line-clamp-2 group-hover:text-[#5A7A8C] transition">
                   {post.title}
                 </h3>

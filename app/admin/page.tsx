@@ -63,6 +63,7 @@ interface AdminStory {
   created_at: string
   updated_at: string
   published_at: string | null
+  is_pinned: boolean
   author: { display_name: string; email: string } | null
 }
 
@@ -289,7 +290,7 @@ export default function AdminPage() {
       const { data, error } = await supabase
         .from('blog_posts')
         .select(`
-          id, title, slug, status, rejection_note, created_at, updated_at, published_at,
+          id, title, slug, status, rejection_note, created_at, updated_at, published_at, is_pinned,
           author:profiles!author_id(display_name, email)
         `)
         .order('updated_at', { ascending: false })
@@ -1085,20 +1086,40 @@ export default function AdminPage() {
                             </>
                           )}
                           {story.status === 'published' && (
-                            <button
-                              onClick={async () => {
-                                if (!confirm('Unpublish this story? It will return to draft status.')) return
-                                try {
-                                  await adminFetch({ action: 'unpublish_story', storyId: story.id })
-                                  await loadStories()
-                                } catch (err: any) {
-                                  setErrorModal({ show: true, message: err.message })
-                                }
-                              }}
-                              className="min-h-[36px] px-4 py-1.5 border border-gray-200 text-gray-600 rounded-lg text-sm hover:bg-gray-50 transition"
-                            >
-                              Unpublish
-                            </button>
+                            <>
+                              <button
+                                onClick={async () => {
+                                  try {
+                                    const act = story.is_pinned ? 'unpin_story' : 'pin_story'
+                                    await adminFetch({ action: act, storyId: story.id })
+                                    await loadStories()
+                                  } catch (err: any) {
+                                    setErrorModal({ show: true, message: err.message })
+                                  }
+                                }}
+                                className={`min-h-[36px] px-4 py-1.5 rounded-lg text-sm font-medium transition ${
+                                  story.is_pinned
+                                    ? 'bg-amber-100 text-amber-800 hover:bg-amber-200'
+                                    : 'border border-gray-200 text-gray-600 hover:bg-gray-50'
+                                }`}
+                              >
+                                {story.is_pinned ? '📌 Pinned' : '📌 Pin'}
+                              </button>
+                              <button
+                                onClick={async () => {
+                                  if (!confirm('Unpublish this story? It will return to draft status.')) return
+                                  try {
+                                    await adminFetch({ action: 'unpublish_story', storyId: story.id })
+                                    await loadStories()
+                                  } catch (err: any) {
+                                    setErrorModal({ show: true, message: err.message })
+                                  }
+                                }}
+                                className="min-h-[36px] px-4 py-1.5 border border-gray-200 text-gray-600 rounded-lg text-sm hover:bg-gray-50 transition"
+                              >
+                                Unpublish
+                              </button>
+                            </>
                           )}
                         </div>
                       </div>

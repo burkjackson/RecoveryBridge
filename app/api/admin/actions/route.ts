@@ -287,6 +287,50 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: true })
     }
 
+    if (action === 'pin_story') {
+      const { storyId } = body
+      if (!storyId) {
+        return NextResponse.json({ error: 'storyId required' }, { status: 400 })
+      }
+
+      const { error: pinError } = await supabase
+        .from('blog_posts')
+        .update({ is_pinned: true })
+        .eq('id', storyId)
+
+      if (pinError) throw pinError
+
+      await supabase.from('admin_logs').insert([{
+        admin_id: admin.id,
+        action_type: 'story_pinned',
+        details: { story_id: storyId },
+      }])
+
+      return NextResponse.json({ success: true })
+    }
+
+    if (action === 'unpin_story') {
+      const { storyId } = body
+      if (!storyId) {
+        return NextResponse.json({ error: 'storyId required' }, { status: 400 })
+      }
+
+      const { error: unpinError } = await supabase
+        .from('blog_posts')
+        .update({ is_pinned: false })
+        .eq('id', storyId)
+
+      if (unpinError) throw unpinError
+
+      await supabase.from('admin_logs').insert([{
+        admin_id: admin.id,
+        action_type: 'story_unpinned',
+        details: { story_id: storyId },
+      }])
+
+      return NextResponse.json({ success: true })
+    }
+
     return NextResponse.json({ error: 'Unknown action' }, { status: 400 })
   } catch (err: any) {
     console.error('Admin action error:', err)
