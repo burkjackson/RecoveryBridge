@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { marked } from 'marked'
 import { IconWebsite, IconInstagram, IconX, IconLinkedIn, IconThreads, IconYouTube } from '@/components/SocialIcons'
+import { StoryTagSelector } from '../StoryTagSelector'
 
 const MAX_TITLE = 120
 const MAX_EXCERPT = 300
@@ -31,14 +32,20 @@ export default function NewStoryPage() {
   const [authorLinkedin, setAuthorLinkedin] = useState('')
   const [authorThreads, setAuthorThreads] = useState('')
   const [authorYoutube, setAuthorYoutube] = useState('')
+  const [tags, setTags] = useState<string[]>([])
   const [previewHtml, setPreviewHtml] = useState('')
   const [uploadingCover, setUploadingCover] = useState(false)
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle')
   const [errorMsg, setErrorMsg] = useState('')
   const [savedId, setSavedId] = useState<string | null>(null)
   const [savedSlug, setSavedSlug] = useState<string | null>(null)
+  const [currentStatus, setCurrentStatus] = useState<'draft' | 'submitted'>('draft')
+  const [lastAutoSaved, setLastAutoSaved] = useState<Date | null>(null)
+  const [autoSaving, setAutoSaving] = useState(false)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const savedIdRef = useRef<string | null>(null)
 
   useEffect(() => {
     async function checkEligibility() {
@@ -69,6 +76,44 @@ export default function NewStoryPage() {
       Promise.resolve(result).then((html) => setPreviewHtml(html as string))
     }
   }, [tab, content])
+
+  // Keep savedIdRef in sync so autoSave closure always has the latest id
+  useEffect(() => { savedIdRef.current = savedId }, [savedId])
+
+  // Auto-save: schedule a draft save 30s after any content change
+  useEffect(() => {
+    // Don't auto-save if already submitted
+    if (currentStatus === 'submitted') return
+    if (!title.trim() || content.trim().length < MIN_CONTENT) return
+
+    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current)
+    autoSaveTimerRef.current = setTimeout(async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (!session) return
+        setAutoSaving(true)
+        const res = await fetch('/api/stories/save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+          body: JSON.stringify({
+            id: savedIdRef.current,
+            title: title.trim(), excerpt: excerpt.trim() || null,
+            content: content.trim(), cover_image_url: coverUrl, status: 'draft',
+            author_website: authorWebsite.trim() || null, author_instagram: authorInstagram.trim() || null,
+            author_twitter: authorTwitter.trim() || null, author_linkedin: authorLinkedin.trim() || null,
+            author_threads: authorThreads.trim() || null, author_youtube: authorYoutube.trim() || null,
+            tags,
+          }),
+        })
+        if (res.ok) {
+          const data = await res.json()
+          if (!savedIdRef.current) { setSavedId(data.id); setSavedSlug(data.slug) }
+          setLastAutoSaved(new Date())
+        }
+      } catch { /* silent */ } finally { setAutoSaving(false) }
+    }, 30_000)
+    return () => { if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current) }
+  }, [title, excerpt, content, coverUrl, authorWebsite, authorInstagram, authorTwitter, authorLinkedin, authorThreads, authorYoutube, tags, currentStatus, supabase]) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleCoverUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -108,6 +153,9 @@ export default function NewStoryPage() {
   }
 
   async function handleSave(status: 'draft' | 'submitted') {
+    // Clear any pending auto-save timer
+    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current)
+
     if (!title.trim()) {
       setErrorMsg('Please add a title before saving.')
       return
@@ -142,6 +190,7 @@ export default function NewStoryPage() {
           author_linkedin: authorLinkedin.trim() || null,
           author_threads: authorThreads.trim() || null,
           author_youtube: authorYoutube.trim() || null,
+          tags,
         }),
       })
 
@@ -150,6 +199,7 @@ export default function NewStoryPage() {
 
       setSavedId(data.id)
       setSavedSlug(data.slug)
+      setCurrentStatus(status)
       setSaveStatus('saved')
       setTimeout(() => setSaveStatus('idle'), 3000)
     } catch (err: unknown) {
@@ -368,6 +418,8 @@ export default function NewStoryPage() {
                 </div>
               </div>
             </div>
+            {/* Tags */}
+            <StoryTagSelector selected={tags} onChange={setTags} />
           </div>
         ) : (
           /* Preview tab */
@@ -412,8 +464,15 @@ export default function NewStoryPage() {
           </div>
         )}
 
+        {/* Auto-save indicator */}
+        {(autoSaving || lastAutoSaved) && (
+          <div className="mt-3 text-xs text-gray-400 text-right">
+            {autoSaving ? 'Auto-saving draft…' : lastAutoSaved ? `Draft auto-saved ${Math.max(0, Math.round((Date.now() - lastAutoSaved.getTime()) / 60000))} min ago` : ''}
+          </div>
+        )}
+
         {/* Actions */}
-        <div className="mt-6 flex flex-col sm:flex-row gap-3 justify-end">
+        <div className="mt-4 flex flex-col sm:flex-row gap-3 justify-end">
           <a
             href="/my"
             className="px-5 py-2.5 text-sm font-semibold text-[#4A5568] border border-gray-200 rounded-full hover:border-gray-300 transition text-center"

@@ -165,6 +165,8 @@ export interface BlogPost {
   author_linkedin: string | null
   author_threads: string | null
   author_youtube: string | null
+  tags: string[] | null
+  word_count: number | null
 }
 
 export interface BlogPostWithAuthor extends BlogPost {

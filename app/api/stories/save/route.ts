@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { slugify } from '@/lib/slugify'
 import type { BlogPostStatus } from '@/lib/types/database'
+import { countWords } from '@/app/stories/utils'
 
 const ELIGIBLE_ROLES = ['professional', 'ally']
 
@@ -39,7 +40,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { id, title, excerpt, content, cover_image_url, status,
             author_website, author_instagram, author_twitter, author_linkedin,
-            author_threads, author_youtube } = body
+            author_threads, author_youtube, tags } = body
 
     if (!title || !content) {
       return NextResponse.json({ error: 'Title and content are required' }, { status: 400 })
@@ -65,6 +66,11 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
       }
 
+      // Validate and sanitize tags (max 3, must be strings)
+      const sanitizedTags = Array.isArray(tags)
+        ? tags.filter((t: unknown) => typeof t === 'string').slice(0, 3)
+        : []
+
       const updateData: Record<string, unknown> = {
         title: title.trim(),
         excerpt: excerpt?.trim() || null,
@@ -77,6 +83,8 @@ export async function POST(request: NextRequest) {
         author_linkedin: author_linkedin?.trim() || null,
         author_threads: author_threads?.trim() || null,
         author_youtube: author_youtube?.trim() || null,
+        tags: sanitizedTags,
+        word_count: countWords(content.trim()),
       }
 
       // Clear rejection note when resubmitting
@@ -112,6 +120,11 @@ export async function POST(request: NextRequest) {
         slug = `${baseSlug}-${attempt + 1}`
       }
 
+      // Validate and sanitize tags for create path
+      const sanitizedTagsCreate = Array.isArray(tags)
+        ? tags.filter((t: unknown) => typeof t === 'string').slice(0, 3)
+        : []
+
       const { data: created, error: createError } = await supabase
         .from('blog_posts')
         .insert([{
@@ -128,6 +141,8 @@ export async function POST(request: NextRequest) {
           author_linkedin: author_linkedin?.trim() || null,
           author_threads: author_threads?.trim() || null,
           author_youtube: author_youtube?.trim() || null,
+          tags: sanitizedTagsCreate,
+          word_count: countWords(content.trim()),
         }])
         .select('id, slug')
         .single()
