@@ -41,22 +41,30 @@ export default async function StoriesPage() {
     <div className="min-h-screen bg-[#F8FAFB] font-sans">
       {/* Header */}
       <header className="bg-[#2D3436] text-white">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-5 flex items-center justify-between">
-          <div>
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-5">
+          <div className="flex items-center justify-between">
+            <div>
+              <a
+                href="https://recoverybridge.app"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-white/50 hover:text-white/80 transition mb-1 inline-block"
+              >
+                ← RecoveryBridge
+              </a>
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Stories</h1>
+              <p className="text-sm text-white/60 mt-0.5">From the recovery community</p>
+            </div>
             <a
-              href="https://recoverybridge.app"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-xs text-white/50 hover:text-white/80 transition mb-1 inline-block"
+              href="/new"
+              className="hidden sm:inline-flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white text-sm font-semibold rounded-full transition border border-white/20"
             >
-              ← RecoveryBridge
+              ✍️ Write a Story
             </a>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Stories</h1>
-            <p className="text-sm text-white/60 mt-0.5">From the recovery community</p>
           </div>
           <a
             href="/new"
-            className="hidden sm:inline-flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white text-sm font-semibold rounded-full transition border border-white/20"
+            className="mt-4 sm:hidden flex items-center justify-center gap-2 px-4 py-2.5 bg-white/10 hover:bg-white/20 text-white text-sm font-semibold rounded-full transition border border-white/20"
           >
             ✍️ Write a Story
           </a>
