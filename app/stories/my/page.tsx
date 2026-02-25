@@ -212,10 +212,10 @@ function Header() {
     <header className="bg-[#2D3436] text-white">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
         <a
-          href="/"
-          className="text-sm text-white/70 hover:text-white transition"
+          href="/stories"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-sm text-white/90 hover:text-white transition font-normal"
         >
-          ← Stories
+          ← All Stories
         </a>
         <span className="text-sm font-semibold">My Stories</span>
         <a
