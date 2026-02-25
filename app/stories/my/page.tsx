@@ -220,6 +220,8 @@ function Header() {
         <span className="text-sm font-semibold">My Stories</span>
         <a
           href="https://recoverybridge.app"
+          target="_blank"
+          rel="noopener noreferrer"
           className="text-xs text-white/50 hover:text-white/80 transition"
         >
           RecoveryBridge

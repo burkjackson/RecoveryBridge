@@ -217,11 +217,11 @@ export default async function StoriesPage() {
       <footer className="border-t border-gray-200 mt-12 py-8 text-center">
         <p className="text-xs text-gray-400">
           © {new Date().getFullYear()} RecoveryBridge ·{' '}
-          <a href="https://recoverybridge.app" className="hover:text-[#5A7A8C] transition">
+          <a href="https://recoverybridge.app" target="_blank" rel="noopener noreferrer" className="hover:text-[#5A7A8C] transition">
             recoverybridge.app
           </a>
           {' · '}
-          <a href="https://recoverybridge.app/privacy" className="hover:text-[#5A7A8C] transition">
+          <a href="https://recoverybridge.app/privacy" target="_blank" rel="noopener noreferrer" className="hover:text-[#5A7A8C] transition">
             Privacy
           </a>
         </p>

@@ -83,6 +83,8 @@ export default async function StoryPage({ params }: Props) {
             <AuthorEditButton authorId={typedPost.author_id} postId={typedPost.id} />
             <a
               href="https://recoverybridge.app"
+              target="_blank"
+              rel="noopener noreferrer"
               className="text-xs text-white/50 hover:text-white/80 transition"
             >
               RecoveryBridge
@@ -205,7 +207,7 @@ export default async function StoryPage({ params }: Props) {
       <footer className="border-t border-gray-100 mt-8 py-8 text-center">
         <p className="text-xs text-gray-400">
           © {new Date().getFullYear()} RecoveryBridge ·{' '}
-          <a href="https://recoverybridge.app" className="hover:text-[#5A7A8C] transition">
+          <a href="https://recoverybridge.app" target="_blank" rel="noopener noreferrer" className="hover:text-[#5A7A8C] transition">
             recoverybridge.app
           </a>
         </p>

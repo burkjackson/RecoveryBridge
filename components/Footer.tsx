@@ -78,6 +78,8 @@ export default function Footer({ className = '' }: FooterProps) {
             <span className="text-gray-300 hidden sm:inline">•</span>
             <a
               href="https://stories.recoverybridge.app"
+              target="_blank"
+              rel="noopener noreferrer"
               className="min-h-[44px] inline-flex items-center hover:text-rb-blue transition"
             >
               Stories
