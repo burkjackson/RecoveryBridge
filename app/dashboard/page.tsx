@@ -622,8 +622,8 @@ export default function DashboardPage() {
 
         {/* Role Display */}
         <div className="bg-white rounded-lg p-5 shadow-sm mb-6">
-          <Body16 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Your Role</Body16>
-          <Body18 className="text-gray-900">
+          <Body16 className="text-xs font-semibold text-rb-gray uppercase tracking-wide mb-2">Your Role</Body16>
+          <Body18 className="text-rb-dark">
             {profile?.user_role === 'person_in_recovery' && 'Person in Recovery'}
             {profile?.user_role === 'professional' && 'Allies in Long-Term Recovery'}
             {profile?.user_role === 'ally' && 'Recovery Support (Legacy)'}
@@ -651,22 +651,22 @@ export default function DashboardPage() {
             aria-pressed={profile?.role_state === 'available'}
             className={`p-8 rounded-2xl text-center transition-all duration-300 transform hover:scale-[1.02] hover:-translate-y-1 ${
               profile?.role_state === 'available'
-                ? 'bg-blue-50 border-4 border-blue-500 shadow-lg shadow-blue-500/50 animate-pulse-glow-blue'
-                : 'bg-white border-4 border-blue-500 shadow-md hover:shadow-xl'
+                ? 'bg-rb-blue-light border-4 border-rb-blue shadow-lg animate-pulse-glow-blue'
+                : 'bg-white border-4 border-rb-blue shadow-md hover:shadow-xl'
             }`}
             style={profile?.role_state === 'available' ? {
-              boxShadow: '0 10px 25px -5px rgba(59, 130, 246, 0.3), 0 8px 10px -6px rgba(59, 130, 246, 0.3)'
+              boxShadow: '0 10px 25px -5px rgba(90, 122, 140, 0.3), 0 8px 10px -6px rgba(90, 122, 140, 0.2)'
             } : {}}
           >
-            <Body18 className="font-bold text-blue-600 mb-2 text-lg">I'm Here To Listen</Body18>
-            <Body16 className="text-gray-600 text-sm mb-4">Offer support and connection to others</Body16>
+            <Body18 className="font-bold text-rb-blue mb-2 text-lg">I'm Here To Listen</Body18>
+            <Body16 className="text-rb-gray text-sm mb-4">Offer support and connection to others</Body16>
             {profile?.role_state === 'available' ? (
-              <div className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-100 rounded-xl">
-                <span className="w-2 h-2 bg-blue-600 rounded-full animate-pulse"></span>
-                <Body16 className="text-sm text-blue-700 font-semibold" aria-live="polite">You're Available</Body16>
+              <div className="flex items-center justify-center gap-2 px-4 py-2 bg-white/70 rounded-xl">
+                <span className="w-2 h-2 bg-rb-blue rounded-full animate-pulse"></span>
+                <Body16 className="text-sm text-rb-blue font-semibold" aria-live="polite">You're Available</Body16>
               </div>
             ) : (
-              <Body16 className="text-sm text-blue-600 font-medium">Click to become available</Body16>
+              <Body16 className="text-sm text-rb-blue font-medium">Click to become available</Body16>
             )}
           </button>
 
@@ -676,29 +676,29 @@ export default function DashboardPage() {
             aria-pressed={profile?.role_state === 'requesting'}
             className={`p-8 rounded-2xl text-center transition-all duration-300 transform hover:scale-[1.02] hover:-translate-y-1 ${
               profile?.role_state === 'requesting'
-                ? 'bg-purple-50 border-4 border-purple-500 shadow-lg shadow-purple-500/50 animate-pulse-glow-purple'
-                : 'bg-white border-4 border-purple-500 shadow-md hover:shadow-xl'
+                ? 'bg-rb-purple-light border-4 border-rb-purple shadow-lg animate-pulse-glow-purple'
+                : 'bg-white border-4 border-rb-purple shadow-md hover:shadow-xl'
             }`}
             style={profile?.role_state === 'requesting' ? {
-              boxShadow: '0 10px 25px -5px rgba(168, 85, 247, 0.3), 0 8px 10px -6px rgba(168, 85, 247, 0.3)'
+              boxShadow: '0 10px 25px -5px rgba(184, 169, 201, 0.4), 0 8px 10px -6px rgba(184, 169, 201, 0.3)'
             } : {}}
           >
-            <Body18 className="font-bold text-purple-600 mb-2 text-lg">I Need Support</Body18>
-            <Body16 className="text-gray-600 text-sm mb-4">Connect with someone who understands</Body16>
+            <Body18 className="font-bold text-rb-purple mb-2 text-lg">I Need Support</Body18>
+            <Body16 className="text-rb-gray text-sm mb-4">Connect with someone who understands</Body16>
             {profile?.role_state === 'requesting' ? (
               <div className="space-y-2">
-                <div className="flex items-center justify-center gap-2 px-4 py-2 bg-purple-100 rounded-xl">
-                  <span className="w-2 h-2 bg-purple-600 rounded-full animate-pulse"></span>
-                  <Body16 className="text-sm text-purple-700 font-semibold" aria-live="polite">Finding Listener...</Body16>
+                <div className="flex items-center justify-center gap-2 px-4 py-2 bg-white/70 rounded-xl">
+                  <span className="w-2 h-2 bg-rb-purple rounded-full animate-pulse"></span>
+                  <Body16 className="text-sm text-rb-purple font-semibold" aria-live="polite">Finding Listener...</Body16>
                 </div>
-                <Body16 className="text-xs text-purple-500" aria-live="polite">
+                <Body16 className="text-xs text-rb-purple" aria-live="polite">
                   {availableListenerCount > 0
                     ? `${availableListenerCount} listener${availableListenerCount === 1 ? '' : 's'} available`
                     : 'Notifying listeners...'}
                 </Body16>
               </div>
             ) : (
-              <Body16 className="text-sm text-purple-600 font-medium">Click to find a listener</Body16>
+              <Body16 className="text-sm text-rb-purple font-medium">Click to find a listener</Body16>
             )}
           </button>
         </div>
@@ -708,7 +708,7 @@ export default function DashboardPage() {
           <div className="bg-white rounded-lg p-5 shadow-sm mb-6">
             <div className="flex items-center gap-2 mb-4">
               <span className="text-amber-400 text-lg">⭐</span>
-              <Body18 className="font-semibold text-gray-900">My Favorites</Body18>
+              <Body18 className="font-semibold text-rb-dark">My Favorites</Body18>
             </div>
             <div className="space-y-2">
               {favorites.map(fav => {
@@ -734,10 +734,10 @@ export default function DashboardPage() {
                     {/* Info */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <Body16 className="font-semibold text-gray-900 truncate">{fp.display_name}</Body16>
+                        <Body16 className="font-semibold text-rb-dark truncate">{fp.display_name}</Body16>
                         <span className={`w-2 h-2 rounded-full flex-shrink-0 ${isOnline ? 'bg-green-500' : 'bg-gray-300'}`}></span>
                       </div>
-                      <Body16 className="text-sm text-gray-500">
+                      <Body16 className="text-sm text-rb-gray">
                         {isOnline ? 'Available now' : 'Offline'}
                       </Body16>
                     </div>
@@ -779,7 +779,7 @@ export default function DashboardPage() {
         {/* Active Sessions */}
         {activeSessions.length > 0 && (
           <div className="bg-white rounded-lg p-6 shadow-sm mb-8">
-            <Body18 className="font-semibold text-gray-900 mb-4">Active Conversations</Body18>
+            <Body18 className="font-semibold text-rb-dark mb-4">Active Conversations</Body18>
             <div className="space-y-2" role="list" aria-label="Active chat sessions">
               {activeSessions.map((session) => (
                 <button
@@ -791,10 +791,10 @@ export default function DashboardPage() {
                 >
                   <div className="flex items-center justify-between">
                     <div>
-                      <Body16 className="font-medium text-gray-900 mb-1">
+                      <Body16 className="font-medium text-rb-dark mb-1">
                         {session.otherUserName}
                       </Body16>
-                      <Body16 className="text-sm text-gray-600">
+                      <Body16 className="text-sm text-rb-gray">
                         Continue your conversation
                       </Body16>
                     </div>
@@ -809,7 +809,7 @@ export default function DashboardPage() {
         {/* Recent Sessions */}
         {recentSessions.length > 0 && (
           <div className="bg-white rounded-lg p-6 shadow-sm mb-8">
-            <Body18 className="font-semibold text-gray-900 mb-4">Recent Conversations</Body18>
+            <Body18 className="font-semibold text-rb-dark mb-4">Recent Conversations</Body18>
             <div className="space-y-2" role="list" aria-label="Recent chat sessions">
               {recentSessions.map((session) => {
                 const endedAt = session.ended_at ? new Date(session.ended_at) : null
@@ -827,10 +827,10 @@ export default function DashboardPage() {
                   >
                     <div className="flex items-center justify-between">
                       <div>
-                        <Body16 className="font-medium text-gray-900 mb-0.5">
+                        <Body16 className="font-medium text-rb-dark mb-0.5">
                           {session.otherUserName}
                         </Body16>
-                        <Body16 className="text-sm text-gray-500">
+                        <Body16 className="text-sm text-rb-gray">
                           {dateLabel}{durationMin !== null && durationMin > 0 ? ` · ${durationMin} min` : ''}
                         </Body16>
                       </div>
@@ -868,10 +868,10 @@ export default function DashboardPage() {
           <div className="relative bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6">
             <div className="text-center mb-5">
               <span className="text-4xl block mb-3" aria-hidden="true">🙏</span>
-              <h2 id="offline-confirm-title" className="text-lg font-bold text-gray-900 mb-2">
+              <h2 id="offline-confirm-title" className="text-lg font-bold text-rb-dark mb-2">
                 Someone is waiting for support
               </h2>
-              <p className="text-sm text-gray-600 leading-relaxed">
+              <p className="text-sm text-rb-gray leading-relaxed">
                 There are people looking for a listener right now. Are you sure you want to go offline?
               </p>
             </div>
