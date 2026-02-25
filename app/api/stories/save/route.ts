@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Title and content are required' }, { status: 400 })
     }
 
-    const allowedStatuses: BlogPostStatus[] = ['draft', 'submitted']
+    const allowedStatuses: BlogPostStatus[] = ['draft', 'submitted', 'published']
     const postStatus: BlogPostStatus = allowedStatuses.includes(status) ? status : 'draft'
 
     if (id) {
