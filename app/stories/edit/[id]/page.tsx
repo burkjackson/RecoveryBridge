@@ -342,7 +342,7 @@ function Header() {
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
         <a href="/my" className="text-sm text-white/70 hover:text-white transition">← My Stories</a>
         <span className="text-sm font-semibold">Edit Story</span>
-        <a href="https://recoverybridge.app" className="text-xs text-white/50 hover:text-white/80 transition">RecoveryBridge</a>
+        <a href="https://recoverybridge.app" target="_blank" rel="noopener noreferrer" className="text-xs text-white/50 hover:text-white/80 transition">RecoveryBridge</a>
       </div>
     </header>
   )

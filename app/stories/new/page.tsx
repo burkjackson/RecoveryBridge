@@ -453,6 +453,8 @@ function Header() {
         <span className="text-sm font-semibold">Write a Story</span>
         <a
           href="https://recoverybridge.app"
+          target="_blank"
+          rel="noopener noreferrer"
           className="text-xs text-white/50 hover:text-white/80 transition"
         >
           RecoveryBridge
