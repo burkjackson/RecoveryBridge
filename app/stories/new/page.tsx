@@ -251,7 +251,7 @@ export default function NewStoryPage() {
                 value={title}
                 onChange={(e) => setTitle(e.target.value.slice(0, MAX_TITLE))}
                 placeholder="Give your story a title…"
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-[#2D3436] text-lg font-semibold placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-[#5A7A8C]/30 focus:border-[#5A7A8C] transition"
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-[#2D3436] text-lg font-semibold placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#5A7A8C]/30 focus:border-[#5A7A8C] transition"
               />
             </div>
 
@@ -311,7 +311,7 @@ export default function NewStoryPage() {
                 onChange={(e) => setExcerpt(e.target.value.slice(0, MAX_EXCERPT))}
                 placeholder="A sentence or two shown in the card preview…"
                 rows={2}
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-sm text-[#2D3436] placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-[#5A7A8C]/30 focus:border-[#5A7A8C] transition resize-none"
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-sm text-[#2D3436] placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#5A7A8C]/30 focus:border-[#5A7A8C] transition resize-none"
               />
             </div>
 
@@ -326,7 +326,7 @@ export default function NewStoryPage() {
                 onChange={(e) => setContent(e.target.value)}
                 placeholder="Share your story, insight, or message of hope…"
                 rows={18}
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-sm text-[#2D3436] placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-[#5A7A8C]/30 focus:border-[#5A7A8C] transition resize-y font-mono leading-relaxed"
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-sm text-[#2D3436] placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#5A7A8C]/30 focus:border-[#5A7A8C] transition resize-y font-mono leading-relaxed"
               />
               <p className="text-xs text-gray-400 mt-1.5">
                 Use **bold**, *italic*, ## Headings, and {">"} blockquotes for formatting.
@@ -341,30 +341,30 @@ export default function NewStoryPage() {
               <div className="space-y-2">
                 <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl border border-gray-200 bg-white focus-within:ring-2 focus-within:ring-[#5A7A8C]/30 focus-within:border-[#5A7A8C] transition">
                   <IconWebsite className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                  <input type="url" value={authorWebsite} onChange={(e) => setAuthorWebsite(e.target.value)} placeholder="Website (https://...)" className="flex-1 text-sm text-[#2D3436] placeholder:text-gray-300 bg-transparent focus:outline-none" />
+                  <input type="url" value={authorWebsite} onChange={(e) => setAuthorWebsite(e.target.value)} placeholder="Website (https://...)" className="flex-1 text-sm text-[#2D3436] placeholder:text-gray-400 bg-transparent focus:outline-none" />
                 </div>
                 <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl border border-gray-200 bg-white focus-within:ring-2 focus-within:ring-[#5A7A8C]/30 focus-within:border-[#5A7A8C] transition">
                   <IconInstagram className="w-4 h-4 text-gray-400 flex-shrink-0" />
                   <span className="text-sm text-gray-400 select-none">@</span>
-                  <input type="text" value={authorInstagram} onChange={(e) => setAuthorInstagram(e.target.value.replace(/^@/, ''))} placeholder="Instagram username" className="flex-1 text-sm text-[#2D3436] placeholder:text-gray-300 bg-transparent focus:outline-none" />
+                  <input type="text" value={authorInstagram} onChange={(e) => setAuthorInstagram(e.target.value.replace(/^@/, ''))} placeholder="Instagram username" className="flex-1 text-sm text-[#2D3436] placeholder:text-gray-400 bg-transparent focus:outline-none" />
                 </div>
                 <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl border border-gray-200 bg-white focus-within:ring-2 focus-within:ring-[#5A7A8C]/30 focus-within:border-[#5A7A8C] transition">
                   <IconX className="w-4 h-4 text-gray-400 flex-shrink-0" />
                   <span className="text-sm text-gray-400 select-none">@</span>
-                  <input type="text" value={authorTwitter} onChange={(e) => setAuthorTwitter(e.target.value.replace(/^@/, ''))} placeholder="X / Twitter username" className="flex-1 text-sm text-[#2D3436] placeholder:text-gray-300 bg-transparent focus:outline-none" />
+                  <input type="text" value={authorTwitter} onChange={(e) => setAuthorTwitter(e.target.value.replace(/^@/, ''))} placeholder="X / Twitter username" className="flex-1 text-sm text-[#2D3436] placeholder:text-gray-400 bg-transparent focus:outline-none" />
                 </div>
                 <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl border border-gray-200 bg-white focus-within:ring-2 focus-within:ring-[#5A7A8C]/30 focus-within:border-[#5A7A8C] transition">
                   <IconLinkedIn className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                  <input type="url" value={authorLinkedin} onChange={(e) => setAuthorLinkedin(e.target.value)} placeholder="LinkedIn URL (https://linkedin.com/in/...)" className="flex-1 text-sm text-[#2D3436] placeholder:text-gray-300 bg-transparent focus:outline-none" />
+                  <input type="url" value={authorLinkedin} onChange={(e) => setAuthorLinkedin(e.target.value)} placeholder="LinkedIn URL (https://linkedin.com/in/...)" className="flex-1 text-sm text-[#2D3436] placeholder:text-gray-400 bg-transparent focus:outline-none" />
                 </div>
                 <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl border border-gray-200 bg-white focus-within:ring-2 focus-within:ring-[#5A7A8C]/30 focus-within:border-[#5A7A8C] transition">
                   <IconThreads className="w-4 h-4 text-gray-400 flex-shrink-0" />
                   <span className="text-sm text-gray-400 select-none">@</span>
-                  <input type="text" value={authorThreads} onChange={(e) => setAuthorThreads(e.target.value.replace(/^@/, ''))} placeholder="Threads username" className="flex-1 text-sm text-[#2D3436] placeholder:text-gray-300 bg-transparent focus:outline-none" />
+                  <input type="text" value={authorThreads} onChange={(e) => setAuthorThreads(e.target.value.replace(/^@/, ''))} placeholder="Threads username" className="flex-1 text-sm text-[#2D3436] placeholder:text-gray-400 bg-transparent focus:outline-none" />
                 </div>
                 <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl border border-gray-200 bg-white focus-within:ring-2 focus-within:ring-[#5A7A8C]/30 focus-within:border-[#5A7A8C] transition">
                   <IconYouTube className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                  <input type="url" value={authorYoutube} onChange={(e) => setAuthorYoutube(e.target.value)} placeholder="YouTube channel URL" className="flex-1 text-sm text-[#2D3436] placeholder:text-gray-300 bg-transparent focus:outline-none" />
+                  <input type="url" value={authorYoutube} onChange={(e) => setAuthorYoutube(e.target.value)} placeholder="YouTube channel URL" className="flex-1 text-sm text-[#2D3436] placeholder:text-gray-400 bg-transparent focus:outline-none" />
                 </div>
               </div>
             </div>
