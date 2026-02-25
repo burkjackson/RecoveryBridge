@@ -75,7 +75,7 @@ export default async function StoryPage({ params }: Props) {
       <header className="bg-[#2D3436] text-white">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
           <a
-            href="/stories"
+            href="/"
             className="text-sm text-white/70 hover:text-white transition flex items-center gap-1.5"
           >
             ← All Stories
@@ -147,7 +147,7 @@ export default async function StoryPage({ params }: Props) {
         {/* Back link */}
         <div className="mt-12 pt-8 border-t border-gray-100">
           <a
-            href="/stories"
+            href="/"
             className="inline-flex items-center gap-2 text-sm font-semibold text-[#5A7A8C] hover:text-[#4A6A7C] transition"
           >
             ← Back to all stories

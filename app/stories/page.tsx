@@ -100,7 +100,7 @@ export default async function StoriesPage() {
             <p className="text-sm text-white/60 mt-0.5">From the recovery community</p>
           </div>
           <a
-            href="/stories/new"
+            href="/new"
             className="hidden sm:inline-flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white text-sm font-semibold rounded-full transition border border-white/20"
           >
             ✍️ Write a Story
@@ -118,7 +118,7 @@ export default async function StoriesPage() {
               Be the first to share your experience. Stories from our community will appear here.
             </p>
             <a
-              href="/stories/new"
+              href="/new"
               className="mt-6 inline-flex items-center gap-2 px-5 py-2.5 bg-[#5A7A8C] text-white text-sm font-semibold rounded-full hover:bg-[#4A6A7C] transition"
             >
               Write the First Story
@@ -129,7 +129,7 @@ export default async function StoriesPage() {
             {/* Featured post — first published */}
             {typedPosts.length > 0 && (
               <Link
-                href={`/stories/${typedPosts[0].slug}`}
+                href={`/${typedPosts[0].slug}`}
                 className="group block mb-10 rounded-2xl overflow-hidden bg-white shadow-sm hover:shadow-md transition-all duration-200"
               >
                 <div className="sm:flex">
@@ -172,7 +172,7 @@ export default async function StoriesPage() {
                 {typedPosts.slice(1).map((post) => (
                   <Link
                     key={post.id}
-                    href={`/stories/${post.slug}`}
+                    href={`/${post.slug}`}
                     className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col"
                   >
                     {/* Cover */}
