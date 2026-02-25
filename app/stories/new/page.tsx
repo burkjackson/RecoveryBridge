@@ -366,7 +366,7 @@ export default function NewStoryPage() {
         {/* Actions */}
         <div className="mt-6 flex flex-col sm:flex-row gap-3 justify-end">
           <a
-            href="/stories/my"
+            href="/my"
             className="px-5 py-2.5 text-sm font-semibold text-[#4A5568] border border-gray-200 rounded-full hover:border-gray-300 transition text-center"
           >
             My Stories
@@ -396,7 +396,7 @@ function Header() {
     <header className="bg-[#2D3436] text-white">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
         <a
-          href="/stories"
+          href="/"
           className="text-sm text-white/70 hover:text-white transition flex items-center gap-1.5"
         >
           ← Stories
