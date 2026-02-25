@@ -6,6 +6,8 @@ import type { BlogPostWithAuthor } from '@/lib/types/database'
 import { IconWebsite, IconInstagram, IconX, IconLinkedIn, IconThreads, IconYouTube } from '@/components/SocialIcons'
 import { BackToStories } from './BackToStories'
 import { AuthorEditButton } from './AuthorEditButton'
+import { formatDate, readingTime } from '../utils'
+import { ShareButtons } from './ShareButtons'
 
 interface Props {
   params: Promise<{ slug: string }>
@@ -35,18 +37,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     openGraph: {
       title: post.title,
       description: post.excerpt ?? undefined,
-      images: post.cover_image_url ? [{ url: post.cover_image_url }] : [],
+      images: post.cover_image_url
+        ? [{ url: post.cover_image_url }]
+        : [{ url: 'https://stories.recoverybridge.app/og-default.png', width: 1200, height: 630 }],
       url: `https://stories.recoverybridge.app/${slug}`,
     },
   }
-}
-
-function formatDate(dateString: string) {
-  return new Date(dateString).toLocaleDateString('en-US', {
-    month: 'long',
-    day: 'numeric',
-    year: 'numeric',
-  })
 }
 
 export default async function StoryPage({ params }: Props) {
@@ -60,7 +56,7 @@ export default async function StoryPage({ params }: Props) {
   const { data: post } = await supabase
     .from('blog_posts')
     .select(`
-      id, title, slug, excerpt, content, cover_image_url, published_at, author_id,
+      id, title, slug, excerpt, content, cover_image_url, published_at, author_id, word_count, tags,
       author_website, author_instagram, author_twitter, author_linkedin, author_threads, author_youtube,
       author:profiles!author_id(display_name, avatar_url, user_role)
     `)
@@ -72,6 +68,30 @@ export default async function StoryPage({ params }: Props) {
 
   const typedPost = post as unknown as BlogPostWithAuthor
   const htmlContent = await marked(typedPost.content)
+
+  // Related stories: tag-overlap first, fall back to most recent
+  let relatedPosts: BlogPostWithAuthor[] = []
+  if (typedPost.tags && typedPost.tags.length > 0) {
+    const { data: tagMatches } = await supabase
+      .from('blog_posts')
+      .select(`id, title, slug, excerpt, cover_image_url, published_at, author_id, word_count, tags, author:profiles!author_id(display_name, avatar_url, user_role)`)
+      .eq('status', 'published')
+      .neq('id', typedPost.id)
+      .overlaps('tags', typedPost.tags)
+      .order('published_at', { ascending: false })
+      .limit(3)
+    relatedPosts = (tagMatches || []) as unknown as BlogPostWithAuthor[]
+  }
+  if (relatedPosts.length < 2) {
+    const { data: recent } = await supabase
+      .from('blog_posts')
+      .select(`id, title, slug, excerpt, cover_image_url, published_at, author_id, word_count, tags, author:profiles!author_id(display_name, avatar_url, user_role)`)
+      .eq('status', 'published')
+      .neq('id', typedPost.id)
+      .order('published_at', { ascending: false })
+      .limit(3)
+    relatedPosts = (recent || []) as unknown as BlogPostWithAuthor[]
+  }
 
   return (
     <div className="min-h-screen bg-white font-sans">
@@ -137,10 +157,22 @@ export default async function StoryPage({ params }: Props) {
               </p>
               <p className="text-xs text-gray-400">
                 {typedPost.published_at ? formatDate(typedPost.published_at) : ''}
+                {' · '}{readingTime(typedPost.word_count, typedPost.content)} min read
               </p>
             </div>
           </div>
         </div>
+
+        {/* Topic tags */}
+        {typedPost.tags && typedPost.tags.length > 0 && (
+          <div className="flex flex-wrap gap-2 pt-4 pb-2">
+            {typedPost.tags.map((tag) => (
+              <span key={tag} className="px-3 py-1 rounded-full bg-[#E8F0F4] text-[#5A7A8C] text-xs font-semibold">
+                {tag}
+              </span>
+            ))}
+          </div>
+        )}
 
         {/* Author social links */}
         {(typedPost.author_website || typedPost.author_instagram || typedPost.author_twitter ||
@@ -197,11 +229,49 @@ export default async function StoryPage({ params }: Props) {
           dangerouslySetInnerHTML={{ __html: htmlContent }}
         />
 
+        {/* Share buttons */}
+        <ShareButtons slug={typedPost.slug} title={typedPost.title} />
+
         {/* Back link */}
-        <div className="mt-12 pt-8 border-t border-gray-100">
+        <div className="mt-4">
           <BackToStories label="← Back to all stories" variant="article" />
         </div>
       </main>
+
+      {/* Related Stories */}
+      {relatedPosts.length > 0 && (
+        <section className="max-w-5xl mx-auto px-4 sm:px-6 py-10 border-t border-gray-100">
+          <h2 className="text-lg font-bold text-[#2D3436] mb-5">More Stories</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {relatedPosts.map((related) => (
+              <a
+                key={related.id}
+                href={`/${related.slug}`}
+                className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col border border-gray-100"
+              >
+                <div className="aspect-video overflow-hidden flex-shrink-0 bg-gray-100">
+                  {related.cover_image_url ? (
+                    <img src={related.cover_image_url} alt={related.title} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-[#5A7A8C] to-[#3A5A6C] flex items-center justify-center">
+                      <span className="text-white/20 text-4xl select-none">✦</span>
+                    </div>
+                  )}
+                </div>
+                <div className="p-4 flex flex-col flex-1">
+                  <h3 className="text-sm font-bold text-[#2D3436] leading-snug mb-1 line-clamp-2 group-hover:text-[#5A7A8C] transition">
+                    {related.title}
+                  </h3>
+                  <p className="text-xs text-gray-400 mt-auto pt-2">
+                    {related.author.display_name}
+                    {related.word_count ? ` · ${readingTime(related.word_count)} min read` : ''}
+                  </p>
+                </div>
+              </a>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Footer */}
       <footer className="border-t border-gray-100 mt-8 py-8 text-center">

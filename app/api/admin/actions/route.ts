@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { sendStoryPublishedEmail, sendStoryRejectedEmail } from '@/lib/email'
 
 // 30 requests per admin per minute — generous for human use, blocks automation
 const RATE_LIMIT_WINDOW_MS = 60 * 1000
@@ -172,6 +173,16 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'storyId required' }, { status: 400 })
       }
 
+      // Fetch story + author details before updating (for email)
+      const { data: storyForEmail } = await supabase
+        .from('blog_posts')
+        .select(`
+          title, slug, author_id,
+          author:profiles!author_id(display_name, email)
+        `)
+        .eq('id', storyId)
+        .single()
+
       const { error: publishError } = await supabase
         .from('blog_posts')
         .update({
@@ -189,6 +200,19 @@ export async function POST(request: NextRequest) {
         details: { story_id: storyId },
       }])
 
+      // Fire-and-forget: email the author (non-blocking, never fails the request)
+      if (storyForEmail) {
+        const authorProfile = (storyForEmail.author as unknown) as { display_name: string; email: string } | null
+        if (authorProfile?.email) {
+          sendStoryPublishedEmail({
+            to: authorProfile.email,
+            authorName: authorProfile.display_name,
+            storyTitle: storyForEmail.title,
+            storySlug: storyForEmail.slug,
+          }).catch(() => { /* silent */ })
+        }
+      }
+
       return NextResponse.json({ success: true })
     }
 
@@ -197,6 +221,16 @@ export async function POST(request: NextRequest) {
       if (!storyId) {
         return NextResponse.json({ error: 'storyId required' }, { status: 400 })
       }
+
+      // Fetch story + author details before updating (for email)
+      const { data: storyForRejectEmail } = await supabase
+        .from('blog_posts')
+        .select(`
+          title, author_id,
+          author:profiles!author_id(display_name, email)
+        `)
+        .eq('id', storyId)
+        .single()
 
       const { error: rejectError } = await supabase
         .from('blog_posts')
@@ -213,6 +247,20 @@ export async function POST(request: NextRequest) {
         action_type: 'story_rejected',
         details: { story_id: storyId, note: rejectionNote },
       }])
+
+      // Fire-and-forget: email the author (non-blocking, never fails the request)
+      if (storyForRejectEmail) {
+        const authorProfile = (storyForRejectEmail.author as unknown) as { display_name: string; email: string } | null
+        if (authorProfile?.email) {
+          sendStoryRejectedEmail({
+            to: authorProfile.email,
+            authorName: authorProfile.display_name,
+            storyTitle: storyForRejectEmail.title,
+            storyId,
+            rejectionNote: rejectionNote ?? null,
+          }).catch(() => { /* silent */ })
+        }
+      }
 
       return NextResponse.json({ success: true })
     }
