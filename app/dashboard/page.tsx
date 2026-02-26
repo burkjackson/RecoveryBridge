@@ -152,6 +152,38 @@ export default function DashboardPage() {
     return () => clearInterval(pollInterval)
   }, [profile?.role_state])
 
+  // Listener-side poll: while available, poll every 2s for a seeker who connected
+  // directly (e.g. via the Connect button on Available Listeners or via Favorites).
+  // Realtime INSERT events are filtered by RLS before reaching the subscriber, so
+  // polling is the reliable fallback.
+  useEffect(() => {
+    if (profile?.role_state !== 'available') return
+
+    async function checkForListenerSession() {
+      if (profileRef.current?.role_state !== 'available') return
+      try {
+        const { data: activeSession } = await supabase
+          .from('sessions')
+          .select('id')
+          .eq('listener_id', profileRef.current.id)
+          .eq('status', 'active')
+          .maybeSingle()
+
+        if (activeSession) {
+          router.push(`/chat/${activeSession.id}`)
+        }
+      } catch {
+        // Silent
+      }
+    }
+
+    // Check immediately, then every 2 seconds
+    checkForListenerSession()
+    const pollInterval = setInterval(checkForListenerSession, 2000)
+
+    return () => clearInterval(pollInterval)
+  }, [profile?.role_state])
+
   async function sendHeartbeat() {
     if (!profile || (profile.role_state !== 'available' && profile.role_state !== 'requesting')) {
       return
