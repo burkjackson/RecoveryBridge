@@ -332,7 +332,7 @@ export async function POST(request: NextRequest) {
     const stack = error instanceof Error ? error.stack : undefined
     console.error('Error sending notifications:', msg, stack)
     return NextResponse.json(
-      { success: false, error: 'Failed to send notifications', detail: msg },
+      { success: false, error: 'Failed to send notifications' },
       { status: 500 }
     )
   }
