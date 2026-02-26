@@ -34,6 +34,12 @@ export const TIME = {
 
   /** Delay before re-notifying listeners that a seeker is still waiting (2 minutes) */
   RENOTIFY_DELAY_MS: 2 * 60 * 1000,
+
+  /** How long a seeker's heartbeat must be absent before they are hidden from the listener view (5 minutes) */
+  SEEKER_DISPLAY_THRESHOLD_MS: 5 * 60 * 1000,
+
+  /** How long before a stale 'requesting' role_state is reset to 'offline' by cleanup (30 minutes) */
+  SEEKER_STALE_REQUESTING_MS: 30 * 60 * 1000,
 } as const
 
 // Re-notification tracking constants
@@ -57,6 +63,8 @@ export const TIME_MINUTES = {
   INACTIVITY_CHECK_INTERVAL: TIME.INACTIVITY_CHECK_INTERVAL_MS / (60 * 1000),
   CLEANUP_NO_MESSAGES: TIME.CLEANUP_NO_MESSAGES_MS / (60 * 1000),
   CLEANUP_INACTIVE: TIME.CLEANUP_INACTIVE_MS / (60 * 1000),
+  SEEKER_DISPLAY_THRESHOLD: TIME.SEEKER_DISPLAY_THRESHOLD_MS / (60 * 1000),
+  SEEKER_STALE_REQUESTING: TIME.SEEKER_STALE_REQUESTING_MS / (60 * 1000),
 } as const
 
 // UI and UX constants

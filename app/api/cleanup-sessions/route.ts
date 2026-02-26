@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { TIME_MINUTES } from '@/lib/constants'
+import { TIME_MINUTES, TIME } from '@/lib/constants'
 
 export async function POST(request: NextRequest) {
   try {
@@ -56,10 +56,19 @@ export async function POST(request: NextRequest) {
 
     if (!activeSessions || activeSessions.length === 0) {
       if (isDev) console.log('No active sessions to clean up')
+      // Still reset stale seekers even when no sessions exist
+      const staleThreshold = new Date(Date.now() - TIME.SEEKER_STALE_REQUESTING_MS).toISOString()
+      const { data: staleRequesters } = await supabase
+        .from('profiles')
+        .update({ role_state: 'offline' })
+        .eq('role_state', 'requesting')
+        .lt('last_heartbeat_at', staleThreshold)
+        .select('id')
       return NextResponse.json({
         success: true,
         message: 'No sessions to clean up',
-        cleaned: 0
+        cleaned: 0,
+        staleSeekerReset: staleRequesters?.length ?? 0
       })
     }
 
@@ -123,25 +132,40 @@ export async function POST(request: NextRequest) {
       }
 
       if (isDev) console.log(`Closed ${sessionsToClose.length} stale session(s)`)
-
-      return NextResponse.json({
-        success: true,
-        message: `Closed ${sessionsToClose.length} stale session(s)`,
-        cleaned: sessionsToClose.length,
-        sessionIds: sessionsToClose
-      })
+    } else {
+      if (isDev) console.log('No stale sessions found')
     }
 
-    if (isDev) console.log('No stale sessions found')
+    // Reset stale 'requesting' role states — seekers who left without logging out.
+    // Their role_state stays 'requesting' in DB so they auto-rejoin if they return
+    // within the display window (5 min). After 30 min of no heartbeat we reset to 'offline'.
+    const staleRequestingThreshold = new Date(Date.now() - TIME.SEEKER_STALE_REQUESTING_MS).toISOString()
+    const { data: staleRequesters, error: staleError } = await supabase
+      .from('profiles')
+      .update({ role_state: 'offline' })
+      .eq('role_state', 'requesting')
+      .lt('last_heartbeat_at', staleRequestingThreshold)
+      .select('id')
+
+    if (staleError) {
+      console.error('Error resetting stale requesting states:', staleError)
+    } else if (staleRequesters && staleRequesters.length > 0) {
+      if (isDev) console.log(`Reset ${staleRequesters.length} stale requesting state(s) to offline`)
+    }
+
     return NextResponse.json({
       success: true,
-      message: 'No stale sessions to close',
-      cleaned: 0
+      message: sessionsToClose.length > 0
+        ? `Closed ${sessionsToClose.length} stale session(s)`
+        : 'No stale sessions to close',
+      cleaned: sessionsToClose.length,
+      sessionIds: sessionsToClose.length > 0 ? sessionsToClose : undefined,
+      staleSeekerReset: staleRequesters?.length ?? 0
     })
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Session cleanup error:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ error: error instanceof Error ? error.message : 'Cleanup failed' }, { status: 500 })
   }
 }
 

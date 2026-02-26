@@ -116,10 +116,10 @@ export default function PeopleSeeking({ currentUserId, currentRoleState }: Peopl
         return
       }
 
-      // Filter out stale requests — seekers use a tighter 5-min window (vs 1-hr for listeners)
-      // to keep the list fresh and only show actively-waiting seekers
-      const SEEKER_THRESHOLD_MS = 5 * 60 * 1000
-      const heartbeatThreshold = new Date(Date.now() - SEEKER_THRESHOLD_MS).toISOString()
+      // Filter out stale requests — seekers use a tighter display window (vs 1-hr for listeners)
+      // to show only actively-waiting seekers. role_state is preserved in DB for 30 min so
+      // seekers who briefly disconnect auto-rejoin the queue when they return.
+      const heartbeatThreshold = new Date(Date.now() - TIME.SEEKER_DISPLAY_THRESHOLD_MS).toISOString()
       const freshSeekers = requestingProfiles.filter(s => {
         if (!s.last_heartbeat_at) return false
         return s.last_heartbeat_at >= heartbeatThreshold
