@@ -23,6 +23,7 @@ export default function DashboardPage() {
   const [connectingFavorite, setConnectingFavorite] = useState<string | null>(null)
   const [error, setError] = useState<{ show: boolean; message: string; action?: () => void }>({ show: false, message: '' })
   const [nudgeDismissed, setNudgeDismissed] = useState(false)
+  const [recentOpen, setRecentOpen] = useState(false)
   const [showOfflineConfirm, setShowOfflineConfirm] = useState(false)
   const profileRef = useRef<Profile | null>(null)
   const lastNotifyTimestampRef = useRef<number>(0)
@@ -806,42 +807,54 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* Recent Sessions */}
+        {/* Recent Sessions — collapsible accordion */}
         {recentSessions.length > 0 && (
-          <div className="bg-white rounded-lg p-6 shadow-sm mb-8">
-            <Body18 className="font-semibold text-rb-dark mb-4">Recent Conversations</Body18>
-            <div className="space-y-2" role="list" aria-label="Recent chat sessions">
-              {recentSessions.map((session) => {
-                const endedAt = session.ended_at ? new Date(session.ended_at) : null
-                const startedAt = new Date(session.created_at)
-                const durationMs = endedAt ? endedAt.getTime() - startedAt.getTime() : null
-                const durationMin = durationMs !== null ? Math.round(durationMs / 60000) : null
-                const dateLabel = endedAt
-                  ? endedAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-                  : ''
-                return (
-                  <div
-                    key={session.id}
-                    role="listitem"
-                    className="w-full p-4 bg-gray-50 rounded-lg"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <Body16 className="font-medium text-rb-dark mb-0.5">
-                          {session.otherUserName}
-                        </Body16>
-                        <Body16 className="text-sm text-rb-gray">
-                          {dateLabel}{durationMin !== null && durationMin > 0 ? ` · ${durationMin} min` : ''}
-                        </Body16>
+          <div className="bg-white rounded-lg shadow-sm mb-8 overflow-hidden">
+            <button
+              onClick={() => setRecentOpen((o) => !o)}
+              aria-expanded={recentOpen}
+              className="w-full flex items-center justify-between px-6 py-4 hover:bg-gray-50 transition-colors"
+            >
+              <Body18 className="font-semibold text-rb-dark">Recent Conversations</Body18>
+              <span className={`text-gray-400 transition-transform duration-200 ${recentOpen ? 'rotate-180' : ''}`}>
+                ▾
+              </span>
+            </button>
+
+            {recentOpen && (
+              <div className="px-6 pb-5 space-y-2" role="list" aria-label="Recent chat sessions">
+                {recentSessions.map((session) => {
+                  const endedAt = session.ended_at ? new Date(session.ended_at) : null
+                  const startedAt = new Date(session.created_at)
+                  const durationMs = endedAt ? endedAt.getTime() - startedAt.getTime() : null
+                  const durationMin = durationMs !== null ? Math.round(durationMs / 60000) : null
+                  const dateLabel = endedAt
+                    ? endedAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                    : ''
+                  return (
+                    <div
+                      key={session.id}
+                      role="listitem"
+                      className="w-full p-4 bg-gray-50 rounded-lg"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <Body16 className="font-medium text-rb-dark mb-0.5">
+                            {session.otherUserName}
+                          </Body16>
+                          <Body16 className="text-sm text-rb-gray">
+                            {dateLabel}{durationMin !== null && durationMin > 0 ? ` · ${durationMin} min` : ''}
+                          </Body16>
+                        </div>
+                        <span className="px-2 py-1 text-xs rounded-full bg-gray-200 text-gray-500 font-medium">
+                          Ended
+                        </span>
                       </div>
-                      <span className="px-2 py-1 text-xs rounded-full bg-gray-200 text-gray-500 font-medium">
-                        Ended
-                      </span>
                     </div>
-                  </div>
-                )
-              })}
-            </div>
+                  )
+                })}
+              </div>
+            )}
           </div>
         )}
 
