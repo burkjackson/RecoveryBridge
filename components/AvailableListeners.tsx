@@ -360,7 +360,7 @@ export default function AvailableListeners({ onCountChange, currentUserId, curre
                   onClick={() => connectWithListener(listener.id)}
                   disabled={connectingId === listener.id}
                   aria-label={`Connect with ${listener.display_name}`}
-                  className="min-h-[36px] px-3 py-1.5 rounded-lg text-xs font-semibold bg-rb-blue text-white hover:bg-rb-blue-hover disabled:opacity-60 transition-all whitespace-nowrap"
+                  className="min-h-[44px] px-4 py-2 rounded-lg text-sm font-semibold bg-rb-blue text-white hover:bg-rb-blue-hover disabled:opacity-60 transition-all whitespace-nowrap"
                 >
                   {connectingId === listener.id ? 'Connecting...' : 'Connect'}
                 </button>
