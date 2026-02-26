@@ -202,7 +202,7 @@ export async function POST(request: NextRequest) {
         // silently fail in the service worker on Safari/PWA.
         tag: `support-request-${seekerId}`,
         data: {
-          url: '/dashboard',
+          url: `/connect?seekerId=${seekerId}`,
           seekerId: seekerId
         }
       })

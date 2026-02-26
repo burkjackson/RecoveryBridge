@@ -1,7 +1,7 @@
 // RecoveryBridge Service Worker for Push Notifications
 // This enables background notifications even when the browser tab is closed
 
-const CACHE_NAME = 'recoverybridge-v5'
+const CACHE_NAME = 'recoverybridge-v6'
 
 // Install event - cache essential resources
 self.addEventListener('install', (event) => {
@@ -46,13 +46,18 @@ self.addEventListener('push', (event) => {
       title = data.title || title
 
       // Build iOS-safe options — explicitly exclude badge and requireInteraction
+      const seekerId = data.data?.seekerId || data.seekerId
       options = {
         body: data.body || options.body,
         icon: data.icon || options.icon,
         tag: data.tag || options.tag,
         data: {
-          url: data.data?.url || data.url || '/dashboard',
-          seekerId: data.data?.seekerId || data.seekerId
+          // If we have a seekerId, open /connect so the listener lands directly
+          // in a chat session. Otherwise fall back to the dashboard.
+          url: seekerId
+            ? `/connect?seekerId=${seekerId}`
+            : (data.data?.url || data.url || '/dashboard'),
+          seekerId
         }
       }
     } catch (e) {
