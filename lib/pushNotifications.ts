@@ -51,16 +51,17 @@ export async function subscribeToPushNotifications(): Promise<PushSubscriptionDa
     // Get service worker registration
     const registration = await navigator.serviceWorker.ready
 
-    // Check if already subscribed
-    const existingSubscription = await registration.pushManager.getSubscription()
-    if (existingSubscription) {
-      return subscriptionToData(existingSubscription)
-    }
-
-    // Subscribe to push notifications
     const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
     if (!vapidPublicKey) {
       throw new Error('VAPID public key not configured')
+    }
+
+    // Always unsubscribe first to guarantee a fresh endpoint from the push server.
+    // Returning an existing subscription risks saving a stale/invalid endpoint —
+    // especially on iOS where APNs can silently invalidate subscriptions.
+    const existingSubscription = await registration.pushManager.getSubscription()
+    if (existingSubscription) {
+      await existingSubscription.unsubscribe()
     }
 
     const subscription = await registration.pushManager.subscribe({
