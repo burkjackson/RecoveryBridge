@@ -1,7 +1,7 @@
 // RecoveryBridge Service Worker for Push Notifications
 // This enables background notifications even when the browser tab is closed
 
-const CACHE_NAME = 'recoverybridge-v4'
+const CACHE_NAME = 'recoverybridge-v5'
 
 // Install event - cache essential resources
 self.addEventListener('install', (event) => {
@@ -27,13 +27,13 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('push', (event) => {
   console.log('Push notification received:', event)
 
-  let notificationData = {
-    title: 'RecoveryBridge',
+  // iOS-safe defaults: badge and requireInteraction are not supported on iOS
+  // and can cause showNotification() to fail silently. Keep options minimal.
+  let title = 'RecoveryBridge'
+  let options = {
     body: 'Someone needs support',
     icon: '/icon-192.png',
-    badge: '/icon-192.png',
     tag: 'recoverybridge-notification',
-    requireInteraction: true,
     data: {
       url: '/dashboard'
     }
@@ -43,11 +43,15 @@ self.addEventListener('push', (event) => {
   if (event.data) {
     try {
       const data = event.data.json()
-      notificationData = {
-        ...notificationData,
-        ...data,
+      title = data.title || title
+
+      // Build iOS-safe options — explicitly exclude badge and requireInteraction
+      options = {
+        body: data.body || options.body,
+        icon: data.icon || options.icon,
+        tag: data.tag || options.tag,
         data: {
-          url: data.data?.url || data.url || '/listeners',
+          url: data.data?.url || data.url || '/dashboard',
           seekerId: data.data?.seekerId || data.seekerId
         }
       }
@@ -57,7 +61,7 @@ self.addEventListener('push', (event) => {
   }
 
   event.waitUntil(
-    self.registration.showNotification(notificationData.title, notificationData)
+    self.registration.showNotification(title, options)
   )
 })
 

@@ -197,9 +197,10 @@ export async function POST(request: NextRequest) {
           ? `${seekerName} has been waiting 2+ minutes. Can you help?`
           : `${seekerName} is looking for a listener right now.`,
         icon: '/icon-192.png',
-        badge: '/icon-192.png',
+        // Note: badge and requireInteraction are intentionally omitted —
+        // they are not supported on iOS and can cause showNotification() to
+        // silently fail in the service worker on Safari/PWA.
         tag: `support-request-${seekerId}`,
-        requireInteraction: true,
         data: {
           url: '/dashboard',
           seekerId: seekerId
