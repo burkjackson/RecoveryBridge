@@ -67,11 +67,12 @@ export default function DashboardPage() {
         },
         (payload) => {
           loadActiveSessions()
-          // Auto-navigate to chat when someone creates a session with me as seeker
+          // Auto-navigate to chat when a session is created involving me
           const newSession = payload.new as Record<string, unknown>
+          const myId = profileRef.current?.id
           if (
-            newSession.seeker_id === profileRef.current?.id &&
-            newSession.status === 'active'
+            newSession.status === 'active' &&
+            (newSession.seeker_id === myId || newSession.listener_id === myId)
           ) {
             router.push(`/chat/${newSession.id}`)
           }
