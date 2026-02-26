@@ -129,6 +129,6 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array {
  */
 export function isIOSNeedsPWAInstall(): boolean {
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
-  const isInStandaloneMode = ('standalone' in window.navigator) && (window.navigator as any).standalone
+  const isInStandaloneMode = ('standalone' in window.navigator) && (window.navigator as { standalone?: boolean }).standalone
   return isIOS && !isInStandaloneMode
 }

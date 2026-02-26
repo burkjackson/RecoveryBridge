@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import {
   isPushNotificationSupported,
@@ -40,6 +40,7 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
   const [isPWA, setIsPWA] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
   const [platform, setPlatform] = useState<'ios' | 'android' | 'desktop'>('desktop')
+  const successTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const supabase = createClient()
 
   useEffect(() => {
@@ -158,9 +159,9 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
       } else {
         setError('Notification permission was not granted. Please try again.')
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error enabling notifications:', err)
-      setError(err.message || 'Failed to enable notifications. Please try again.')
+      setError(err instanceof Error ? err.message : 'Failed to enable notifications. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -196,9 +197,9 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
 
       setIsSubscribed(false)
       setSuccessMessage('Notifications disabled successfully.')
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error disabling notifications:', err)
-      setError(err.message || 'Failed to disable notifications. Please try again.')
+      setError(err instanceof Error ? err.message : 'Failed to disable notifications. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -238,14 +239,13 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
         onProfileUpdate(data)
       }
 
-      setSuccessMessage(newValue 
-        ? 'Always Available to Listen enabled! You\'ll stay marked as available indefinitely when listening.' 
+      setSuccessMessage(newValue
+        ? 'Always Available to Listen enabled! You\'ll stay marked as available indefinitely when listening.'
         : 'Always Available mode disabled. Normal 5-minute timeout applies when listening.'
       )
-      
-      // Clear success message after 5 seconds
-      setTimeout(() => setSuccessMessage(null), 5000)
-    } catch (err: any) {
+      if (successTimerRef.current) clearTimeout(successTimerRef.current)
+      successTimerRef.current = setTimeout(() => setSuccessMessage(null), 5000)
+    } catch (err: unknown) {
       console.error('Error updating always available:', err)
       setError('Failed to update Always Available setting. Please try again.')
     } finally {
@@ -282,8 +282,9 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
         ? `Quiet hours set: ${quietHoursStart} – ${quietHoursEnd}. No notifications during this time.`
         : 'Quiet hours disabled. You\'ll receive notifications anytime.'
       )
-      setTimeout(() => setSuccessMessage(null), 5000)
-    } catch (err: any) {
+      if (successTimerRef.current) clearTimeout(successTimerRef.current)
+      successTimerRef.current = setTimeout(() => setSuccessMessage(null), 5000)
+    } catch (err: unknown) {
       console.error('Error saving quiet hours:', err)
       setError('Failed to save quiet hours. Please try again.')
     } finally {
@@ -622,6 +623,7 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
       <NotificationInstructionsModal
         isOpen={showInstructionsModal}
         onClose={() => setShowInstructionsModal(false)}
+        platform={platform}
       />
     </div>
   )

@@ -25,6 +25,7 @@ export const TIME = {
 
   /** Session cleanup: Close sessions with no activity after this time (30 minutes) */
   CLEANUP_INACTIVE_MS: 30 * 60 * 1000,
+
   /** Debounce time before "stopped typing" indicator clears (2 seconds) */
   TYPING_TIMEOUT_MS: 2 * 1000,
 
@@ -152,7 +153,7 @@ export const CONVERSATION_STARTERS = {
     "Hey, I'm here for you. How are you feeling right now?",
     "Thanks for reaching out. What's on your mind today?",
     "I'm glad you're here. Is there something specific you'd like to talk about?",
-    "Welcome — this is a safe space. Take your time. whats going on?",
+    "Welcome — this is a safe space. Take your time. What's on your mind?",
     "I'm listening whenever you're ready to share.",
     "How has your day been going?",
   ],

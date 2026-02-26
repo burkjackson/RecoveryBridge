@@ -67,6 +67,7 @@ async function getCroppedImg(imageSrc: string, pixelCrop: Area): Promise<Blob> {
 export default function AvatarUpload({ userId, currentAvatarUrl, onUploadComplete }: AvatarUploadProps) {
   const [uploading, setUploading] = useState(false)
   const [previewUrl, setPreviewUrl] = useState<string | null>(currentAvatarUrl || null)
+  const [uploadError, setUploadError] = useState<string | null>(null)
 
   // Crop modal state
   const [showCropModal, setShowCropModal] = useState(false)
@@ -83,6 +84,7 @@ export default function AvatarUpload({ userId, currentAvatarUrl, onUploadComplet
   }, [])
 
   async function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
+    setUploadError(null)
     try {
       if (!event.target.files || event.target.files.length === 0) {
         return
@@ -92,13 +94,13 @@ export default function AvatarUpload({ userId, currentAvatarUrl, onUploadComplet
 
       // Validate file size (max 5MB)
       if (file.size > 5 * 1024 * 1024) {
-        alert('File size must be less than 5MB')
+        setUploadError('File size must be less than 5MB')
         return
       }
 
       // Validate file type
       if (!file.type.startsWith('image/')) {
-        alert('Please select an image file')
+        setUploadError('Please select an image file')
         return
       }
 
@@ -110,8 +112,8 @@ export default function AvatarUpload({ userId, currentAvatarUrl, onUploadComplet
       setZoom(1)
       setCrop({ x: 0, y: 0 })
 
-    } catch (error: any) {
-      alert(error.message)
+    } catch (error: unknown) {
+      setUploadError(error instanceof Error ? error.message : 'Failed to load image')
     }
   }
 
@@ -162,8 +164,8 @@ export default function AvatarUpload({ userId, currentAvatarUrl, onUploadComplet
       setImageToCrop(null)
       setOriginalFile(null)
 
-    } catch (error: any) {
-      alert(error.message)
+    } catch (error: unknown) {
+      setUploadError(error instanceof Error ? error.message : 'Upload failed. Please try again.')
     } finally {
       setUploading(false)
     }
@@ -216,6 +218,9 @@ export default function AvatarUpload({ userId, currentAvatarUrl, onUploadComplet
           className="hidden"
         />
 
+        {uploadError && (
+          <p className="text-xs text-red-600 text-center">{uploadError}</p>
+        )}
         <Body16 className="text-center text-xs sm:text-sm">
           JPG, PNG or GIF. Max 5MB.
         </Body16>

@@ -57,48 +57,21 @@ export async function middleware(request: NextRequest) {
   // Get user session
   const { data: { user } } = await supabase.auth.getUser()
 
-  // Protect dashboard routes
-  if (request.nextUrl.pathname.startsWith('/dashboard')) {
-    if (!user) {
-      return NextResponse.redirect(new URL('/login', request.url))
-    }
+  const { pathname } = request.nextUrl
+
+  // Routes that require authentication (redirect to /login if not signed in)
+  const authRoutes = ['/dashboard', '/chat', '/profile', '/listeners', '/admin']
+  if (authRoutes.some((route) => pathname.startsWith(route)) && !user) {
+    return NextResponse.redirect(new URL('/login', request.url))
   }
 
-  // Protect chat routes
-  if (request.nextUrl.pathname.startsWith('/chat')) {
-    if (!user) {
-      return NextResponse.redirect(new URL('/login', request.url))
-    }
+  // Onboarding requires auth but redirects to /signup instead
+  if (pathname.startsWith('/onboarding') && !user) {
+    return NextResponse.redirect(new URL('/signup', request.url))
   }
 
-  // Protect profile routes
-  if (request.nextUrl.pathname.startsWith('/profile')) {
-    if (!user) {
-      return NextResponse.redirect(new URL('/login', request.url))
-    }
-  }
-
-  // Protect listeners routes
-  if (request.nextUrl.pathname.startsWith('/listeners')) {
-    if (!user) {
-      return NextResponse.redirect(new URL('/login', request.url))
-    }
-  }
-
-  // Protect onboarding routes
-  if (request.nextUrl.pathname.startsWith('/onboarding')) {
-    if (!user) {
-      return NextResponse.redirect(new URL('/signup', request.url))
-    }
-  }
-
-  // Protect admin routes - requires authentication AND admin role
-  if (request.nextUrl.pathname.startsWith('/admin')) {
-    if (!user) {
-      return NextResponse.redirect(new URL('/login', request.url))
-    }
-
-    // Check if user has admin privileges
+  // Admin routes additionally require is_admin = true
+  if (pathname.startsWith('/admin') && user) {
     const { data: profile } = await supabase
       .from('profiles')
       .select('is_admin')
@@ -106,7 +79,6 @@ export async function middleware(request: NextRequest) {
       .single()
 
     if (!profile?.is_admin) {
-      // Not an admin - redirect to dashboard
       return NextResponse.redirect(new URL('/dashboard', request.url))
     }
   }
