@@ -120,14 +120,14 @@ export default function DashboardPage() {
     }
   }, [profile?.role_state])
 
-  // Session poll: while seeker is requesting, poll every 5s for an active session.
+  // Session poll: while seeker is requesting, poll every 2s for an active session.
   // This is a reliable fallback alongside the realtime subscription — Supabase
   // realtime postgres_changes can miss INSERT events if RLS filters the payload
   // before it reaches the subscriber.
   useEffect(() => {
     if (profile?.role_state !== 'requesting') return
 
-    const pollInterval = setInterval(async () => {
+    async function checkForSession() {
       if (profileRef.current?.role_state !== 'requesting') return
       try {
         const { data: activeSession } = await supabase
@@ -143,7 +143,11 @@ export default function DashboardPage() {
       } catch {
         // Silent — don't disrupt the seeker experience if poll fails
       }
-    }, 5000)
+    }
+
+    // Check immediately, then every 2 seconds
+    checkForSession()
+    const pollInterval = setInterval(checkForSession, 2000)
 
     return () => clearInterval(pollInterval)
   }, [profile?.role_state])
