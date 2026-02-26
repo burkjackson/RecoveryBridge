@@ -799,7 +799,7 @@ export default function DashboardPage() {
         )}
 
         {/* Available Listeners */}
-        <AvailableListeners onCountChange={setAvailableListenerCount} currentUserId={profile?.id} />
+        <AvailableListeners onCountChange={setAvailableListenerCount} currentUserId={profile?.id} currentRoleState={profile?.role_state} />
 
         {/* Notification Settings */}
         <div className="mb-4 sm:mb-6">

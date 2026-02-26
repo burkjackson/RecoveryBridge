@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Body16, Body18 } from '@/components/ui/Typography'
 import ErrorState from '@/components/ErrorState'
@@ -22,9 +23,11 @@ interface Listener {
 interface AvailableListenersProps {
   onCountChange?: (count: number) => void
   currentUserId?: string
+  currentRoleState?: string | null
 }
 
-export default function AvailableListeners({ onCountChange, currentUserId }: AvailableListenersProps) {
+export default function AvailableListeners({ onCountChange, currentUserId, currentRoleState }: AvailableListenersProps) {
+  const router = useRouter()
   const [listeners, setListeners] = useState<Listener[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -32,6 +35,7 @@ export default function AvailableListeners({ onCountChange, currentUserId }: Ava
   const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set())
   const [hasSharedSession, setHasSharedSession] = useState<Set<string>>(new Set())
   const [togglingFavorite, setTogglingFavorite] = useState<string | null>(null)
+  const [connectingId, setConnectingId] = useState<string | null>(null)
   const supabase = createClient()
 
   useEffect(() => {
@@ -178,6 +182,48 @@ export default function AvailableListeners({ onCountChange, currentUserId }: Ava
     }
   }
 
+  async function connectWithListener(listenerId: string) {
+    if (connectingId) return
+    setConnectingId(listenerId)
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      // Check for existing active session first
+      const { data: existingSession } = await supabase
+        .from('sessions')
+        .select('id')
+        .eq('seeker_id', user.id)
+        .eq('listener_id', listenerId)
+        .eq('status', 'active')
+        .maybeSingle()
+
+      if (existingSession) {
+        router.push(`/chat/${existingSession.id}`)
+        return
+      }
+
+      // Create a new session
+      const { data: session, error } = await supabase
+        .from('sessions')
+        .insert([{ seeker_id: user.id, listener_id: listenerId, status: 'active' }])
+        .select()
+        .single()
+
+      if (error || !session) {
+        console.error('Error creating session:', error)
+        return
+      }
+
+      router.push(`/chat/${session.id}`)
+    } catch (err) {
+      console.error('Error connecting with listener:', err)
+    } finally {
+      setConnectingId(null)
+    }
+  }
+
   function getDisplayMessage(tagline: string | null, bio: string | null): string {
     if (tagline && tagline.trim()) return tagline
     if (!bio || bio.trim() === '') return 'Available to listen'
@@ -248,27 +294,35 @@ export default function AvailableListeners({ onCountChange, currentUserId }: Ava
 
       <div className="space-y-2">
         {listeners.map((listener) => (
-          <button
+          <div
             key={listener.id}
-            onClick={() => setProfilePreview(listener)}
-            aria-label={`View ${listener.display_name}'s profile`}
-            className="w-full flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-all text-left"
+            className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg transition-all"
           >
-            {/* Avatar */}
-            {listener.avatar_url ? (
-              <img
-                src={listener.avatar_url}
-                alt={listener.display_name}
-                className="w-10 h-10 rounded-full object-cover flex-shrink-0"
-              />
-            ) : (
-              <div className="w-10 h-10 rounded-full bg-rb-blue flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
-                {listener.display_name.charAt(0).toUpperCase()}
-              </div>
-            )}
+            {/* Avatar — clicking opens bio */}
+            <button
+              onClick={() => setProfilePreview(listener)}
+              aria-label={`View ${listener.display_name}'s profile`}
+              className="flex-shrink-0"
+            >
+              {listener.avatar_url ? (
+                <img
+                  src={listener.avatar_url}
+                  alt={listener.display_name}
+                  className="w-10 h-10 rounded-full object-cover hover:opacity-80 transition-opacity"
+                />
+              ) : (
+                <div className="w-10 h-10 rounded-full bg-rb-blue flex items-center justify-center text-white font-bold text-sm hover:opacity-80 transition-opacity">
+                  {listener.display_name.charAt(0).toUpperCase()}
+                </div>
+              )}
+            </button>
 
-            {/* Info */}
-            <div className="flex-1 min-w-0">
+            {/* Info — clicking opens bio */}
+            <button
+              onClick={() => setProfilePreview(listener)}
+              aria-label={`View ${listener.display_name}'s profile`}
+              className="flex-1 min-w-0 text-left"
+            >
               <div className="flex items-center gap-2">
                 <Body16 className="font-semibold text-gray-900 truncate">
                   {listener.display_name}
@@ -297,19 +351,34 @@ export default function AvailableListeners({ onCountChange, currentUserId }: Ava
                   )}
                 </div>
               )}
-            </div>
+            </button>
 
-            {/* Online indicator */}
+            {/* Right side: Connect button (when seeking) or online dot */}
             <div className="flex-shrink-0">
-              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+              {currentRoleState === 'requesting' ? (
+                <button
+                  onClick={() => connectWithListener(listener.id)}
+                  disabled={connectingId === listener.id}
+                  aria-label={`Connect with ${listener.display_name}`}
+                  className="min-h-[36px] px-3 py-1.5 rounded-lg text-xs font-semibold bg-rb-blue text-white hover:bg-rb-blue-hover disabled:opacity-60 transition-all whitespace-nowrap"
+                >
+                  {connectingId === listener.id ? 'Connecting...' : 'Connect'}
+                </button>
+              ) : (
+                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+              )}
             </div>
-          </button>
+          </div>
         ))}
       </div>
 
       <div className="mt-4 pt-4 border-t border-gray-200">
         <Body16 className="text-sm text-gray-600 text-center">
-          Click <strong>"I Need Support"</strong> above to connect with an available listener
+          {currentRoleState === 'requesting' ? (
+            <>Tap <strong>Connect</strong> next to a listener to start a session</>
+          ) : (
+            <>Click <strong>&ldquo;I Need Support&rdquo;</strong> above to connect with an available listener</>
+          )}
         </Body16>
       </div>
 
@@ -368,6 +437,22 @@ export default function AvailableListeners({ onCountChange, currentUserId }: Ava
                     </span>
                   ))}
                 </div>
+              </div>
+            )}
+
+            {/* Connect button — shown when the viewer is currently seeking support */}
+            {currentRoleState === 'requesting' && (
+              <div className="pt-3 border-t border-gray-100">
+                <button
+                  onClick={() => {
+                    setProfilePreview(null)
+                    connectWithListener(profilePreview.id)
+                  }}
+                  disabled={connectingId === profilePreview.id}
+                  className="min-h-[44px] w-full px-4 py-2.5 rounded-xl font-semibold text-sm bg-rb-blue text-white hover:bg-rb-blue-hover disabled:opacity-60 transition-all"
+                >
+                  {connectingId === profilePreview.id ? 'Connecting...' : `Connect with ${profilePreview.display_name}`}
+                </button>
               </div>
             )}
 
