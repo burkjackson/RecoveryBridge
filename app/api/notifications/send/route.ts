@@ -136,6 +136,7 @@ export async function POST(request: NextRequest) {
     if (listenersError) throw listenersError
 
     if (!listeners || listeners.length === 0) {
+      console.log(`[notify] No available listeners for seeker ${seekerId}`)
       return NextResponse.json({
         success: true,
         message: 'No available listeners to notify',
@@ -143,10 +144,13 @@ export async function POST(request: NextRequest) {
       })
     }
 
+    console.log(`[notify] Found ${listeners.length} listener(s): ${listeners.map(l => `${l.id.slice(0,8)} role=${l.role_state} always=${l.always_available}`).join(', ')}`)
+
     // Filter out listeners who are in their quiet hours
     const activeListeners = listeners.filter(l => !isInQuietHours(l))
 
     if (activeListeners.length === 0) {
+      console.log(`[notify] All ${listeners.length} listener(s) are in quiet hours`)
       return NextResponse.json({
         success: true,
         message: 'All listeners are in quiet hours',
@@ -164,6 +168,7 @@ export async function POST(request: NextRequest) {
     if (subError) throw subError
 
     const activeSubs = subscriptions || []
+    console.log(`[notify] Found ${activeSubs.length} push subscription(s) for ${activeListeners.length} active listener(s)`)
 
     // Server-side verify favorite listener IDs (never trust client list)
     let verifiedFavoriteIds = new Set<string>()
@@ -214,8 +219,10 @@ export async function POST(request: NextRequest) {
           successUserIds.add(sub.user_id)
         } catch (error: unknown) {
           const statusCode = (error as { statusCode?: number })?.statusCode
-          console.error(`Failed to send notification to subscription ${sub.id}:`, error)
+          const body = (error as { body?: string })?.body
+          console.error(`[notify] Push failed for sub ${sub.id} (user ${sub.user_id?.slice(0,8)}): status=${statusCode} body=${body}`)
           if (statusCode && statusCode >= 400 && statusCode < 500) {
+            console.log(`[notify] Removing invalid subscription ${sub.id}`)
             await supabase.from('push_subscriptions').delete().eq('id', sub.id)
           }
         }
