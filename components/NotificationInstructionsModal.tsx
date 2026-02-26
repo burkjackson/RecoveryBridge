@@ -98,6 +98,19 @@ function IOSInstructions() {
         </Body16>
       </Step>
 
+      <Step number={4} title="Make Alerts Stay on Screen (Listeners)">
+        <Body16 className="text-gray-700 mb-2">
+          By default, iOS dismisses notification banners after a few seconds. If you&apos;re a listener, change this so you never miss a support request:
+        </Body16>
+        <SubStep letter="a">Open your iPhone <strong>Settings</strong> app.</SubStep>
+        <SubStep letter="b">Scroll down and tap <strong>RecoveryBridge</strong>.</SubStep>
+        <SubStep letter="c">Tap <strong>Notifications</strong>.</SubStep>
+        <SubStep letter="d">Under <strong>Banner Style</strong>, tap <strong>"Persistent"</strong>.</SubStep>
+        <SubStep letter="✓" warning={false}>
+          Alerts will now stay on your screen until you actively dismiss them — so you never miss someone in need.
+        </SubStep>
+      </Step>
+
       <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded mb-6">
         <Body18 className="font-semibold text-amber-900 mb-2">⚠️ Important Reminder</Body18>
         <Body16 className="text-sm text-amber-800">
