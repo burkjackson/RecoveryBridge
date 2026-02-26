@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
@@ -16,7 +16,8 @@ import { createClient } from '@/lib/supabase/client'
  *
  * If anything goes wrong it redirects to /dashboard with a message.
  */
-export default function ConnectPage() {
+
+function ConnectInner() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const seekerId = searchParams.get('seekerId')
@@ -126,5 +127,20 @@ export default function ConnectPage() {
         <p className="text-rb-gray font-medium">{status}</p>
       </div>
     </main>
+  )
+}
+
+export default function ConnectPage() {
+  return (
+    <Suspense fallback={
+      <main className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#F8F9FA' }}>
+        <div className="text-center p-8">
+          <div className="w-12 h-12 border-4 border-rb-blue border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-rb-gray font-medium">Connecting you...</p>
+        </div>
+      </main>
+    }>
+      <ConnectInner />
+    </Suspense>
   )
 }
