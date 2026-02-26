@@ -328,9 +328,11 @@ export async function POST(request: NextRequest) {
     })
 
   } catch (error: unknown) {
-    console.error('Error sending notifications:', error)
+    const msg = error instanceof Error ? error.message : String(error)
+    const stack = error instanceof Error ? error.stack : undefined
+    console.error('Error sending notifications:', msg, stack)
     return NextResponse.json(
-      { success: false, error: 'Failed to send notifications' },
+      { success: false, error: 'Failed to send notifications', detail: msg },
       { status: 500 }
     )
   }
