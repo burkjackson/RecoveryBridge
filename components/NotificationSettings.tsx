@@ -454,7 +454,7 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
                 <div className="w-full p-3 bg-blue-50 border border-blue-200 rounded-lg text-left">
                   <Body16 className="text-xs font-semibold text-blue-900 mb-1">💡 Make alerts stay on screen longer</Body16>
                   <Body16 className="text-xs text-blue-800 leading-relaxed">
-                    Go to <strong>Settings → RecoveryBridge → Notifications</strong> and change <strong>Banner Style</strong> from &ldquo;Temporary&rdquo; to <strong>&ldquo;Persistent&rdquo;</strong>.
+                    Go to <strong>Settings → Apps → RecoveryBridge → Notifications</strong> and change <strong>Banner Style</strong> from &ldquo;Temporary&rdquo; to <strong>&ldquo;Persistent&rdquo;</strong>.
                   </Body16>
                 </div>
               )}
