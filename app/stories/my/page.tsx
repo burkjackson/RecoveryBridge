@@ -3,14 +3,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { BlogPost, BlogPostStatus } from '@/lib/types/database'
-
-function formatDate(dateString: string) {
-  return new Date(dateString).toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  })
-}
+import { formatDateShort } from '../utils'
 
 function StatusBadge({ status }: { status: BlogPostStatus }) {
   const config = {
@@ -168,7 +161,7 @@ export default function MyStoriesPage() {
                       <StatusBadge status={post.status} />
                     </div>
                     <p className="text-xs text-gray-400">
-                      Updated {formatDate(post.updated_at)}
+                      Updated {formatDateShort(post.updated_at)}
                     </p>
                   </div>
 
