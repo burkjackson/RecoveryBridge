@@ -120,6 +120,34 @@ export default function DashboardPage() {
     }
   }, [profile?.role_state])
 
+  // Session poll: while seeker is requesting, poll every 5s for an active session.
+  // This is a reliable fallback alongside the realtime subscription — Supabase
+  // realtime postgres_changes can miss INSERT events if RLS filters the payload
+  // before it reaches the subscriber.
+  useEffect(() => {
+    if (profile?.role_state !== 'requesting') return
+
+    const pollInterval = setInterval(async () => {
+      if (profileRef.current?.role_state !== 'requesting') return
+      try {
+        const { data: activeSession } = await supabase
+          .from('sessions')
+          .select('id')
+          .eq('seeker_id', profileRef.current.id)
+          .eq('status', 'active')
+          .maybeSingle()
+
+        if (activeSession) {
+          router.push(`/chat/${activeSession.id}`)
+        }
+      } catch {
+        // Silent — don't disrupt the seeker experience if poll fails
+      }
+    }, 5000)
+
+    return () => clearInterval(pollInterval)
+  }, [profile?.role_state])
+
   async function sendHeartbeat() {
     if (!profile || (profile.role_state !== 'available' && profile.role_state !== 'requesting')) {
       return
