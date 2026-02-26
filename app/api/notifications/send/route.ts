@@ -215,7 +215,10 @@ export async function POST(request: NextRequest) {
       const successUserIds = new Set<string>()
       await Promise.all(subs.map(async (sub) => {
         try {
-          await webpush.sendNotification(sub.subscription, payload)
+          await webpush.sendNotification(sub.subscription, payload, {
+            urgency: 'high',       // APNs priority 10 — deliver immediately
+            TTL: 300,              // Keep in APNs queue for 5 minutes if device is offline
+          })
           count++
           successUserIds.add(sub.user_id)
         } catch (error: unknown) {
