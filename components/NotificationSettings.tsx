@@ -137,14 +137,19 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
           throw new Error('User not authenticated')
         }
 
-        const { error: dbError } = await supabase.from('push_subscriptions').upsert({
+        // First, delete any existing subscriptions for this user (handles stale/expired endpoints)
+        await supabase
+          .from('push_subscriptions')
+          .delete()
+          .eq('user_id', user.id)
+
+        // Insert fresh subscription
+        const { error: dbError } = await supabase.from('push_subscriptions').insert({
           user_id: user.id,
           subscription: {
             endpoint: subscription.endpoint,
             keys: subscription.keys,
           },
-        }, {
-          onConflict: 'user_id'
         })
 
         if (dbError) {
