@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import { Body16, Body18 } from '@/components/ui/Typography'
 import ErrorState from '@/components/ErrorState'
 import Modal from '@/components/Modal'
-import { TIME } from '@/lib/constants'
+import { TIME, UI } from '@/lib/constants'
 
 interface Seeker {
   id: string
@@ -116,8 +116,10 @@ export default function PeopleSeeking({ currentUserId, currentRoleState }: Peopl
         return
       }
 
-      // Filter out stale requests (no heartbeat within threshold = old/abandoned)
-      const heartbeatThreshold = new Date(Date.now() - TIME.HEARTBEAT_THRESHOLD_MS).toISOString()
+      // Filter out stale requests — seekers use a tighter 5-min window (vs 1-hr for listeners)
+      // to keep the list fresh and only show actively-waiting seekers
+      const SEEKER_THRESHOLD_MS = 5 * 60 * 1000
+      const heartbeatThreshold = new Date(Date.now() - SEEKER_THRESHOLD_MS).toISOString()
       const freshSeekers = requestingProfiles.filter(s => {
         if (!s.last_heartbeat_at) return false
         return s.last_heartbeat_at >= heartbeatThreshold
@@ -187,9 +189,9 @@ export default function PeopleSeeking({ currentUserId, currentRoleState }: Peopl
 
       // Navigate to chat
       router.push(`/chat/${session.id}`)
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error creating session:', error)
-      setErrorModal({ show: true, message: error.message || 'An unexpected error occurred' })
+      setErrorModal({ show: true, message: error instanceof Error ? error.message : 'An unexpected error occurred' })
     } finally {
       setConnecting(null)
       isConnecting.current = false
@@ -203,7 +205,7 @@ export default function PeopleSeeking({ currentUserId, currentRoleState }: Peopl
     if (!bio || bio.trim() === '') {
       return 'Looking for support'
     }
-    return bio.length > 60 ? bio.substring(0, 60) + '...' : bio
+    return bio.length > UI.BIO_TRUNCATE_LENGTH ? bio.substring(0, UI.BIO_TRUNCATE_LENGTH) + '...' : bio
   }
 
   // Only show to available listeners

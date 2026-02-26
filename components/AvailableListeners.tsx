@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { Body16, Body18 } from '@/components/ui/Typography'
 import ErrorState from '@/components/ErrorState'
 import Modal from '@/components/Modal'
-import { TIME } from '@/lib/constants'
+import { TIME, UI } from '@/lib/constants'
 
 interface Listener {
   id: string
@@ -181,7 +181,7 @@ export default function AvailableListeners({ onCountChange, currentUserId }: Ava
   function getDisplayMessage(tagline: string | null, bio: string | null): string {
     if (tagline && tagline.trim()) return tagline
     if (!bio || bio.trim() === '') return 'Available to listen'
-    return bio.length > 60 ? bio.substring(0, 60) + '...' : bio
+    return bio.length > UI.BIO_TRUNCATE_LENGTH ? bio.substring(0, UI.BIO_TRUNCATE_LENGTH) + '...' : bio
   }
 
   if (loading) {
