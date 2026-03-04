@@ -103,6 +103,19 @@ export default function OnboardingPage() {
 
       if (error) throw error
 
+      // Send welcome email (fire and forget — don't block navigation)
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session?.access_token) {
+        fetch('/api/email/welcome', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({ displayName, userRole }),
+        }).catch(() => {})
+      }
+
       router.push('/dashboard')
     } catch (error: any) {
       setError(error.message)
