@@ -46,8 +46,8 @@ export async function POST(request: NextRequest) {
       results.push({ email: profile.email, status: 'sent' })
     }
 
-    // Small delay between sends
-    await new Promise(r => setTimeout(r, 250))
+    // Small delay between sends (600ms to stay under Resend's 2 req/s limit)
+    await new Promise(r => setTimeout(r, 600))
   }
 
   return NextResponse.json({
