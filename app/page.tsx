@@ -31,7 +31,7 @@ export default function Home() {
                   What is RecoveryBridge?
                 </h2>
                 <p className="text-base sm:text-lg text-rb-gray text-center mb-6 leading-relaxed">
-                  Recovery is hard. Some days are harder than others. RecoveryBridge is a <strong>peer-to-peer support platform</strong> built for the moments when you need to talk to someone who truly gets it—not a hotline, not a therapist, but a real person who has walked a similar road in their own recovery and is ready to listen.
+                  Recovery is hard. Some days are harder than others. RecoveryBridge is a <strong>peer-to-peer support platform</strong> built for the moments when you need to connect to someone who truly gets it—not a hotline, not a therapist, but a real person who has walked a similar road in their own recovery and is ready to listen.
                 </p>
                 <p className="text-base text-rb-gray text-center leading-relaxed">
                   Through <strong>private, one-on-one chat-based conversations</strong>, you can speak freely—about the struggles, the setbacks, the small victories, and everything in between. No judgment. No pressure. Just genuine human connection in a space designed to hold your story with care.
@@ -94,7 +94,7 @@ export default function Home() {
                   </div>
                   <h3 className="font-bold text-rb-dark mb-2 text-lg">Ask for Support</h3>
                   <p className="text-sm text-rb-gray leading-relaxed">
-                    When you need to talk, tap "I Need Support." Available listeners are notified instantly—no waiting, no scheduling.
+                    When you need to connect, tap "I Need Support." Available listeners are notified instantly—no waiting, no scheduling.
                   </p>
                 </div>
 

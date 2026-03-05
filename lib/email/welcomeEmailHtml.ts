@@ -45,7 +45,7 @@ export function welcomeEmailHtml(displayName: string, userRole: string): string 
               <table width="100%" cellpadding="0" cellspacing="0" border="0">
                 <tr>
                   <td>
-                    <p style="margin:0 0 4px;font-size:11px;font-weight:700;color:#5A7A8C;letter-spacing:1.5px;text-transform:uppercase;">When you need to talk</p>
+                    <p style="margin:0 0 4px;font-size:11px;font-weight:700;color:#5A7A8C;letter-spacing:1.5px;text-transform:uppercase;">When you need to connect</p>
                     <p style="margin:0 0 16px;font-size:20px;font-weight:700;color:#2D3436;">Getting Support</p>
                     <p style="margin:0 0 20px;font-size:15px;line-height:1.7;color:#4A5568;">
                       On your hardest days, you don't have to go through it alone. Here's how to reach out:
