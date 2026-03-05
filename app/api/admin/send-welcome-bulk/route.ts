@@ -16,10 +16,19 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const { data: profiles, error } = await supabaseAdmin
+  const body = await request.json().catch(() => ({}))
+  const testEmail = body?.testEmail as string | undefined
+
+  let query = supabaseAdmin
     .from('profiles')
     .select('id, email, display_name, user_role')
     .not('email', 'is', null)
+
+  if (testEmail) {
+    query = query.eq('email', testEmail)
+  }
+
+  const { data: profiles, error } = await query
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
