@@ -45,6 +45,9 @@ export default function ProfilePage() {
   const [thankYouNotes, setThankYouNotes] = useState<ThankYouNoteWithSender[]>([])
   const [notesLoading, setNotesLoading] = useState(false)
   const [notesExpanded, setNotesExpanded] = useState(false)
+  const [sendingWelcomeEmail, setSendingWelcomeEmail] = useState(false)
+  const [welcomeEmailSent, setWelcomeEmailSent] = useState(false)
+  const [welcomeEmailError, setWelcomeEmailError] = useState<string | null>(null)
   const router = useRouter()
   const supabase = createClient()
 
@@ -315,6 +318,31 @@ export default function ProfilePage() {
   async function handleSignOut() {
     await supabase.auth.signOut()
     router.push('/')
+  }
+
+  async function handleResendWelcomeEmail() {
+    if (!profile) return
+    setSendingWelcomeEmail(true)
+    setWelcomeEmailError(null)
+    setWelcomeEmailSent(false)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.access_token) throw new Error('Not authenticated')
+      const res = await fetch('/api/email/welcome', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ displayName: profile.display_name, userRole: profile.user_role }),
+      })
+      if (!res.ok) throw new Error('Failed to send')
+      setWelcomeEmailSent(true)
+    } catch {
+      setWelcomeEmailError('Could not send email. Please try again.')
+    } finally {
+      setSendingWelcomeEmail(false)
+    }
   }
 
   async function handleDeleteAccount() {
@@ -1060,6 +1088,23 @@ export default function ProfilePage() {
                 </div>
               )}
             </div>
+          )}
+        </div>
+
+        {/* Resend Welcome Email */}
+        <div className="mt-6 flex flex-col items-center gap-2">
+          <button
+            onClick={handleResendWelcomeEmail}
+            disabled={sendingWelcomeEmail}
+            className="min-h-[44px] px-6 py-2.5 text-rb-blue text-sm font-medium hover:text-white hover:bg-rb-blue border border-rb-blue rounded-full transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {sendingWelcomeEmail ? 'Sending…' : 'Resend Welcome Email'}
+          </button>
+          {welcomeEmailSent && (
+            <p className="text-sm text-green-600">Welcome email sent! Check your inbox.</p>
+          )}
+          {welcomeEmailError && (
+            <p className="text-sm text-red-500">{welcomeEmailError}</p>
           )}
         </div>
 
