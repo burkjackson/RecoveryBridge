@@ -1112,7 +1112,7 @@ export default function ProfilePage() {
         <div className="mt-4 flex justify-center">
           <button
             onClick={() => setShowDeleteModal(true)}
-            className="min-h-[44px] px-6 py-2.5 text-gray-500 text-sm font-medium hover:text-white hover:bg-red-600 border border-gray-300 hover:border-red-600 rounded-full transition-all"
+            className="min-h-[44px] px-6 py-2.5 text-red-500 text-sm font-medium hover:text-white hover:bg-red-600 border border-red-300 hover:border-red-600 rounded-full transition-all bg-transparent"
           >
             Delete Account
           </button>
