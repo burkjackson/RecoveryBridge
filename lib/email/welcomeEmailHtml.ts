@@ -18,7 +18,7 @@ export function welcomeEmailHtml(displayName: string, userRole: string): string 
           <!-- Header -->
           <tr>
             <td style="background-color:#5A7A8C;border-radius:16px 16px 0 0;padding:40px 40px 32px;text-align:center;">
-              <p style="margin:0 0 8px;font-size:28px;font-weight:800;color:#ffffff;letter-spacing:-0.5px;">RecoveryBridge</p>
+              <img src="https://recoverybridge.app/logo-with-text.png" alt="RecoveryBridge" width="220" style="display:block;margin:0 auto 12px;max-width:220px;">
               <p style="margin:0;font-size:13px;font-weight:600;color:rgba(255,255,255,0.75);letter-spacing:2px;text-transform:uppercase;">Real Connection &nbsp;·&nbsp; Real Recovery</p>
             </td>
           </tr>
