@@ -304,11 +304,6 @@ export function welcomeEmailHtml(displayName: string, userRole: string): string 
                 </tr>
                 <tr>
                   <td style="padding:8px 0;font-size:14px;color:#4A5568;line-height:1.6;">
-                    <span style="font-weight:600;color:#2D3436;">✦ Enable push notifications</span> — Especially important for listeners. Install RecoveryBridge as a PWA on your phone and enable notifications so you're alerted when someone needs you.
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding:8px 0;font-size:14px;color:#4A5568;line-height:1.6;">
                     <span style="font-weight:600;color:#2D3436;">✦ You can switch roles anytime</span> — Being a listener one day and seeking support another is completely normal. Your dashboard lets you switch with a single tap.
                   </td>
                 </tr>
