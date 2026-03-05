@@ -165,7 +165,7 @@ function welcomeEmailHtml(displayName: string, userRole: string): string {
                         </td>
                         <td style="padding-left:12px;">
                           <p style="margin:0;font-size:15px;font-weight:600;color:#2D3436;">Get notified when someone needs help</p>
-                          <p style="margin:4px 0 0;font-size:14px;color:#4A5568;line-height:1.6;">When a seeker requests support, you'll receive a push notification. Enable notifications in your profile settings so you never miss one.</p>
+                          <p style="margin:4px 0 0;font-size:14px;color:#4A5568;line-height:1.6;">When a seeker requests support, you'll get a push notification instantly. <strong style="color:#2D3436;">See the notification setup guide below</strong> — it takes 2 minutes and makes all the difference.</p>
                         </td>
                       </tr>
                     </table>
@@ -195,7 +195,86 @@ function welcomeEmailHtml(displayName: string, userRole: string): string {
                         </td>
                         <td style="padding-left:12px;">
                           <p style="margin:0;font-size:15px;font-weight:600;color:#2D3436;">Step away anytime</p>
-                          <p style="margin:4px 0 0;font-size:14px;color:#4A5568;line-height:1.6;">Set yourself offline whenever you need a break. You can also set Quiet Hours in your notification settings so you're never disturbed at unwanted times.</p>
+                          <p style="margin:4px 0 0;font-size:14px;color:#4A5568;line-height:1.6;">Set yourself offline whenever you need a break. Quiet Hours let you block off times you're never disturbed — like overnight.</p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Notification Setup Callout -->
+          <tr>
+            <td style="padding:0 32px 32px;">
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#FFF8E6;border:2px solid #F59E0B;border-radius:12px;">
+                <tr>
+                  <td style="padding:24px 28px;">
+                    <p style="margin:0 0 4px;font-size:11px;font-weight:700;color:#92400E;letter-spacing:1.5px;text-transform:uppercase;">Action Required</p>
+                    <p style="margin:0 0 12px;font-size:17px;font-weight:700;color:#78350F;">Set up notifications — takes 2 minutes</p>
+                    <p style="margin:0 0 16px;font-size:14px;line-height:1.7;color:#92400E;">
+                      Without notifications, you won't know when someone needs you. Here's exactly what to do:
+                    </p>
+
+                    <!-- Step A -->
+                    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:12px;">
+                      <tr>
+                        <td style="vertical-align:top;width:28px;padding-top:1px;">
+                          <span style="display:inline-block;width:20px;height:20px;background-color:#F59E0B;border-radius:50%;text-align:center;line-height:20px;font-size:11px;font-weight:700;color:#ffffff;">A</span>
+                        </td>
+                        <td style="padding-left:10px;">
+                          <p style="margin:0;font-size:14px;font-weight:600;color:#78350F;">Install RecoveryBridge as an app on your phone</p>
+                          <p style="margin:3px 0 0;font-size:13px;color:#92400E;line-height:1.6;">
+                            <strong>iPhone (Safari):</strong> Tap the Share icon → "Add to Home Screen"<br>
+                            <strong>Android (Chrome):</strong> Tap the menu (⋮) → "Add to Home Screen" or "Install App"<br>
+                            <em>This is required to receive push notifications reliably.</em>
+                          </p>
+                        </td>
+                      </tr>
+                    </table>
+
+                    <!-- Step B -->
+                    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:12px;">
+                      <tr>
+                        <td style="vertical-align:top;width:28px;padding-top:1px;">
+                          <span style="display:inline-block;width:20px;height:20px;background-color:#F59E0B;border-radius:50%;text-align:center;line-height:20px;font-size:11px;font-weight:700;color:#ffffff;">B</span>
+                        </td>
+                        <td style="padding-left:10px;">
+                          <p style="margin:0;font-size:14px;font-weight:600;color:#78350F;">Enable push notifications</p>
+                          <p style="margin:3px 0 0;font-size:13px;color:#92400E;line-height:1.6;">
+                            Open RecoveryBridge → tap <strong>Profile</strong> → scroll to <strong>Notification Settings</strong> → toggle on <strong>"Enable Push Notifications"</strong> and allow when prompted.
+                          </p>
+                        </td>
+                      </tr>
+                    </table>
+
+                    <!-- Step C -->
+                    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:12px;">
+                      <tr>
+                        <td style="vertical-align:top;width:28px;padding-top:1px;">
+                          <span style="display:inline-block;width:20px;height:20px;background-color:#F59E0B;border-radius:50%;text-align:center;line-height:20px;font-size:11px;font-weight:700;color:#ffffff;">C</span>
+                        </td>
+                        <td style="padding-left:10px;">
+                          <p style="margin:0;font-size:14px;font-weight:600;color:#78350F;">Turn on "Always Available" <span style="font-weight:400;font-style:italic;">(recommended)</span></p>
+                          <p style="margin:3px 0 0;font-size:13px;color:#92400E;line-height:1.6;">
+                            In Notification Settings, enable <strong>"Always Available"</strong>. This means you'll receive a notification whenever someone needs support — even if you forgot to set yourself as available that day. You stay in control: you can still choose whether to respond.
+                          </p>
+                        </td>
+                      </tr>
+                    </table>
+
+                    <!-- Step D -->
+                    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td style="vertical-align:top;width:28px;padding-top:1px;">
+                          <span style="display:inline-block;width:20px;height:20px;background-color:#F59E0B;border-radius:50%;text-align:center;line-height:20px;font-size:11px;font-weight:700;color:#ffffff;">D</span>
+                        </td>
+                        <td style="padding-left:10px;">
+                          <p style="margin:0;font-size:14px;font-weight:600;color:#78350F;">Set Quiet Hours so you're never disturbed overnight</p>
+                          <p style="margin:3px 0 0;font-size:13px;color:#92400E;line-height:1.6;">
+                            In Notification Settings → <strong>Quiet Hours</strong>, choose a Do Not Disturb window (e.g., 10 PM – 7 AM). Notifications are silenced during that time automatically — so you can sleep easy.
+                          </p>
                         </td>
                       </tr>
                     </table>
