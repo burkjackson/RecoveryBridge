@@ -44,6 +44,7 @@ export async function POST(request: NextRequest) {
 
     const { error: sendError } = await resend.emails.send({
       from: 'RecoveryBridge <hello@contact.recoverybridge.app>',
+      replyTo: 'admin@recoverybridge.app',
       to: profile.email,
       subject: 'Welcome to RecoveryBridge 💙',
       html: welcomeEmailHtml(profile.display_name || 'there', profile.user_role || ''),

@@ -33,6 +33,7 @@ export async function POST(request: NextRequest) {
 
     const { error: sendError } = await resend.emails.send({
       from: 'RecoveryBridge <hello@contact.recoverybridge.app>',
+      replyTo: 'admin@recoverybridge.app',
       to: user.email,
       subject: 'Welcome to RecoveryBridge 💙',
       html: welcomeEmailHtml(displayName || 'there', userRole || ''),
