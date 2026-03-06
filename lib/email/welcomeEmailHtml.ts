@@ -348,12 +348,6 @@ export function welcomeEmailHtml(displayName: string, userRole: string): string 
               <p style="margin:0 0 20px;font-size:13px;color:#718096;">Follow us for stories, tips, and community updates</p>
               <table cellpadding="0" cellspacing="0" border="0" style="display:inline-table;">
                 <tr>
-                  <!-- Facebook -->
-                  <td style="padding:0 10px;">
-                    <a href="https://www.facebook.com/ARecoveryBridge/" style="display:inline-block;text-decoration:none;">
-                      <img src="https://recoverybridge.app/facebook-icon.png" alt="Facebook" width="40" height="40" style="display:block;border-radius:50%;">
-                    </a>
-                  </td>
                   <!-- Instagram -->
                   <td style="padding:0 10px;">
                     <a href="https://www.instagram.com/recoverybridge.app" style="display:inline-block;text-decoration:none;">
@@ -364,6 +358,12 @@ export function welcomeEmailHtml(displayName: string, userRole: string): string 
                   <td style="padding:0 10px;">
                     <a href="https://www.threads.com/@recoverybridge.app" style="display:inline-block;text-decoration:none;">
                       <img src="https://recoverybridge.app/threads-icon.png" alt="Threads" width="52" height="52" style="display:block;margin:-6px;">
+                    </a>
+                  </td>
+                  <!-- Facebook -->
+                  <td style="padding:0 10px;">
+                    <a href="https://www.facebook.com/ARecoveryBridge/" style="display:inline-block;text-decoration:none;">
+                      <img src="https://recoverybridge.app/facebook-icon.png" alt="Facebook" width="40" height="40" style="display:block;border-radius:50%;">
                     </a>
                   </td>
                 </tr>
