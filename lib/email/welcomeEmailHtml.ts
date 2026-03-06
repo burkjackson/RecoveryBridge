@@ -363,7 +363,7 @@ export function welcomeEmailHtml(displayName: string, userRole: string): string 
                   <!-- Threads -->
                   <td style="padding:0 10px;">
                     <a href="https://www.threads.com/@recoverybridge.app" style="display:inline-block;text-decoration:none;">
-                      <img src="https://recoverybridge.app/threads-icon.png" alt="Threads" width="40" height="40" style="display:block;border-radius:50%;">
+                      <img src="https://recoverybridge.app/threads-icon.png" alt="Threads" width="40" height="40" style="display:block;border-radius:8px;">
                     </a>
                   </td>
                 </tr>
