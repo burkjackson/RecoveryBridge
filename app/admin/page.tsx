@@ -1015,7 +1015,7 @@ export default function AdminPage() {
                           <p className="text-xs text-gray-400 mb-3">
                             Published {story.published_at ? new Date(story.published_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : ''}
                             {' · '}
-                            <a href={`https://stories.recoverybridge.app/${story.slug}`} target="_blank" rel="noopener noreferrer" className="text-rb-blue hover:underline">
+                            <a href={`/stories/${story.slug}`} target="_blank" rel="noopener noreferrer" className="text-rb-blue hover:underline">
                               View ↗
                             </a>
                           </p>

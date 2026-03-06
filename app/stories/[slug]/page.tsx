@@ -39,8 +39,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       description: post.excerpt ?? undefined,
       images: post.cover_image_url
         ? [{ url: post.cover_image_url }]
-        : [{ url: 'https://stories.recoverybridge.app/og-default.png', width: 1200, height: 630 }],
-      url: `https://stories.recoverybridge.app/${slug}`,
+        : [{ url: 'https://recoverybridge.app/og-default.png', width: 1200, height: 630 }],
+      url: `https://recoverybridge.app/stories/${slug}`,
     },
   }
 }

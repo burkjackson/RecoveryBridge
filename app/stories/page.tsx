@@ -9,8 +9,8 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'RecoveryBridge Stories',
     description: 'Stories, insights, and hope from the recovery community.',
-    url: 'https://stories.recoverybridge.app',
-    images: [{ url: 'https://stories.recoverybridge.app/og-default.png', width: 1200, height: 630 }],
+    url: 'https://recoverybridge.app/stories',
+    images: [{ url: 'https://recoverybridge.app/og-default.png', width: 1200, height: 630 }],
   },
 }
 

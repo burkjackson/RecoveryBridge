@@ -215,13 +215,13 @@ export default function Home() {
                 </p>
                 <div className="flex flex-col sm:flex-row gap-3 justify-center">
                   <a
-                    href="https://stories.recoverybridge.app"
+                    href="/stories"
                     className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#5A7A8C] text-white font-semibold rounded-full hover:bg-[#4A6A7C] transition shadow-md text-sm"
                   >
                     Read Stories →
                   </a>
                   <a
-                    href="https://stories.recoverybridge.app/new"
+                    href="/stories/new"
                     className="inline-flex items-center justify-center gap-2 px-6 py-3 border border-[#5A7A8C] text-[#5A7A8C] font-semibold rounded-full hover:bg-[#5A7A8C]/5 transition text-sm"
                   >
                     ✍️ Share Your Story

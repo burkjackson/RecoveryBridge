@@ -825,13 +825,13 @@ export default function ProfilePage() {
               </div>
               <div className="flex gap-2 flex-shrink-0">
                 <a
-                  href="https://stories.recoverybridge.app/my"
+                  href="/stories/my"
                   className="min-h-[36px] px-3 py-2 text-xs font-semibold text-[#5A7A8C] border border-[#5A7A8C] rounded-lg hover:bg-[#5A7A8C]/5 transition"
                 >
                   My Stories
                 </a>
                 <a
-                  href="https://stories.recoverybridge.app/new"
+                  href="/stories/new"
                   className="min-h-[36px] px-3 py-2 text-xs font-semibold text-white bg-[#5A7A8C] rounded-lg hover:bg-[#4A6A7C] transition"
                 >
                   Write
