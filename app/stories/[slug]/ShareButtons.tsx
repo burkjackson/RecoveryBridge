@@ -10,7 +10,7 @@ interface Props {
 
 export function ShareButtons({ slug, title }: Props) {
   const [copied, setCopied] = useState(false)
-  const url = `https://stories.recoverybridge.app/${slug}`
+  const url = `https://recoverybridge.app/stories/${slug}`
   const encodedUrl = encodeURIComponent(url)
   const encodedTitle = encodeURIComponent(title)
 
