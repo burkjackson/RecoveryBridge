@@ -375,7 +375,7 @@ export function welcomeEmailHtml(displayName: string, userRole: string): string 
           <tr>
             <td style="padding:8px 40px 32px;text-align:center;">
               <p style="margin:0 0 16px;font-size:13px;color:#718096;">RecoveryBridge is free for everyone. If it's helped you, consider supporting us.</p>
-              <a href="https://recoverybridge.app/donate" style="display:inline-block;background-color:#5A7A8C;color:#ffffff;text-decoration:none;font-size:15px;font-weight:600;padding:12px 32px;border-radius:8px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">💙 Support RecoveryBridge</a>
+              <a href="https://recoverybridge.app/donate" style="display:inline-block;background-color:#3B82F6;color:#ffffff;text-decoration:none;font-size:16px;font-weight:600;padding:12px 24px;border-radius:9999px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">💙 Support RecoveryBridge</a>
             </td>
           </tr>
 
