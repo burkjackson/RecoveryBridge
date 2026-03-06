@@ -440,14 +440,14 @@ export default function OnboardingPage() {
 
             {(() => {
               const options = [
-                { value: 'facebook',      label: '👍 Facebook' },
-                { value: 'instagram',     label: '📸 Instagram' },
-                { value: 'threads',       label: '🧵 Threads' },
-                { value: 'tiktok',        label: '🎵 TikTok' },
-                { value: 'website_blog',  label: '🌐 Website or Blog' },
-                { value: 'search_engine', label: '🔍 Search Engine (Google, etc.)' },
-                { value: 'friend_family', label: '🤝 Friend or Family Member' },
-                { value: 'other',         label: '💬 Other' },
+                { value: 'facebook',      label: 'Facebook' },
+                { value: 'instagram',     label: 'Instagram' },
+                { value: 'threads',       label: 'Threads' },
+                { value: 'tiktok',        label: 'TikTok' },
+                { value: 'website_blog',  label: 'Website or Blog' },
+                { value: 'search_engine', label: 'Search Engine (Google, etc.)' },
+                { value: 'friend_family', label: 'Friend or Family Member' },
+                { value: 'other',         label: 'Other' },
               ]
               return (
                 <div className="space-y-3 mb-8">
