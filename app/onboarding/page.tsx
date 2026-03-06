@@ -15,6 +15,7 @@ export default function OnboardingPage() {
   const [tags, setTags] = useState<string[]>([])
   const [agreedToGuidelines, setAgreedToGuidelines] = useState(false)
   const [referralSource, setReferralSource] = useState('')
+  const [otherReferral, setOtherReferral] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const router = useRouter()
@@ -97,7 +98,7 @@ export default function OnboardingPage() {
           user_role: userRole,
           role_state: 'offline',
           tags: tags.length > 0 ? tags : null,
-          referral_source: referralSource || null,
+          referral_source: referralSource === 'other' ? (otherReferral.trim() || 'other') : (referralSource || null),
         })
         .eq('id', userId)
 
@@ -474,6 +475,18 @@ export default function OnboardingPage() {
                 </div>
               )
             })()}
+
+            {referralSource === 'other' && (
+              <input
+                type="text"
+                placeholder="Please tell us where you heard about us"
+                value={otherReferral}
+                onChange={e => setOtherReferral(e.target.value)}
+                className="w-full p-4 border-2 border-rb-blue rounded-lg text-gray-800 placeholder-gray-400 focus:outline-none focus:border-rb-blue mb-6"
+                maxLength={200}
+                autoFocus
+              />
+            )}
 
             <div className="flex gap-3">
               <button
