@@ -351,7 +351,7 @@ export function welcomeEmailHtml(displayName: string, userRole: string): string 
                   <!-- Facebook -->
                   <td style="padding:0 10px;">
                     <a href="https://www.facebook.com/ARecoveryBridge/" style="display:inline-block;text-decoration:none;">
-                      <div style="width:40px;height:40px;background-color:#1877F2;border-radius:50%;text-align:center;line-height:40px;font-size:22px;font-weight:900;color:#ffffff;font-family:Arial,sans-serif;">f</div>
+                      <img src="https://recoverybridge.app/facebook-icon.png" alt="Facebook" width="40" height="40" style="display:block;border-radius:50%;">
                     </a>
                   </td>
                   <!-- Instagram -->
