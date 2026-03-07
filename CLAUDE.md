@@ -21,7 +21,6 @@ RecoveryBridge is a **peer-to-peer support platform for people in addiction reco
 | Database | Supabase (PostgreSQL + Auth + Realtime + Storage) |
 | Styling | Tailwind CSS 3.4 with custom theme |
 | Push Notifications | web-push (VAPID) + Service Worker |
-| SMS (disabled) | Twilio (pending verification) |
 | Error Tracking | Sentry (@sentry/nextjs) |
 | Image Cropping | react-easy-crop |
 | Hosting | Vercel |
@@ -39,7 +38,7 @@ app/
 ├── admin/page.tsx                  # Admin moderation dashboard (reports, blocks, users)
 ├── chat/[id]/page.tsx              # Real-time 1:1 chat (largest file ~800 lines)
 ├── dashboard/page.tsx              # Main hub: role selection, sessions, notifications
-├── profile/page.tsx                # Edit profile, tags, avatar, SMS settings
+├── profile/page.tsx                # Edit profile, tags, avatar, notification settings
 ├── listeners/page.tsx              # Browse & filter available listeners, connect
 ├── onboarding/page.tsx             # 4-step post-signup setup (role, bio, tags, guidelines)
 ├── login/page.tsx                  # Email/password authentication
@@ -75,7 +74,6 @@ components/
 lib/
 ├── constants.ts                    # All timing, validation, tags, reactions, timezones
 ├── pushNotifications.ts            # Web Push API utilities (subscribe/unsubscribe)
-├── sms.ts                          # Twilio wrapper (sendSMS, isValidE164)
 ├── env.ts                          # Environment variable validation
 ├── supabase/
 │   ├── client.ts                   # Browser-side Supabase client
@@ -126,8 +124,6 @@ The central user table. Key fields:
 | quiet_hours_start | text | HH:MM format (default '23:00') |
 | quiet_hours_end | text | HH:MM format (default '07:00') |
 | quiet_hours_timezone | text | IANA timezone (default 'America/New_York') |
-| phone_number | text | E.164 format, validated by DB constraint |
-| sms_notifications_enabled | boolean | SMS fallback toggle |
 
 ### sessions
 | Field | Type | Notes |
@@ -227,7 +223,6 @@ Stores Web Push subscription endpoints per user (one user can have multiple devi
 - **Always Available mode:** Listeners receive notifications even when not in "available" state (requires PWA + push enabled)
 - **Quiet Hours:** Server-side filtering — notifications skip listeners whose local time falls within their quiet window
 - **Re-notifications:** If seeker waits 2+ minutes with no listener, notifications re-fire (max 3 re-sends)
-- **SMS fallback (disabled):** Would send SMS to listeners not reached by push. Commented out pending Twilio verification.
 - **Rate limiting:** Max 3 notification requests per user per 60 seconds
 
 ### 5. Admin Moderation
@@ -264,7 +259,6 @@ Stores Web Push subscription endpoints per user (one user can have multiple devi
   - Fetches seeker name from DB (never trusts client)
   - Queries listeners where `role_state = 'available'` OR `always_available = true`
   - Removes invalid push subscriptions (4xx responses)
-  - SMS fallback (currently disabled)
 
 ---
 
@@ -323,9 +317,6 @@ NEXT_PUBLIC_SENTRY_DSN            # Sentry error tracking
 SENTRY_ORG                        # Sentry organization
 SENTRY_PROJECT                    # Sentry project name
 SENTRY_AUTH_TOKEN                 # Sentry auth token (for source maps)
-TWILIO_ACCOUNT_SID                # Twilio SMS (disabled, pending verification)
-TWILIO_AUTH_TOKEN                  # Twilio SMS
-TWILIO_PHONE_NUMBER               # Twilio SMS sending number
 ```
 
 ---
@@ -416,7 +407,6 @@ All tables have RLS enabled. Key policies:
 | PWA (installable) | ✅ Live | iOS + Android |
 | Crisis resources | ✅ Live | 988, Crisis Text Line, SAMHSA |
 | Sentry error tracking | ✅ Live | Conditional (needs env vars) |
-| SMS fallback | 🔇 Disabled | Code complete, Twilio verification pending |
 | Account deletion | ✅ Live | 2-step confirmation |
 
 ---
@@ -425,17 +415,9 @@ All tables have RLS enabled. Key policies:
 
 1. **Admin auth is client-side only** — The admin page checks `is_admin` on the client. RLS policies enforce it server-side, but the admin check in middleware should be hardened.
 
-2. **SMS feature disabled** — All SMS code is written and tested but commented out in `route.ts` and `profile/page.tsx`. Waiting for Twilio account verification. To re-enable:
-   - Uncomment import and SMS block in `app/api/notifications/send/route.ts`
-   - Uncomment SMS UI in `app/profile/page.tsx`
-   - Add Twilio env vars to Vercel
-   - Redeploy
+2. **PeopleSeeking heartbeat threshold** — Uses a 5-minute threshold (different from the 1-hour threshold in AvailableListeners) to keep the seeking list fresh.
 
-3. **Unused SMS state in profile page** — The `phoneNumber`, `smsEnabled`, `savingSms`, `smsSuccess`, `smsError` state variables and `handleSaveSms` function remain in the profile page even though the UI is commented out. This is intentional for easy re-enable.
-
-4. **PeopleSeeking heartbeat threshold** — Uses a 5-minute threshold (different from the 1-hour threshold in AvailableListeners) to keep the seeking list fresh.
-
-5. **Service Worker cache version** — Currently at v4. Increment when making breaking changes to cached assets.
+3. **Service Worker cache version** — Currently at v4. Increment when making breaking changes to cached assets.
 
 ---
 
@@ -467,22 +449,3 @@ cda354a Add People Seeking Support section to listener dashboard
 478d5e1 Add Listener Matching & Discovery (V2 Feature #1)
 ```
 
----
-
-## How to Re-Enable SMS When Twilio Is Verified
-
-1. In `app/api/notifications/send/route.ts`:
-   - Uncomment `import { sendSMS } from '@/lib/sms'` (line 4-5)
-   - Replace `const smsCount = 0` with the commented-out SMS block below it
-   - Remove the `/* ... */` comment wrapper
-
-2. In `app/profile/page.tsx`:
-   - Change `{/* SMS Notifications — hidden until Twilio verification is complete` back to `{/* SMS Notifications */}`
-   - Remove the closing `*/}` that wraps the entire section
-
-3. In Vercel → Settings → Environment Variables, add:
-   - `TWILIO_ACCOUNT_SID`
-   - `TWILIO_AUTH_TOKEN`
-   - `TWILIO_PHONE_NUMBER`
-
-4. Redeploy.

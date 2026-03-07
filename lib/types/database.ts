@@ -17,8 +17,6 @@ export interface Profile {
   quiet_hours_start: string
   quiet_hours_end: string
   quiet_hours_timezone: string
-  phone_number: string | null
-  sms_notifications_enabled: boolean
   email_notifications_enabled: boolean
   referral_source: string | null
   created_at?: string
@@ -187,8 +185,6 @@ export interface ProfileUpdateData {
   quiet_hours_start?: string
   quiet_hours_end?: string
   quiet_hours_timezone?: string
-  phone_number?: string | null
-  sms_notifications_enabled?: boolean
   email_notifications_enabled?: boolean
   display_name?: string
   bio?: string
