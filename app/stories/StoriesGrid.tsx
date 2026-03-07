@@ -70,7 +70,7 @@ export function StoriesGrid({ initialPosts, initialHasMore }: Props) {
           Be the first to share your experience. Stories from our community will appear here.
         </p>
         <a
-          href="/new"
+          href="/stories/new"
           className="mt-6 inline-flex items-center gap-2 px-5 py-2.5 bg-[#5A7A8C] text-white text-sm font-semibold rounded-full hover:bg-[#4A6A7C] transition"
         >
           Write the First Story

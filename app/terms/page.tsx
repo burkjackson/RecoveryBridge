@@ -213,8 +213,8 @@ export default function TermsPage() {
             <Body18 className="font-semibold mb-2">Questions About These Terms?</Body18>
             <Body16 className="text-rb-gray">
               If you have questions about these terms, please contact us at{' '}
-              <a href="mailto:legal@recoverybridge.com" className="text-rb-blue hover:underline">
-                legal@recoverybridge.com
+              <a href="mailto:legal@recoverybridge.app" className="text-rb-blue hover:underline">
+                legal@recoverybridge.app
               </a>
             </Body16>
           </section>
