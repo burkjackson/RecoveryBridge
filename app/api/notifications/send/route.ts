@@ -2,8 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import webpush from 'web-push'
 import { createClient } from '@supabase/supabase-js'
 import { sendSupportRequestEmail } from '@/lib/email'
-// TODO: Re-enable when Twilio verification is complete
-// import { sendSMS } from '@/lib/sms'
 
 // Simple in-memory rate limiter: max 3 requests per user per 60 seconds
 const RATE_LIMIT_WINDOW_MS = 60 * 1000
@@ -129,7 +127,7 @@ export async function POST(request: NextRequest) {
     // 2. Users with "always_available" enabled (should receive notifications anytime)
     const { data: listeners, error: listenersError } = await supabase
       .from('profiles')
-      .select('id, display_name, email, email_notifications_enabled, role_state, always_available, quiet_hours_enabled, quiet_hours_start, quiet_hours_end, quiet_hours_timezone, phone_number, sms_notifications_enabled')
+      .select('id, display_name, email, email_notifications_enabled, role_state, always_available, quiet_hours_enabled, quiet_hours_start, quiet_hours_end, quiet_hours_timezone')
       .or('role_state.eq.available,always_available.eq.true')
       .neq('id', seekerId)
 
@@ -254,31 +252,6 @@ export async function POST(request: NextRequest) {
       successUserIds.forEach(id => pushSuccessUserIds.add(id))
     }
 
-    // SMS fallback: disabled until Twilio verification is complete
-    // TODO: Uncomment when Twilio account is verified
-    const smsCount = 0
-    /*
-    let smsCount = 0
-    const smsEligibleListeners = activeListeners.filter(l =>
-      l.sms_notifications_enabled &&
-      l.phone_number &&
-      !pushSuccessUserIds.has(l.id)
-    )
-
-    if (smsEligibleListeners.length > 0) {
-      const smsBody = isRenotification
-        ? `RecoveryBridge: ${seekerName} has been waiting 2+ minutes for support. Open the app to connect.`
-        : `RecoveryBridge: ${seekerName} needs support right now. Open the app to connect.`
-
-      const smsPromises = smsEligibleListeners.map(async (listener) => {
-        const sent = await sendSMS(listener.phone_number!, smsBody)
-        if (sent) smsCount++
-      })
-
-      await Promise.all(smsPromises)
-    }
-    */
-
     // Email fallback: listeners who opted in but didn't receive a push notification
     let emailCount = 0
     if (process.env.RESEND_API_KEY) {
@@ -319,10 +292,9 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: `Notifications sent to ${pushSuccessCount} via push, ${smsCount} via SMS, ${emailCount} via email`,
-      notified: pushSuccessCount + smsCount + emailCount,
+      message: `Notifications sent to ${pushSuccessCount} via push, ${emailCount} via email`,
+      notified: pushSuccessCount + emailCount,
       pushCount: pushSuccessCount,
-      smsCount,
       emailCount,
       total: activeSubs.length,
     })
