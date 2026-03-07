@@ -98,7 +98,7 @@ export default function MyStoriesPage() {
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold text-[#2D3436]">My Stories</h1>
           <a
-            href="/new"
+            href="/stories/new"
             className="inline-flex items-center gap-2 px-4 py-2 bg-[#5A7A8C] text-white text-sm font-semibold rounded-full hover:bg-[#4A6A7C] transition shadow-sm"
           >
             ✍️ Write New Story
@@ -117,7 +117,7 @@ export default function MyStoriesPage() {
             <h2 className="text-lg font-semibold text-[#2D3436] mb-2">No stories yet</h2>
             <p className="text-sm text-[#4A5568] mb-6">Share your experience with the community.</p>
             <a
-              href="/new"
+              href="/stories/new"
               className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#5A7A8C] text-white text-sm font-semibold rounded-full hover:bg-[#4A6A7C] transition"
             >
               Write Your First Story

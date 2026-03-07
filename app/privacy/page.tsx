@@ -177,8 +177,8 @@ export default function PrivacyPage() {
             <Body18 className="font-semibold mb-2">Questions About Privacy?</Body18>
             <Body16 className="text-rb-gray">
               If you have questions about this privacy policy or how we handle your data, please contact us at{' '}
-              <a href="mailto:privacy@recoverybridge.com" className="text-rb-blue hover:underline">
-                privacy@recoverybridge.com
+              <a href="mailto:privacy@recoverybridge.app" className="text-rb-blue hover:underline">
+                privacy@recoverybridge.app
               </a>
             </Body16>
           </section>

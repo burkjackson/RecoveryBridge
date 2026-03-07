@@ -1,9 +1,1 @@
-{
-  "rewrites": [
-    {
-      "source": "/:path*",
-      "has": [{ "type": "host", "value": "stories.recoverybridge.app" }],
-      "destination": "/stories/:path*"
-    }
-  ]
-}
+{}

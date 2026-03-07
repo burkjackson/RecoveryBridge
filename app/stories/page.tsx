@@ -57,14 +57,14 @@ export default async function StoriesPage() {
               <p className="text-sm text-white/60 mt-0.5">From the recovery community</p>
             </div>
             <a
-              href="/new"
+              href="/stories/new"
               className="hidden sm:inline-flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white text-sm font-semibold rounded-full transition border border-white/20"
             >
               ✍️ Write a Story
             </a>
           </div>
           <a
-            href="/new"
+            href="/stories/new"
             className="mt-4 sm:hidden flex items-center justify-center gap-2 px-4 py-2.5 bg-white/10 hover:bg-white/20 text-white text-sm font-semibold rounded-full transition border border-white/20"
           >
             ✍️ Write a Story
