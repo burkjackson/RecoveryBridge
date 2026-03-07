@@ -506,9 +506,18 @@ export default function ProfilePage() {
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rb-blue focus:border-transparent transition-all"
                   placeholder="e.g., 5 years sober, here to help"
                 />
-                <Body16 className="text-gray-500 text-xs">
-                  This appears next to your name when you're available to listen. {editValue.length}/60 characters
-                </Body16>
+                <div className="flex justify-between items-center">
+                  <Body16 className="text-gray-500 text-xs">
+                    This appears next to your name when you're available to listen.
+                  </Body16>
+                  <span className={`text-xs whitespace-nowrap ml-2 ${
+                    editValue.length >= 60 ? 'text-red-500 font-semibold' :
+                    editValue.length > 50 ? 'text-amber-500' :
+                    'text-gray-400'
+                  }`}>
+                    {editValue.length}/60
+                  </span>
+                </div>
                 <div className="flex gap-2">
                   <button
                     onClick={() => handleSave('tagline')}
@@ -554,12 +563,22 @@ export default function ProfilePage() {
                   value={editValue}
                   onChange={(e) => setEditValue(e.target.value)}
                   rows={4}
+                  maxLength={500}
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rb-blue focus:border-transparent transition-all resize-none"
                   placeholder="Tell us about yourself..."
                 />
-                <Body16 className="text-gray-500 text-xs leading-relaxed">
-                  Share what brings you to RecoveryBridge, what recovery means to you, or what helps you most in your journey.
-                </Body16>
+                <div className="flex justify-between items-start gap-2">
+                  <Body16 className="text-gray-500 text-xs leading-relaxed">
+                    Share what brings you to RecoveryBridge, what recovery means to you, or what helps you most in your journey.
+                  </Body16>
+                  <span className={`text-xs whitespace-nowrap mt-0.5 ${
+                    editValue.length >= 500 ? 'text-red-500 font-semibold' :
+                    editValue.length > 450 ? 'text-amber-500' :
+                    'text-gray-400'
+                  }`}>
+                    {editValue.length}/500
+                  </span>
+                </div>
                 <div className="flex gap-2">
                   <button
                     onClick={() => handleSave('bio')}

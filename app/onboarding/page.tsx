@@ -287,11 +287,19 @@ export default function OnboardingPage() {
               </label>
               <textarea
                 value={bio}
-                onChange={(e) => setBio(e.target.value)}
+                onChange={(e) => setBio(e.target.value.slice(0, 500))}
                 rows={6}
+                maxLength={500}
                 className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rb-blue focus:border-transparent transition-all resize-none"
                 placeholder="Share your story, what brings you here, or what you hope to offer others..."
               />
+              <p className={`text-xs text-right mt-1 ${
+                bio.length >= 500 ? 'text-red-500 font-semibold' :
+                bio.length > 450 ? 'text-amber-500' :
+                'text-gray-400'
+              }`}>
+                {bio.length}/500
+              </p>
               <Body16 className="mt-2 text-gray-500 text-sm">
                 Not sure what to share? Consider: What brings you to RecoveryBridge? What does recovery look like for you? What's one thing you'd like others to know about you?
               </Body16>

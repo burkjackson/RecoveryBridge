@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, Fragment } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { Heading1, Body16, Body18 } from '@/components/ui/Typography'
@@ -79,6 +79,11 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   // Track message count so scrollToBottom only fires on new messages (not read_at updates)
   const prevMessageCountRef = useRef(0)
 
+  // Scroll-to-bottom button
+  const messagesContainerRef = useRef<HTMLDivElement>(null)
+  const [showScrollButton, setShowScrollButton] = useState(false)
+  const [newMessagesBelowCount, setNewMessagesBelowCount] = useState(0)
+
   useEffect(() => {
     params.then(({ id }) => setSessionId(id))
   }, [params])
@@ -99,8 +104,16 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   }, [session, currentUserId])
 
   useEffect(() => {
+    const el = messagesContainerRef.current
+    const isAtBottom = el ? (el.scrollHeight - el.scrollTop - el.clientHeight) < 150 : true
+
     if (messages.length > prevMessageCountRef.current) {
-      scrollToBottom()
+      if (isAtBottom) {
+        scrollToBottom()
+        setNewMessagesBelowCount(0)
+      } else {
+        setNewMessagesBelowCount(prev => prev + (messages.length - prevMessageCountRef.current))
+      }
     }
     prevMessageCountRef.current = messages.length
   }, [messages])
@@ -651,6 +664,33 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }
 
+  function handleScroll() {
+    const el = messagesContainerRef.current
+    if (!el) return
+    const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight
+    setShowScrollButton(distanceFromBottom > 150)
+    if (distanceFromBottom < 50) setNewMessagesBelowCount(0)
+  }
+
+  function shouldShowTimeSeparator(message: Message, prevMessage: Message | null): boolean {
+    if (!prevMessage) return true
+    const diff = new Date(message.created_at).getTime() - new Date(prevMessage.created_at).getTime()
+    return diff > 10 * 60 * 1000 // 10 minutes
+  }
+
+  function formatTimeSeparator(timestamp: string): string {
+    const date = new Date(timestamp)
+    const now = new Date()
+    const isToday = date.toDateString() === now.toDateString()
+    const yesterday = new Date(now)
+    yesterday.setDate(yesterday.getDate() - 1)
+    const isYesterday = date.toDateString() === yesterday.toDateString()
+    const time = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    if (isToday) return time
+    if (isYesterday) return `Yesterday · ${time}`
+    return `${date.toLocaleDateString([], { month: 'short', day: 'numeric' })} · ${time}`
+  }
+
   // Helper: get reactions grouped for a specific message
   function getReactionsForMessage(messageId: string) {
     const msgReactions = reactions.filter((r) => r.message_id === messageId)
@@ -784,12 +824,15 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
         )}
 
         {/* Messages */}
-        <div
-          className="flex-1 overflow-y-auto p-4 sm:p-6"
-          role="log"
-          aria-live="polite"
-          aria-label="Chat messages"
-        >
+        <div className="flex-1 relative overflow-hidden">
+          <div
+            ref={messagesContainerRef}
+            onScroll={handleScroll}
+            className="h-full overflow-y-auto p-4 sm:p-6"
+            role="log"
+            aria-live="polite"
+            aria-label="Chat messages"
+          >
           <div className="max-w-4xl mx-auto space-y-3">
             {messages.length === 0 ? (
               /* --- V2: Conversation Starters --- */
@@ -818,16 +861,27 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                 </div>
               )
             ) : (
-              messages.map((message) => {
+              messages.map((message, index) => {
                 const isOwn = message.sender_id === currentUserId
                 const msgReactions = getReactionsForMessage(message.id)
                 const hasReactions = Object.keys(msgReactions).length > 0
+                const prevMessage = index > 0 ? messages[index - 1] : null
+                const showSeparator = shouldShowTimeSeparator(message, prevMessage)
 
                 return (
-                  <div
-                    key={message.id}
-                    className={`flex ${isOwn ? 'justify-end animate-slide-in-right' : 'justify-start animate-slide-in-left'}`}
-                  >
+                  <Fragment key={message.id}>
+                    {showSeparator && (
+                      <div className="flex items-center gap-3 my-3" aria-hidden="true">
+                        <div className="flex-1 h-px bg-gray-200" />
+                        <span className="text-xs text-gray-400 whitespace-nowrap">
+                          {formatTimeSeparator(message.created_at)}
+                        </span>
+                        <div className="flex-1 h-px bg-gray-200" />
+                      </div>
+                    )}
+                    <div
+                      className={`flex ${isOwn ? 'justify-end animate-slide-in-right' : 'justify-start animate-slide-in-left'}`}
+                    >
                     <div className="relative max-w-[70%] sm:max-w-md">
                       <div
                         className={`px-4 py-3 rounded-2xl shadow-md ${
@@ -847,13 +901,10 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                         <Body16 className="!text-white">
                           {message.content}
                         </Body16>
-                        <div className="flex items-center justify-end gap-1 mt-1">
-                          <p className="text-xs !text-white/80">
-                            {new Date(message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                          </p>
-                          {/* --- V2: Read receipt checkmarks (own messages only) --- */}
-                          {isOwn && (
-                            <span className="text-xs ml-0.5" aria-label={message.read_at ? 'Read' : 'Sent'}>
+                        {/* --- V2: Read receipt checkmarks (own messages only) --- */}
+                        {isOwn && (
+                          <div className="flex items-center justify-end mt-1">
+                            <span className="text-xs" aria-label={message.read_at ? 'Read' : 'Sent'}>
                               {message.read_at ? (
                                 // Double check — read
                                 <svg width="16" height="11" viewBox="0 0 16 11" fill="none" className="inline-block">
@@ -867,8 +918,8 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                                 </svg>
                               )}
                             </span>
-                          )}
-                        </div>
+                          </div>
+                        )}
                       </div>
 
                       {/* --- V2: Reaction picker popover --- */}
@@ -912,7 +963,8 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                         </div>
                       )}
                     </div>
-                  </div>
+                    </div>
+                  </Fragment>
                 )
               })
             )}
@@ -951,6 +1003,18 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
               />
             )}
           </div>
+          </div>
+
+          {/* Scroll to bottom button */}
+          {showScrollButton && (
+            <button
+              onClick={() => { scrollToBottom(); setNewMessagesBelowCount(0) }}
+              aria-label="Scroll to latest messages"
+              className="absolute bottom-4 right-4 sm:right-6 z-10 flex items-center gap-1.5 bg-gray-900/90 backdrop-blur-sm text-white text-sm font-medium px-3.5 py-2 rounded-full shadow-lg hover:bg-gray-900 transition-all"
+            >
+              {newMessagesBelowCount > 0 ? `${newMessagesBelowCount} new ↓` : '↓'}
+            </button>
+          )}
         </div>
 
         {/* Message Input */}
