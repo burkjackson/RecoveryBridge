@@ -213,7 +213,7 @@ export default function EditStoryPage() {
             <div className="text-4xl mb-4">🔍</div>
             <h2 className="text-xl font-bold text-[#2D3436] mb-2">Story not found</h2>
             <p className="text-sm text-[#4A5568] mb-4">This story doesn't exist or you don't have permission to edit it.</p>
-            <a href="/my" className="text-sm text-[#5A7A8C] hover:underline">← My Stories</a>
+            <a href="/stories/my" className="text-sm text-[#5A7A8C] hover:underline">← My Stories</a>
           </div>
         </div>
       </div>
@@ -347,9 +347,15 @@ export default function EditStoryPage() {
 
         {errorMsg && <div className="mt-4 px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">{errorMsg}</div>}
         {saveStatus === 'saved' && savedSlug && (
-          <div className="mt-4 px-4 py-3 bg-green-50 border border-green-200 rounded-xl text-sm text-green-800 flex items-center justify-between">
-            <span>✓ Saved successfully</span>
-            <a href="/my" className="text-xs font-semibold underline">View My Stories →</a>
+          <div className="mt-4 px-4 py-3 bg-green-50 border border-green-200 rounded-xl text-sm text-green-800 flex items-center justify-between gap-4">
+            <span>
+              {currentStatus === 'submitted'
+                ? '✓ Submitted for review — an admin will approve and publish it shortly.'
+                : currentStatus === 'published'
+                ? '✓ Changes saved.'
+                : '✓ Draft saved successfully.'}
+            </span>
+            <a href="/stories/my" className="text-xs font-semibold underline whitespace-nowrap">View My Stories →</a>
           </div>
         )}
 
@@ -361,7 +367,7 @@ export default function EditStoryPage() {
         )}
 
         <div className="mt-4 flex flex-col sm:flex-row gap-3 justify-end">
-          <a href="/my" className="px-5 py-2.5 text-sm font-semibold text-[#4A5568] border border-gray-200 rounded-full hover:border-gray-300 transition text-center">My Stories</a>
+          <a href="/stories/my" className="px-5 py-2.5 text-sm font-semibold text-[#4A5568] border border-gray-200 rounded-full hover:border-gray-300 transition text-center">My Stories</a>
           {currentStatus === 'published' ? (
             <>
               <button onClick={() => handleSave('draft')} disabled={saveStatus === 'saving'} className="px-5 py-2.5 text-sm font-semibold text-[#4A5568] border border-gray-200 rounded-full hover:border-gray-300 transition disabled:opacity-50">
@@ -391,7 +397,7 @@ function Header() {
   return (
     <header className="bg-[#2D3436] text-white">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
-        <a href="/my" className="text-sm text-white/70 hover:text-white transition">← My Stories</a>
+        <a href="/stories/my" className="text-sm text-white/70 hover:text-white transition">← My Stories</a>
         <span className="text-sm font-semibold">Edit Story</span>
         <a href="https://recoverybridge.app" target="_blank" rel="noopener noreferrer" className="text-xs text-white/50 hover:text-white/80 transition">RecoveryBridge</a>
       </div>

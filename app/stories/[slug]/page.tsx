@@ -246,7 +246,7 @@ export default async function StoryPage({ params }: Props) {
             {relatedPosts.map((related) => (
               <a
                 key={related.id}
-                href={`/${related.slug}`}
+                href={`/stories/${related.slug}`}
                 className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col border border-gray-100"
               >
                 <div className="aspect-video overflow-hidden flex-shrink-0 bg-gray-100">

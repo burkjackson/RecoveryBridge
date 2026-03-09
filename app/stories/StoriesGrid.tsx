@@ -83,7 +83,7 @@ export function StoriesGrid({ initialPosts, initialHasMore }: Props) {
     <>
       {/* Featured post */}
       <Link
-        href={`/${posts[0].slug}`}
+        href={`/stories/${posts[0].slug}`}
         className="group block mb-10 rounded-2xl overflow-hidden bg-white shadow-sm hover:shadow-md transition-all duration-200"
       >
         <div className="sm:flex">
@@ -136,7 +136,7 @@ export function StoriesGrid({ initialPosts, initialHasMore }: Props) {
           {posts.slice(1).map((post) => (
             <Link
               key={post.id}
-              href={`/${post.slug}`}
+              href={`/stories/${post.slug}`}
               className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col"
             >
               <div className="aspect-video overflow-hidden flex-shrink-0">
