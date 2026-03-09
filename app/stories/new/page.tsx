@@ -456,9 +456,13 @@ export default function NewStoryPage() {
 
         {/* Success */}
         {saveStatus === 'saved' && savedSlug && (
-          <div className="mt-4 px-4 py-3 bg-green-50 border border-green-200 rounded-xl text-sm text-green-800 flex items-center justify-between">
-            <span>✓ Saved successfully</span>
-            <a href={`/stories/my`} className="text-xs font-semibold underline">
+          <div className="mt-4 px-4 py-3 bg-green-50 border border-green-200 rounded-xl text-sm text-green-800 flex items-center justify-between gap-4">
+            <span>
+              {currentStatus === 'submitted'
+                ? '✓ Submitted for review — an admin will approve and publish it shortly.'
+                : '✓ Draft saved successfully.'}
+            </span>
+            <a href="/stories/my" className="text-xs font-semibold underline whitespace-nowrap">
               View My Stories →
             </a>
           </div>
@@ -474,7 +478,7 @@ export default function NewStoryPage() {
         {/* Actions */}
         <div className="mt-4 flex flex-col sm:flex-row gap-3 justify-end">
           <a
-            href="/my"
+            href="/stories/my"
             className="px-5 py-2.5 text-sm font-semibold text-[#4A5568] border border-gray-200 rounded-full hover:border-gray-300 transition text-center"
           >
             My Stories
