@@ -22,7 +22,7 @@ export function AuthorEditButton({ authorId, postId }: Props) {
 
   return (
     <a
-      href={`/edit/${postId}`}
+      href={`/stories/edit/${postId}`}
       className="text-xs font-semibold text-white/60 hover:text-white transition border border-white/20 hover:border-white/50 px-3 py-1.5 rounded-full"
     >
       ✏️ Edit Story
