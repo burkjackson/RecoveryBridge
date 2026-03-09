@@ -168,7 +168,7 @@ export default function MyStoriesPage() {
                   <div className="flex items-center gap-2 flex-shrink-0">
                     {post.status === 'published' && (
                       <a
-                        href={`/${post.slug}`}
+                        href={`/stories/${post.slug}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-xs text-[#5A7A8C] hover:underline font-medium"
@@ -177,7 +177,7 @@ export default function MyStoriesPage() {
                       </a>
                     )}
                     <a
-                      href={`/edit/${post.id}`}
+                      href={`/stories/edit/${post.id}`}
                       className="px-3 py-1.5 text-xs font-semibold text-[#4A5568] border border-gray-200 rounded-lg hover:border-[#5A7A8C] hover:text-[#5A7A8C] transition"
                     >
                       Edit
