@@ -120,6 +120,65 @@ export default function Home() {
               </div>
             </div>
 
+            {/* Key Features */}
+            <div className="max-w-4xl mx-auto mb-12">
+              <h2 className="text-2xl sm:text-3xl font-bold text-rb-dark mb-3 text-center">
+                Built for Real Life
+              </h2>
+              <p className="text-base text-rb-gray text-center mb-8 max-w-2xl mx-auto leading-relaxed">
+                RecoveryBridge is designed around the realities of recovery—the unexpected hard moments, the need for privacy, and the power of being truly heard.
+              </p>
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                <div className="bg-white rounded-2xl p-6 shadow-md border border-rb-blue-light text-left flex gap-4 items-start">
+                  <span className="text-3xl flex-shrink-0" role="img" aria-label="Magnifying glass">🔍</span>
+                  <div>
+                    <h3 className="font-bold text-rb-dark mb-1">Find the Right Listener</h3>
+                    <p className="text-sm text-rb-gray leading-relaxed">Browse listeners by specialty—from early recovery and relapse prevention to grief, trauma, veterans support, and more. Find someone who truly understands your specific journey.</p>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-2xl p-6 shadow-md border border-rb-blue-light text-left flex gap-4 items-start">
+                  <span className="text-3xl flex-shrink-0" role="img" aria-label="Bell">🔔</span>
+                  <div>
+                    <h3 className="font-bold text-rb-dark mb-1">Instant Listener Alerts</h3>
+                    <p className="text-sm text-rb-gray leading-relaxed">The moment you ask for support, available listeners are notified in real time—on their phone or computer—so someone can show up fast.</p>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-2xl p-6 shadow-md border border-rb-blue-light text-left flex gap-4 items-start">
+                  <span className="text-3xl flex-shrink-0" role="img" aria-label="Speech bubble">💬</span>
+                  <div>
+                    <h3 className="font-bold text-rb-dark mb-1">Real-Time Private Chat</h3>
+                    <p className="text-sm text-rb-gray leading-relaxed">Once connected, you're in a live one-on-one conversation. Messages appear instantly, just like texting a friend—but with someone who truly understands.</p>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-2xl p-6 shadow-md border border-rb-blue-light text-left flex gap-4 items-start">
+                  <span className="text-3xl flex-shrink-0" role="img" aria-label="Mobile phone">📱</span>
+                  <div>
+                    <h3 className="font-bold text-rb-dark mb-1">Works Like a Mobile App</h3>
+                    <p className="text-sm text-rb-gray leading-relaxed">Install RecoveryBridge on your phone's home screen for instant access—no app store required. It works offline-ready and feels native on iOS and Android.</p>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-2xl p-6 shadow-md border border-rb-blue-light text-left flex gap-4 items-start">
+                  <span className="text-3xl flex-shrink-0" role="img" aria-label="Calendar with check">🗓️</span>
+                  <div>
+                    <h3 className="font-bold text-rb-dark mb-1">Listeners Set Their Own Schedule</h3>
+                    <p className="text-sm text-rb-gray leading-relaxed">Volunteers control when they're available. Set quiet hours so you're not disturbed overnight, and step in whenever you have capacity to give back.</p>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-2xl p-6 shadow-md border border-rb-blue-light text-left flex gap-4 items-start">
+                  <span className="text-3xl flex-shrink-0" role="img" aria-label="Shield">🛡️</span>
+                  <div>
+                    <h3 className="font-bold text-rb-dark mb-1">Safe & Moderated</h3>
+                    <p className="text-sm text-rb-gray leading-relaxed">Community safety guidelines, user reporting, and an active moderation team keep RecoveryBridge a respectful and supportive space for everyone.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             {/* Become a Listener CTA */}
             <div className="max-w-3xl mx-auto mb-12">
               <div className="bg-gradient-to-br from-rb-blue to-rb-blue-dark rounded-2xl p-8 shadow-xl text-center">
@@ -143,28 +202,36 @@ export default function Home() {
             </div>
 
             {/* Value Propositions */}
-            <div className="grid sm:grid-cols-3 gap-4 sm:gap-6 mb-8 sm:mb-12">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8 sm:mb-12">
               <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-lg border-2 border-rb-blue-light hover:shadow-xl hover:border-rb-blue transition-all transform hover:scale-105">
                 <div className="text-5xl mb-4" role="img" aria-label="Handshake">🤝</div>
-                <h3 className="font-bold text-rb-dark mb-2 text-lg">Peer Support</h3>
+                <h3 className="font-bold text-rb-dark mb-2 text-lg">Talk to Someone Who Gets It</h3>
                 <p className="text-sm text-rb-gray leading-relaxed">
-                  Connect with others who understand your journey
+                  Not a hotline. Not a therapist. A real person with lived experience in recovery who is ready to listen without judgment.
                 </p>
               </div>
 
               <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-lg border-2 border-rb-blue-light hover:shadow-xl hover:border-rb-blue transition-all transform hover:scale-105">
                 <div className="text-5xl mb-4" role="img" aria-label="Lock">🔒</div>
-                <h3 className="font-bold text-rb-dark mb-2 text-lg">Private & Safe</h3>
+                <h3 className="font-bold text-rb-dark mb-2 text-lg">Private & Confidential</h3>
                 <p className="text-sm text-rb-gray leading-relaxed">
-                  Encrypted conversations in a confidential space
+                  Every conversation is one-on-one and private. No group chat, no audience. What you share stays between you and your listener.
                 </p>
               </div>
 
               <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-lg border-2 border-rb-blue-light hover:shadow-xl hover:border-rb-blue transition-all transform hover:scale-105">
-                <div className="text-5xl mb-4" role="img" aria-label="Green heart">💚</div>
-                <h3 className="font-bold text-rb-dark mb-2 text-lg">Always Available</h3>
+                <div className="text-5xl mb-4" role="img" aria-label="Lightning bolt">⚡</div>
+                <h3 className="font-bold text-rb-dark mb-2 text-lg">No Appointments Needed</h3>
                 <p className="text-sm text-rb-gray leading-relaxed">
-                  Find support when you need it, day or night
+                  When you're struggling, you can't always wait. Tap a button and available listeners are notified instantly—no scheduling, no waiting rooms.
+                </p>
+              </div>
+
+              <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-lg border-2 border-rb-blue-light hover:shadow-xl hover:border-rb-blue transition-all transform hover:scale-105">
+                <div className="text-5xl mb-4" role="img" aria-label="Gift">🎁</div>
+                <h3 className="font-bold text-rb-dark mb-2 text-lg">Completely Free</h3>
+                <p className="text-sm text-rb-gray leading-relaxed">
+                  RecoveryBridge is free to use—no subscriptions, no fees, no barriers. Support should never come with a price tag.
                 </p>
               </div>
             </div>
@@ -195,12 +262,17 @@ export default function Home() {
             <div className="inline-flex flex-wrap items-center justify-center gap-4 text-sm text-rb-gray mb-8 bg-white rounded-full px-6 py-3 shadow-md border border-rb-blue-light">
               <div className="flex items-center gap-2">
                 <span className="text-base" role="img" aria-label="Lock">🔒</span>
-                <span className="font-semibold">End-to-end encrypted</span>
+                <span className="font-semibold">Private & secure</span>
               </div>
               <span className="hidden sm:inline text-rb-gray">•</span>
               <div className="flex items-center gap-2">
                 <span className="text-base" role="img" aria-label="Checkmark">✓</span>
                 <span className="font-semibold">Always confidential</span>
+              </div>
+              <span className="hidden sm:inline text-rb-gray">•</span>
+              <div className="flex items-center gap-2">
+                <span className="text-base" role="img" aria-label="Gift">🎁</span>
+                <span className="font-semibold">Always free</span>
               </div>
             </div>
 
