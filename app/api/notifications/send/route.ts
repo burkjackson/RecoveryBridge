@@ -123,6 +123,25 @@ export async function POST(request: NextRequest) {
 
     const seekerName = seekerProfile?.display_name || 'Someone'
 
+    // Check if the seeker already has an active session — if so, skip notifications.
+    // This prevents re-notifications firing after a listener has already connected,
+    // particularly in race conditions where the client-side check and navigation overlap.
+    const { data: existingSession } = await supabase
+      .from('sessions')
+      .select('id')
+      .eq('seeker_id', seekerId)
+      .eq('status', 'active')
+      .maybeSingle()
+
+    if (existingSession) {
+      console.log(`[notify] Seeker ${seekerId} already has an active session — skipping notifications`)
+      return NextResponse.json({
+        success: true,
+        message: 'Seeker already connected',
+        notified: 0
+      })
+    }
+
     // Find all available listeners (excluding the person requesting support)
     // Include both:
     // 1. Users currently in "available" state
