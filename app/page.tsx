@@ -133,7 +133,7 @@ export default function Home() {
                   <span className="text-3xl flex-shrink-0" role="img" aria-label="Magnifying glass">🔍</span>
                   <div>
                     <h3 className="font-bold text-rb-dark mb-1">Find the Right Listener</h3>
-                    <p className="text-sm text-rb-gray leading-relaxed">Browse listeners by specialty—from early recovery and relapse prevention to grief, trauma, veterans support, and more. Find someone who truly understands your specific journey.</p>
+                    <p className="text-sm text-rb-gray leading-relaxed">Browse a directory of listeners by specialty—early recovery, relapse prevention, grief, trauma, veterans support, and more. Read their bios and choose someone who resonates with your journey before you even connect.</p>
                   </div>
                 </div>
 
@@ -141,7 +141,7 @@ export default function Home() {
                   <span className="text-3xl flex-shrink-0" role="img" aria-label="Bell">🔔</span>
                   <div>
                     <h3 className="font-bold text-rb-dark mb-1">Instant Listener Alerts</h3>
-                    <p className="text-sm text-rb-gray leading-relaxed">The moment you ask for support, available listeners are notified in real time—on their phone or computer—so someone can show up fast.</p>
+                    <p className="text-sm text-rb-gray leading-relaxed">The moment you ask for support, available listeners are notified in real time—on their phone or computer. If no one connects right away, we keep notifying listeners every couple of minutes until someone shows up.</p>
                   </div>
                 </div>
 
@@ -176,28 +176,6 @@ export default function Home() {
                     <p className="text-sm text-rb-gray leading-relaxed">Community safety guidelines, user reporting, and an active moderation team keep RecoveryBridge a respectful and supportive space for everyone.</p>
                   </div>
                 </div>
-              </div>
-            </div>
-
-            {/* Become a Listener CTA */}
-            <div className="max-w-3xl mx-auto mb-12">
-              <div className="bg-gradient-to-br from-rb-blue to-rb-blue-dark rounded-2xl p-8 shadow-xl text-center">
-                <div className="text-5xl mb-4">🎧</div>
-                <h2 className="text-2xl sm:text-3xl font-bold text-white mb-3">
-                  Are You in Long-Term Recovery?
-                </h2>
-                <p className="text-base text-white/90 leading-relaxed mb-3 max-w-xl mx-auto">
-                  We're looking for volunteers who want to give back. As a listener, you show up for people in their hardest moments—not as a counselor, but as someone who genuinely understands.
-                </p>
-                <p className="text-sm text-white/75 leading-relaxed mb-6 max-w-xl mx-auto">
-                  You choose when you're available. You decide when to step away. And the impact you make is real.
-                </p>
-                <button
-                  onClick={() => router.push('/signup')}
-                  className="inline-flex items-center gap-2 px-8 py-4 bg-white text-rb-blue font-bold rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] hover:-translate-y-1 text-base"
-                >
-                  Become a Listener →
-                </button>
               </div>
             </div>
 
@@ -236,6 +214,28 @@ export default function Home() {
               </div>
             </div>
 
+            {/* Become a Listener CTA */}
+            <div className="max-w-3xl mx-auto mb-12">
+              <div className="bg-gradient-to-br from-rb-blue to-rb-blue-dark rounded-2xl p-8 shadow-xl text-center">
+                <div className="text-5xl mb-4">🎧</div>
+                <h2 className="text-2xl sm:text-3xl font-bold text-white mb-3">
+                  Are You in Long-Term Recovery?
+                </h2>
+                <p className="text-base text-white/90 leading-relaxed mb-3 max-w-xl mx-auto">
+                  We're looking for volunteers who want to give back. As a listener, you show up for people in their hardest moments—not as a counselor, but as someone who genuinely understands.
+                </p>
+                <p className="text-sm text-white/75 leading-relaxed mb-6 max-w-xl mx-auto">
+                  You choose when you're available. You decide when to step away. And the impact you make is real.
+                </p>
+                <button
+                  onClick={() => router.push('/signup')}
+                  className="inline-flex items-center gap-2 px-8 py-4 bg-white text-rb-blue font-bold rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] hover:-translate-y-1 text-base"
+                >
+                  Become a Listener →
+                </button>
+              </div>
+            </div>
+
             {/* Who We Serve */}
             <div className="max-w-3xl mx-auto mb-12">
               <h2 className="text-2xl sm:text-3xl font-bold text-rb-dark mb-6 text-center">
@@ -250,9 +250,15 @@ export default function Home() {
                   </li>
                   <div className="border-t border-rb-blue-light"></div>
                   <li className="flex flex-col items-center text-center">
+                    <span className="text-5xl mb-3" role="img" aria-label="Stethoscope">🩺</span>
+                    <strong className="text-rb-dark mb-2 text-lg">Recovery Professionals</strong>
+                    <p className="text-sm text-rb-gray leading-relaxed">Counselors, coaches, social workers, and healthcare providers who want to extend their reach and support people between sessions</p>
+                  </li>
+                  <div className="border-t border-rb-blue-light"></div>
+                  <li className="flex flex-col items-center text-center">
                     <span className="text-5xl mb-3" role="img" aria-label="Handshake">🤝</span>
-                    <strong className="text-rb-dark mb-2 text-lg">Allies in Long-Term Recovery</strong>
-                    <p className="text-sm text-rb-gray leading-relaxed">Professional advocates giving back by offering support to others on their journey</p>
+                    <strong className="text-rb-dark mb-2 text-lg">Allies & Long-Term Recovery Advocates</strong>
+                    <p className="text-sm text-rb-gray leading-relaxed">People who have walked the road and want to give back by offering support to others on their journey</p>
                   </li>
                 </ul>
               </div>
