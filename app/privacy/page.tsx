@@ -44,7 +44,7 @@ export default function PrivacyPage() {
               <strong className="text-[#2D3436]">Account Information:</strong> When you create an account, we collect your email address, display name, and any profile information you choose to share (like your bio or role).
             </Body16>
             <Body16 className="text-rb-gray mb-3">
-              <strong className="text-[#2D3436]">Messages:</strong> We store your chat messages to provide the service. Your messages are encrypted in transit and at rest.
+              <strong className="text-[#2D3436]">Messages:</strong> We store your chat messages to provide the service. Your messages are encrypted in transit and at rest. In cases of reported misconduct, session transcripts may be reviewed by RecoveryBridge administrators for moderation purposes. All such reviews are recorded in an audit log.
             </Body16>
             <Body16 className="text-rb-gray">
               <strong className="text-[#2D3436]">Usage Data:</strong> We collect basic information about how you use RecoveryBridge (like when you log in) to improve our service and keep it secure.

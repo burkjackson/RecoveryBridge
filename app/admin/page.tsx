@@ -95,6 +95,13 @@ export default function AdminPage() {
   const [deleteUserModal, setDeleteUserModal] = useState({ show: false, step: 1, userId: '', displayName: '', confirmName: '' })
   const [resolutionModal, setResolutionModal] = useState({ show: false, reportId: '', notes: '' })
 
+  // Transcript viewer
+  const [transcriptConfirm, setTranscriptConfirm] = useState<{ show: boolean; sessionId: string; reportedUserId?: string; reportId?: string }>({ show: false, sessionId: '' })
+  const [transcriptMessages, setTranscriptMessages] = useState<Record<string, { id: string; sender_id: string; content: string; created_at: string }[]>>({})
+  const [transcriptProfiles, setTranscriptProfiles] = useState<Record<string, string>>({})
+  const [transcriptLoading, setTranscriptLoading] = useState<string | null>(null)
+  const [expandedTranscript, setExpandedTranscript] = useState<string | null>(null)
+
   const router = useRouter()
   const supabase = createClient()
 
@@ -425,6 +432,47 @@ export default function AdminPage() {
     }
   }
 
+  async function loadTranscript(sessionId: string, reportId?: string) {
+    setTranscriptLoading(sessionId)
+    try {
+      const { data: messages, error } = await supabase
+        .from('messages')
+        .select('id, sender_id, content, created_at')
+        .eq('session_id', sessionId)
+        .order('created_at', { ascending: true })
+      if (error) throw error
+
+      const senderIds = [...new Set((messages || []).map(m => m.sender_id))]
+      if (senderIds.length > 0) {
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('id, display_name')
+          .in('id', senderIds)
+        const map: Record<string, string> = {}
+        profileData?.forEach(p => { map[p.id] = p.display_name })
+        setTranscriptProfiles(prev => ({ ...prev, ...map }))
+      }
+
+      setTranscriptMessages(prev => ({ ...prev, [sessionId]: messages || [] }))
+      setExpandedTranscript(sessionId)
+
+      // Audit log every transcript view
+      const { data: { user } } = await supabase.auth.getUser()
+      await supabase.from('admin_logs').insert([{
+        admin_id: user?.id,
+        action_type: 'transcript_viewed',
+        target_session_id: sessionId,
+        target_report_id: reportId || null,
+        details: { report_id: reportId || null },
+      }])
+    } catch (err) {
+      console.error('Error loading transcript:', err)
+      setErrorModal({ show: true, message: 'Could not load the transcript. Please try again.' })
+    } finally {
+      setTranscriptLoading(null)
+    }
+  }
+
   function deleteUser(userId: string, displayName: string) {
     // Show first confirmation modal
     setDeleteUserModal({ show: true, step: 1, userId, displayName, confirmName: '' })
@@ -624,7 +672,7 @@ export default function AdminPage() {
                         <Body16 className="mb-3 text-rb-gray">{report.description}</Body16>
                       )}
                       {report.status === 'pending' && (
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 flex-wrap">
                           <button
                             onClick={() => updateReportStatus(report.id, 'reviewing')}
                             className="min-h-[44px] px-4 py-3 bg-blue-500 text-white rounded text-sm hover:bg-blue-600"
@@ -655,6 +703,69 @@ export default function AdminPage() {
                           >
                             Block User
                           </button>
+                        </div>
+                      )}
+                      {report.session_id && (
+                        <div className="mt-3">
+                          <button
+                            onClick={() => {
+                              if (expandedTranscript === report.session_id) {
+                                setExpandedTranscript(null)
+                              } else {
+                                setTranscriptConfirm({ show: true, sessionId: report.session_id!, reportedUserId: report.reported_user_id, reportId: report.id })
+                              }
+                            }}
+                            className="flex items-center gap-1.5 text-sm text-rb-blue hover:text-rb-blue-hover font-medium"
+                          >
+                            <span>💬</span>
+                            <span>{expandedTranscript === report.session_id ? 'Hide Transcript' : 'View Chat Transcript'}</span>
+                          </button>
+                          {expandedTranscript === report.session_id && (() => {
+                            const msgs = transcriptMessages[report.session_id] || []
+                            const isLoading = transcriptLoading === report.session_id
+                            return (
+                              <div className="mt-2 bg-gray-900 rounded-lg border border-gray-700 overflow-hidden">
+                                <div className="px-4 py-2 bg-gray-800 border-b border-gray-700 flex items-center justify-between">
+                                  <span className="text-xs text-gray-400 font-semibold uppercase tracking-wide">
+                                    Chat Transcript ({msgs.length} message{msgs.length !== 1 ? 's' : ''})
+                                  </span>
+                                  <span className="text-xs text-amber-400">🔒 Admin view · logged</span>
+                                </div>
+                                <div className="p-4 space-y-3 max-h-96 overflow-y-auto">
+                                  {isLoading ? (
+                                    <div className="text-center py-4">
+                                      <div className="inline-block w-5 h-5 border-2 border-rb-blue border-t-transparent rounded-full animate-spin" />
+                                      <p className="text-sm text-gray-400 mt-2">Loading transcript…</p>
+                                    </div>
+                                  ) : msgs.length === 0 ? (
+                                    <p className="text-sm text-gray-400 text-center py-4">No messages in this session.</p>
+                                  ) : (
+                                    msgs.map((msg, i) => {
+                                      const isReported = msg.sender_id === report.reported_user_id
+                                      const senderName = transcriptProfiles[msg.sender_id] || 'Unknown'
+                                      const showName = i === 0 || msgs[i - 1].sender_id !== msg.sender_id
+                                      return (
+                                        <div key={msg.id} className={`flex flex-col ${isReported ? 'items-end' : 'items-start'}`}>
+                                          {showName && (
+                                            <span className="text-xs text-gray-400 mb-1 px-1">
+                                              {senderName} · {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                            </span>
+                                          )}
+                                          <div className={`max-w-[80%] px-3 py-2 rounded-xl text-sm break-words ${
+                                            isReported
+                                              ? 'bg-red-900/50 border border-red-700/50 text-red-100'
+                                              : 'bg-gray-700 text-gray-100'
+                                          }`}>
+                                            {msg.content}
+                                          </div>
+                                        </div>
+                                      )
+                                    })
+                                  )}
+                                </div>
+                              </div>
+                            )
+                          })()}
                         </div>
                       )}
                     </div>
@@ -724,26 +835,85 @@ export default function AdminPage() {
                     <Body16 className="text-sm text-rb-gray mb-2">
                       Started: {new Date(session.created_at).toLocaleString()}
                     </Body16>
-                    {session.status === 'active' && (
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => router.push(`/chat/${session.id}`)}
-                          className="min-h-[44px] px-4 py-3 bg-blue-500 text-white rounded text-sm hover:bg-blue-600"
-                        >
-                          View Chat
-                        </button>
-                        <button
-                          onClick={() => setEndSessionModal({
-                            show: true,
-                            sessionId: session.id,
-                            participants: `${session.listener?.display_name || 'Unknown'} and ${session.seeker?.display_name || 'Unknown'}`
-                          })}
-                          className="min-h-[44px] px-4 py-3 bg-red-500 text-white rounded text-sm hover:bg-red-600"
-                        >
-                          End Session
-                        </button>
-                      </div>
-                    )}
+                    <div className="flex gap-2 flex-wrap">
+                      {session.status === 'active' && (
+                        <>
+                          <button
+                            onClick={() => router.push(`/chat/${session.id}`)}
+                            className="min-h-[44px] px-4 py-3 bg-blue-500 text-white rounded text-sm hover:bg-blue-600"
+                          >
+                            View Chat
+                          </button>
+                          <button
+                            onClick={() => setEndSessionModal({
+                              show: true,
+                              sessionId: session.id,
+                              participants: `${session.listener?.display_name || 'Unknown'} and ${session.seeker?.display_name || 'Unknown'}`
+                            })}
+                            className="min-h-[44px] px-4 py-3 bg-red-500 text-white rounded text-sm hover:bg-red-600"
+                          >
+                            End Session
+                          </button>
+                        </>
+                      )}
+                      <button
+                        onClick={() => {
+                          if (expandedTranscript === session.id) {
+                            setExpandedTranscript(null)
+                          } else {
+                            setTranscriptConfirm({ show: true, sessionId: session.id })
+                          }
+                        }}
+                        className="min-h-[44px] px-4 py-3 border border-gray-300 text-rb-gray rounded text-sm hover:bg-gray-50"
+                      >
+                        💬 {expandedTranscript === session.id ? 'Hide Transcript' : 'View Transcript'}
+                      </button>
+                    </div>
+                    {expandedTranscript === session.id && (() => {
+                      const msgs = transcriptMessages[session.id] || []
+                      const isLoading = transcriptLoading === session.id
+                      return (
+                        <div className="mt-3 bg-gray-900 rounded-lg border border-gray-700 overflow-hidden">
+                          <div className="px-4 py-2 bg-gray-800 border-b border-gray-700 flex items-center justify-between">
+                            <span className="text-xs text-gray-400 font-semibold uppercase tracking-wide">
+                              Chat Transcript ({msgs.length} message{msgs.length !== 1 ? 's' : ''})
+                            </span>
+                            <span className="text-xs text-amber-400">🔒 Admin view · logged</span>
+                          </div>
+                          <div className="p-4 space-y-3 max-h-96 overflow-y-auto">
+                            {isLoading ? (
+                              <div className="text-center py-4">
+                                <div className="inline-block w-5 h-5 border-2 border-rb-blue border-t-transparent rounded-full animate-spin" />
+                                <p className="text-sm text-gray-400 mt-2">Loading transcript…</p>
+                              </div>
+                            ) : msgs.length === 0 ? (
+                              <p className="text-sm text-gray-400 text-center py-4">No messages in this session.</p>
+                            ) : (
+                              msgs.map((msg, i) => {
+                                const senderName = transcriptProfiles[msg.sender_id] || 'Unknown'
+                                const showName = i === 0 || msgs[i - 1].sender_id !== msg.sender_id
+                                const firstSenderId = msgs[0]?.sender_id
+                                const isFirstSpeaker = msg.sender_id === firstSenderId
+                                return (
+                                  <div key={msg.id} className={`flex flex-col ${isFirstSpeaker ? 'items-start' : 'items-end'}`}>
+                                    {showName && (
+                                      <span className="text-xs text-gray-400 mb-1 px-1">
+                                        {senderName} · {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                      </span>
+                                    )}
+                                    <div className={`max-w-[80%] px-3 py-2 rounded-xl text-sm break-words ${
+                                      isFirstSpeaker ? 'bg-gray-700 text-gray-100' : 'bg-rb-blue/80 text-white'
+                                    }`}>
+                                      {msg.content}
+                                    </div>
+                                  </div>
+                                )
+                              })
+                            )}
+                          </div>
+                        </div>
+                      )
+                    })()}
                   </div>
                 ))}
               </div>
@@ -1268,6 +1438,31 @@ export default function AdminPage() {
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-rb-blue"
             placeholder="Type the name to confirm deletion"
           />
+        </div>
+      </Modal>
+
+      {/* Transcript Confirmation Modal */}
+      <Modal
+        isOpen={transcriptConfirm.show}
+        onClose={() => setTranscriptConfirm({ show: false, sessionId: '' })}
+        title="View Private Conversation"
+        type="confirm"
+        onConfirm={() => {
+          const { sessionId, reportId } = transcriptConfirm
+          setTranscriptConfirm({ show: false, sessionId: '' })
+          loadTranscript(sessionId, reportId)
+        }}
+        confirmText="View Transcript"
+        confirmStyle="primary"
+      >
+        <div className="space-y-3">
+          <p>You are about to view a private chat session for moderation purposes.</p>
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+            <p className="text-sm text-amber-800">
+              ⚠️ This action will be recorded in the admin audit log.
+            </p>
+          </div>
+          <p className="text-sm text-rb-gray">Only view transcripts when investigating a report or verifying conduct. Transcripts should not be accessed for any other purpose.</p>
         </div>
       </Modal>
 
