@@ -31,6 +31,7 @@ export default function SignupPage() {
 
     try {
       // Create account - database unique constraint will prevent duplicates atomically
+      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? (typeof window !== 'undefined' ? window.location.origin : '')
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -38,6 +39,7 @@ export default function SignupPage() {
           data: {
             display_name: displayName,
           },
+          emailRedirectTo: siteUrl,
         },
       })
 
