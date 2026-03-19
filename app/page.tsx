@@ -250,15 +250,15 @@ export default function Home() {
                   </li>
                   <div className="border-t border-rb-blue-light"></div>
                   <li className="flex flex-col items-center text-center">
-                    <span className="text-5xl mb-3" role="img" aria-label="Stethoscope">🩺</span>
-                    <strong className="text-rb-dark mb-2 text-lg">Recovery Professionals</strong>
-                    <p className="text-sm text-rb-gray leading-relaxed">Counselors, coaches, social workers, and healthcare providers who want to extend their reach and support people between sessions</p>
-                  </li>
-                  <div className="border-t border-rb-blue-light"></div>
-                  <li className="flex flex-col items-center text-center">
                     <span className="text-5xl mb-3" role="img" aria-label="Handshake">🤝</span>
                     <strong className="text-rb-dark mb-2 text-lg">Allies & Long-Term Recovery Advocates</strong>
                     <p className="text-sm text-rb-gray leading-relaxed">People who have walked the road and want to give back by offering support to others on their journey</p>
+                  </li>
+                  <div className="border-t border-rb-blue-light"></div>
+                  <li className="flex flex-col items-center text-center">
+                    <span className="text-5xl mb-3" role="img" aria-label="Stethoscope">🩺</span>
+                    <strong className="text-rb-dark mb-2 text-lg">Recovery Professionals</strong>
+                    <p className="text-sm text-rb-gray leading-relaxed">Counselors, coaches, social workers, and healthcare providers who want to extend their reach and support people between sessions</p>
                   </li>
                 </ul>
               </div>
