@@ -63,7 +63,7 @@ export default function Home() {
                 </h2>
                 <p className="text-base text-rb-gray text-center mb-4 leading-relaxed">
                   We believe that <strong>connection is the antidote to addiction</strong> and that we do not heal in isolation.
-                  RecoveryBridge exists to create a space where your story matters, your struggles are valid, and your
+                  RecoveryBridge exists to create a safe space where your story matters, your struggles are valid, and your
                   progress—no matter how small—deserves celebration.
                 </p>
                 <p className="text-base text-rb-gray text-center mb-4 leading-relaxed">
