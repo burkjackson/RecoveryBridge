@@ -252,7 +252,7 @@ export default function Home() {
                   <li className="flex flex-col items-center text-center">
                     <span className="text-5xl mb-3" role="img" aria-label="Handshake">🤝</span>
                     <strong className="text-rb-dark mb-2 text-lg">Allies & Long-Term Recovery Advocates</strong>
-                    <p className="text-sm text-rb-gray leading-relaxed">People who have walked the road and want to give back by offering support to others on their journey</p>
+                    <p className="text-sm text-rb-gray leading-relaxed">Supporters who may not be in recovery themselves but are deeply committed to the cause—family members, friends, community advocates, and others who want to show up for people on their journey</p>
                   </li>
                   <div className="border-t border-rb-blue-light"></div>
                   <li className="flex flex-col items-center text-center">
