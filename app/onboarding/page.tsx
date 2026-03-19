@@ -479,69 +479,45 @@ export default function OnboardingPage() {
               <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2 px-1">Other</p>
               <div className="space-y-2">
                 {[
-                  { value: 'podcast', label: 'Podcast' },
-                  { value: 'website_blog', label: 'Website or Blog' },
+                  { value: 'podcast', label: 'Podcast', placeholder: 'Which podcast? (optional)', detail: podcastName, setDetail: setPodcastName },
+                  { value: 'website_blog', label: 'Website or Blog', placeholder: 'Which website or blog? (optional)', detail: websiteName, setDetail: setWebsiteName },
                   { value: 'search_engine', label: 'Search Engine (Google, etc.)' },
                   { value: 'friend_family', label: 'Friend or Family Member' },
-                  { value: 'other', label: 'Other' },
-                ].map(({ value, label }) => (
-                  <label
-                    key={value}
-                    className={`flex items-center gap-4 p-4 rounded-lg border-2 cursor-pointer transition-all ${
-                      referralSource === value
-                        ? 'border-rb-blue bg-blue-50'
-                        : 'border-gray-200 hover:border-rb-blue/50'
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="referral_source"
-                      value={value}
-                      checked={referralSource === value}
-                      onChange={() => setReferralSource(value)}
-                      className="w-4 h-4 accent-rb-blue"
-                    />
-                    <Body16 className="font-medium text-gray-800">{label}</Body16>
-                  </label>
+                  { value: 'other', label: 'Other', placeholder: 'Please tell us where you heard about us', detail: otherReferral, setDetail: setOtherReferral },
+                ].map(({ value, label, placeholder, detail, setDetail }) => (
+                  <div key={value}>
+                    <label
+                      className={`flex items-center gap-4 p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                        referralSource === value
+                          ? 'border-rb-blue bg-blue-50'
+                          : 'border-gray-200 hover:border-rb-blue/50'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="referral_source"
+                        value={value}
+                        checked={referralSource === value}
+                        onChange={() => setReferralSource(value)}
+                        className="w-4 h-4 accent-rb-blue"
+                      />
+                      <Body16 className="font-medium text-gray-800">{label}</Body16>
+                    </label>
+                    {referralSource === value && placeholder && setDetail && (
+                      <input
+                        type="text"
+                        placeholder={placeholder}
+                        value={detail}
+                        onChange={e => setDetail(e.target.value)}
+                        className="w-full mt-2 p-4 border-2 border-rb-blue rounded-lg text-gray-800 placeholder-gray-400 focus:outline-none focus:border-rb-blue"
+                        maxLength={200}
+                        autoFocus
+                      />
+                    )}
+                  </div>
                 ))}
               </div>
             </div>
-
-            {referralSource === 'podcast' && (
-              <input
-                type="text"
-                placeholder="Which podcast? (optional)"
-                value={podcastName}
-                onChange={e => setPodcastName(e.target.value)}
-                className="w-full p-4 border-2 border-rb-blue rounded-lg text-gray-800 placeholder-gray-400 focus:outline-none focus:border-rb-blue mb-6"
-                maxLength={200}
-                autoFocus
-              />
-            )}
-
-            {referralSource === 'website_blog' && (
-              <input
-                type="text"
-                placeholder="Which website or blog? (optional)"
-                value={websiteName}
-                onChange={e => setWebsiteName(e.target.value)}
-                className="w-full p-4 border-2 border-rb-blue rounded-lg text-gray-800 placeholder-gray-400 focus:outline-none focus:border-rb-blue mb-6"
-                maxLength={200}
-                autoFocus
-              />
-            )}
-
-            {referralSource === 'other' && (
-              <input
-                type="text"
-                placeholder="Please tell us where you heard about us"
-                value={otherReferral}
-                onChange={e => setOtherReferral(e.target.value)}
-                className="w-full p-4 border-2 border-rb-blue rounded-lg text-gray-800 placeholder-gray-400 focus:outline-none focus:border-rb-blue mb-6"
-                maxLength={200}
-                autoFocus
-              />
-            )}
 
             <div className="flex gap-3 mt-6">
               <button
