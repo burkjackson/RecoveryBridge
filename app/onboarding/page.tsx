@@ -16,6 +16,8 @@ export default function OnboardingPage() {
   const [agreedToGuidelines, setAgreedToGuidelines] = useState(false)
   const [referralSource, setReferralSource] = useState('')
   const [otherReferral, setOtherReferral] = useState('')
+  const [podcastName, setPodcastName] = useState('')
+  const [websiteName, setWebsiteName] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const router = useRouter()
@@ -98,7 +100,13 @@ export default function OnboardingPage() {
           user_role: userRole,
           role_state: 'offline',
           tags: tags.length > 0 ? tags : null,
-          referral_source: referralSource === 'other' ? (otherReferral.trim() || 'other') : (referralSource || null),
+          referral_source: referralSource === 'other'
+            ? (otherReferral.trim() || 'other')
+            : referralSource === 'podcast'
+              ? (podcastName.trim() ? `podcast: ${podcastName.trim()}` : 'podcast')
+              : referralSource === 'website_blog'
+                ? (websiteName.trim() ? `website: ${websiteName.trim()}` : 'website_blog')
+                : (referralSource || null),
         })
         .eq('id', userId)
 
@@ -445,6 +453,7 @@ export default function OnboardingPage() {
                 { value: 'instagram',     label: 'Instagram' },
                 { value: 'threads',       label: 'Threads' },
                 { value: 'tiktok',        label: 'TikTok' },
+                { value: 'podcast',       label: 'Podcast' },
                 { value: 'website_blog',  label: 'Website or Blog' },
                 { value: 'search_engine', label: 'Search Engine (Google, etc.)' },
                 { value: 'friend_family', label: 'Friend or Family Member' },
@@ -475,6 +484,30 @@ export default function OnboardingPage() {
                 </div>
               )
             })()}
+
+            {referralSource === 'podcast' && (
+              <input
+                type="text"
+                placeholder="Which podcast? (optional)"
+                value={podcastName}
+                onChange={e => setPodcastName(e.target.value)}
+                className="w-full p-4 border-2 border-rb-blue rounded-lg text-gray-800 placeholder-gray-400 focus:outline-none focus:border-rb-blue mb-6"
+                maxLength={200}
+                autoFocus
+              />
+            )}
+
+            {referralSource === 'website_blog' && (
+              <input
+                type="text"
+                placeholder="Which website or blog? (optional)"
+                value={websiteName}
+                onChange={e => setWebsiteName(e.target.value)}
+                className="w-full p-4 border-2 border-rb-blue rounded-lg text-gray-800 placeholder-gray-400 focus:outline-none focus:border-rb-blue mb-6"
+                maxLength={200}
+                autoFocus
+              />
+            )}
 
             {referralSource === 'other' && (
               <input
