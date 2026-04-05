@@ -1,7 +1,7 @@
 // RecoveryBridge Service Worker for Push Notifications
 // This enables background notifications even when the browser tab is closed
 
-const CACHE_NAME = 'recoverybridge-v6'
+const CACHE_NAME = 'recoverybridge-v7'
 
 // Install event - cache essential resources
 self.addEventListener('install', (event) => {
@@ -66,7 +66,18 @@ self.addEventListener('push', (event) => {
   }
 
   event.waitUntil(
-    self.registration.showNotification(title, options)
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true })
+      .then((clientList) => {
+        // If the user is already in an active chat session, suppress support-request
+        // notifications — they can't connect to another seeker while in a session,
+        // and this prevents stale re-notifications from firing after they've matched.
+        const seekerId = options.data?.seekerId
+        if (seekerId) {
+          const inChat = clientList.some((client) => client.url.includes('/chat/'))
+          if (inChat) return
+        }
+        return self.registration.showNotification(title, options)
+      })
   )
 })
 

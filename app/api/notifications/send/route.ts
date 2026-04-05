@@ -236,7 +236,7 @@ export async function POST(request: NextRequest) {
         try {
           await webpush.sendNotification(sub.subscription, payload, {
             urgency: 'high',       // APNs priority 10 — deliver immediately
-            TTL: 300,              // Keep in APNs queue for 5 minutes if device is offline
+            TTL: 60,               // Expire after 60s — stale support-request notifications aren't useful
           })
           count++
           successUserIds.add(sub.user_id)

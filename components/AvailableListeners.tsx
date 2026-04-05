@@ -216,6 +216,13 @@ export default function AvailableListeners({ onCountChange, currentUserId, curre
         return
       }
 
+      // Mark both users as offline while in chat — seeker leaves seeking list,
+      // listener becomes unavailable to other seekers until the session ends
+      await supabase
+        .from('profiles')
+        .update({ role_state: 'offline' })
+        .in('id', [user.id, listenerId])
+
       router.push(`/chat/${session.id}`)
     } catch (err) {
       console.error('Error connecting with listener:', err)

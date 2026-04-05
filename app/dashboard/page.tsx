@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Heading1, Body16, Body18 } from '@/components/ui/Typography'
 import { SkeletonRoleCard } from '@/components/Skeleton'
 import ErrorState from '@/components/ErrorState'
@@ -25,7 +25,9 @@ export default function DashboardPage() {
   const [nudgeDismissed, setNudgeDismissed] = useState(false)
   const [recentOpen, setRecentOpen] = useState(false)
   const [showOfflineConfirm, setShowOfflineConfirm] = useState(false)
+  const [showPostChatBanner, setShowPostChatBanner] = useState(false)
   const profileRef = useRef<Profile | null>(null)
+  const searchParams = useSearchParams()
   const lastNotifyTimestampRef = useRef<number>(0)
   const notifyCountRef = useRef<number>(0)
   const router = useRouter()
@@ -47,6 +49,15 @@ export default function DashboardPage() {
       // sessionStorage may not be available
     }
   }, [])
+
+  // Show post-chat check-in banner for seekers returning from a session
+  useEffect(() => {
+    if (searchParams.get('postChat') === 'true') {
+      setShowPostChatBanner(true)
+      const timer = setTimeout(() => setShowPostChatBanner(false), 8000)
+      return () => clearTimeout(timer)
+    }
+  }, [searchParams])
 
   useEffect(() => {
     loadProfile()
@@ -659,6 +670,26 @@ export default function DashboardPage() {
             </button>
           </div>
         </div>
+
+        {/* Post-chat check-in banner (seekers returning from a session) */}
+        {showPostChatBanner && (
+          <div className="mb-6 flex items-start gap-3 bg-blue-50 border border-rb-blue/30 rounded-xl p-4 shadow-sm">
+            <span className="text-2xl flex-shrink-0" aria-hidden="true">💙</span>
+            <div className="flex-1 min-w-0">
+              <Body16 className="font-semibold text-rb-dark text-sm">Thanks for connecting — how are you feeling?</Body16>
+              <Body16 className="text-rb-gray text-sm mt-0.5">Take a moment for yourself. The 988 Lifeline and Crisis Text Line are always here if you need extra support.</Body16>
+            </div>
+            <button
+              onClick={() => setShowPostChatBanner(false)}
+              aria-label="Dismiss"
+              className="min-h-[44px] min-w-[44px] flex items-center justify-center text-rb-gray hover:text-rb-dark transition-colors flex-shrink-0 -mt-1 -mr-1"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+              </svg>
+            </button>
+          </div>
+        )}
 
         {/* Onboarding Nudge Banner */}
         {!nudgeDismissed && profile && (!profile.user_role || !profile.bio) && (

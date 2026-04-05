@@ -187,6 +187,13 @@ export default function PeopleSeeking({ currentUserId, currentRoleState }: Peopl
 
       if (error) throw error
 
+      // Mark both users as offline while in chat — seeker leaves seeking list,
+      // listener becomes unavailable to other seekers until the session ends
+      await supabase
+        .from('profiles')
+        .update({ role_state: 'offline' })
+        .in('id', [seekerId, user.id])
+
       // Navigate to chat
       router.push(`/chat/${session.id}`)
     } catch (error: unknown) {

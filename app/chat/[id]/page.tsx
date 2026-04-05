@@ -129,12 +129,19 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
         .eq('id', sessionId)
 
       if (error) throw error
+
+      // Seeker goes offline; listener returns to available so they can take more sessions
+      if (session) {
+        await supabase.from('profiles').update({ role_state: 'offline' }).eq('id', session.seeker_id)
+        await supabase.from('profiles').update({ role_state: 'available' }).eq('id', session.listener_id)
+      }
+
       setInactivityModal(false)
       setFeedbackModal(true)
     } catch (error) {
       console.error('Error ending session:', error)
     }
-  }, [sessionId, router, supabase])
+  }, [sessionId, session, router, supabase])
 
   const dismissInactivityWarning = useCallback(() => {
     setInactivityModal(false)
@@ -544,6 +551,13 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
         .eq('id', sessionId)
 
       if (error) throw error
+
+      // Seeker goes offline; listener returns to available so they can take more sessions
+      if (session) {
+        await supabase.from('profiles').update({ role_state: 'offline' }).eq('id', session.seeker_id)
+        await supabase.from('profiles').update({ role_state: 'available' }).eq('id', session.listener_id)
+      }
+
       setFeedbackModal(true)
     } catch (error) {
       console.error('Error ending session:', error)
@@ -593,13 +607,19 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
       setFavoriteAdded(false) // roll back on error
     } finally {
       setFavoriteSaving(false)
-      setTimeout(() => router.push('/dashboard'), 800)
+      setTimeout(() => returnToDashboard(), 800)
     }
+  }
+
+  // Seekers get a warm check-in banner when they return to the dashboard after a chat
+  function returnToDashboard() {
+    const isSeeker = currentUserId === session?.seeker_id
+    router.push(isSeeker ? '/dashboard?postChat=true' : '/dashboard')
   }
 
   function skipFeedback() {
     setFeedbackModal(false)
-    router.push('/dashboard')
+    returnToDashboard()
   }
 
   const REPORT_REASONS = [
@@ -749,7 +769,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
               </div>
             ) : (
               <button
-                onClick={() => router.push('/dashboard')}
+                onClick={returnToDashboard}
                 className="min-h-[44px] px-4 py-2 text-sm bg-gray-900 hover:bg-gray-800 text-white rounded-lg transition-all font-semibold"
               >
                 ← Back to Dashboard
@@ -1318,7 +1338,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                         {favoriteSaving ? 'Saving...' : '⭐ Yes, save to favorites'}
                       </button>
                       <button
-                        onClick={() => router.push('/dashboard')}
+                        onClick={returnToDashboard}
                         className="min-h-[44px] w-full px-4 py-2.5 bg-gray-100 border-2 border-gray-200 text-gray-500 rounded-xl font-semibold hover:bg-gray-200 transition-all text-sm"
                       >
                         Not now
