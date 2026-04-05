@@ -87,7 +87,7 @@ function ConnectInner() {
       return
     }
 
-    setStatus(`Connecting you with ${seeker.display_name}...`)
+    setStatus(`Connecting you with ${seeker.display_name || 'someone'}...`)
 
     // Create the session
     const { data: session, error } = await supabase
@@ -116,6 +116,12 @@ function ConnectInner() {
       setTimeout(() => router.replace('/dashboard'), 2000)
       return
     }
+
+    // Mark both users offline while in chat (same as PeopleSeeking/AvailableListeners)
+    await supabase
+      .from('profiles')
+      .update({ role_state: 'offline' })
+      .in('id', [seekerId, user.id])
 
     router.replace(`/chat/${session.id}`)
   }
