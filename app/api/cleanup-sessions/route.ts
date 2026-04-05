@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Server misconfiguration' }, { status: 500 })
       }
       if (secretKey !== validSecret) {
-        return NextResponse.json({ error: 'Invalid secret key' }, { status: 401 })
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
       }
     }
     // Otherwise require authentication (for dashboard-triggered cleanups)

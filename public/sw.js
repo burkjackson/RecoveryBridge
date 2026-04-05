@@ -1,7 +1,7 @@
 // RecoveryBridge Service Worker for Push Notifications
 // This enables background notifications even when the browser tab is closed
 
-const CACHE_NAME = 'recoverybridge-v7'
+const CACHE_NAME = 'recoverybridge-v8'
 
 // Install event - cache essential resources
 self.addEventListener('install', (event) => {
@@ -94,7 +94,10 @@ self.addEventListener('notificationclick', (event) => {
       // Check if there's already a window open
       for (let i = 0; i < clientList.length; i++) {
         const client = clientList[i]
-        if (client.url.includes(urlToOpen) && 'focus' in client) {
+        // Use exact pathname match to avoid loose substring collisions (e.g. /connect vs /connect?other)
+        const clientPath = new URL(client.url).pathname
+        const targetPath = urlToOpen.startsWith('/') ? urlToOpen.split('?')[0] : new URL(urlToOpen).pathname
+        if (clientPath === targetPath && 'focus' in client) {
           return client.focus()
         }
       }

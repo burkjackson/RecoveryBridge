@@ -27,6 +27,7 @@ export default function DashboardPage() {
   const [showOfflineConfirm, setShowOfflineConfirm] = useState(false)
   const [showPostChatBanner, setShowPostChatBanner] = useState(false)
   const [postChatFeeling, setPostChatFeeling] = useState<'good' | 'struggling' | null>(null)
+  const postChatFeelingRef = useRef<'good' | 'struggling' | null>(null)
   const profileRef = useRef<Profile | null>(null)
   const searchParams = useSearchParams()
   const lastNotifyTimestampRef = useRef<number>(0)
@@ -51,12 +52,19 @@ export default function DashboardPage() {
     }
   }, [])
 
-  // Show post-chat check-in banner for seekers returning from a session
+  // Show post-chat check-in banner for seekers returning from a session.
+  // Only auto-dismiss if the user hasn't selected 'struggling' — never dismiss
+  // while they're reading crisis resources.
   useEffect(() => {
     if (searchParams.get('postChat') === 'true') {
       setShowPostChatBanner(true)
       setPostChatFeeling(null)
-      const timer = setTimeout(() => setShowPostChatBanner(false), 8000)
+      postChatFeelingRef.current = null
+      const timer = setTimeout(() => {
+        if (postChatFeelingRef.current !== 'struggling') {
+          setShowPostChatBanner(false)
+        }
+      }, 8000)
       return () => clearTimeout(timer)
     }
   }, [searchParams])
@@ -724,14 +732,14 @@ export default function DashboardPage() {
                   <Body16 className="font-semibold text-rb-dark text-sm">Thanks for connecting — how are you feeling?</Body16>
                   <div className="flex gap-3 mt-3">
                     <button
-                      onClick={() => { setPostChatFeeling('good'); setTimeout(() => setShowPostChatBanner(false), 3000) }}
+                      onClick={() => { postChatFeelingRef.current = 'good'; setPostChatFeeling('good'); setTimeout(() => setShowPostChatBanner(false), 3000) }}
                       aria-label="Feeling good"
                       className="min-h-[44px] flex items-center gap-1.5 px-4 py-2 bg-white border border-gray-200 rounded-full text-sm font-semibold hover:bg-green-50 hover:border-green-300 transition-colors"
                     >
                       <span aria-hidden="true">👍</span> Good
                     </button>
                     <button
-                      onClick={() => setPostChatFeeling('struggling')}
+                      onClick={() => { postChatFeelingRef.current = 'struggling'; setPostChatFeeling('struggling') }}
                       aria-label="Feeling like I'm struggling"
                       className="min-h-[44px] flex items-center gap-1.5 px-4 py-2 bg-white border border-gray-200 rounded-full text-sm font-semibold hover:bg-purple-50 hover:border-purple-300 transition-colors"
                     >
