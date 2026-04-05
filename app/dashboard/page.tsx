@@ -26,6 +26,7 @@ export default function DashboardPage() {
   const [recentOpen, setRecentOpen] = useState(false)
   const [showOfflineConfirm, setShowOfflineConfirm] = useState(false)
   const [showPostChatBanner, setShowPostChatBanner] = useState(false)
+  const [postChatFeeling, setPostChatFeeling] = useState<'good' | 'struggling' | null>(null)
   const profileRef = useRef<Profile | null>(null)
   const searchParams = useSearchParams()
   const lastNotifyTimestampRef = useRef<number>(0)
@@ -54,6 +55,7 @@ export default function DashboardPage() {
   useEffect(() => {
     if (searchParams.get('postChat') === 'true') {
       setShowPostChatBanner(true)
+      setPostChatFeeling(null)
       const timer = setTimeout(() => setShowPostChatBanner(false), 8000)
       return () => clearTimeout(timer)
     }
@@ -673,21 +675,75 @@ export default function DashboardPage() {
 
         {/* Post-chat check-in banner (seekers returning from a session) */}
         {showPostChatBanner && (
-          <div className="mb-6 flex items-start gap-3 bg-blue-50 border border-rb-blue/30 rounded-xl p-4 shadow-sm">
-            <span className="text-2xl flex-shrink-0" aria-hidden="true">💙</span>
-            <div className="flex-1 min-w-0">
-              <Body16 className="font-semibold text-rb-dark text-sm">Thanks for connecting — how are you feeling?</Body16>
-              <Body16 className="text-rb-gray text-sm mt-0.5">Take a moment for yourself. The 988 Lifeline and Crisis Text Line are always here if you need extra support.</Body16>
-            </div>
-            <button
-              onClick={() => setShowPostChatBanner(false)}
-              aria-label="Dismiss"
-              className="min-h-[44px] min-w-[44px] flex items-center justify-center text-rb-gray hover:text-rb-dark transition-colors flex-shrink-0 -mt-1 -mr-1"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-              </svg>
-            </button>
+          <div className={`mb-6 rounded-xl p-4 shadow-sm border ${postChatFeeling === 'struggling' ? 'bg-purple-50 border-rb-purple/40' : 'bg-blue-50 border-rb-blue/30'}`}>
+            {postChatFeeling === 'good' ? (
+              <div className="flex items-center gap-3">
+                <span className="text-2xl flex-shrink-0" aria-hidden="true">💙</span>
+                <Body16 className="font-semibold text-rb-dark text-sm flex-1">Glad to hear it — take care of yourself today.</Body16>
+                <button
+                  onClick={() => setShowPostChatBanner(false)}
+                  aria-label="Dismiss"
+                  className="min-h-[44px] min-w-[44px] flex items-center justify-center text-rb-gray hover:text-rb-dark transition-colors flex-shrink-0"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                </button>
+              </div>
+            ) : postChatFeeling === 'struggling' ? (
+              <div className="flex items-start gap-3">
+                <span className="text-2xl flex-shrink-0" aria-hidden="true">🤝</span>
+                <div className="flex-1 min-w-0">
+                  <Body16 className="font-semibold text-rb-dark text-sm">You don't have to go through this alone.</Body16>
+                  <Body16 className="text-rb-gray text-sm mt-1">Reach out anytime — support is available 24/7.</Body16>
+                  <div className="flex flex-wrap gap-2 mt-3">
+                    <a href="tel:988" className="min-h-[44px] inline-flex items-center px-4 py-2 bg-rb-blue text-white rounded-full text-sm font-semibold hover:bg-rb-blue-hover transition-colors">Call 988</a>
+                    <a href="sms:741741&body=HELLO" className="min-h-[44px] inline-flex items-center px-4 py-2 bg-white border border-rb-blue text-rb-blue rounded-full text-sm font-semibold hover:bg-rb-blue-light transition-colors">Text HOME to 741741</a>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowPostChatBanner(false)}
+                  aria-label="Dismiss"
+                  className="min-h-[44px] min-w-[44px] flex items-center justify-center text-rb-gray hover:text-rb-dark transition-colors flex-shrink-0 -mt-1 -mr-1"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-start gap-3">
+                <span className="text-2xl flex-shrink-0" aria-hidden="true">💙</span>
+                <div className="flex-1 min-w-0">
+                  <Body16 className="font-semibold text-rb-dark text-sm">Thanks for connecting — how are you feeling?</Body16>
+                  <div className="flex gap-3 mt-3">
+                    <button
+                      onClick={() => { setPostChatFeeling('good'); setTimeout(() => setShowPostChatBanner(false), 3000) }}
+                      aria-label="Feeling good"
+                      className="min-h-[44px] flex items-center gap-1.5 px-4 py-2 bg-white border border-gray-200 rounded-full text-sm font-semibold hover:bg-green-50 hover:border-green-300 transition-colors"
+                    >
+                      <span aria-hidden="true">👍</span> Good
+                    </button>
+                    <button
+                      onClick={() => setPostChatFeeling('struggling')}
+                      aria-label="Feeling like I'm struggling"
+                      className="min-h-[44px] flex items-center gap-1.5 px-4 py-2 bg-white border border-gray-200 rounded-full text-sm font-semibold hover:bg-purple-50 hover:border-purple-300 transition-colors"
+                    >
+                      <span aria-hidden="true">👎</span> Struggling
+                    </button>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowPostChatBanner(false)}
+                  aria-label="Dismiss"
+                  className="min-h-[44px] min-w-[44px] flex items-center justify-center text-rb-gray hover:text-rb-dark transition-colors flex-shrink-0 -mt-1 -mr-1"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                </button>
+              </div>
+            )}
           </div>
         )}
 
