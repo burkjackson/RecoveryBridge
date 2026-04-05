@@ -699,6 +699,12 @@ export default function DashboardPage() {
                   <div className="flex flex-wrap gap-2 mt-3">
                     <a href="tel:988" className="min-h-[44px] inline-flex items-center px-4 py-2 bg-rb-blue text-white rounded-full text-sm font-semibold hover:bg-rb-blue-hover transition-colors">Call 988</a>
                     <a href="sms:741741&body=HELLO" className="min-h-[44px] inline-flex items-center px-4 py-2 bg-white border border-rb-blue text-rb-blue rounded-full text-sm font-semibold hover:bg-rb-blue-light transition-colors">Text HOME to 741741</a>
+                    <button
+                      onClick={() => { setShowPostChatBanner(false); setRoleState('requesting') }}
+                      className="min-h-[44px] inline-flex items-center px-4 py-2 bg-rb-purple/20 border border-rb-purple/40 text-rb-dark rounded-full text-sm font-semibold hover:bg-rb-purple/30 transition-colors"
+                    >
+                      🤝 Talk to a listener again
+                    </button>
                   </div>
                 </div>
                 <button
