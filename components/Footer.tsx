@@ -135,7 +135,7 @@ export default function Footer({ className = '' }: FooterProps) {
 
         {/* Copyright */}
         <div className="text-center text-xs text-gray-400">
-          © {new Date().getFullYear()} RecoveryBridge. All rights reserved.
+          © {new Date().getFullYear()} RecoveryBridge LLC. All rights reserved.
         </div>
       </div>
     </footer>
