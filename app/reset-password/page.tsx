@@ -68,14 +68,14 @@ export default function ResetPasswordPage() {
   // Still checking session
   if (validSession === null) {
     return (
-      <main id="main-content" className="min-h-screen flex items-center justify-center p-4 sm:p-6" style={{ backgroundColor: '#F8F9FA' }}>
+      <main id="main-content" className="min-h-screen flex items-center justify-center p-4 sm:p-6 bg-[#F8F9FA] dark:bg-gray-900">
         <div className="w-full max-w-md">
-          <div className="bg-white rounded-lg shadow-sm p-8 sm:p-10 text-center">
-            <svg className="animate-spin h-8 w-8 text-gray-900 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-8 sm:p-10 text-center">
+            <svg className="animate-spin h-8 w-8 text-gray-900 dark:text-gray-100 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
-            <Body16 className="mt-4 text-gray-600">Verifying reset link...</Body16>
+            <Body16 className="mt-4 text-gray-600 dark:text-gray-400">Verifying reset link...</Body16>
           </div>
         </div>
       </main>
@@ -85,17 +85,17 @@ export default function ResetPasswordPage() {
   // Invalid or expired session
   if (validSession === false) {
     return (
-      <main id="main-content" className="min-h-screen flex items-center justify-center p-4 sm:p-6" style={{ backgroundColor: '#F8F9FA' }}>
+      <main id="main-content" className="min-h-screen flex items-center justify-center p-4 sm:p-6 bg-[#F8F9FA] dark:bg-gray-900">
         <div className="w-full max-w-md">
-          <div className="bg-white rounded-lg shadow-sm p-8 sm:p-10">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-8 sm:p-10">
             <div className="text-center mb-6">
-              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </div>
               <Heading1 className="text-2xl mb-3">Invalid or Expired Link</Heading1>
-              <Body16 className="text-gray-600 mb-6">
+              <Body16 className="text-gray-600 dark:text-gray-400 mb-6">
                 This password reset link is invalid or has expired. Password reset links are only valid for 1 hour.
               </Body16>
               <a
@@ -112,19 +112,19 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <main id="main-content" className="min-h-screen flex items-center justify-center p-4 sm:p-6" style={{ backgroundColor: '#F8F9FA' }}>
+    <main id="main-content" className="min-h-screen flex items-center justify-center p-4 sm:p-6 bg-[#F8F9FA] dark:bg-gray-900">
       <div className="w-full max-w-md">
-        <div className="bg-white rounded-lg shadow-sm p-8 sm:p-10">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-8 sm:p-10">
           <div className="mb-8">
             <Heading1 className="text-2xl mb-2">Create New Password</Heading1>
-            <Body16 className="text-gray-600">
+            <Body16 className="text-gray-600 dark:text-gray-400">
               Choose a strong password for your account.
             </Body16>
           </div>
 
           <form onSubmit={handlePasswordReset} className="space-y-4">
             <div>
-              <label htmlFor="password-input" className="block mb-2 text-sm font-medium text-gray-700">
+              <label htmlFor="password-input" className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
                 New Password
               </label>
               <div className="relative">
@@ -135,14 +135,14 @@ export default function ResetPasswordPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   aria-required="true"
-                  className="w-full px-4 py-3 pr-12 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rb-blue focus:border-transparent transition-all"
+                  className="w-full px-4 py-3 pr-12 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-rb-blue focus:border-transparent transition-all dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400"
                   placeholder="Enter new password"
                   minLength={6}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors p-1 rounded"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors p-1 rounded"
                   aria-label={showPassword ? "Hide password" : "Show password"}
                 >
                   {showPassword ? (
@@ -157,11 +157,11 @@ export default function ResetPasswordPage() {
                   )}
                 </button>
               </div>
-              <Body16 className="text-xs text-gray-500 mt-1">Must be at least 6 characters</Body16>
+              <Body16 className="text-xs text-gray-500 dark:text-gray-500 mt-1">Must be at least 6 characters</Body16>
             </div>
 
             <div>
-              <label htmlFor="confirm-password-input" className="block mb-2 text-sm font-medium text-gray-700">
+              <label htmlFor="confirm-password-input" className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
                 Confirm New Password
               </label>
               <div className="relative">
@@ -172,14 +172,14 @@ export default function ResetPasswordPage() {
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required
                   aria-required="true"
-                  className="w-full px-4 py-3 pr-12 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rb-blue focus:border-transparent transition-all"
+                  className="w-full px-4 py-3 pr-12 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-rb-blue focus:border-transparent transition-all dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400"
                   placeholder="Confirm new password"
                   minLength={6}
                 />
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors p-1 rounded"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors p-1 rounded"
                   aria-label={showConfirmPassword ? "Hide password" : "Show password"}
                 >
                   {showConfirmPassword ? (
@@ -197,8 +197,8 @@ export default function ResetPasswordPage() {
             </div>
 
             {error && (
-              <div role="alert" className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                <Body16 className="text-red-600 text-sm">{error}</Body16>
+              <div role="alert" className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                <Body16 className="text-red-600 dark:text-red-300 text-sm">{error}</Body16>
               </div>
             )}
 

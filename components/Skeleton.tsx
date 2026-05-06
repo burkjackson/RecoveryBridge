@@ -8,7 +8,7 @@ interface SkeletonProps {
 export function Skeleton({ className = '' }: SkeletonProps) {
   return (
     <div
-      className={`animate-pulse bg-gray-200 rounded ${className}`}
+      className={`animate-pulse bg-gray-200 dark:bg-gray-700 rounded ${className}`}
       aria-hidden="true"
     />
   )
@@ -17,7 +17,7 @@ export function Skeleton({ className = '' }: SkeletonProps) {
 // Skeleton for dashboard role cards (mobile-optimized)
 export function SkeletonRoleCard() {
   return (
-    <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-sm space-y-4">
+    <div className="bg-white dark:bg-gray-800 rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-sm space-y-4">
       {/* Icon + Title */}
       <div className="flex items-center gap-3">
         <Skeleton className="w-8 h-8 rounded-full" />
@@ -53,7 +53,7 @@ export function SkeletonChatList() {
   return (
     <div className="space-y-3">
       {[1, 2, 3].map((i) => (
-        <div key={i} className="bg-white rounded-xl p-4 shadow-sm">
+        <div key={i} className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm">
           <div className="flex items-start gap-3">
             {/* Avatar */}
             <Skeleton className="w-12 h-12 rounded-full flex-shrink-0" />
@@ -76,7 +76,7 @@ export function SkeletonChatList() {
 // Skeleton for listener cards (mobile-optimized)
 export function SkeletonListenerCard() {
   return (
-    <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-sm space-y-4">
+    <div className="bg-white dark:bg-gray-800 rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-sm space-y-4">
       <div className="flex items-center gap-4">
         {/* Avatar */}
         <Skeleton className="w-16 h-16 rounded-full flex-shrink-0" />
@@ -96,7 +96,7 @@ export function SkeletonListenerCard() {
 // Skeleton for profile page (mobile-optimized)
 export function SkeletonProfile() {
   return (
-    <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-sm space-y-6">
+    <div className="bg-white dark:bg-gray-800 rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-sm space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
         <Skeleton className="w-20 h-20 rounded-full flex-shrink-0" />
@@ -130,7 +130,7 @@ export function SkeletonProfile() {
 // Skeleton for admin tables (mobile-optimized)
 export function SkeletonAdminRow() {
   return (
-    <div className="border border-gray-200 rounded-lg p-4 space-y-3">
+    <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 space-y-3">
       <div className="flex justify-between items-start">
         <div className="flex-1 space-y-2">
           <Skeleton className="h-5 w-3/4" />
@@ -157,7 +157,7 @@ export function SkeletonPage({ message = "Loading..." }: { message?: string }) {
           <Skeleton className="w-16 h-16 rounded-full" />
         </div>
         {/* Message */}
-        <p className="text-rb-gray" role="status" aria-live="polite">
+        <p className="text-rb-gray dark:text-gray-400" role="status" aria-live="polite">
           {message}
         </p>
       </div>

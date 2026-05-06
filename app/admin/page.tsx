@@ -524,23 +524,23 @@ export default function AdminPage() {
 
   if (loading) {
     return (
-      <main id="main-content" className="min-h-screen p-4 sm:p-6" style={{ backgroundColor: '#F8F9FA' }}>
+      <main id="main-content" className="min-h-screen p-4 sm:p-6 bg-[#F8F9FA] dark:bg-gray-900">
         <div className="max-w-7xl mx-auto">
           {/* Header skeleton */}
           <div className="mb-6 sm:mb-8">
-            <div className="h-8 bg-gray-200 rounded animate-pulse w-48 mb-2" />
-            <div className="h-4 bg-gray-200 rounded animate-pulse w-56" />
+            <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-48 mb-2" />
+            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-56" />
           </div>
 
           {/* Tab skeleton */}
           <div className="flex gap-2 mb-6">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-10 w-24 bg-gray-200 rounded-lg animate-pulse" />
+              <div key={i} className="h-10 w-24 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse" />
             ))}
           </div>
 
           {/* Content skeleton */}
-          <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-sm">
+          <div className="bg-white dark:bg-gray-800 rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-sm">
             <div className="space-y-4" role="status" aria-label="Loading admin panel">
               <SkeletonAdminRow />
               <SkeletonAdminRow />
@@ -557,7 +557,7 @@ export default function AdminPage() {
   }
 
   return (
-    <main id="main-content" className="min-h-screen p-4 sm:p-6" style={{ backgroundColor: '#F8F9FA' }}>
+    <main id="main-content" className="min-h-screen p-4 sm:p-6 bg-[#F8F9FA] dark:bg-gray-900">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-6 sm:mb-8 flex items-center justify-between">
@@ -580,7 +580,7 @@ export default function AdminPage() {
             className={`px-4 py-2 rounded-lg whitespace-nowrap ${
               activeTab === 'reports'
                 ? 'bg-rb-blue text-white'
-                : 'bg-white text-[#2D3436] hover:bg-gray-50'
+                : 'bg-white dark:bg-gray-800 text-[#2D3436] dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-700/50'
             }`}
           >
             📋 Reports
@@ -590,7 +590,7 @@ export default function AdminPage() {
             className={`px-4 py-2 rounded-lg whitespace-nowrap ${
               activeTab === 'blocks'
                 ? 'bg-rb-blue text-white'
-                : 'bg-white text-[#2D3436] hover:bg-gray-50'
+                : 'bg-white dark:bg-gray-800 text-[#2D3436] dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-700/50'
             }`}
           >
             🚫 Blocks
@@ -600,7 +600,7 @@ export default function AdminPage() {
             className={`px-4 py-2 rounded-lg whitespace-nowrap ${
               activeTab === 'sessions'
                 ? 'bg-rb-blue text-white'
-                : 'bg-white text-[#2D3436] hover:bg-gray-50'
+                : 'bg-white dark:bg-gray-800 text-[#2D3436] dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-700/50'
             }`}
           >
             💬 Sessions
@@ -610,7 +610,7 @@ export default function AdminPage() {
             className={`px-4 py-2 rounded-lg whitespace-nowrap ${
               activeTab === 'users'
                 ? 'bg-rb-blue text-white'
-                : 'bg-white text-[#2D3436] hover:bg-gray-50'
+                : 'bg-white dark:bg-gray-800 text-[#2D3436] dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-700/50'
             }`}
           >
             👥 Users
@@ -620,7 +620,7 @@ export default function AdminPage() {
             className={`px-4 py-2 rounded-lg whitespace-nowrap ${
               activeTab === 'signups'
                 ? 'bg-rb-blue text-white'
-                : 'bg-white text-[#2D3436] hover:bg-gray-50'
+                : 'bg-white dark:bg-gray-800 text-[#2D3436] dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-700/50'
             }`}
           >
             🆕 Sign-Ups
@@ -630,7 +630,7 @@ export default function AdminPage() {
             className={`px-4 py-2 rounded-lg whitespace-nowrap ${
               activeTab === 'stories'
                 ? 'bg-rb-blue text-white'
-                : 'bg-white text-[#2D3436] hover:bg-gray-50'
+                : 'bg-white dark:bg-gray-800 text-[#2D3436] dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-700/50'
             }`}
           >
             📝 Stories
@@ -638,7 +638,7 @@ export default function AdminPage() {
         </div>
 
         {/* Content */}
-        <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-sm">
+        <div className="bg-white dark:bg-gray-800 rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-sm">
           {/* Reports Tab */}
           {activeTab === 'reports' && (
             <div>
@@ -648,21 +648,21 @@ export default function AdminPage() {
               ) : (
                 <div className="space-y-4">
                   {reports.map((report) => (
-                    <div key={report.id} className="border border-gray-200 rounded-lg p-4">
+                    <div key={report.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
                       <div className="flex items-start justify-between mb-2">
                         <div>
-                          <Body16 className="font-semibold">
+                          <Body16 className="font-semibold dark:text-gray-100">
                             {report.reporter?.display_name || 'Unknown'} reported {report.reported_user?.display_name || 'Unknown'}
                           </Body16>
-                          <Body16 className="text-sm text-rb-gray">
+                          <Body16 className="text-sm text-rb-gray dark:text-gray-400">
                             {new Date(report.created_at).toLocaleString()}
                           </Body16>
                         </div>
                         <span className={`px-3 py-1 rounded-full text-xs ${
-                          report.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                          report.status === 'reviewing' ? 'bg-blue-100 text-blue-800' :
-                          report.status === 'resolved' ? 'bg-green-100 text-green-800' :
-                          'bg-gray-100 text-gray-800'
+                          report.status === 'pending' ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300' :
+                          report.status === 'reviewing' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300' :
+                          report.status === 'resolved' ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300' :
+                          'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300'
                         }`}>
                           {report.status}
                         </span>
@@ -784,17 +784,17 @@ export default function AdminPage() {
               ) : (
                 <div className="space-y-4">
                   {blocks.map((block) => (
-                    <div key={block.id} className="border border-red-200 rounded-lg p-4 bg-red-50">
+                    <div key={block.id} className="border border-red-200 dark:border-red-800 rounded-lg p-4 bg-red-50 dark:bg-red-900/20">
                       <div className="flex items-start justify-between mb-2">
-                        <Body16 className="font-semibold">
+                        <Body16 className="font-semibold dark:text-gray-100">
                           {block.user?.display_name || 'Unknown User'}
                         </Body16>
                         <span className="px-3 py-1 rounded-full text-xs bg-red-600 text-white">
                           {block.block_type}
                         </span>
                       </div>
-                      <Body16 className="mb-2"><strong>Reason:</strong> {block.reason}</Body16>
-                      <Body16 className="text-sm text-rb-gray mb-3">
+                      <Body16 className="mb-2 dark:text-gray-300"><strong>Reason:</strong> {block.reason}</Body16>
+                      <Body16 className="text-sm text-rb-gray dark:text-gray-400 mb-3">
                         Blocked: {new Date(block.blocked_at).toLocaleString()}
                         {block.expires_at && ` • Expires: ${new Date(block.expires_at).toLocaleString()}`}
                       </Body16>
@@ -821,18 +821,18 @@ export default function AdminPage() {
               <Body18 className="mb-4">Chat Sessions ({sessions.length})</Body18>
               <div className="space-y-3">
                 {sessions.map((session) => (
-                  <div key={session.id} className="border border-gray-200 rounded-lg p-4">
+                  <div key={session.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
                     <div className="flex items-start justify-between mb-2">
-                      <Body16>
+                      <Body16 className="dark:text-gray-100">
                         <strong>{session.listener?.display_name || 'Unknown'}</strong> ↔ <strong>{session.seeker?.display_name || 'Unknown'}</strong>
                       </Body16>
                       <span className={`px-3 py-1 rounded-full text-xs ${
-                        session.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                        session.status === 'active' ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300' : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300'
                       }`}>
                         {session.status}
                       </span>
                     </div>
-                    <Body16 className="text-sm text-rb-gray mb-2">
+                    <Body16 className="text-sm text-rb-gray dark:text-gray-400 mb-2">
                       Started: {new Date(session.created_at).toLocaleString()}
                     </Body16>
                     <div className="flex gap-2 flex-wrap">
@@ -864,7 +864,7 @@ export default function AdminPage() {
                             setTranscriptConfirm({ show: true, sessionId: session.id })
                           }
                         }}
-                        className="min-h-[44px] px-4 py-3 border border-gray-300 text-rb-gray rounded text-sm hover:bg-gray-50"
+                        className="min-h-[44px] px-4 py-3 border border-gray-300 dark:border-gray-600 text-rb-gray dark:text-gray-400 rounded text-sm hover:bg-gray-50 dark:hover:bg-gray-700"
                       >
                         💬 {expandedTranscript === session.id ? 'Hide Transcript' : 'View Transcript'}
                       </button>
@@ -926,18 +926,18 @@ export default function AdminPage() {
               <Body18 className="mb-4">All Users ({users.length})</Body18>
               <div className="space-y-3">
                 {users.map((user) => (
-                  <div key={user.id} className="border border-gray-200 rounded-lg p-4">
+                  <div key={user.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
                     <div className="flex items-start justify-between mb-2">
                       <div>
-                        <Body16 className="font-semibold">
+                        <Body16 className="font-semibold dark:text-gray-100">
                           {user.display_name}
-                          {user.is_admin && <span className="ml-2 px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded">Admin</span>}
+                          {user.is_admin && <span className="ml-2 px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 text-xs rounded">Admin</span>}
                         </Body16>
-                        <Body16 className="text-sm text-rb-gray">
+                        <Body16 className="text-sm text-rb-gray dark:text-gray-400">
                           {user.user_role} • {user.role_state}
                         </Body16>
                       </div>
-                      <Body16 className="text-xs text-rb-gray">
+                      <Body16 className="text-xs text-rb-gray dark:text-gray-400">
                         Joined {new Date(user.created_at).toLocaleDateString()}
                       </Body16>
                     </div>
@@ -980,16 +980,16 @@ export default function AdminPage() {
                 <>
                   {/* Action toolbar — shown when rows are selected */}
                   <div className={`flex flex-wrap items-center gap-2 mb-3 p-3 rounded-lg transition-all ${
-                    selectedIds.size > 0 ? 'bg-rb-blue-light border border-rb-blue/20' : 'bg-gray-50 border border-transparent'
+                    selectedIds.size > 0 ? 'bg-rb-blue-light dark:bg-gray-700 border border-rb-blue/20 dark:border-gray-600' : 'bg-gray-50 dark:bg-gray-700/50 border border-transparent'
                   }`}>
-                    <label className="flex items-center gap-2 cursor-pointer select-none min-h-[36px] pr-3 border-r border-gray-200">
+                    <label className="flex items-center gap-2 cursor-pointer select-none min-h-[36px] pr-3 border-r border-gray-200 dark:border-gray-600">
                       <input
                         type="checkbox"
                         className="w-4 h-4 rounded accent-rb-blue"
                         checked={signups.length > 0 && signups.every(u => selectedIds.has(u.id))}
                         onChange={toggleSelectAll}
                       />
-                      <span className="text-sm text-rb-gray whitespace-nowrap">
+                      <span className="text-sm text-rb-gray dark:text-gray-400 whitespace-nowrap">
                         {selectedIds.size > 0 ? `${selectedIds.size} selected` : 'Select all'}
                       </span>
                     </label>
@@ -1016,23 +1016,23 @@ export default function AdminPage() {
                         </button>
                       </>
                     ) : (
-                      <span className="text-xs text-rb-gray">Select users to copy emails or mark as contacted</span>
+                      <span className="text-xs text-rb-gray dark:text-gray-400">Select users to copy emails or mark as contacted</span>
                     )}
                   </div>
 
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                       <thead>
-                        <tr className="border-b border-gray-200 text-left">
+                        <tr className="border-b border-gray-200 dark:border-gray-700 text-left">
                           <th className="pb-3 pr-3 w-8" />
-                          <th className="pb-3 pr-4 font-semibold text-rb-dark">Name</th>
-                          <th className="pb-3 pr-4 font-semibold text-rb-dark">Email</th>
-                          <th className="pb-3 pr-4 font-semibold text-rb-dark hidden sm:table-cell">Role</th>
-                          <th className="pb-3 pr-4 font-semibold text-rb-dark hidden lg:table-cell">Source</th>
-                          <th className="pb-3 font-semibold text-rb-dark hidden md:table-cell">Joined</th>
+                          <th className="pb-3 pr-4 font-semibold text-rb-dark dark:text-gray-100">Name</th>
+                          <th className="pb-3 pr-4 font-semibold text-rb-dark dark:text-gray-100">Email</th>
+                          <th className="pb-3 pr-4 font-semibold text-rb-dark dark:text-gray-100 hidden sm:table-cell">Role</th>
+                          <th className="pb-3 pr-4 font-semibold text-rb-dark dark:text-gray-100 hidden lg:table-cell">Source</th>
+                          <th className="pb-3 font-semibold text-rb-dark dark:text-gray-100 hidden md:table-cell">Joined</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-gray-100">
+                      <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
                         {signups.map((user) => {
                           const contacted = contactedIds.has(user.id)
                           const selected = selectedIds.has(user.id)
@@ -1041,9 +1041,9 @@ export default function AdminPage() {
                               key={user.id}
                               onClick={() => toggleSelect(user.id)}
                               className={`cursor-pointer transition-colors ${
-                                selected ? 'bg-rb-blue-light' :
-                                contacted ? 'bg-gray-50 opacity-60' :
-                                'hover:bg-gray-50'
+                                selected ? 'bg-rb-blue-light dark:bg-gray-700' :
+                                contacted ? 'bg-gray-50 dark:bg-gray-700/50 opacity-60' :
+                                'hover:bg-gray-50 dark:hover:bg-gray-700/50'
                               }`}
                             >
                               <td className="py-3 pr-3">
@@ -1057,15 +1057,15 @@ export default function AdminPage() {
                               </td>
                               <td className="py-3 pr-4">
                                 <div className="flex items-center gap-2 flex-wrap">
-                                  <span className={`font-medium ${contacted ? 'text-rb-gray' : 'text-rb-dark'}`}>
+                                  <span className={`font-medium ${contacted ? 'text-rb-gray dark:text-gray-500' : 'text-rb-dark dark:text-gray-100'}`}>
                                     {user.display_name}
                                   </span>
                                   {user.is_admin && (
-                                    <span className="px-1.5 py-0.5 bg-purple-100 text-purple-800 text-xs rounded">Admin</span>
+                                    <span className="px-1.5 py-0.5 bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 text-xs rounded">Admin</span>
                                   )}
                                   {contacted && (
                                     <span
-                                      className="px-1.5 py-0.5 bg-green-100 text-green-700 text-xs rounded cursor-pointer hover:bg-red-100 hover:text-red-700 transition"
+                                      className="px-1.5 py-0.5 bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-300 text-xs rounded cursor-pointer hover:bg-red-100 dark:hover:bg-red-900/20 hover:text-red-700 dark:hover:text-red-300 transition"
                                       title="Click to undo"
                                       onClick={e => { e.stopPropagation(); unmarkContacted(user.id) }}
                                     >
@@ -1076,13 +1076,13 @@ export default function AdminPage() {
                               </td>
                               <td className="py-3 pr-4">
                                 <div className="flex items-center gap-2">
-                                  <span className="text-rb-gray font-mono text-xs break-all">
+                                  <span className="text-rb-gray dark:text-gray-400 font-mono text-xs break-all">
                                     {user.email || '—'}
                                   </span>
                                   {user.email && (
                                     <button
                                       onClick={e => { e.stopPropagation(); copyEmail(user.id, user.email) }}
-                                      className="shrink-0 px-2 py-1 text-xs rounded bg-gray-100 hover:bg-rb-blue hover:text-white transition"
+                                      className="shrink-0 px-2 py-1 text-xs rounded bg-gray-100 dark:bg-gray-700 hover:bg-rb-blue hover:text-white transition"
                                       title="Copy email"
                                     >
                                       {copiedId === user.id ? '✓' : '📋'}
@@ -1090,13 +1090,13 @@ export default function AdminPage() {
                                   )}
                                 </div>
                               </td>
-                              <td className="py-3 pr-4 hidden sm:table-cell text-rb-gray">
+                              <td className="py-3 pr-4 hidden sm:table-cell text-rb-gray dark:text-gray-400">
                                 {user.user_role === 'person_in_recovery' ? 'Person in Recovery'
                                   : user.user_role === 'professional' ? 'Allies in Long-Term Recovery'
                                   : user.user_role === 'ally' ? 'Recovery Support'
                                   : <span className="italic text-gray-400">Not set</span>}
                               </td>
-                              <td className="py-3 pr-4 hidden lg:table-cell text-rb-gray text-xs">
+                              <td className="py-3 pr-4 hidden lg:table-cell text-rb-gray dark:text-gray-400 text-xs">
                                 {user.referral_source === 'facebook' ? '👍 Facebook'
                                   : user.referral_source === 'instagram' ? '📸 Instagram'
                                   : user.referral_source === 'threads' ? '🧵 Threads'
@@ -1107,7 +1107,7 @@ export default function AdminPage() {
                                   : user.referral_source === 'other' ? '💬 Other'
                                   : <span className="italic text-gray-300">—</span>}
                               </td>
-                              <td className="py-3 hidden md:table-cell text-rb-gray text-xs">
+                              <td className="py-3 hidden md:table-cell text-rb-gray dark:text-gray-400 text-xs">
                                 {new Date(user.created_at).toLocaleString('en-US', {
                                   month: 'short', day: 'numeric', year: 'numeric',
                                   hour: 'numeric', minute: '2-digit', hour12: true,
@@ -1131,13 +1131,13 @@ export default function AdminPage() {
                 <div className="flex gap-2">
                   <button
                     onClick={() => setStoriesFilter('pending')}
-                    className={`px-3 py-1.5 rounded-lg text-sm font-semibold ${storiesFilter === 'pending' ? 'bg-amber-100 text-amber-800' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                    className={`px-3 py-1.5 rounded-lg text-sm font-semibold ${storiesFilter === 'pending' ? 'bg-amber-100 dark:bg-amber-900/20 text-amber-800 dark:text-amber-200' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'}`}
                   >
                     Pending ({stories.filter(s => s.status === 'submitted').length})
                   </button>
                   <button
                     onClick={() => setStoriesFilter('all')}
-                    className={`px-3 py-1.5 rounded-lg text-sm font-semibold ${storiesFilter === 'all' ? 'bg-rb-blue text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                    className={`px-3 py-1.5 rounded-lg text-sm font-semibold ${storiesFilter === 'all' ? 'bg-rb-blue text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'}`}
                   >
                     All ({stories.length})
                   </button>
@@ -1163,26 +1163,26 @@ export default function AdminPage() {
                 return (
                   <div className="space-y-3">
                     {filtered.map((story) => (
-                      <div key={story.id} className="border border-gray-200 rounded-xl p-4">
+                      <div key={story.id} className="border border-gray-200 dark:border-gray-700 rounded-xl p-4">
                         <div className="flex items-start justify-between gap-3 mb-3">
                           <div className="flex-1 min-w-0">
-                            <p className="font-semibold text-[#2D3436] truncate">{story.title}</p>
-                            <p className="text-xs text-gray-500 mt-0.5">
+                            <p className="font-semibold text-[#2D3436] dark:text-gray-100 truncate">{story.title}</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                               by {story.author?.display_name ?? 'Unknown'} ·{' '}
                               {new Date(story.updated_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                             </p>
                           </div>
                           <span className={`flex-shrink-0 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${
-                            story.status === 'published' ? 'bg-green-100 text-green-700' :
-                            story.status === 'submitted' ? 'bg-amber-100 text-amber-700' :
-                            'bg-gray-100 text-gray-600'
+                            story.status === 'published' ? 'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-300' :
+                            story.status === 'submitted' ? 'bg-amber-100 dark:bg-amber-900/20 text-amber-700 dark:text-amber-200' :
+                            'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
                           }`}>
                             {story.status === 'submitted' ? 'Pending' : story.status.charAt(0).toUpperCase() + story.status.slice(1)}
                           </span>
                         </div>
 
                         {story.status === 'published' && (
-                          <p className="text-xs text-gray-400 mb-3">
+                          <p className="text-xs text-gray-400 dark:text-gray-500 mb-3">
                             Published {story.published_at ? new Date(story.published_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : ''}
                             {' · '}
                             <a href={`/stories/${story.slug}`} target="_blank" rel="noopener noreferrer" className="text-rb-blue hover:underline">
@@ -1199,7 +1199,7 @@ export default function AdminPage() {
                               onChange={(e) => setRejectNote(e.target.value)}
                               placeholder="Optional: explain what needs to change…"
                               rows={2}
-                              className="w-full px-3 py-2 border border-amber-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-300 resize-none"
+                              className="w-full px-3 py-2 border border-amber-200 dark:border-amber-800 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-300 resize-none dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400"
                             />
                           </div>
                         )}
@@ -1240,7 +1240,7 @@ export default function AdminPage() {
                                   </button>
                                   <button
                                     onClick={() => { setRejectingStoryId(null); setRejectNote('') }}
-                                    className="min-h-[36px] px-3 py-1.5 text-sm text-gray-500 border border-gray-200 rounded-lg hover:bg-gray-50 transition"
+                                    className="min-h-[36px] px-3 py-1.5 text-sm text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition"
                                   >
                                     Cancel
                                   </button>
@@ -1269,8 +1269,8 @@ export default function AdminPage() {
                                 }}
                                 className={`min-h-[36px] px-4 py-1.5 rounded-lg text-sm font-medium transition ${
                                   story.is_pinned
-                                    ? 'bg-amber-100 text-amber-800 hover:bg-amber-200'
-                                    : 'border border-gray-200 text-gray-600 hover:bg-gray-50'
+                                    ? 'bg-amber-100 dark:bg-amber-900/20 text-amber-800 dark:text-amber-200 hover:bg-amber-200 dark:hover:bg-amber-900/40'
+                                    : 'border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
                                 }`}
                               >
                                 {story.is_pinned ? '📌 Pinned' : '📌 Pin'}
@@ -1285,7 +1285,7 @@ export default function AdminPage() {
                                     setErrorModal({ show: true, message: err.message })
                                   }
                                 }}
-                                className="min-h-[36px] px-4 py-1.5 border border-gray-200 text-gray-600 rounded-lg text-sm hover:bg-gray-50 transition"
+                                className="min-h-[36px] px-4 py-1.5 border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition"
                               >
                                 Unpublish
                               </button>
@@ -1343,7 +1343,7 @@ export default function AdminPage() {
             <textarea
               value={blockInput.reason}
               onChange={(e) => setBlockInput({ ...blockInput, reason: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-rb-blue"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-rb-blue dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400"
               rows={3}
               placeholder="Enter the reason for blocking this user..."
             />
@@ -1353,7 +1353,7 @@ export default function AdminPage() {
             <select
               value={blockInput.type}
               onChange={(e) => setBlockInput({ ...blockInput, type: e.target.value as 'temporary' | 'permanent' })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-rb-blue"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-rb-blue dark:bg-gray-700 dark:text-gray-100"
             >
               <option value="temporary">Temporary (7 days)</option>
               <option value="permanent">Permanent</option>
@@ -1402,8 +1402,8 @@ export default function AdminPage() {
       >
         <div className="space-y-3">
           <p>You are about to permanently delete user: <strong>{deleteUserModal.displayName}</strong></p>
-          <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-            <p className="font-semibold mb-2">This will remove ALL of their data:</p>
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
+            <p className="font-semibold mb-2 dark:text-gray-200">This will remove ALL of their data:</p>
             <ul className="list-disc list-inside space-y-1 text-sm">
               <li>Profile information</li>
               <li>Chat sessions</li>
@@ -1428,14 +1428,14 @@ export default function AdminPage() {
       >
         <div className="space-y-4">
           <p>To proceed with deleting <strong>{deleteUserModal.displayName}</strong>, type their name exactly as shown below:</p>
-          <div className="bg-gray-100 border border-gray-300 rounded-lg p-3 text-center">
-            <code className="font-mono font-semibold">{deleteUserModal.displayName}</code>
+          <div className="bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg p-3 text-center">
+            <code className="font-mono font-semibold dark:text-gray-100">{deleteUserModal.displayName}</code>
           </div>
           <input
             type="text"
             value={deleteUserModal.confirmName}
             onChange={(e) => setDeleteUserModal({ ...deleteUserModal, confirmName: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-rb-blue"
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-rb-blue dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400"
             placeholder="Type the name to confirm deletion"
           />
         </div>
@@ -1457,8 +1457,8 @@ export default function AdminPage() {
       >
         <div className="space-y-3">
           <p>You are about to view a private chat session for moderation purposes.</p>
-          <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-            <p className="text-sm text-amber-800">
+          <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
+            <p className="text-sm text-amber-800 dark:text-amber-200">
               ⚠️ This action will be recorded in the admin audit log.
             </p>
           </div>
@@ -1484,7 +1484,7 @@ export default function AdminPage() {
           <textarea
             value={resolutionModal.notes}
             onChange={(e) => setResolutionModal({ ...resolutionModal, notes: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-rb-blue"
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-rb-blue dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400"
             rows={4}
             placeholder="Enter notes about how this report was resolved..."
           />

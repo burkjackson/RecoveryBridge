@@ -212,7 +212,7 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
 
   async function toggleAlwaysAvailable() {
     if (!profile) return
-    
+
     if (!isSubscribed) {
       setError('Please enable push notifications first to use Always Available mode.')
       return
@@ -304,15 +304,15 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
       <>
         <button
           onClick={() => setShowInstructionsModal(true)}
-          className="w-full p-3 bg-blue-50 rounded-lg border border-blue-200 hover:border-blue-400 hover:bg-blue-100 transition-all text-left"
+          className="w-full p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800 hover:border-blue-400 hover:bg-blue-100 transition-all text-left"
         >
           <div className="flex items-center gap-2">
             <span className="text-lg">📱</span>
             <div className="flex-1">
-              <Body16 className="text-sm font-semibold text-blue-900">
+              <Body16 className="text-sm font-semibold text-blue-900 dark:text-blue-200">
                 {platform === 'android' ? 'Install as App for Notifications' : 'Install as Web App for Notifications'}
               </Body16>
-              <Body16 className="text-xs text-blue-700">
+              <Body16 className="text-xs text-blue-700 dark:text-blue-300">
                 Tap for setup instructions →
               </Body16>
             </div>
@@ -332,8 +332,8 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
   // Desktop: push not supported (e.g. Safari on Mac)
   if (!supported && !isMobile) {
     return (
-      <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-        <Body16 className="text-sm text-rb-gray">
+      <div className="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-700">
+        <Body16 className="text-sm text-rb-gray dark:text-gray-400">
           <strong>🔔 Push notifications</strong> aren&apos;t supported in this browser. Try Chrome or Edge for desktop notifications.
         </Body16>
       </div>
@@ -342,17 +342,17 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
 
   if (showIOSInstructions) {
     return (
-      <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+      <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
         <div className="flex items-start gap-2 mb-3">
           <span className="text-xl">📱</span>
           <div>
-            <Body16 className="font-semibold text-[#2D3436] mb-2">
+            <Body16 className="font-semibold text-[#2D3436] dark:text-gray-100 mb-2">
               Enable Notifications on iOS
             </Body16>
-            <Body16 className="text-sm text-rb-gray mb-2">
+            <Body16 className="text-sm text-rb-gray dark:text-gray-400 mb-2">
               To receive notifications on iPhone/iPad, you need to install RecoveryBridge to your home screen:
             </Body16>
-            <ol className="text-sm text-rb-gray space-y-1 ml-4">
+            <ol className="text-sm text-rb-gray dark:text-gray-400 space-y-1 ml-4">
               <li>1. Tap the <strong>Share</strong> button (□↑) in Safari</li>
               <li>2. Scroll down and tap <strong>"Add to Home Screen"</strong></li>
               <li>3. Tap <strong>"Add"</strong></li>
@@ -366,7 +366,7 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
   }
 
   return (
-    <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-lg border border-blue-200 overflow-hidden">
+    <div className="bg-gradient-to-br from-blue-50 to-purple-50 dark:from-gray-800 dark:to-gray-800 rounded-lg border border-blue-200 dark:border-gray-700 overflow-hidden">
       {/* Collapsible Header — always visible */}
       <button
         onClick={() => setExpanded(!expanded)}
@@ -377,8 +377,8 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
         <div className="flex items-center gap-3">
           <span className="text-2xl">🔔</span>
           <div>
-            <Body16 className="font-semibold text-[#2D3436]">Push Notifications</Body16>
-            <Body16 className="text-xs text-rb-gray">
+            <Body16 className="font-semibold text-[#2D3436] dark:text-gray-100">Push Notifications</Body16>
+            <Body16 className="text-xs text-rb-gray dark:text-gray-400">
               {isSubscribed ? (
                 <span className="text-green-700 font-medium">✓ Enabled{alwaysAvailable ? ' · Always Available' : ''}</span>
               ) : (
@@ -387,13 +387,13 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
             </Body16>
           </div>
         </div>
-        <span className="text-gray-400 text-sm flex-shrink-0">{expanded ? '▲' : '▼'}</span>
+        <span className="text-gray-400 dark:text-gray-500 text-sm flex-shrink-0">{expanded ? '▲' : '▼'}</span>
       </button>
 
       {/* Collapsible Body */}
       {expanded && (
         <div className="px-4 pb-4">
-          <Body16 className="text-sm text-rb-gray mb-3">
+          <Body16 className="text-sm text-rb-gray dark:text-gray-400 mb-3">
             Get notified when someone needs support, even when RecoveryBridge isn&apos;t open.
           </Body16>
 
@@ -414,27 +414,27 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
           )}
 
           {successMessage && (
-            <div className="mb-3 p-3 bg-green-50 border-l-4 border-green-500 rounded">
-              <Body16 className="text-sm text-green-700">
+            <div className="mb-3 p-3 bg-green-50 dark:bg-green-900/20 border-l-4 border-green-500 rounded">
+              <Body16 className="text-sm text-green-700 dark:text-green-200">
                 {successMessage}
               </Body16>
             </div>
           )}
 
           {!isPWA && isMobile && (
-            <div className="mb-3 p-4 bg-amber-50 border-l-4 border-amber-500 rounded">
-              <Body16 className="text-sm text-amber-900 font-semibold mb-2">
+            <div className="mb-3 p-4 bg-amber-50 dark:bg-amber-900/20 border-l-4 border-amber-500 rounded">
+              <Body16 className="text-sm text-amber-900 dark:text-amber-200 font-semibold mb-2">
                 ⚠️ Install as PWA Required
               </Body16>
-              <Body16 className="text-sm text-amber-800">
+              <Body16 className="text-sm text-amber-800 dark:text-amber-300">
                 Push notifications only work when RecoveryBridge is installed as a Progressive Web App. Please install to your home screen first, then enable notifications.
               </Body16>
             </div>
           )}
 
           {!isMobile && (
-            <div className="mb-3 p-3 bg-blue-50 border-l-4 border-blue-400 rounded">
-              <Body16 className="text-sm text-blue-800">
+            <div className="mb-3 p-3 bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-400 rounded">
+              <Body16 className="text-sm text-blue-800 dark:text-blue-300">
                 🖥️ <strong>Desktop notifications:</strong> Click &quot;Enable Notifications&quot; and allow when your browser prompts you. Notifications will appear even when the tab is in the background.
               </Body16>
             </div>
@@ -451,9 +451,9 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
 
               {/* iOS tip: how to make notifications stay on screen */}
               {platform === 'ios' && isPWA && (
-                <div className="w-full p-3 bg-blue-50 border border-blue-200 rounded-lg text-left">
-                  <Body16 className="text-xs font-semibold text-blue-900 mb-1">💡 Make alerts stay on screen longer</Body16>
-                  <Body16 className="text-xs text-blue-800 leading-relaxed">
+                <div className="w-full p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg text-left">
+                  <Body16 className="text-xs font-semibold text-blue-900 dark:text-blue-200 mb-1">💡 Make alerts stay on screen longer</Body16>
+                  <Body16 className="text-xs text-blue-800 dark:text-blue-300 leading-relaxed">
                     Go to <strong>Settings → Apps → RecoveryBridge → Notifications</strong> and change <strong>Banner Style</strong> from &ldquo;Temporary&rdquo; to <strong>&ldquo;Persistent&rdquo;</strong>.
                   </Body16>
                 </div>
@@ -463,7 +463,7 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
                 onClick={handleDisableNotifications}
                 disabled={loading}
                 aria-label={loading ? 'Disabling notifications...' : 'Disable push notifications'}
-                className="min-h-[44px] px-6 py-2 bg-white border-2 border-rb-gray text-rb-gray rounded-full text-sm font-semibold hover:border-red-500 hover:text-red-600 transition disabled:opacity-50"
+                className="min-h-[44px] px-6 py-2 bg-white dark:bg-gray-700 border-2 border-rb-gray text-rb-gray dark:text-gray-300 rounded-full text-sm font-semibold hover:border-red-500 hover:text-red-600 transition disabled:opacity-50"
               >
                 {loading ? 'Disabling...' : 'Disable Notifications'}
               </button>
@@ -479,7 +479,7 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
                 {loading ? 'Enabling...' : 'Enable Notifications'}
               </button>
               {!isPWA && isMobile && (
-                <Body16 className="text-xs text-amber-700 text-center">
+                <Body16 className="text-xs text-amber-700 dark:text-amber-300 text-center">
                   Button disabled - install as PWA first
                 </Body16>
               )}
@@ -501,7 +501,7 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
           )}
 
           {/* Always Available Toggle - Peer Support Model */}
-          <div className="mt-4 p-4 bg-white rounded-lg border border-gray-200">
+          <div className="mt-4 p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
             <div className="flex items-start space-x-3">
               <input
                 type="checkbox"
@@ -509,21 +509,21 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
                 checked={alwaysAvailable}
                 onChange={toggleAlwaysAvailable}
                 disabled={loading || !isSubscribed}
-                className="mt-1 h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="mt-1 h-5 w-5 rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
               />
               <div className="flex-1">
                 <div className="flex items-center justify-between">
                   <label
                     htmlFor="alwaysAvailable"
                     className={`block font-medium ${
-                      !isSubscribed ? 'text-gray-400' : 'text-gray-900 cursor-pointer'
+                      !isSubscribed ? 'text-gray-400 dark:text-gray-500' : 'text-gray-900 dark:text-gray-100 cursor-pointer'
                     }`}
                   >
                     Always Available to Listen
                   </label>
                   <button
                     onClick={() => setShowAlwaysAvailableInfo(!showAlwaysAvailableInfo)}
-                    className="text-gray-500 text-sm flex items-center gap-1 hover:text-gray-700 transition-colors"
+                    className="text-gray-500 dark:text-gray-500 text-sm flex items-center gap-1 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
                     type="button"
                     aria-expanded={showAlwaysAvailableInfo}
                     aria-label="Toggle Always Available details"
@@ -535,7 +535,7 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
                 {/* Collapsible dropdown content */}
                 {showAlwaysAvailableInfo && (
                   <div className="mt-3 space-y-2">
-                    <Body16 className="text-sm text-gray-600">
+                    <Body16 className="text-sm text-gray-600 dark:text-gray-400">
                       When you&apos;re marked as &quot;Available to Listen&quot;, this keeps you online indefinitely. You&apos;ll receive push notifications when someone needs support, even when the app is closed.
                     </Body16>
 
@@ -565,7 +565,7 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
 
           {/* Quiet Hours (Do Not Disturb) */}
           {isSubscribed && (
-            <div className="mt-4 p-4 bg-white rounded-lg border border-gray-200">
+            <div className="mt-4 p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
               <div className="flex items-start space-x-3">
                 <input
                   type="checkbox"
@@ -573,45 +573,45 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
                   checked={quietHoursEnabled}
                   onChange={(e) => setQuietHoursEnabled(e.target.checked)}
                   disabled={quietHoursSaving}
-                  className="mt-1 h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:opacity-50"
+                  className="mt-1 h-5 w-5 rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 disabled:opacity-50"
                 />
                 <div className="flex-1">
-                  <label htmlFor="quietHours" className="block font-medium text-gray-900 cursor-pointer">
+                  <label htmlFor="quietHours" className="block font-medium text-gray-900 dark:text-gray-100 cursor-pointer">
                     Quiet Hours
                   </label>
-                  <Body16 className="text-xs text-gray-500 mt-0.5">
+                  <Body16 className="text-xs text-gray-500 dark:text-gray-500 mt-0.5">
                     Pause notifications during set hours (e.g., overnight)
                   </Body16>
 
                   {quietHoursEnabled && (
                     <div className="mt-3 space-y-3">
                       <div className="flex items-center gap-2">
-                        <label htmlFor="qh-start" className="text-sm text-gray-700 w-12">From</label>
+                        <label htmlFor="qh-start" className="text-sm text-gray-700 dark:text-gray-300 w-12">From</label>
                         <input
                           id="qh-start"
                           type="time"
                           value={quietHoursStart}
                           onChange={(e) => setQuietHoursStart(e.target.value)}
-                          className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500"
+                          className="px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500"
                         />
                       </div>
                       <div className="flex items-center gap-2">
-                        <label htmlFor="qh-end" className="text-sm text-gray-700 w-12">Until</label>
+                        <label htmlFor="qh-end" className="text-sm text-gray-700 dark:text-gray-300 w-12">Until</label>
                         <input
                           id="qh-end"
                           type="time"
                           value={quietHoursEnd}
                           onChange={(e) => setQuietHoursEnd(e.target.value)}
-                          className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500"
+                          className="px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500"
                         />
                       </div>
                       <div className="flex items-center gap-2">
-                        <label htmlFor="qh-tz" className="text-sm text-gray-700 w-12">Zone</label>
+                        <label htmlFor="qh-tz" className="text-sm text-gray-700 dark:text-gray-300 w-12">Zone</label>
                         <select
                           id="qh-tz"
                           value={quietHoursTimezone}
                           onChange={(e) => setQuietHoursTimezone(e.target.value)}
-                          className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500 flex-1"
+                          className="px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500 flex-1"
                         >
                           {TIMEZONES.map(tz => (
                             <option key={tz.value} value={tz.value}>{tz.label}</option>

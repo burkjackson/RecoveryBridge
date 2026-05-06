@@ -31,7 +31,7 @@ export default function CrisisResources() {
               role="dialog"
               aria-labelledby="crisis-modal-title"
               aria-modal="true"
-              className="bg-white rounded-2xl p-6 sm:p-8 max-w-md w-full shadow-2xl my-4"
+              className="bg-white dark:bg-gray-800 rounded-2xl p-6 sm:p-8 max-w-md w-full shadow-2xl my-4"
               onClick={(e) => e.stopPropagation()}
             >
             {/* Header */}
@@ -40,14 +40,14 @@ export default function CrisisResources() {
                 <span className="text-3xl" aria-hidden="true">🆘</span>
                 <h2
                   id="crisis-modal-title"
-                  className="text-2xl font-bold text-rb-dark"
+                  className="text-2xl font-bold text-rb-dark dark:text-gray-100"
                 >
                   Crisis Support
                 </h2>
               </div>
               <button
                 onClick={() => setIsOpen(false)}
-                className="text-rb-gray hover:text-rb-dark text-2xl leading-none"
+                className="text-rb-gray dark:text-gray-400 hover:text-rb-dark dark:hover:text-gray-100 text-2xl leading-none"
                 aria-label="Close crisis resources"
               >
                 ×
@@ -55,7 +55,7 @@ export default function CrisisResources() {
             </div>
 
             {/* Message */}
-            <p className="text-rb-dark mb-6 text-lg">
+            <p className="text-rb-dark dark:text-gray-100 mb-6 text-lg">
               If you're in crisis or need immediate support, please reach out to one of these resources:
             </p>
 
@@ -63,10 +63,10 @@ export default function CrisisResources() {
             <div className="space-y-4 mb-6">
               {/* 988 Suicide & Crisis Lifeline */}
               <div className="bg-red-50 border-2 border-red-200 rounded-xl p-4">
-                <h3 className="font-bold text-rb-dark mb-2 text-lg">
+                <h3 className="font-bold text-rb-dark dark:text-gray-100 mb-2 text-lg">
                   988 Suicide & Crisis Lifeline
                 </h3>
-                <div className="space-y-1 text-rb-dark">
+                <div className="space-y-1 text-rb-dark dark:text-gray-100">
                   <p className="flex items-center gap-2">
                     <span className="font-semibold">Call or Text:</span>
                     <a
@@ -76,16 +76,16 @@ export default function CrisisResources() {
                       988
                     </a>
                   </p>
-                  <p className="text-sm text-rb-gray">24/7 • Free & Confidential</p>
+                  <p className="text-sm text-rb-gray dark:text-gray-400">24/7 • Free & Confidential</p>
                 </div>
               </div>
 
               {/* Crisis Text Line */}
-              <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-4">
-                <h3 className="font-bold text-rb-dark mb-2 text-lg">
+              <div className="bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-200 dark:border-blue-800 rounded-xl p-4">
+                <h3 className="font-bold text-rb-dark dark:text-gray-100 mb-2 text-lg">
                   Crisis Text Line
                 </h3>
-                <div className="space-y-1 text-rb-dark">
+                <div className="space-y-1 text-rb-dark dark:text-gray-100">
                   <p className="flex items-center gap-2">
                     <span className="font-semibold">Text:</span>
                     <span className="font-bold">HOME</span>
@@ -97,16 +97,16 @@ export default function CrisisResources() {
                       741741
                     </a>
                   </p>
-                  <p className="text-sm text-rb-gray">24/7 • Free & Confidential</p>
+                  <p className="text-sm text-rb-gray dark:text-gray-400">24/7 • Free & Confidential</p>
                 </div>
               </div>
 
               {/* SAMHSA National Helpline */}
               <div className="bg-purple-50 border-2 border-purple-200 rounded-xl p-4">
-                <h3 className="font-bold text-rb-dark mb-2 text-lg">
+                <h3 className="font-bold text-rb-dark dark:text-gray-100 mb-2 text-lg">
                   SAMHSA National Helpline
                 </h3>
-                <div className="space-y-1 text-rb-dark">
+                <div className="space-y-1 text-rb-dark dark:text-gray-100">
                   <p className="flex items-center gap-2">
                     <span className="font-semibold">Call:</span>
                     <a
@@ -116,19 +116,19 @@ export default function CrisisResources() {
                       1-800-662-4357
                     </a>
                   </p>
-                  <p className="text-sm text-rb-gray">
+                  <p className="text-sm text-rb-gray dark:text-gray-400">
                     Treatment referral & information service
                   </p>
-                  <p className="text-sm text-rb-gray">24/7 • Free & Confidential</p>
+                  <p className="text-sm text-rb-gray dark:text-gray-400">24/7 • Free & Confidential</p>
                 </div>
               </div>
 
               {/* Emergency Services */}
               <div className="bg-orange-50 border-2 border-orange-200 rounded-xl p-4">
-                <h3 className="font-bold text-rb-dark mb-2 text-lg">
+                <h3 className="font-bold text-rb-dark dark:text-gray-100 mb-2 text-lg">
                   Emergency Services
                 </h3>
-                <div className="space-y-1 text-rb-dark">
+                <div className="space-y-1 text-rb-dark dark:text-gray-100">
                   <p className="flex items-center gap-2">
                     <span className="font-semibold">Call:</span>
                     <a
@@ -138,14 +138,14 @@ export default function CrisisResources() {
                       911
                     </a>
                   </p>
-                  <p className="text-sm text-rb-gray">For immediate life-threatening emergencies</p>
+                  <p className="text-sm text-rb-gray dark:text-gray-400">For immediate life-threatening emergencies</p>
                 </div>
               </div>
             </div>
 
             {/* Important Note */}
             <div className="bg-rb-blue/10 border border-rb-blue/30 rounded-lg p-4 mb-6">
-              <p className="text-sm text-rb-dark">
+              <p className="text-sm text-rb-dark dark:text-gray-100">
                 <strong>You're not alone.</strong> These services are staffed by trained counselors who can help you through difficult moments. All calls and texts are confidential.
               </p>
             </div>

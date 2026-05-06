@@ -19,6 +19,11 @@ body {
   color: var(--rb-dark);
 }
 
+.dark body {
+  background-color: #111827;
+  color: #F9FAFB;
+}
+
 /* Typography Utilities */
 .heading-1 {
   @apply text-heading-1 text-rb-dark;

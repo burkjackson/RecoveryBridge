@@ -66,10 +66,10 @@ export default function SignupPage() {
   }
 
   return (
-    <main id="main-content" className="min-h-screen flex items-center justify-center p-4 sm:p-6" style={{ backgroundColor: '#F8F9FA' }}>
+    <main id="main-content" className="min-h-screen flex items-center justify-center p-4 sm:p-6 bg-[#F8F9FA] dark:bg-gray-900">
         <div className="w-full max-w-md">
           {/* Welcome Card */}
-          <div className="bg-white rounded-lg shadow-sm p-8 sm:p-10">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-8 sm:p-10">
             {/* Header */}
             <div className="text-center mb-8">
               <img
@@ -78,12 +78,12 @@ export default function SignupPage() {
                 className="mx-auto mb-4"
                 style={{ width: '400px' }}
               />
-              <Body16 className="text-gray-500 mb-6">Create your account</Body16>
+              <Body16 className="text-gray-500 dark:text-gray-500 mb-6">Create your account</Body16>
             </div>
 
             <form onSubmit={handleSignup} className="space-y-4" aria-label="Sign up form">
               <div>
-                <label htmlFor="displayname-input" className="block mb-2 text-sm font-medium text-gray-700">
+                <label htmlFor="displayname-input" className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
                   Display Name
                 </label>
                 <input
@@ -94,13 +94,13 @@ export default function SignupPage() {
                   required
                   aria-required="true"
                   aria-invalid={error ? "true" : "false"}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rb-blue focus:border-transparent transition-all"
+                  className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-rb-blue focus:border-transparent transition-all dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400"
                   placeholder="Your name"
                 />
               </div>
 
               <div>
-                <label htmlFor="signup-email-input" className="block mb-2 text-sm font-medium text-gray-700">
+                <label htmlFor="signup-email-input" className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
                   Email <span className="text-red-600" aria-label="required">*</span>
                 </label>
                 <input
@@ -112,13 +112,13 @@ export default function SignupPage() {
                   aria-required="true"
                   aria-invalid={error ? "true" : "false"}
                   aria-describedby={error ? "signup-error" : undefined}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rb-blue focus:border-transparent transition-all"
+                  className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-rb-blue focus:border-transparent transition-all dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400"
                   placeholder="you@example.com"
                 />
               </div>
 
               <div>
-                <label htmlFor="signup-password-input" className="block mb-2 text-sm font-medium text-gray-700">
+                <label htmlFor="signup-password-input" className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
                   Password <span className="text-red-600" aria-label="required">*</span>
                 </label>
                 <div className="relative">
@@ -132,7 +132,7 @@ export default function SignupPage() {
                     aria-required="true"
                     aria-invalid={error ? "true" : "false"}
                     aria-describedby="password-help"
-                    className="w-full px-4 py-3 pr-12 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rb-blue focus:border-transparent transition-all"
+                    className="w-full px-4 py-3 pr-12 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-rb-blue focus:border-transparent transition-all dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400"
                     placeholder="At least 6 characters"
                   />
                   <button
@@ -153,14 +153,14 @@ export default function SignupPage() {
                     )}
                   </button>
                 </div>
-                <p id="password-help" className="text-sm text-rb-gray mt-1">
+                <p id="password-help" className="text-sm text-rb-gray dark:text-gray-400 mt-1">
                   Must be at least 6 characters
                 </p>
               </div>
 
               {error && (
-                <div id="signup-error" role="alert" className="p-3 bg-red-50 border-l-4 border-red-500 rounded">
-                  <Body16 className="text-sm text-red-700">{error}</Body16>
+                <div id="signup-error" role="alert" className="p-3 bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 dark:border-red-800 rounded">
+                  <Body16 className="text-sm text-red-700 dark:text-red-300">{error}</Body16>
                 </div>
               )}
 
@@ -183,8 +183,8 @@ export default function SignupPage() {
               </button>
             </form>
 
-            <div className="mt-6 pt-6 border-t border-gray-200">
-              <Body16 className="text-center text-gray-600">
+            <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+              <Body16 className="text-center text-gray-600 dark:text-gray-400">
                 Already have an account?{' '}
                 <a href="/login" className="text-rb-blue font-semibold hover:underline transition">
                   Log in

@@ -21,15 +21,15 @@ export default function NotificationInstructionsModal({
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl max-h-[90vh] overflow-y-auto"
+        className="bg-white dark:bg-gray-800 rounded-2xl p-6 max-w-md w-full shadow-2xl max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
-          <Heading1 className="text-2xl">Enable Notifications</Heading1>
+          <Heading1 className="text-2xl dark:text-gray-100">Enable Notifications</Heading1>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition p-2"
+            className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition p-2"
             aria-label="Close instructions"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -65,14 +65,14 @@ export default function NotificationInstructionsModal({
 function IOSInstructions() {
   return (
     <>
-      <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded mb-6">
-        <Body18 className="font-semibold text-blue-900 mb-2">📱 PWA Required on iPhone</Body18>
-        <Body16 className="text-sm text-blue-800">
+      <div className="bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500 p-4 rounded mb-6">
+        <Body18 className="font-semibold text-blue-900 dark:text-blue-200 mb-2">📱 PWA Required on iPhone</Body18>
+        <Body16 className="text-sm text-blue-800 dark:text-blue-300">
           Push notifications only work when RecoveryBridge is <strong>opened as a Progressive Web App</strong> from your home screen — not from Safari directly.
         </Body16>
       </div>
 
-      <Body16 className="text-gray-600 mb-6">
+      <Body16 className="text-gray-600 dark:text-gray-400 mb-6">
         Follow these steps to get instant notifications when someone needs support:
       </Body16>
 
@@ -87,19 +87,19 @@ function IOSInstructions() {
       </Step>
 
       <Step number={2} title="Open from Your Home Screen">
-        <Body16 className="text-gray-700">
+        <Body16 className="text-gray-700 dark:text-gray-300">
           Go to your home screen and tap the <strong>RecoveryBridge icon</strong> — not Safari.
         </Body16>
       </Step>
 
       <Step number={3} title="Turn On Notifications">
-        <Body16 className="text-gray-700">
+        <Body16 className="text-gray-700 dark:text-gray-300">
           Click the <strong>"Enable Notifications"</strong> button on your dashboard and allow when prompted.
         </Body16>
       </Step>
 
       <Step number={4} title="Make Alerts Stay on Screen (Listeners)">
-        <Body16 className="text-gray-700 mb-2">
+        <Body16 className="text-gray-700 dark:text-gray-300 mb-2">
           By default, iOS dismisses notification banners after a few seconds. If you&apos;re a listener, change this so you never miss a support request:
         </Body16>
         <SubStep letter="a">Open your iPhone <strong>Settings</strong> app.</SubStep>
@@ -111,19 +111,19 @@ function IOSInstructions() {
         </SubStep>
       </Step>
 
-      <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded mb-6">
-        <Body18 className="font-semibold text-amber-900 mb-2">⚠️ Important Reminder</Body18>
-        <Body16 className="text-sm text-amber-800">
+      <div className="bg-amber-50 dark:bg-amber-900/20 border-l-4 border-amber-500 p-4 rounded mb-6">
+        <Body18 className="font-semibold text-amber-900 dark:text-amber-200 mb-2">⚠️ Important Reminder</Body18>
+        <Body16 className="text-sm text-amber-800 dark:text-amber-300">
           Notifications <strong>only work when you open RecoveryBridge as a PWA from your home screen</strong>, not from Safari. If you&apos;re reading this in Safari right now, complete Steps 1 &amp; 2 first!
         </Body16>
       </div>
 
-      <div className="bg-green-50 border-l-4 border-green-500 p-4 rounded mb-6">
-        <Body18 className="font-semibold text-green-900 mb-2">⚡ Always Available Mode</Body18>
-        <Body16 className="text-sm text-green-800 mb-2">
+      <div className="bg-green-50 dark:bg-green-900/20 border-l-4 border-green-500 p-4 rounded mb-6">
+        <Body18 className="font-semibold text-green-900 dark:text-green-200 mb-2">⚡ Always Available Mode</Body18>
+        <Body16 className="text-sm text-green-800 dark:text-green-200 mb-2">
           Once notifications are enabled, listeners can turn on <strong>Always Available Mode</strong> to stay reachable even when the app is closed.
         </Body16>
-        <Body16 className="text-sm text-green-800">
+        <Body16 className="text-sm text-green-800 dark:text-green-200">
           <strong>Requires:</strong> PWA mode + Push notifications enabled. Available for listeners only.
         </Body16>
       </div>
@@ -137,19 +137,19 @@ function IOSInstructions() {
 function AndroidInstructions() {
   return (
     <>
-      <div className="bg-green-50 border-l-4 border-green-500 p-4 rounded mb-6">
-        <Body18 className="font-semibold text-green-900 mb-2">🤖 Great news — Android is easy!</Body18>
-        <Body16 className="text-sm text-green-800">
+      <div className="bg-green-50 dark:bg-green-900/20 border-l-4 border-green-500 p-4 rounded mb-6">
+        <Body18 className="font-semibold text-green-900 dark:text-green-200 mb-2">🤖 Great news — Android is easy!</Body18>
+        <Body16 className="text-sm text-green-800 dark:text-green-200">
           Android Chrome supports push notifications natively. Just install the app and you&apos;re ready to go.
         </Body16>
       </div>
 
-      <Body16 className="text-gray-600 mb-6">
+      <Body16 className="text-gray-600 dark:text-gray-400 mb-6">
         Follow these quick steps:
       </Body16>
 
       <Step number={1} title="Install RecoveryBridge">
-        <Body16 className="text-gray-700 mb-2">
+        <Body16 className="text-gray-700 dark:text-gray-300 mb-2">
           Chrome will show an <strong>"Install app"</strong> banner at the bottom of the screen — tap it. If you don&apos;t see it:
         </Body16>
         <SubStep letter="a">Tap the <strong>⋮ menu</strong> (three dots) in the top-right corner of Chrome.</SubStep>
@@ -158,27 +158,27 @@ function AndroidInstructions() {
       </Step>
 
       <Step number={2} title="Open from Your Home Screen">
-        <Body16 className="text-gray-700">
+        <Body16 className="text-gray-700 dark:text-gray-300">
           Tap the <strong>RecoveryBridge icon</strong> on your home screen to open it as an app.
         </Body16>
       </Step>
 
       <Step number={3} title="Enable Notifications">
-        <Body16 className="text-gray-700">
+        <Body16 className="text-gray-700 dark:text-gray-300">
           Tap <strong>"Enable Notifications"</strong> on your dashboard and tap <strong>Allow</strong> when Chrome asks for permission. That&apos;s it — you&apos;re set!
         </Body16>
       </Step>
 
-      <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded mb-6">
-        <Body18 className="font-semibold text-blue-900 mb-2">💡 Tip</Body18>
-        <Body16 className="text-sm text-blue-800">
+      <div className="bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500 p-4 rounded mb-6">
+        <Body18 className="font-semibold text-blue-900 dark:text-blue-200 mb-2">💡 Tip</Body18>
+        <Body16 className="text-sm text-blue-800 dark:text-blue-300">
           On Android, notifications work in Chrome, Edge, and Samsung Internet. Firefox for Android does not support web push notifications.
         </Body16>
       </div>
 
-      <div className="bg-green-50 border-l-4 border-green-500 p-4 rounded mb-6">
-        <Body18 className="font-semibold text-green-900 mb-2">⚡ Always Available Mode</Body18>
-        <Body16 className="text-sm text-green-800">
+      <div className="bg-green-50 dark:bg-green-900/20 border-l-4 border-green-500 p-4 rounded mb-6">
+        <Body18 className="font-semibold text-green-900 dark:text-green-200 mb-2">⚡ Always Available Mode</Body18>
+        <Body16 className="text-sm text-green-800 dark:text-green-200">
           Once notifications are enabled, listeners can turn on <strong>Always Available Mode</strong> to stay reachable even when the app is closed.
         </Body16>
       </div>
@@ -192,14 +192,14 @@ function AndroidInstructions() {
 function DesktopInstructions() {
   return (
     <>
-      <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded mb-6">
-        <Body18 className="font-semibold text-blue-900 mb-2">🖥️ Desktop Notifications</Body18>
-        <Body16 className="text-sm text-blue-800">
+      <div className="bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500 p-4 rounded mb-6">
+        <Body18 className="font-semibold text-blue-900 dark:text-blue-200 mb-2">🖥️ Desktop Notifications</Body18>
+        <Body16 className="text-sm text-blue-800 dark:text-blue-300">
           Desktop notifications work in Chrome and Edge without any installation required. Safari on Mac does not support web push.
         </Body16>
       </div>
 
-      <Body16 className="text-gray-600 mb-6">
+      <Body16 className="text-gray-600 dark:text-gray-400 mb-6">
         Two options — pick whichever works best for you:
       </Body16>
 
@@ -210,7 +210,7 @@ function DesktopInstructions() {
       </Step>
 
       <Step number={2} title="(Optional) Install as a Desktop App">
-        <Body16 className="text-gray-700 mb-2">
+        <Body16 className="text-gray-700 dark:text-gray-300 mb-2">
           For a cleaner experience, you can install RecoveryBridge as a standalone app:
         </Body16>
         <SubStep letter="a">Look for the <strong>install icon</strong> (⊕ or monitor icon) in the address bar.</SubStep>
@@ -218,9 +218,9 @@ function DesktopInstructions() {
         <SubStep letter="c">RecoveryBridge will open in its own window, separate from your browser.</SubStep>
       </Step>
 
-      <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded mb-6">
-        <Body18 className="font-semibold text-amber-900 mb-2">⚠️ Using Safari on Mac?</Body18>
-        <Body16 className="text-sm text-amber-800">
+      <div className="bg-amber-50 dark:bg-amber-900/20 border-l-4 border-amber-500 p-4 rounded mb-6">
+        <Body18 className="font-semibold text-amber-900 dark:text-amber-200 mb-2">⚠️ Using Safari on Mac?</Body18>
+        <Body16 className="text-sm text-amber-800 dark:text-amber-300">
           Safari does not support web push notifications. Please use <strong>Chrome</strong> or <strong>Edge</strong> for desktop notifications.
         </Body16>
       </div>
@@ -238,7 +238,7 @@ function Step({ number, title, children }: { number: number; title: string; chil
         <div className="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center font-bold flex-shrink-0">
           {number}
         </div>
-        <Body18 className="font-semibold text-gray-900">{title}</Body18>
+        <Body18 className="font-semibold text-gray-900 dark:text-gray-100">{title}</Body18>
       </div>
       <div className="ml-10 space-y-3">{children}</div>
     </div>
@@ -248,10 +248,10 @@ function Step({ number, title, children }: { number: number; title: string; chil
 function SubStep({ letter, warning, children }: { letter: string; warning?: boolean; children: React.ReactNode }) {
   return (
     <div className="flex items-start gap-3">
-      <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-1 ${warning ? 'bg-amber-100' : 'bg-blue-100'}`}>
+      <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-1 ${warning ? 'bg-amber-100 dark:bg-amber-900/40' : 'bg-blue-100 dark:bg-blue-900/40'}`}>
         <span className={`text-xs font-bold ${warning ? 'text-amber-600' : 'text-blue-600'}`}>{letter}</span>
       </div>
-      <Body16 className="text-gray-700">{children}</Body16>
+      <Body16 className="text-gray-700 dark:text-gray-300">{children}</Body16>
     </div>
   )
 }

@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import './globals.css'
 import CrisisResources from '@/components/CrisisResources'
 import ServiceWorkerRegistration from '@/components/ServiceWorkerRegistration'
+import ThemeProvider from '@/components/ThemeProvider'
 
 export const metadata: Metadata = {
   title: 'RecoveryBridge',
@@ -38,10 +39,16 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
+      <head>
+        {/* Prevent flash of incorrect theme */}
+        <script dangerouslySetInnerHTML={{ __html: `(function(){var s=localStorage.getItem('rb-theme');var p=window.matchMedia('(prefers-color-scheme: dark)').matches;if(s==='dark'||(s===null&&p)){document.documentElement.classList.add('dark');}})();` }} />
+      </head>
       <body>
-        <ServiceWorkerRegistration />
-        {children}
-        <CrisisResources />
+        <ThemeProvider>
+          <ServiceWorkerRegistration />
+          {children}
+          <CrisisResources />
+        </ThemeProvider>
       </body>
     </html>
   )

@@ -686,12 +686,12 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   if (loading) {
     return (
       <>
-        <main id="main-content" className="min-h-screen flex flex-col" style={{ backgroundColor: '#F8F9FA' }}>
+        <main id="main-content" className="min-h-screen flex flex-col bg-[#F8F9FA] dark:bg-gray-900">
           {/* Header skeleton */}
-          <div className="bg-white border-b border-gray-200 p-4 sm:p-6">
+          <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4 sm:p-6">
             <div className="max-w-4xl mx-auto">
-              <div className="h-6 bg-gray-200 rounded animate-pulse w-32 mb-2" />
-              <div className="h-4 bg-gray-200 rounded animate-pulse w-24" />
+              <div className="h-6 bg-gray-200 dark:bg-gray-600 rounded animate-pulse w-32 mb-2" />
+              <div className="h-4 bg-gray-200 dark:bg-gray-600 rounded animate-pulse w-24" />
             </div>
           </div>
 
@@ -706,9 +706,9 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
           </div>
 
           {/* Input skeleton */}
-          <div className="bg-white border-t border-gray-200 p-4">
+          <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4">
             <div className="max-w-4xl mx-auto">
-              <div className="h-12 bg-gray-200 rounded-lg animate-pulse" />
+              <div className="h-12 bg-gray-200 dark:bg-gray-600 rounded-lg animate-pulse" />
             </div>
           </div>
         </main>
@@ -718,17 +718,17 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
 
   return (
     <>
-      <main id="main-content" className="min-h-screen flex flex-col" style={{ backgroundColor: '#F8F9FA' }}>
+      <main id="main-content" className="min-h-screen flex flex-col bg-[#F8F9FA] dark:bg-gray-900">
         {/* Header */}
-        <div className="bg-white border-b border-gray-200 p-4 sm:p-6">
+        <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4 sm:p-6">
           <div className="max-w-4xl mx-auto flex justify-between items-center">
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <Body18 className="font-bold text-gray-900">Chat with {otherUserName}</Body18>
+                <Body18 className="font-bold text-gray-900 dark:text-gray-100">Chat with {otherUserName}</Body18>
                 <button
                   onClick={() => setProfileModal(true)}
                   aria-label={`View ${otherUserName}'s profile`}
-                  className="min-h-[32px] min-w-[32px] p-1.5 text-gray-400 hover:text-rb-blue hover:bg-blue-50 rounded-full transition-all"
+                  className="min-h-[32px] min-w-[32px] p-1.5 text-gray-400 dark:text-gray-500 hover:text-rb-blue hover:bg-blue-50 dark:hover:bg-gray-700 rounded-full transition-all"
                   title="View profile"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -741,10 +741,10 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                   {session?.status === 'active' ? (
                     <>
                       <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" aria-label="Active"></span>
-                      <Body16 className="text-sm text-gray-600">Active session</Body16>
+                      <Body16 className="text-sm text-gray-600 dark:text-gray-400">Active session</Body16>
                     </>
                   ) : (
-                    <Body16 className="text-sm text-gray-600">Session ended</Body16>
+                    <Body16 className="text-sm text-gray-600 dark:text-gray-400">Session ended</Body16>
                   )}
                 </div>
                 <PrivacyBadge />
@@ -796,8 +796,8 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
 
         {/* Session ended by other party (shown when feedback modal not yet displayed) */}
         {sessionEndedByOther && !feedbackModal && (
-          <div className="bg-amber-50 border-b border-amber-200 px-4 py-3 text-center">
-            <p className="text-amber-800 font-medium text-sm">
+          <div className="bg-amber-50 dark:bg-amber-900/20 border-b border-amber-200 dark:border-amber-800 px-4 py-3 text-center">
+            <p className="text-amber-800 dark:text-amber-200 font-medium text-sm">
               {otherUserName} has ended this session.
             </p>
           </div>
@@ -814,8 +814,8 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
             {messages.length === 0 ? (
               /* --- V2: Conversation Starters --- */
               session?.status === 'active' ? (
-                <div className="bg-white rounded-lg p-6 shadow-sm">
-                  <Body16 className="text-gray-500 text-center mb-4">Tap a prompt to start the conversation:</Body16>
+                <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
+                  <Body16 className="text-gray-500 dark:text-gray-400 text-center mb-4">Tap a prompt to start the conversation:</Body16>
                   <div className="flex flex-wrap gap-2 justify-center">
                     {(currentUserId === session?.seeker_id
                       ? CONVERSATION_STARTERS.seeker
@@ -825,7 +825,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                         key={starter}
                         onClick={() => sendStarter(starter)}
                         disabled={sending}
-                        className="px-4 py-2.5 bg-blue-50 text-rb-blue border border-blue-200 rounded-full text-sm font-medium hover:bg-blue-100 hover:border-blue-300 transition-all min-h-[44px] disabled:opacity-50"
+                        className="px-4 py-2.5 bg-blue-50 dark:bg-gray-700 text-rb-blue dark:text-blue-300 border border-blue-200 dark:border-gray-600 rounded-full text-sm font-medium hover:bg-blue-100 dark:hover:bg-gray-600 hover:border-blue-300 dark:hover:border-gray-500 transition-all min-h-[44px] disabled:opacity-50"
                       >
                         {starter}
                       </button>
@@ -833,8 +833,8 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                   </div>
                 </div>
               ) : (
-                <div className="bg-white rounded-lg p-8 text-center shadow-sm">
-                  <Body16 className="text-gray-600">No messages in this session.</Body16>
+                <div className="bg-white dark:bg-gray-800 rounded-lg p-8 text-center shadow-sm">
+                  <Body16 className="text-gray-600 dark:text-gray-400">No messages in this session.</Body16>
                 </div>
               )
             ) : (
@@ -853,7 +853,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                         className={`px-4 py-3 rounded-2xl shadow-md ${
                           isOwn
                             ? 'bg-rb-blue text-white'
-                            : 'bg-gray-800 text-white'
+                            : 'bg-gray-800 dark:bg-gray-700 text-white'
                         }`}
                         role="article"
                         aria-label={`Message from ${isOwn ? 'you' : otherUserName}`}
@@ -894,14 +894,14 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                       {/* --- V2: Reaction picker popover --- */}
                       {reactionPickerMessageId === message.id && (
                         <div
-                          className={`absolute ${isOwn ? 'right-0' : 'left-0'} -top-12 bg-white rounded-full shadow-lg border border-gray-200 flex gap-1 p-1.5 z-10`}
+                          className={`absolute ${isOwn ? 'right-0' : 'left-0'} -top-12 bg-white dark:bg-gray-800 rounded-full shadow-lg border border-gray-200 dark:border-gray-700 flex gap-1 p-1.5 z-10`}
                           onClick={(e) => e.stopPropagation()}
                         >
                           {REACTIONS.map((r) => (
                             <button
                               key={r.key}
                               onClick={() => toggleReaction(message.id, r.key)}
-                              className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full hover:bg-gray-100 transition-all text-xl"
+                              className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-all text-xl"
                               aria-label={r.label}
                               title={r.label}
                             >
@@ -920,8 +920,8 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                               onClick={() => toggleReaction(message.id, r.key)}
                               className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs border transition-all ${
                                 msgReactions[r.key].byMe
-                                  ? 'bg-blue-50 border-blue-300 text-blue-700'
-                                  : 'bg-gray-50 border-gray-200 text-gray-600'
+                                  ? 'bg-blue-50 dark:bg-blue-900/30 border-blue-300 dark:border-blue-700 text-blue-700 dark:text-blue-300'
+                                  : 'bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400'
                               }`}
                               aria-label={`${r.label} ${msgReactions[r.key].count}`}
                             >
@@ -940,7 +940,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
             {/* --- V2: Typing indicator --- */}
             {isOtherTyping && (
               <div className="flex justify-start animate-slide-in-left">
-                <div className="bg-gray-800 text-white px-4 py-3 rounded-2xl shadow-md">
+                <div className="bg-gray-800 dark:bg-gray-700 text-white px-4 py-3 rounded-2xl shadow-md">
                   <div className="flex items-center gap-2">
                     <Body16 className="!text-white/80 text-sm">{otherUserName} is typing</Body16>
                     <span className="typing-dots">
@@ -975,7 +975,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
 
         {/* Message Input */}
         {session?.status === 'active' && (
-          <div className="bg-white border-t border-gray-200 p-4">
+          <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4">
             <form onSubmit={sendMessage} className="max-w-4xl mx-auto" aria-label="Send message">
               <div className="flex gap-2">
                 <label htmlFor="message-input" className="sr-only">Type your message</label>
@@ -989,7 +989,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                   }}
                   maxLength={VALIDATION.MAX_MESSAGE_LENGTH}
                   placeholder="Type a message..."
-                  className="flex-1 px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rb-blue focus:border-transparent transition-all"
+                  className="flex-1 px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-rb-blue focus:border-transparent transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-400"
                   disabled={sending}
                   aria-label="Message text"
                 />
@@ -1017,7 +1017,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                   ? 'text-red-500 font-semibold'
                   : newMessage.length > VALIDATION.MAX_MESSAGE_LENGTH * 0.9
                   ? 'text-amber-500'
-                  : 'text-gray-300'
+                  : 'text-gray-300 dark:text-gray-500'
               }`}>
                 {newMessage.length}/{VALIDATION.MAX_MESSAGE_LENGTH}
               </p>
@@ -1097,18 +1097,18 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
             onClick={() => setReportModal(false)}
           >
             <div
-              className="bg-white rounded-2xl p-6 sm:p-8 max-w-md w-full shadow-2xl"
+              className="bg-white dark:bg-gray-800 rounded-2xl p-6 sm:p-8 max-w-md w-full shadow-2xl"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-start justify-between mb-4">
-                <h2 id="report-modal-title" className="text-xl font-bold text-gray-900">
+                <h2 id="report-modal-title" className="text-xl font-bold text-gray-900 dark:text-gray-100">
                   {reportStep === 'reason' && `Report ${otherUserName}`}
                   {reportStep === 'details' && 'Additional Details'}
                   {reportStep === 'confirm' && 'Confirm Report'}
                 </h2>
                 <button
                   onClick={() => setReportModal(false)}
-                  className="text-gray-400 hover:text-gray-600 text-2xl leading-none"
+                  className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 text-2xl leading-none"
                   aria-label="Close"
                 >
                   &times;
@@ -1117,7 +1117,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
 
               {reportStep === 'reason' && (
                 <div>
-                  <p className="text-sm text-gray-600 mb-4">Select a reason for your report:</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">Select a reason for your report:</p>
                   <div className="space-y-2">
                     {REPORT_REASONS.map((reason) => (
                       <button
@@ -1126,7 +1126,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                           setReportReason(reason)
                           setReportStep('details')
                         }}
-                        className="w-full text-left px-4 py-3 rounded-lg border border-gray-200 hover:border-rb-blue hover:bg-blue-50 transition-all text-sm font-medium min-h-[44px]"
+                        className="w-full text-left px-4 py-3 rounded-lg border border-gray-200 dark:border-gray-600 hover:border-rb-blue hover:bg-blue-50 dark:hover:bg-gray-700 transition-all text-sm font-medium min-h-[44px] text-gray-800 dark:text-gray-200"
                       >
                         {reason}
                       </button>
@@ -1137,22 +1137,22 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
 
               {reportStep === 'details' && (
                 <div>
-                  <p className="text-sm text-gray-600 mb-1">
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
                     Reason: <span className="font-medium">{reportReason}</span>
                   </p>
-                  <p className="text-sm text-gray-500 mb-3">Add any additional details (optional):</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-500 mb-3">Add any additional details (optional):</p>
                   <textarea
                     value={reportDetails}
                     onChange={(e) => setReportDetails(e.target.value)}
                     placeholder="Describe what happened..."
                     rows={3}
                     maxLength={500}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-rb-blue focus:border-transparent resize-none"
+                    className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-rb-blue focus:border-transparent resize-none bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-400"
                   />
                   <div className="flex gap-3 mt-4">
                     <button
                       onClick={() => setReportStep('reason')}
-                      className="flex-1 min-h-[44px] px-4 py-2 rounded-lg border-2 border-gray-200 text-gray-700 font-semibold hover:bg-gray-50 transition-all text-sm"
+                      className="flex-1 min-h-[44px] px-4 py-2 rounded-lg border-2 border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-semibold hover:bg-gray-50 dark:hover:bg-gray-700 transition-all text-sm"
                     >
                       Back
                     </button>
@@ -1168,20 +1168,20 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
 
               {reportStep === 'confirm' && (
                 <div>
-                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4">
-                    <p className="text-sm font-medium text-amber-800 mb-1">You are about to report {otherUserName}</p>
-                    <p className="text-sm text-amber-700">Reason: {reportReason}</p>
+                  <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4 mb-4">
+                    <p className="text-sm font-medium text-amber-800 dark:text-amber-200 mb-1">You are about to report {otherUserName}</p>
+                    <p className="text-sm text-amber-700 dark:text-amber-300">Reason: {reportReason}</p>
                     {reportDetails.trim() && (
-                      <p className="text-sm text-amber-700 mt-1">Details: {reportDetails.trim()}</p>
+                      <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">Details: {reportDetails.trim()}</p>
                     )}
                   </div>
-                  <p className="text-sm text-gray-600 mb-4">
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
                     Our team will review this report. False reports may result in action against your account.
                   </p>
                   <div className="flex gap-3">
                     <button
                       onClick={() => setReportStep('details')}
-                      className="flex-1 min-h-[44px] px-4 py-2 rounded-lg border-2 border-gray-200 text-gray-700 font-semibold hover:bg-gray-50 transition-all text-sm"
+                      className="flex-1 min-h-[44px] px-4 py-2 rounded-lg border-2 border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-semibold hover:bg-gray-50 dark:hover:bg-gray-700 transition-all text-sm"
                     >
                       Back
                     </button>
@@ -1228,8 +1228,8 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
           <p className="text-lg mb-4">
             We haven't seen any activity in this chat for a while.
           </p>
-          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-            <p className="text-sm">
+          <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
+            <p className="text-sm text-amber-900 dark:text-amber-200">
               <strong>This chat will automatically close in 5 minutes</strong> if there's no response.
               Send a message or click "I'm Still Here" to keep the conversation going.
             </p>
@@ -1276,8 +1276,8 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
 
               {/* Tagline */}
               {otherUserProfile.tagline && (
-                <div className="bg-blue-50 rounded-lg p-4 border-l-4 border-rb-blue">
-                  <Body16 className="text-gray-700 italic text-center">
+                <div className="bg-blue-50 dark:bg-gray-700 rounded-lg p-4 border-l-4 border-rb-blue">
+                  <Body16 className="text-gray-700 dark:text-gray-300 italic text-center">
                     "{otherUserProfile.tagline}"
                   </Body16>
                 </div>
@@ -1286,14 +1286,14 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
               {/* Bio */}
               {otherUserProfile.bio ? (
                 <div>
-                  <Body18 className="font-semibold text-gray-900 mb-2">About</Body18>
-                  <Body16 className="text-gray-700 leading-relaxed">
+                  <Body18 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">About</Body18>
+                  <Body16 className="text-gray-700 dark:text-gray-300 leading-relaxed">
                     {otherUserProfile.bio}
                   </Body16>
                 </div>
               ) : (
                 <div className="text-center py-4">
-                  <Body16 className="text-gray-500 italic">
+                  <Body16 className="text-gray-500 dark:text-gray-400 italic">
                     {otherUserName} hasn't added a bio yet.
                   </Body16>
                 </div>
@@ -1305,41 +1305,41 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
         {/* Session Feedback Modal */}
         {feedbackModal && (
           <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-2xl p-6 sm:p-8 max-w-sm w-full shadow-2xl text-center">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 sm:p-8 max-w-sm w-full shadow-2xl text-center">
               {feedbackSubmitted ? (
                 <div className="py-4">
                   <span className="text-5xl block mb-3">🙏</span>
-                  <Body18 className="font-bold text-gray-900 mb-2">Thank you!</Body18>
-                  <Body16 className="text-gray-600">Your feedback helps our community.</Body16>
-                  <Body16 className="text-gray-400 text-sm mt-2">One more thing...</Body16>
+                  <Body18 className="font-bold text-gray-900 dark:text-gray-100 mb-2">Thank you!</Body18>
+                  <Body16 className="text-gray-600 dark:text-gray-400">Your feedback helps our community.</Body16>
+                  <Body16 className="text-gray-400 dark:text-gray-500 text-sm mt-2">One more thing...</Body16>
                 </div>
               ) : favoriteStep ? (
                 <div className="py-2">
                   <span className="text-5xl block mb-3">⭐</span>
-                  <Body18 className="font-bold text-gray-900 mb-2">
+                  <Body18 className="font-bold text-gray-900 dark:text-gray-100 mb-2">
                     Save {otherUserName}?
                   </Body18>
-                  <Body16 className="text-gray-600 mb-6">
+                  <Body16 className="text-gray-600 dark:text-gray-400 mb-6">
                     Add them to your favorites so you can find them quickly next time.
                   </Body16>
 
                   {alreadyFavorited || favoriteAdded ? (
                     <div className="py-3">
-                      <Body16 className="text-amber-700 font-semibold">⭐ Already in your favorites!</Body16>
-                      <Body16 className="text-gray-400 text-sm mt-1">Returning to dashboard...</Body16>
+                      <Body16 className="text-amber-700 dark:text-amber-300 font-semibold">⭐ Already in your favorites!</Body16>
+                      <Body16 className="text-gray-400 dark:text-gray-500 text-sm mt-1">Returning to dashboard...</Body16>
                     </div>
                   ) : (
                     <div className="space-y-3">
                       <button
                         onClick={addFavorite}
                         disabled={favoriteSaving}
-                        className="min-h-[44px] w-full px-5 py-3 bg-amber-50 border-2 border-amber-300 text-amber-800 rounded-xl font-semibold hover:bg-amber-100 hover:border-amber-400 transition-all text-lg disabled:opacity-50"
+                        className="min-h-[44px] w-full px-5 py-3 bg-amber-50 dark:bg-amber-900/20 border-2 border-amber-300 dark:border-amber-700 text-amber-800 dark:text-amber-200 rounded-xl font-semibold hover:bg-amber-100 dark:hover:bg-amber-900/30 hover:border-amber-400 transition-all text-lg disabled:opacity-50"
                       >
                         {favoriteSaving ? 'Saving...' : '⭐ Yes, save to favorites'}
                       </button>
                       <button
                         onClick={returnToDashboard}
-                        className="min-h-[44px] w-full px-4 py-2.5 bg-gray-100 border-2 border-gray-200 text-gray-500 rounded-xl font-semibold hover:bg-gray-200 transition-all text-sm"
+                        className="min-h-[44px] w-full px-4 py-2.5 bg-gray-100 dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 rounded-xl font-semibold hover:bg-gray-200 dark:hover:bg-gray-600 transition-all text-sm"
                       >
                         Not now
                       </button>
@@ -1349,30 +1349,30 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
               ) : (
                 <>
                   <span className="text-5xl block mb-3">💬</span>
-                  <Body18 className="font-bold text-gray-900 mb-2">Session Ended</Body18>
+                  <Body18 className="font-bold text-gray-900 dark:text-gray-100 mb-2">Session Ended</Body18>
                   {sessionEndedByOther && (
-                    <Body16 className="text-amber-700 text-sm mb-2">
+                    <Body16 className="text-amber-700 dark:text-amber-300 text-sm mb-2">
                       {otherUserName} ended this session.
                     </Body16>
                   )}
 
                   {/* --- V2: Session Summary Card --- */}
-                  <div className="bg-gray-50 rounded-lg p-3 mb-4 text-sm text-gray-600">
+                  <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 mb-4 text-sm text-gray-600 dark:text-gray-400">
                     <div className="flex items-center justify-center gap-4">
                       <span>Duration: {getSessionDuration()}</span>
-                      <span className="text-gray-300">|</span>
+                      <span className="text-gray-300 dark:text-gray-600">|</span>
                       <span>{messages.length} message{messages.length !== 1 ? 's' : ''}</span>
                     </div>
                   </div>
 
-                  <Body16 className="text-gray-600 mb-4">
+                  <Body16 className="text-gray-600 dark:text-gray-400 mb-4">
                     Was this conversation helpful?
                   </Body16>
 
                   {/* Thank-you note — only visible to seekers */}
                   {session && currentUserId === session.seeker_id && (
                     <div className="mb-4 text-left">
-                      <label htmlFor="thank-you-note" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
+                      <label htmlFor="thank-you-note" className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1.5">
                         💌 Leave a note for your listener <span className="font-normal normal-case">(optional)</span>
                       </label>
                       <textarea
@@ -1381,11 +1381,11 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                         onChange={e => setThankYouNote(e.target.value.slice(0, 300))}
                         placeholder="Your support really meant a lot to me..."
                         rows={3}
-                        className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-rb-blue/40 focus:border-rb-blue transition"
+                        className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-rb-blue/40 focus:border-rb-blue transition bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-400"
                       />
                       <p className={`text-xs text-right mt-0.5 ${
                         thankYouNote.length >= 300 ? 'text-red-500' :
-                        thankYouNote.length >= 250 ? 'text-amber-500' : 'text-gray-400'
+                        thankYouNote.length >= 250 ? 'text-amber-500' : 'text-gray-400 dark:text-gray-500'
                       }`}>
                         {thankYouNote.length} / 300
                       </p>
@@ -1395,20 +1395,20 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                   <div className="flex gap-3 justify-center mb-4">
                     <button
                       onClick={() => submitFeedback(true)}
-                      className="min-h-[44px] flex-1 px-5 py-3 bg-green-50 border-2 border-green-200 text-green-700 rounded-xl font-semibold hover:bg-green-100 hover:border-green-300 transition-all text-lg"
+                      className="min-h-[44px] flex-1 px-5 py-3 bg-green-50 dark:bg-green-900/20 border-2 border-green-200 dark:border-green-800 text-green-700 dark:text-green-300 rounded-xl font-semibold hover:bg-green-100 dark:hover:bg-green-900/30 hover:border-green-300 transition-all text-lg"
                     >
                       👍 Yes
                     </button>
                     <button
                       onClick={() => submitFeedback(false)}
-                      className="min-h-[44px] flex-1 px-5 py-3 bg-gray-50 border-2 border-gray-200 text-gray-600 rounded-xl font-semibold hover:bg-gray-100 hover:border-gray-300 transition-all text-lg"
+                      className="min-h-[44px] flex-1 px-5 py-3 bg-gray-50 dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 rounded-xl font-semibold hover:bg-gray-100 dark:hover:bg-gray-600 hover:border-gray-300 transition-all text-lg"
                     >
                       👎 No
                     </button>
                   </div>
                   <button
                     onClick={skipFeedback}
-                    className="min-h-[44px] w-full px-4 py-2.5 bg-gray-100 border-2 border-gray-200 text-gray-500 rounded-xl font-semibold hover:bg-gray-200 hover:border-gray-300 transition-all text-sm"
+                    className="min-h-[44px] w-full px-4 py-2.5 bg-gray-100 dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 rounded-xl font-semibold hover:bg-gray-200 dark:hover:bg-gray-600 hover:border-gray-300 transition-all text-sm"
                   >
                     Skip Feedback
                   </button>

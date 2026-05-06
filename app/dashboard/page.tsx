@@ -12,6 +12,7 @@ import AvailableListeners from '@/components/AvailableListeners'
 import PeopleSeeking from '@/components/PeopleSeeking'
 import type { Profile, SessionWithUserName, ProfileUpdateData, FavoriteWithProfile } from '@/lib/types/database'
 import { TIME, NOTIFICATION } from '@/lib/constants'
+import ThemeToggle from '@/components/ThemeToggle'
 
 function DashboardContent() {
   const [profile, setProfile] = useState<Profile | null>(null)
@@ -609,15 +610,15 @@ function DashboardContent() {
 
   if (loading) {
     return (
-      <main id="main-content" className="min-h-screen p-4 sm:p-6" style={{ backgroundColor: '#F8F9FA' }}>
+      <main id="main-content" className="min-h-screen p-4 sm:p-6 bg-[#F8F9FA] dark:bg-gray-900">
         <div className="max-w-6xl mx-auto">
           {/* Header skeleton */}
           <div className="mb-6 sm:mb-8">
             <div className="flex gap-4 items-start mb-4">
-              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gray-200 animate-pulse flex-shrink-0" />
+              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gray-200 dark:bg-gray-600 animate-pulse flex-shrink-0" />
               <div className="flex-1 space-y-2">
-                <div className="h-7 bg-gray-200 rounded animate-pulse w-48 sm:w-64" />
-                <div className="h-4 bg-gray-200 rounded animate-pulse w-32 sm:w-48" />
+                <div className="h-7 bg-gray-200 dark:bg-gray-600 rounded animate-pulse w-48 sm:w-64" />
+                <div className="h-4 bg-gray-200 dark:bg-gray-600 rounded animate-pulse w-32 sm:w-48" />
               </div>
             </div>
           </div>
@@ -633,10 +634,10 @@ function DashboardContent() {
   }
 
   return (
-    <main id="main-content" className="min-h-screen p-4 sm:p-6" style={{ backgroundColor: '#F8F9FA' }}>
+    <main id="main-content" className="min-h-screen p-4 sm:p-6 bg-[#F8F9FA] dark:bg-gray-900">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
-        <div className="bg-white rounded-2xl shadow-lg p-6 mb-6 sm:mb-8 border border-rb-gray/10">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 mb-6 sm:mb-8 border border-rb-gray/10">
           {/* Top Navigation Bar */}
           <div className="flex justify-between items-center mb-6">
             {/* Left: Logo */}
@@ -646,13 +647,16 @@ function DashboardContent() {
               className="h-10 sm:h-12 w-auto"
             />
 
-            {/* Right: Sign Out */}
-            <button
-              onClick={handleSignOut}
-              className="min-h-[44px] px-4 sm:px-6 py-2 sm:py-2.5 bg-gray-900 text-white rounded-full text-sm font-semibold hover:bg-gray-800 transition-all whitespace-nowrap"
-            >
-              Sign Out
-            </button>
+            {/* Right: Theme toggle + Sign Out */}
+            <div className="flex items-center gap-2">
+              <ThemeToggle />
+              <button
+                onClick={handleSignOut}
+                className="min-h-[44px] px-4 sm:px-6 py-2 sm:py-2.5 bg-gray-900 text-white rounded-full text-sm font-semibold hover:bg-gray-800 transition-all whitespace-nowrap"
+              >
+                Sign Out
+              </button>
+            </div>
           </div>
 
           {/* Welcome Section */}
@@ -667,11 +671,11 @@ function DashboardContent() {
             )}
             <div className="flex-1 min-w-0">
               <Heading1 className="text-base sm:text-xl md:text-2xl break-words mb-1">Welcome back, {profile?.display_name}!</Heading1>
-              <Body16 className="text-rb-gray font-medium italic text-sm mb-1">"{profile?.tagline || 'Your story matters here'}"</Body16>
-              <Body16 className="text-rb-gray text-xs sm:text-sm">Choose how you'd like to engage today</Body16>
+              <Body16 className="text-rb-gray dark:text-gray-400 font-medium italic text-sm mb-1">"{profile?.tagline || 'Your story matters here'}"</Body16>
+              <Body16 className="text-rb-gray dark:text-gray-400 text-xs sm:text-sm">Choose how you'd like to engage today</Body16>
             </div>
           </div>
-          <div className="flex gap-3 pt-4 border-t border-gray-100">
+          <div className="flex gap-3 pt-4 border-t border-gray-100 dark:border-gray-700">
             <button
               onClick={() => router.push('/profile')}
               className="min-h-[44px] px-6 py-2.5 bg-gradient-to-r from-rb-blue to-rb-blue-hover text-white rounded-full text-sm font-semibold hover:shadow-lg transition-all"
@@ -683,15 +687,15 @@ function DashboardContent() {
 
         {/* Post-chat check-in banner (seekers returning from a session) */}
         {showPostChatBanner && (
-          <div className={`mb-6 rounded-xl p-4 shadow-sm border ${postChatFeeling === 'struggling' ? 'bg-purple-50 border-rb-purple/40' : 'bg-blue-50 border-rb-blue/30'}`}>
+          <div className={`mb-6 rounded-xl p-4 shadow-sm border ${postChatFeeling === 'struggling' ? 'bg-purple-50 dark:bg-purple-900/20 border-rb-purple/40' : 'bg-blue-50 dark:bg-blue-900/20 border-rb-blue/30 dark:border-blue-800'}`}>
             {postChatFeeling === 'good' ? (
               <div className="flex items-center gap-3">
                 <span className="text-2xl flex-shrink-0" aria-hidden="true">💙</span>
-                <Body16 className="font-semibold text-rb-dark text-sm flex-1">Glad to hear it — take care of yourself today.</Body16>
+                <Body16 className="font-semibold text-rb-dark dark:text-gray-100 text-sm flex-1">Glad to hear it — take care of yourself today.</Body16>
                 <button
                   onClick={() => setShowPostChatBanner(false)}
                   aria-label="Dismiss"
-                  className="min-h-[44px] min-w-[44px] flex items-center justify-center text-rb-gray hover:text-rb-dark transition-colors flex-shrink-0"
+                  className="min-h-[44px] min-w-[44px] flex items-center justify-center text-rb-gray dark:text-gray-400 hover:text-rb-dark dark:hover:text-gray-100 transition-colors flex-shrink-0"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                     <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
@@ -702,14 +706,14 @@ function DashboardContent() {
               <div className="flex items-start gap-3">
                 <span className="text-2xl flex-shrink-0" aria-hidden="true">🤝</span>
                 <div className="flex-1 min-w-0">
-                  <Body16 className="font-semibold text-rb-dark text-sm">You don't have to go through this alone.</Body16>
-                  <Body16 className="text-rb-gray text-sm mt-1">Reach out anytime — support is available 24/7.</Body16>
+                  <Body16 className="font-semibold text-rb-dark dark:text-gray-100 text-sm">You don't have to go through this alone.</Body16>
+                  <Body16 className="text-rb-gray dark:text-gray-400 text-sm mt-1">Reach out anytime — support is available 24/7.</Body16>
                   <div className="flex flex-wrap gap-2 mt-3">
                     <a href="tel:988" className="min-h-[44px] inline-flex items-center px-4 py-2 bg-rb-blue text-white rounded-full text-sm font-semibold hover:bg-rb-blue-hover transition-colors">Call 988</a>
-                    <a href="sms:741741&body=HELLO" className="min-h-[44px] inline-flex items-center px-4 py-2 bg-white border border-rb-blue text-rb-blue rounded-full text-sm font-semibold hover:bg-rb-blue-light transition-colors">Text HOME to 741741</a>
+                    <a href="sms:741741&body=HELLO" className="min-h-[44px] inline-flex items-center px-4 py-2 bg-white dark:bg-gray-800 border border-rb-blue text-rb-blue rounded-full text-sm font-semibold hover:bg-rb-blue-light dark:hover:bg-gray-700 transition-colors">Text HOME to 741741</a>
                     <button
                       onClick={() => { setShowPostChatBanner(false); setRoleState('requesting') }}
-                      className="min-h-[44px] inline-flex items-center px-4 py-2 bg-rb-purple/20 border border-rb-purple/40 text-rb-dark rounded-full text-sm font-semibold hover:bg-rb-purple/30 transition-colors"
+                      className="min-h-[44px] inline-flex items-center px-4 py-2 bg-rb-purple/20 border border-rb-purple/40 text-rb-dark dark:text-gray-100 rounded-full text-sm font-semibold hover:bg-rb-purple/30 transition-colors"
                     >
                       🤝 Talk to a listener again
                     </button>
@@ -718,7 +722,7 @@ function DashboardContent() {
                 <button
                   onClick={() => setShowPostChatBanner(false)}
                   aria-label="Dismiss"
-                  className="min-h-[44px] min-w-[44px] flex items-center justify-center text-rb-gray hover:text-rb-dark transition-colors flex-shrink-0 -mt-1 -mr-1"
+                  className="min-h-[44px] min-w-[44px] flex items-center justify-center text-rb-gray dark:text-gray-400 hover:text-rb-dark dark:hover:text-gray-100 transition-colors flex-shrink-0 -mt-1 -mr-1"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                     <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
@@ -729,19 +733,19 @@ function DashboardContent() {
               <div className="flex items-start gap-3">
                 <span className="text-2xl flex-shrink-0" aria-hidden="true">💙</span>
                 <div className="flex-1 min-w-0">
-                  <Body16 className="font-semibold text-rb-dark text-sm">Thanks for connecting — how are you feeling?</Body16>
+                  <Body16 className="font-semibold text-rb-dark dark:text-gray-100 text-sm">Thanks for connecting — how are you feeling?</Body16>
                   <div className="flex gap-3 mt-3">
                     <button
                       onClick={() => { postChatFeelingRef.current = 'good'; setPostChatFeeling('good'); setTimeout(() => setShowPostChatBanner(false), 3000) }}
                       aria-label="Feeling good"
-                      className="min-h-[44px] flex items-center gap-1.5 px-4 py-2 bg-white border border-gray-200 rounded-full text-sm font-semibold hover:bg-green-50 hover:border-green-300 transition-colors"
+                      className="min-h-[44px] flex items-center gap-1.5 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-full text-sm font-semibold hover:bg-green-50 hover:border-green-300 transition-colors"
                     >
                       <span aria-hidden="true">👍</span> Good
                     </button>
                     <button
                       onClick={() => { postChatFeelingRef.current = 'struggling'; setPostChatFeeling('struggling') }}
                       aria-label="Feeling like I'm struggling"
-                      className="min-h-[44px] flex items-center gap-1.5 px-4 py-2 bg-white border border-gray-200 rounded-full text-sm font-semibold hover:bg-purple-50 hover:border-purple-300 transition-colors"
+                      className="min-h-[44px] flex items-center gap-1.5 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-full text-sm font-semibold hover:bg-purple-50 hover:border-purple-300 transition-colors"
                     >
                       <span aria-hidden="true">👎</span> Struggling
                     </button>
@@ -750,7 +754,7 @@ function DashboardContent() {
                 <button
                   onClick={() => setShowPostChatBanner(false)}
                   aria-label="Dismiss"
-                  className="min-h-[44px] min-w-[44px] flex items-center justify-center text-rb-gray hover:text-rb-dark transition-colors flex-shrink-0 -mt-1 -mr-1"
+                  className="min-h-[44px] min-w-[44px] flex items-center justify-center text-rb-gray dark:text-gray-400 hover:text-rb-dark dark:hover:text-gray-100 transition-colors flex-shrink-0 -mt-1 -mr-1"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                     <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
@@ -763,11 +767,11 @@ function DashboardContent() {
 
         {/* Onboarding Nudge Banner */}
         {!nudgeDismissed && profile && (!profile.user_role || !profile.bio) && (
-          <div className="mb-6 flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl p-4 shadow-sm">
+          <div className="mb-6 flex items-start gap-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4 shadow-sm">
             <span className="text-2xl flex-shrink-0" aria-hidden="true">✏️</span>
             <div className="flex-1 min-w-0">
-              <Body16 className="font-semibold text-amber-900 text-sm">Finish setting up your profile</Body16>
-              <Body16 className="text-amber-800 text-sm mt-0.5">Choose your role and add a bio so others can find and connect with you.</Body16>
+              <Body16 className="font-semibold text-amber-900 dark:text-amber-200 text-sm">Finish setting up your profile</Body16>
+              <Body16 className="text-amber-800 dark:text-amber-300 text-sm mt-0.5">Choose your role and add a bio so others can find and connect with you.</Body16>
               <button
                 onClick={() => router.push('/onboarding')}
                 className="mt-3 min-h-[44px] inline-flex items-center gap-1 px-5 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-full text-sm font-semibold transition-colors"
@@ -778,7 +782,7 @@ function DashboardContent() {
             <button
               onClick={() => setNudgeDismissed(true)}
               aria-label="Dismiss"
-              className="min-h-[44px] min-w-[44px] flex items-center justify-center text-amber-600 hover:text-amber-900 transition-colors flex-shrink-0 -mt-1 -mr-1"
+              className="min-h-[44px] min-w-[44px] flex items-center justify-center text-amber-600 dark:text-amber-400 hover:text-amber-900 dark:hover:text-amber-200 transition-colors flex-shrink-0 -mt-1 -mr-1"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                 <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
@@ -788,9 +792,9 @@ function DashboardContent() {
         )}
 
         {/* Role Display */}
-        <div className="bg-white rounded-lg p-5 shadow-sm mb-6">
-          <Body16 className="text-xs font-semibold text-rb-gray uppercase tracking-wide mb-2">Your Role</Body16>
-          <Body18 className="text-rb-dark">
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-5 shadow-sm mb-6">
+          <Body16 className="text-xs font-semibold text-rb-gray dark:text-gray-400 uppercase tracking-wide mb-2">Your Role</Body16>
+          <Body18 className="text-rb-dark dark:text-gray-100">
             {profile?.user_role === 'person_in_recovery' && 'Person in Recovery'}
             {profile?.user_role === 'professional' && 'Allies in Long-Term Recovery'}
             {profile?.user_role === 'ally' && 'Recovery Support (Legacy)'}
@@ -818,17 +822,17 @@ function DashboardContent() {
             aria-pressed={profile?.role_state === 'available'}
             className={`p-8 rounded-2xl text-center transition-all duration-300 transform hover:scale-[1.02] hover:-translate-y-1 ${
               profile?.role_state === 'available'
-                ? 'bg-rb-blue-light border-4 border-rb-blue shadow-lg animate-pulse-glow-blue'
-                : 'bg-white border-4 border-rb-blue shadow-md hover:shadow-xl'
+                ? 'bg-rb-blue-light dark:bg-gray-700 border-4 border-rb-blue shadow-lg animate-pulse-glow-blue'
+                : 'bg-white dark:bg-gray-800 border-4 border-rb-blue shadow-md hover:shadow-xl'
             }`}
             style={profile?.role_state === 'available' ? {
               boxShadow: '0 10px 25px -5px rgba(90, 122, 140, 0.3), 0 8px 10px -6px rgba(90, 122, 140, 0.2)'
             } : {}}
           >
             <Body18 className="font-bold text-rb-blue mb-2 text-lg">I'm Here To Listen</Body18>
-            <Body16 className="text-rb-gray text-sm mb-4">Offer support and connection to others</Body16>
+            <Body16 className="text-rb-gray dark:text-gray-400 text-sm mb-4">Offer support and connection to others</Body16>
             {profile?.role_state === 'available' ? (
-              <div className="flex items-center justify-center gap-2 px-4 py-2 bg-white/70 rounded-xl">
+              <div className="flex items-center justify-center gap-2 px-4 py-2 bg-white/70 dark:bg-gray-800/70 rounded-xl">
                 <span className="w-2 h-2 bg-rb-blue rounded-full animate-pulse"></span>
                 <Body16 className="text-sm text-rb-blue font-semibold" aria-live="polite">You're Available</Body16>
               </div>
@@ -843,18 +847,18 @@ function DashboardContent() {
             aria-pressed={profile?.role_state === 'requesting'}
             className={`p-8 rounded-2xl text-center transition-all duration-300 transform hover:scale-[1.02] hover:-translate-y-1 ${
               profile?.role_state === 'requesting'
-                ? 'bg-rb-purple-light border-4 border-rb-purple shadow-lg animate-pulse-glow-purple'
-                : 'bg-white border-4 border-rb-purple shadow-md hover:shadow-xl'
+                ? 'bg-rb-purple-light dark:bg-gray-700 border-4 border-rb-purple shadow-lg animate-pulse-glow-purple'
+                : 'bg-white dark:bg-gray-800 border-4 border-rb-purple shadow-md hover:shadow-xl'
             }`}
             style={profile?.role_state === 'requesting' ? {
               boxShadow: '0 10px 25px -5px rgba(184, 169, 201, 0.4), 0 8px 10px -6px rgba(184, 169, 201, 0.3)'
             } : {}}
           >
             <Body18 className="font-bold text-rb-purple mb-2 text-lg">I Need Support</Body18>
-            <Body16 className="text-rb-gray text-sm mb-4">Connect with someone who understands</Body16>
+            <Body16 className="text-rb-gray dark:text-gray-400 text-sm mb-4">Connect with someone who understands</Body16>
             {profile?.role_state === 'requesting' ? (
               <div className="space-y-2">
-                <div className="flex items-center justify-center gap-2 px-4 py-2 bg-white/70 rounded-xl">
+                <div className="flex items-center justify-center gap-2 px-4 py-2 bg-white/70 dark:bg-gray-800/70 rounded-xl">
                   <span className="w-2 h-2 bg-rb-purple rounded-full animate-pulse"></span>
                   <Body16 className="text-sm text-rb-purple font-semibold" aria-live="polite">Finding Listener...</Body16>
                 </div>
@@ -872,10 +876,10 @@ function DashboardContent() {
 
         {/* My Favorites */}
         {favorites.length > 0 && (
-          <div className="bg-white rounded-lg p-5 shadow-sm mb-6">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-5 shadow-sm mb-6">
             <div className="flex items-center gap-2 mb-4">
               <span className="text-amber-400 text-lg">⭐</span>
-              <Body18 className="font-semibold text-rb-dark">My Favorites</Body18>
+              <Body18 className="font-semibold text-rb-dark dark:text-gray-100">My Favorites</Body18>
             </div>
             <div className="space-y-2">
               {favorites.map(fav => {
@@ -887,7 +891,7 @@ function DashboardContent() {
                   fp.last_heartbeat_at >= heartbeatThreshold
                 )
                 return (
-                  <div key={fav.id} className="flex items-center gap-3 p-3 bg-amber-50/40 border border-amber-100 rounded-lg">
+                  <div key={fav.id} className="flex items-center gap-3 p-3 bg-amber-50/40 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-800/40 rounded-lg">
                     {/* Avatar */}
                     {fp.avatar_url ? (
                       <img src={fp.avatar_url} alt={fp.display_name}
@@ -901,10 +905,10 @@ function DashboardContent() {
                     {/* Info */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <Body16 className="font-semibold text-rb-dark truncate">{fp.display_name}</Body16>
-                        <span className={`w-2 h-2 rounded-full flex-shrink-0 ${isOnline ? 'bg-green-500' : 'bg-gray-300'}`}></span>
+                        <Body16 className="font-semibold text-rb-dark dark:text-gray-100 truncate">{fp.display_name}</Body16>
+                        <span className={`w-2 h-2 rounded-full flex-shrink-0 ${isOnline ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-600'}`}></span>
                       </div>
-                      <Body16 className="text-sm text-rb-gray">
+                      <Body16 className="text-sm text-rb-gray dark:text-gray-400">
                         {isOnline ? 'Available now' : 'Offline'}
                       </Body16>
                     </div>
@@ -945,8 +949,8 @@ function DashboardContent() {
 
         {/* Active Sessions */}
         {activeSessions.length > 0 && (
-          <div className="bg-white rounded-lg p-6 shadow-sm mb-8">
-            <Body18 className="font-semibold text-rb-dark mb-4">Active Conversations</Body18>
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm mb-8">
+            <Body18 className="font-semibold text-rb-dark dark:text-gray-100 mb-4">Active Conversations</Body18>
             <div className="space-y-2" role="list" aria-label="Active chat sessions">
               {activeSessions.map((session) => (
                 <button
@@ -954,18 +958,18 @@ function DashboardContent() {
                   onClick={() => router.push(`/chat/${session.id}`)}
                   aria-label={`Open chat with ${session.otherUserName}`}
                   role="listitem"
-                  className="w-full p-4 bg-gray-50 rounded-lg text-left hover:bg-gray-100 transition-all"
+                  className="w-full p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-all"
                 >
                   <div className="flex items-center justify-between">
                     <div>
-                      <Body16 className="font-medium text-rb-dark mb-1">
+                      <Body16 className="font-medium text-rb-dark dark:text-gray-100 mb-1">
                         {session.otherUserName}
                       </Body16>
-                      <Body16 className="text-sm text-rb-gray">
+                      <Body16 className="text-sm text-rb-gray dark:text-gray-400">
                         Continue your conversation
                       </Body16>
                     </div>
-                    <span className="text-gray-400">→</span>
+                    <span className="text-gray-400 dark:text-gray-500">→</span>
                   </div>
                 </button>
               ))}
@@ -975,14 +979,14 @@ function DashboardContent() {
 
         {/* Recent Sessions — collapsible accordion */}
         {recentSessions.length > 0 && (
-          <div className="bg-white rounded-lg shadow-sm mb-8 overflow-hidden">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm mb-8 overflow-hidden">
             <button
               onClick={() => setRecentOpen((o) => !o)}
               aria-expanded={recentOpen}
-              className="w-full flex items-center justify-between px-6 py-4 hover:bg-gray-50 transition-colors"
+              className="w-full flex items-center justify-between px-6 py-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
             >
-              <Body18 className="font-semibold text-rb-dark">Recent Conversations</Body18>
-              <span className={`text-gray-400 transition-transform duration-200 ${recentOpen ? 'rotate-180' : ''}`}>
+              <Body18 className="font-semibold text-rb-dark dark:text-gray-100">Recent Conversations</Body18>
+              <span className={`text-gray-400 dark:text-gray-500 transition-transform duration-200 ${recentOpen ? 'rotate-180' : ''}`}>
                 ▾
               </span>
             </button>
@@ -1001,18 +1005,18 @@ function DashboardContent() {
                     <div
                       key={session.id}
                       role="listitem"
-                      className="w-full p-4 bg-gray-50 rounded-lg"
+                      className="w-full p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg"
                     >
                       <div className="flex items-center justify-between">
                         <div>
-                          <Body16 className="font-medium text-rb-dark mb-0.5">
+                          <Body16 className="font-medium text-rb-dark dark:text-gray-100 mb-0.5">
                             {session.otherUserName}
                           </Body16>
-                          <Body16 className="text-sm text-rb-gray">
+                          <Body16 className="text-sm text-rb-gray dark:text-gray-400">
                             {dateLabel}{durationMin !== null && durationMin > 0 ? ` · ${durationMin} min` : ''}
                           </Body16>
                         </div>
-                        <span className="px-2 py-1 text-xs rounded-full bg-gray-200 text-gray-500 font-medium">
+                        <span className="px-2 py-1 text-xs rounded-full bg-gray-200 dark:bg-gray-600 text-gray-500 dark:text-gray-400 font-medium">
                           Ended
                         </span>
                       </div>
@@ -1044,13 +1048,13 @@ function DashboardContent() {
           />
 
           {/* Modal card */}
-          <div className="relative bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6">
+          <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-sm w-full p-6">
             <div className="text-center mb-5">
               <span className="text-4xl block mb-3" aria-hidden="true">🙏</span>
-              <h2 id="offline-confirm-title" className="text-lg font-bold text-rb-dark mb-2">
+              <h2 id="offline-confirm-title" className="text-lg font-bold text-rb-dark dark:text-gray-100 mb-2">
                 Someone is waiting for support
               </h2>
-              <p className="text-sm text-rb-gray leading-relaxed">
+              <p className="text-sm text-rb-gray dark:text-gray-400 leading-relaxed">
                 There are people looking for a listener right now. Are you sure you want to go offline?
               </p>
             </div>
@@ -1071,7 +1075,7 @@ function DashboardContent() {
                   setShowOfflineConfirm(false)
                   setRoleState('offline')
                 }}
-                className="min-h-[48px] w-full px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full text-sm font-semibold transition-colors"
+                className="min-h-[48px] w-full px-6 py-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-full text-sm font-semibold transition-colors"
               >
                 Go Offline Anyway
               </button>

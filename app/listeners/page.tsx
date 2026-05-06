@@ -244,13 +244,13 @@ export default function ListenersPage() {
 
   if (loading) {
     return (
-      <main id="main-content" className="min-h-screen p-4 sm:p-6 bg-gradient-to-br from-rb-blue/5 via-rb-white to-rb-blue/10">
+      <main id="main-content" className="min-h-screen p-4 sm:p-6 bg-gradient-to-br from-rb-blue/5 via-rb-white to-rb-blue/10 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
           <div className="max-w-4xl mx-auto">
             {/* Header skeleton */}
             <div className="mb-6 sm:mb-8">
-              <div className="h-4 bg-gray-200 rounded animate-pulse w-32 mb-4" />
-              <div className="h-8 bg-gray-200 rounded animate-pulse w-56 mb-2" />
-              <div className="h-4 bg-gray-200 rounded animate-pulse w-72" />
+              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-32 mb-4" />
+              <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-56 mb-2" />
+              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-72" />
             </div>
 
             {/* Listener cards skeleton */}
@@ -265,10 +265,10 @@ export default function ListenersPage() {
   }
 
   return (
-    <main id="main-content" className="min-h-screen p-4 sm:p-6 bg-gradient-to-br from-rb-blue/5 via-rb-white to-rb-blue/10">
+    <main id="main-content" className="min-h-screen p-4 sm:p-6 bg-gradient-to-br from-rb-blue/5 via-rb-white to-rb-blue/10 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
       <div className="max-w-4xl mx-auto">
           {/* Header Card */}
-          <div className="bg-white rounded-2xl shadow-lg p-6 sm:p-8 mb-6 sm:mb-8 border border-rb-gray/10">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 sm:p-8 mb-6 sm:mb-8 border border-rb-gray/10 dark:border-gray-700">
             <button
               onClick={() => router.push('/dashboard')}
               className="inline-flex items-center gap-2 min-h-[44px] py-2 text-sm text-rb-blue hover:text-rb-blue-hover font-semibold transition mb-4"
@@ -285,7 +285,7 @@ export default function ListenersPage() {
 
           {/* Search & Filter Bar */}
           {listeners.length > 0 && (
-            <div className="bg-white rounded-2xl shadow-md p-4 sm:p-5 mb-4 sm:mb-6 border border-rb-gray/10">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-md p-4 sm:p-5 mb-4 sm:mb-6 border border-rb-gray/10 dark:border-gray-700">
               <div className="flex gap-3 items-center">
                 {/* Search input */}
                 <div className="flex-1 relative">
@@ -297,7 +297,7 @@ export default function ListenersPage() {
                     placeholder="Search by name, bio, or topic..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-rb-blue focus:border-transparent transition-all"
+                    className="w-full pl-10 pr-4 py-2.5 border border-gray-200 dark:border-gray-600 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-rb-blue focus:border-transparent transition-all dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400"
                   />
                 </div>
                 {/* Filter toggle */}
@@ -306,7 +306,7 @@ export default function ListenersPage() {
                   className={`min-h-[44px] px-4 py-2.5 rounded-xl text-sm font-medium transition-all flex items-center gap-2 ${
                     showFilters || selectedTags.length > 0
                       ? 'bg-rb-blue text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                   }`}
                   aria-expanded={showFilters}
                   aria-label="Toggle tag filters"
@@ -325,8 +325,8 @@ export default function ListenersPage() {
 
               {/* Tag filters */}
               {showFilters && (
-                <div className="mt-3 pt-3 border-t border-gray-100">
-                  <Body16 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Filter by topic</Body16>
+                <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
+                  <Body16 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Filter by topic</Body16>
                   {availableTags.length > 0 ? (
                     <div className="flex flex-wrap gap-2">
                       {availableTags.map(tag => (
@@ -336,7 +336,7 @@ export default function ListenersPage() {
                           className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
                             selectedTags.includes(tag)
                               ? 'bg-rb-blue text-white shadow-sm'
-                              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                              : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
                           }`}
                           aria-pressed={selectedTags.includes(tag)}
                         >
@@ -353,7 +353,7 @@ export default function ListenersPage() {
                       )}
                     </div>
                   ) : (
-                    <Body16 className="text-sm text-gray-400 italic">No listeners have set specialty tags yet</Body16>
+                    <Body16 className="text-sm text-gray-400 dark:text-gray-500 italic">No listeners have set specialty tags yet</Body16>
                   )}
                 </div>
               )}
@@ -368,7 +368,7 @@ export default function ListenersPage() {
           )}
 
           {listeners.length === 0 ? (
-            <div className="bg-gradient-to-br from-white to-rb-blue/5 rounded-2xl p-8 sm:p-12 text-center shadow-lg border border-rb-blue/20">
+            <div className="bg-gradient-to-br from-white to-rb-blue/5 dark:from-gray-800 dark:to-gray-800 rounded-2xl p-8 sm:p-12 text-center shadow-lg border border-rb-blue/20 dark:border-gray-700">
               <span className="text-5xl mb-4 block" role="img" aria-label="Waiting">⏳</span>
               <Body18 className="mb-4 text-[#2D3436] font-bold">No listeners available right now</Body18>
               <Body16 className="text-rb-gray">
@@ -376,7 +376,7 @@ export default function ListenersPage() {
               </Body16>
             </div>
           ) : filteredListeners.length === 0 ? (
-            <div className="bg-gradient-to-br from-white to-rb-blue/5 rounded-2xl p-8 sm:p-12 text-center shadow-lg border border-rb-blue/20">
+            <div className="bg-gradient-to-br from-white to-rb-blue/5 dark:from-gray-800 dark:to-gray-800 rounded-2xl p-8 sm:p-12 text-center shadow-lg border border-rb-blue/20 dark:border-gray-700">
               <span className="text-5xl mb-4 block" role="img" aria-label="Search">🔍</span>
               <Body18 className="mb-4 text-[#2D3436] font-bold">No listeners match your filters</Body18>
               <Body16 className="text-rb-gray mb-4">
@@ -399,7 +399,7 @@ export default function ListenersPage() {
                 return (
                   <div
                     key={listener.id}
-                    className="bg-white rounded-2xl p-5 sm:p-6 shadow-md hover:shadow-lg transition-all border-2 border-rb-blue/20 hover:border-rb-blue/40"
+                    className="bg-white dark:bg-gray-800 rounded-2xl p-5 sm:p-6 shadow-md hover:shadow-lg transition-all border-2 border-rb-blue/20 dark:border-gray-700 hover:border-rb-blue/40 dark:hover:border-gray-600"
                   >
                     <div className="flex gap-4 items-start">
                       {/* Avatar */}
@@ -421,7 +421,7 @@ export default function ListenersPage() {
                           <Body18 className="font-bold text-[#2D3436]">{listener.display_name}</Body18>
                           <span className="w-2 h-2 bg-[#3B82F6] rounded-full animate-pulse" aria-label="Available"></span>
                           {tagMatchCount > 0 && (
-                            <span className="text-xs font-medium text-green-700 bg-green-50 px-2 py-0.5 rounded-full">
+                            <span className="text-xs font-medium text-green-700 dark:text-green-300 bg-green-50 dark:bg-green-900/20 px-2 py-0.5 rounded-full">
                               {tagMatchCount} match{tagMatchCount !== 1 ? 'es' : ''}
                             </span>
                           )}
@@ -433,7 +433,7 @@ export default function ListenersPage() {
                             {listener.user_role === 'ally' && 'Recovery Support (Legacy)'}
                           </Body16>
                           {(listener.helpful_count || 0) > 0 && (
-                            <span className="text-xs text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full font-medium">
+                            <span className="text-xs text-amber-700 dark:text-amber-200 bg-amber-50 dark:bg-amber-900/20 px-2 py-0.5 rounded-full font-medium">
                               👍 {listener.helpful_count} helpful
                             </span>
                           )}
@@ -451,8 +451,8 @@ export default function ListenersPage() {
                                 key={tag}
                                 className={`px-2 py-0.5 rounded-full text-xs font-medium ${
                                   currentUserTags?.includes(tag)
-                                    ? 'bg-green-100 text-green-700'
-                                    : 'bg-gray-100 text-gray-600'
+                                    ? 'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-300'
+                                    : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
                                 }`}
                               >
                                 {tag}
@@ -512,8 +512,8 @@ export default function ListenersPage() {
           <p className="text-lg mb-4">
             Your account has been restricted and you cannot create new chat sessions at this time.
           </p>
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
-            <p className="text-sm">
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-4">
+            <p className="text-sm dark:text-gray-300">
               <strong>Reason:</strong>
               <br />
               {blockModal.reason}
@@ -535,7 +535,7 @@ export default function ListenersPage() {
           <p className="text-lg mb-4">
             We couldn&apos;t connect you with this listener right now.
           </p>
-          <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+          <div className="bg-orange-50 dark:bg-amber-900/20 border border-orange-200 dark:border-amber-800 rounded-lg p-4">
             <p className="text-sm">
               This happens sometimes! Please try again in a moment, or try connecting with a different listener.
             </p>
@@ -595,8 +595,8 @@ export default function ListenersPage() {
 
               {/* Tagline */}
               {previewProfile.tagline && (
-                <div className="bg-blue-50 rounded-lg p-4 border-l-4 border-rb-blue">
-                  <Body16 className="text-gray-700 italic text-center">
+                <div className="bg-blue-50 dark:bg-gray-700 rounded-lg p-4 border-l-4 border-rb-blue dark:border-gray-600">
+                  <Body16 className="text-gray-700 dark:text-gray-300 italic text-center">
                     &ldquo;{previewProfile.tagline}&rdquo;
                   </Body16>
                 </div>
@@ -605,15 +605,15 @@ export default function ListenersPage() {
               {/* Tags */}
               {previewProfile.tags && previewProfile.tags.length > 0 && (
                 <div>
-                  <Body16 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Topics</Body16>
+                  <Body16 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Topics</Body16>
                   <div className="flex flex-wrap gap-1.5">
                     {previewProfile.tags.map(tag => (
                       <span
                         key={tag}
                         className={`px-2.5 py-1 rounded-full text-xs font-medium ${
                           currentUserTags?.includes(tag)
-                            ? 'bg-green-100 text-green-700'
-                            : 'bg-rb-blue/10 text-rb-blue'
+                            ? 'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-300'
+                            : 'bg-rb-blue/10 dark:bg-gray-700 text-rb-blue dark:text-gray-300'
                         }`}
                       >
                         {tag}
@@ -626,14 +626,14 @@ export default function ListenersPage() {
               {/* Bio */}
               {previewProfile.bio ? (
                 <div>
-                  <Body18 className="font-semibold text-gray-900 mb-2">About</Body18>
-                  <Body16 className="text-gray-700 leading-relaxed">
+                  <Body18 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">About</Body18>
+                  <Body16 className="text-gray-700 dark:text-gray-300 leading-relaxed">
                     {previewProfile.bio}
                   </Body16>
                 </div>
               ) : (
                 <div className="text-center py-4">
-                  <Body16 className="text-gray-500 italic">
+                  <Body16 className="text-gray-500 dark:text-gray-400 italic">
                     {previewProfile.display_name} hasn&apos;t added a bio yet.
                   </Body16>
                 </div>

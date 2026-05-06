@@ -222,17 +222,17 @@ export default function PeopleSeeking({ currentUserId, currentRoleState }: Peopl
 
   if (loading) {
     return (
-      <div className="bg-white rounded-lg p-5 shadow-sm mb-6">
-        <Body18 className="font-semibold text-gray-900 mb-4">People Seeking Support</Body18>
+      <div className="bg-white dark:bg-gray-800 rounded-lg p-5 shadow-sm mb-6">
+        <Body18 className="font-semibold text-gray-900 dark:text-gray-100 mb-4">People Seeking Support</Body18>
         <div className="space-y-3">
           {[1, 2].map(i => (
-            <div key={i} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg animate-pulse">
-              <div className="w-10 h-10 rounded-full bg-gray-200"></div>
+            <div key={i} className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg animate-pulse">
+              <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-600"></div>
               <div className="flex-1">
-                <div className="h-4 bg-gray-200 rounded w-24 mb-2"></div>
-                <div className="h-3 bg-gray-200 rounded w-full"></div>
+                <div className="h-4 bg-gray-200 dark:bg-gray-600 rounded w-24 mb-2"></div>
+                <div className="h-3 bg-gray-200 dark:bg-gray-600 rounded w-full"></div>
               </div>
-              <div className="h-8 w-20 bg-gray-200 rounded-full"></div>
+              <div className="h-8 w-20 bg-gray-200 dark:bg-gray-600 rounded-full"></div>
             </div>
           ))}
         </div>
@@ -242,8 +242,8 @@ export default function PeopleSeeking({ currentUserId, currentRoleState }: Peopl
 
   if (error) {
     return (
-      <div className="bg-white rounded-lg p-5 shadow-sm mb-6">
-        <Body18 className="font-semibold text-gray-900 mb-4">People Seeking Support</Body18>
+      <div className="bg-white dark:bg-gray-800 rounded-lg p-5 shadow-sm mb-6">
+        <Body18 className="font-semibold text-gray-900 dark:text-gray-100 mb-4">People Seeking Support</Body18>
         <ErrorState
           type="inline"
           message={error}
@@ -259,11 +259,11 @@ export default function PeopleSeeking({ currentUserId, currentRoleState }: Peopl
 
   if (seekers.length === 0) {
     return (
-      <div className="bg-white rounded-lg p-5 shadow-sm mb-6">
-        <Body18 className="font-semibold text-gray-900 mb-3">People Seeking Support</Body18>
-        <div className="text-center py-6 bg-gray-50 rounded-lg">
-          <Body16 className="text-gray-600 mb-2">No one is seeking support right now</Body16>
-          <Body16 className="text-sm text-gray-500">
+      <div className="bg-white dark:bg-gray-800 rounded-lg p-5 shadow-sm mb-6">
+        <Body18 className="font-semibold text-gray-900 dark:text-gray-100 mb-3">People Seeking Support</Body18>
+        <div className="text-center py-6 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+          <Body16 className="text-gray-600 dark:text-gray-400 mb-2">No one is seeking support right now</Body16>
+          <Body16 className="text-sm text-gray-500 dark:text-gray-500">
             You&apos;ll be notified when someone needs help
           </Body16>
         </div>
@@ -272,9 +272,9 @@ export default function PeopleSeeking({ currentUserId, currentRoleState }: Peopl
   }
 
   return (
-    <div className="bg-white rounded-lg p-5 shadow-sm mb-6">
+    <div className="bg-white dark:bg-gray-800 rounded-lg p-5 shadow-sm mb-6">
       <div className="flex items-center justify-between mb-4">
-        <Body18 className="font-semibold text-gray-900">People Seeking Support</Body18>
+        <Body18 className="font-semibold text-gray-900 dark:text-gray-100">People Seeking Support</Body18>
         <div className="flex items-center gap-2 px-3 py-1.5 bg-purple-50 rounded-full border border-purple-200">
           <span className="w-2 h-2 bg-purple-500 rounded-full animate-pulse"></span>
           <Body16 className="text-sm text-purple-700 font-semibold">
@@ -315,12 +315,12 @@ export default function PeopleSeeking({ currentUserId, currentRoleState }: Peopl
               aria-label={`View ${seeker.display_name}'s profile`}
             >
               <div className="flex items-center gap-2">
-                <Body16 className="font-semibold text-gray-900 truncate">
+                <Body16 className="font-semibold text-gray-900 dark:text-gray-100 truncate">
                   {seeker.display_name}
                 </Body16>
                 <span className="w-2 h-2 bg-purple-500 rounded-full animate-pulse flex-shrink-0" aria-label="Seeking support"></span>
               </div>
-              <Body16 className="text-sm text-gray-600 truncate">
+              <Body16 className="text-sm text-gray-600 dark:text-gray-400 truncate">
                 {getDisplayMessage(seeker.tagline, seeker.bio)}
               </Body16>
               {seeker.tags && seeker.tags.length > 0 && (
@@ -331,7 +331,7 @@ export default function PeopleSeeking({ currentUserId, currentRoleState }: Peopl
                     </span>
                   ))}
                   {seeker.tags.length > 3 && (
-                    <span className="text-[10px] text-gray-400">+{seeker.tags.length - 3}</span>
+                    <span className="text-[10px] text-gray-400 dark:text-gray-500">+{seeker.tags.length - 3}</span>
                   )}
                 </div>
               )}
@@ -392,7 +392,7 @@ export default function PeopleSeeking({ currentUserId, currentRoleState }: Peopl
               )}
               <div>
                 {profilePreview.tagline && (
-                  <p className="text-sm italic text-gray-600">"{profilePreview.tagline}"</p>
+                  <p className="text-sm italic text-gray-600 dark:text-gray-400">"{profilePreview.tagline}"</p>
                 )}
                 <div className="flex items-center gap-2 mt-1">
                   <span className="w-2 h-2 bg-purple-500 rounded-full animate-pulse"></span>
@@ -404,15 +404,15 @@ export default function PeopleSeeking({ currentUserId, currentRoleState }: Peopl
             {/* Bio */}
             {profilePreview.bio && (
               <div>
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">About</p>
-                <p className="text-sm text-gray-700">{profilePreview.bio}</p>
+                <p className="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide mb-1">About</p>
+                <p className="text-sm text-gray-700 dark:text-gray-300">{profilePreview.bio}</p>
               </div>
             )}
 
             {/* Tags */}
             {profilePreview.tags && profilePreview.tags.length > 0 && (
               <div>
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Topics</p>
+                <p className="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide mb-2">Topics</p>
                 <div className="flex flex-wrap gap-2">
                   {profilePreview.tags.map(tag => (
                     <span key={tag} className="px-2.5 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-700">
@@ -444,7 +444,7 @@ export default function PeopleSeeking({ currentUserId, currentRoleState }: Peopl
             {blockModal.reason}
           </p>
         </div>
-        <p className="text-sm text-rb-gray">
+        <p className="text-sm text-rb-gray dark:text-gray-400">
           Please contact support for more information.
         </p>
       </Modal>
@@ -465,7 +465,7 @@ export default function PeopleSeeking({ currentUserId, currentRoleState }: Peopl
             This happens sometimes! Please try again in a moment.
           </p>
           {errorModal.message && (
-            <p className="text-xs text-rb-gray mt-2">
+            <p className="text-xs text-rb-gray dark:text-gray-400 mt-2">
               Technical details: {errorModal.message}
             </p>
           )}

@@ -211,7 +211,7 @@ export default function NewStoryPage() {
 
   if (checking) {
     return (
-      <div className="min-h-screen bg-[#F8FAFB] flex items-center justify-center">
+      <div className="min-h-screen bg-[#F8FAFB] dark:bg-gray-900 flex items-center justify-center">
         <div className="w-6 h-6 border-2 border-[#5A7A8C] border-t-transparent rounded-full animate-spin" />
       </div>
     )
@@ -219,13 +219,13 @@ export default function NewStoryPage() {
 
   if (notSignedIn) {
     return (
-      <div className="min-h-screen bg-[#F8FAFB] flex flex-col">
+      <div className="min-h-screen bg-[#F8FAFB] dark:bg-gray-900 flex flex-col">
         <Header />
         <div className="flex-1 flex items-center justify-center px-4">
           <div className="text-center max-w-sm">
             <div className="text-4xl mb-4">🔒</div>
-            <h2 className="text-xl font-bold text-[#2D3436] mb-2">Sign in required</h2>
-            <p className="text-sm text-[#4A5568] mb-6">
+            <h2 className="text-xl font-bold text-[#2D3436] dark:text-gray-100 mb-2">Sign in required</h2>
+            <p className="text-sm text-[#4A5568] dark:text-gray-400 mb-6">
               You need to be signed in to write a story.
             </p>
             <a
@@ -242,13 +242,13 @@ export default function NewStoryPage() {
 
   if (!eligible) {
     return (
-      <div className="min-h-screen bg-[#F8FAFB] flex flex-col">
+      <div className="min-h-screen bg-[#F8FAFB] dark:bg-gray-900 flex flex-col">
         <Header />
         <div className="flex-1 flex items-center justify-center px-4">
           <div className="text-center max-w-md">
             <div className="text-4xl mb-4">✍️</div>
-            <h2 className="text-xl font-bold text-[#2D3436] mb-2">Stories are for listeners</h2>
-            <p className="text-sm text-[#4A5568] mb-6">
+            <h2 className="text-xl font-bold text-[#2D3436] dark:text-gray-100 mb-2">Stories are for listeners</h2>
+            <p className="text-sm text-[#4A5568] dark:text-gray-400 mb-6">
               Only verified listeners and recovery professionals can write stories for the community.
               If you believe this is a mistake, reach out to us.
             </p>
@@ -265,12 +265,12 @@ export default function NewStoryPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F8FAFB] font-sans">
+    <div className="min-h-screen bg-[#F8FAFB] dark:bg-gray-900 font-sans">
       <Header />
 
       <main className="max-w-3xl mx-auto px-4 sm:px-6 py-8">
         {/* Tab switcher */}
-        <div className="flex gap-1 mb-6 p-1 bg-white border border-gray-200 rounded-xl w-fit">
+        <div className="flex gap-1 mb-6 p-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl w-fit">
           {(['write', 'preview'] as Tab[]).map((t) => (
             <button
               key={t}
@@ -278,7 +278,7 @@ export default function NewStoryPage() {
               className={`px-5 py-2 rounded-lg text-sm font-semibold transition capitalize ${
                 tab === t
                   ? 'bg-[#2D3436] text-white shadow-sm'
-                  : 'text-[#4A5568] hover:text-[#2D3436]'
+                  : 'text-[#4A5568] dark:text-gray-400 hover:text-[#2D3436] dark:hover:text-gray-100'
               }`}
             >
               {t}
@@ -291,8 +291,8 @@ export default function NewStoryPage() {
             {/* Title */}
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <label className="text-sm font-semibold text-[#2D3436]">Title *</label>
-                <span className={`text-xs ${title.length > MAX_TITLE * 0.9 ? 'text-amber-500' : 'text-gray-400'}`}>
+                <label className="text-sm font-semibold text-[#2D3436] dark:text-gray-100">Title *</label>
+                <span className={`text-xs ${title.length > MAX_TITLE * 0.9 ? 'text-amber-500' : 'text-gray-400 dark:text-gray-500'}`}>
                   {title.length}/{MAX_TITLE}
                 </span>
               </div>
@@ -301,17 +301,17 @@ export default function NewStoryPage() {
                 value={title}
                 onChange={(e) => setTitle(e.target.value.slice(0, MAX_TITLE))}
                 placeholder="Give your story a title…"
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-[#2D3436] text-lg font-semibold placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#5A7A8C]/30 focus:border-[#5A7A8C] transition"
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-[#2D3436] dark:text-gray-100 text-lg font-semibold placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#5A7A8C]/30 focus:border-[#5A7A8C] transition"
               />
             </div>
 
             {/* Cover image */}
             <div>
-              <label className="text-sm font-semibold text-[#2D3436] block mb-1.5">
-                Cover Photo <span className="font-normal text-gray-400">(optional)</span>
+              <label className="text-sm font-semibold text-[#2D3436] dark:text-gray-100 block mb-1.5">
+                Cover Photo <span className="font-normal text-gray-400 dark:text-gray-500">(optional)</span>
               </label>
               {coverUrl ? (
-                <div className="relative rounded-xl overflow-hidden h-48 bg-gray-100">
+                <div className="relative rounded-xl overflow-hidden h-48 bg-gray-100 dark:bg-gray-700">
                   <img src={coverUrl} alt="Cover" className="w-full h-full object-cover" />
                   <button
                     onClick={() => setCoverUrl(null)}
@@ -324,7 +324,7 @@ export default function NewStoryPage() {
                 <button
                   onClick={() => fileInputRef.current?.click()}
                   disabled={uploadingCover}
-                  className="w-full h-32 rounded-xl border-2 border-dashed border-gray-200 hover:border-[#5A7A8C] bg-white flex flex-col items-center justify-center gap-2 text-sm text-[#4A5568] hover:text-[#5A7A8C] transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full h-32 rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-600 hover:border-[#5A7A8C] bg-white dark:bg-gray-700 flex flex-col items-center justify-center gap-2 text-sm text-[#4A5568] dark:text-gray-400 hover:text-[#5A7A8C] transition disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {uploadingCover ? (
                     <div className="w-5 h-5 border-2 border-[#5A7A8C] border-t-transparent rounded-full animate-spin" />
@@ -332,7 +332,7 @@ export default function NewStoryPage() {
                     <>
                       <span className="text-2xl">🖼️</span>
                       <span>Upload a cover photo</span>
-                      <span className="text-xs text-gray-400">JPG, PNG — up to 8MB · Landscape works best for link previews on Facebook &amp; X</span>
+                      <span className="text-xs text-gray-400 dark:text-gray-500">JPG, PNG — up to 8MB · Landscape works best for link previews on Facebook &amp; X</span>
                     </>
                   )}
                 </button>
@@ -349,10 +349,10 @@ export default function NewStoryPage() {
             {/* Excerpt */}
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <label className="text-sm font-semibold text-[#2D3436]">
-                  Short Description <span className="font-normal text-gray-400">(optional)</span>
+                <label className="text-sm font-semibold text-[#2D3436] dark:text-gray-100">
+                  Short Description <span className="font-normal text-gray-400 dark:text-gray-500">(optional)</span>
                 </label>
-                <span className={`text-xs ${excerpt.length > MAX_EXCERPT * 0.9 ? 'text-amber-500' : 'text-gray-400'}`}>
+                <span className={`text-xs ${excerpt.length > MAX_EXCERPT * 0.9 ? 'text-amber-500' : 'text-gray-400 dark:text-gray-500'}`}>
                   {excerpt.length}/{MAX_EXCERPT}
                 </span>
               </div>
@@ -361,60 +361,60 @@ export default function NewStoryPage() {
                 onChange={(e) => setExcerpt(e.target.value.slice(0, MAX_EXCERPT))}
                 placeholder="A sentence or two shown in the card preview…"
                 rows={2}
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-sm text-[#2D3436] placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#5A7A8C]/30 focus:border-[#5A7A8C] transition resize-none"
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm text-[#2D3436] dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#5A7A8C]/30 focus:border-[#5A7A8C] transition resize-none"
               />
             </div>
 
             {/* Content */}
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <label className="text-sm font-semibold text-[#2D3436]">Story *</label>
-                <span className="text-xs text-gray-400">Markdown supported</span>
+                <label className="text-sm font-semibold text-[#2D3436] dark:text-gray-100">Story *</label>
+                <span className="text-xs text-gray-400 dark:text-gray-500">Markdown supported</span>
               </div>
               <textarea
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
                 placeholder="Share your story, insight, or message of hope…"
                 rows={18}
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-sm text-[#2D3436] placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#5A7A8C]/30 focus:border-[#5A7A8C] transition resize-y font-mono leading-relaxed"
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm text-[#2D3436] dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#5A7A8C]/30 focus:border-[#5A7A8C] transition resize-y font-mono leading-relaxed"
               />
-              <p className="text-xs text-gray-400 mt-1.5">
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1.5">
                 Use **bold**, *italic*, ## Headings, and {">"} blockquotes for formatting.
               </p>
             </div>
 
             {/* Social Links */}
             <div>
-              <label className="text-sm font-semibold text-[#2D3436] block mb-1.5">
-                Your Links <span className="font-normal text-gray-400">(optional — shown on your published story)</span>
+              <label className="text-sm font-semibold text-[#2D3436] dark:text-gray-100 block mb-1.5">
+                Your Links <span className="font-normal text-gray-400 dark:text-gray-500">(optional — shown on your published story)</span>
               </label>
               <div className="space-y-2">
-                <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl border border-gray-200 bg-white focus-within:ring-2 focus-within:ring-[#5A7A8C]/30 focus-within:border-[#5A7A8C] transition">
+                <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 focus-within:ring-2 focus-within:ring-[#5A7A8C]/30 focus-within:border-[#5A7A8C] transition">
                   <IconWebsite className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                  <input type="url" value={authorWebsite} onChange={(e) => setAuthorWebsite(e.target.value)} placeholder="Website (https://...)" className="flex-1 text-sm text-[#2D3436] placeholder:text-gray-400 bg-transparent focus:outline-none" />
+                  <input type="url" value={authorWebsite} onChange={(e) => setAuthorWebsite(e.target.value)} placeholder="Website (https://...)" className="flex-1 text-sm text-[#2D3436] dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 bg-transparent focus:outline-none" />
                 </div>
-                <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl border border-gray-200 bg-white focus-within:ring-2 focus-within:ring-[#5A7A8C]/30 focus-within:border-[#5A7A8C] transition">
+                <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 focus-within:ring-2 focus-within:ring-[#5A7A8C]/30 focus-within:border-[#5A7A8C] transition">
                   <IconInstagram className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                  <span className="text-sm text-gray-400 select-none">@</span>
-                  <input type="text" value={authorInstagram} onChange={(e) => setAuthorInstagram(e.target.value.replace(/^@/, ''))} placeholder="Instagram username" className="flex-1 text-sm text-[#2D3436] placeholder:text-gray-400 bg-transparent focus:outline-none" />
+                  <span className="text-sm text-gray-400 dark:text-gray-500 select-none">@</span>
+                  <input type="text" value={authorInstagram} onChange={(e) => setAuthorInstagram(e.target.value.replace(/^@/, ''))} placeholder="Instagram username" className="flex-1 text-sm text-[#2D3436] dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 bg-transparent focus:outline-none" />
                 </div>
-                <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl border border-gray-200 bg-white focus-within:ring-2 focus-within:ring-[#5A7A8C]/30 focus-within:border-[#5A7A8C] transition">
+                <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 focus-within:ring-2 focus-within:ring-[#5A7A8C]/30 focus-within:border-[#5A7A8C] transition">
                   <IconX className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                  <span className="text-sm text-gray-400 select-none">@</span>
-                  <input type="text" value={authorTwitter} onChange={(e) => setAuthorTwitter(e.target.value.replace(/^@/, ''))} placeholder="X / Twitter username" className="flex-1 text-sm text-[#2D3436] placeholder:text-gray-400 bg-transparent focus:outline-none" />
+                  <span className="text-sm text-gray-400 dark:text-gray-500 select-none">@</span>
+                  <input type="text" value={authorTwitter} onChange={(e) => setAuthorTwitter(e.target.value.replace(/^@/, ''))} placeholder="X / Twitter username" className="flex-1 text-sm text-[#2D3436] dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 bg-transparent focus:outline-none" />
                 </div>
-                <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl border border-gray-200 bg-white focus-within:ring-2 focus-within:ring-[#5A7A8C]/30 focus-within:border-[#5A7A8C] transition">
+                <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 focus-within:ring-2 focus-within:ring-[#5A7A8C]/30 focus-within:border-[#5A7A8C] transition">
                   <IconLinkedIn className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                  <input type="url" value={authorLinkedin} onChange={(e) => setAuthorLinkedin(e.target.value)} placeholder="LinkedIn URL (https://linkedin.com/in/...)" className="flex-1 text-sm text-[#2D3436] placeholder:text-gray-400 bg-transparent focus:outline-none" />
+                  <input type="url" value={authorLinkedin} onChange={(e) => setAuthorLinkedin(e.target.value)} placeholder="LinkedIn URL (https://linkedin.com/in/...)" className="flex-1 text-sm text-[#2D3436] dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 bg-transparent focus:outline-none" />
                 </div>
-                <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl border border-gray-200 bg-white focus-within:ring-2 focus-within:ring-[#5A7A8C]/30 focus-within:border-[#5A7A8C] transition">
+                <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 focus-within:ring-2 focus-within:ring-[#5A7A8C]/30 focus-within:border-[#5A7A8C] transition">
                   <IconThreads className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                  <span className="text-sm text-gray-400 select-none">@</span>
-                  <input type="text" value={authorThreads} onChange={(e) => setAuthorThreads(e.target.value.replace(/^@/, ''))} placeholder="Threads username" className="flex-1 text-sm text-[#2D3436] placeholder:text-gray-400 bg-transparent focus:outline-none" />
+                  <span className="text-sm text-gray-400 dark:text-gray-500 select-none">@</span>
+                  <input type="text" value={authorThreads} onChange={(e) => setAuthorThreads(e.target.value.replace(/^@/, ''))} placeholder="Threads username" className="flex-1 text-sm text-[#2D3436] dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 bg-transparent focus:outline-none" />
                 </div>
-                <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl border border-gray-200 bg-white focus-within:ring-2 focus-within:ring-[#5A7A8C]/30 focus-within:border-[#5A7A8C] transition">
+                <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 focus-within:ring-2 focus-within:ring-[#5A7A8C]/30 focus-within:border-[#5A7A8C] transition">
                   <IconYouTube className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                  <input type="url" value={authorYoutube} onChange={(e) => setAuthorYoutube(e.target.value)} placeholder="YouTube channel URL" className="flex-1 text-sm text-[#2D3436] placeholder:text-gray-400 bg-transparent focus:outline-none" />
+                  <input type="url" value={authorYoutube} onChange={(e) => setAuthorYoutube(e.target.value)} placeholder="YouTube channel URL" className="flex-1 text-sm text-[#2D3436] dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 bg-transparent focus:outline-none" />
                 </div>
               </div>
             </div>
@@ -423,7 +423,7 @@ export default function NewStoryPage() {
           </div>
         ) : (
           /* Preview tab */
-          <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm overflow-hidden">
             {/* Cover */}
             {coverUrl && (
               <div className="w-full h-56 overflow-hidden">
@@ -431,11 +431,11 @@ export default function NewStoryPage() {
               </div>
             )}
             <div className="p-6 sm:p-8">
-              <h1 className="text-2xl sm:text-3xl font-bold text-[#2D3436] leading-tight mb-4">
+              <h1 className="text-2xl sm:text-3xl font-bold text-[#2D3436] dark:text-gray-100 leading-tight mb-4">
                 {title || <span className="text-gray-300">Your title will appear here</span>}
               </h1>
               {excerpt && (
-                <p className="text-[#4A5568] italic leading-relaxed mb-6 border-l-4 border-[#E8EEF2] pl-4">
+                <p className="text-[#4A5568] dark:text-gray-400 italic leading-relaxed mb-6 border-l-4 border-[#E8EEF2] dark:border-gray-700 pl-4">
                   {excerpt}
                 </p>
               )}
@@ -470,7 +470,7 @@ export default function NewStoryPage() {
 
         {/* Auto-save indicator */}
         {(autoSaving || lastAutoSaved) && (
-          <div className="mt-3 text-xs text-gray-400 text-right">
+          <div className="mt-3 text-xs text-gray-400 dark:text-gray-500 text-right">
             {autoSaving ? 'Auto-saving draft…' : lastAutoSaved ? `Draft auto-saved ${Math.max(0, Math.round((Date.now() - lastAutoSaved.getTime()) / 60000))} min ago` : ''}
           </div>
         )}
@@ -479,7 +479,7 @@ export default function NewStoryPage() {
         <div className="mt-4 flex flex-col sm:flex-row gap-3 justify-end">
           <a
             href="/stories/my"
-            className="px-5 py-2.5 text-sm font-semibold text-[#4A5568] border border-gray-200 rounded-full hover:border-gray-300 transition text-center"
+            className="px-5 py-2.5 text-sm font-semibold text-[#4A5568] dark:text-gray-400 border border-gray-200 dark:border-gray-600 rounded-full hover:border-gray-300 dark:hover:border-gray-500 transition text-center"
           >
             My Stories
           </a>

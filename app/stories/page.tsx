@@ -39,7 +39,7 @@ export default async function StoriesPage() {
   const initialHasMore = (count ?? 0) > PAGE_SIZE
 
   return (
-    <div className="min-h-screen bg-[#F8FAFB] font-sans">
+    <div className="min-h-screen bg-[#F8FAFB] dark:bg-gray-900 font-sans">
       {/* Header */}
       <header className="bg-[#2D3436] text-white">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-5">
@@ -78,8 +78,8 @@ export default async function StoriesPage() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-gray-200 mt-12 py-8 text-center">
-        <p className="text-xs text-gray-400">
+      <footer className="border-t border-gray-200 dark:border-gray-700 mt-12 py-8 text-center">
+        <p className="text-xs text-gray-400 dark:text-gray-500">
           © {new Date().getFullYear()} RecoveryBridge ·{' '}
           <a href="https://recoverybridge.app" target="_blank" rel="noopener noreferrer" className="hover:text-[#5A7A8C] transition">
             recoverybridge.app

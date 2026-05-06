@@ -80,20 +80,20 @@ export default function Modal({
       onClick={handleBackdropClick}
     >
       <div
-        className="bg-white rounded-2xl p-6 sm:p-8 max-w-md w-full shadow-2xl animate-fadeIn"
+        className="bg-white dark:bg-gray-800 rounded-2xl p-6 sm:p-8 max-w-md w-full shadow-2xl animate-fadeIn"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex items-start justify-between mb-4">
           <h2
             id="modal-title"
-            className="text-xl sm:text-2xl font-bold text-rb-dark pr-8"
+            className="text-xl sm:text-2xl font-bold text-rb-dark dark:text-gray-100 pr-8"
           >
             {title}
           </h2>
           <button
             onClick={onClose}
-            className="text-rb-gray hover:text-rb-dark text-2xl leading-none transition focus:outline-none focus:ring-2 focus:ring-rb-blue rounded"
+            className="text-rb-gray dark:text-gray-400 hover:text-rb-dark dark:hover:text-gray-100 text-2xl leading-none transition focus:outline-none focus:ring-2 focus:ring-rb-blue rounded"
             aria-label="Close modal"
           >
             ×
@@ -101,7 +101,7 @@ export default function Modal({
         </div>
 
         {/* Content */}
-        <div className="mb-6 text-rb-dark">
+        <div className="mb-6 text-rb-dark dark:text-gray-100">
           {children}
         </div>
 
@@ -110,7 +110,7 @@ export default function Modal({
           {type === 'confirm' && (
             <button
               onClick={onClose}
-              className="px-6 py-2 rounded-full font-semibold border-2 border-rb-gray/30 text-rb-dark hover:bg-rb-gray/10 transition focus:outline-none focus:ring-2 focus:ring-rb-blue focus:ring-offset-2"
+              className="px-6 py-2 rounded-full font-semibold border-2 border-rb-gray/30 text-rb-dark dark:text-gray-100 hover:bg-rb-gray/10 transition focus:outline-none focus:ring-2 focus:ring-rb-blue focus:ring-offset-2"
             >
               {cancelText}
             </button>

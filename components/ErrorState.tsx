@@ -22,19 +22,19 @@ export default function ErrorState({
   if (type === 'page') {
     return (
       <div className={`min-h-screen flex items-center justify-center p-4 sm:p-6 ${className}`}>
-        <div className="max-w-md w-full bg-white rounded-xl sm:rounded-2xl p-6 sm:p-8 shadow-sm text-center">
+        <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-xl sm:rounded-2xl p-6 sm:p-8 shadow-sm text-center">
           {/* Error icon */}
           <div className="w-16 h-16 mx-auto mb-4 bg-red-100 rounded-full flex items-center justify-center">
             <span className="text-3xl" role="img" aria-label="Error">⚠️</span>
           </div>
 
           {/* Title */}
-          <h2 className="text-xl font-semibold text-[#2D3436] mb-2">
+          <h2 className="text-xl font-semibold text-[#2D3436] dark:text-gray-100 mb-2">
             {title}
           </h2>
 
           {/* Message */}
-          <p className="text-rb-gray mb-6">
+          <p className="text-rb-gray dark:text-gray-400 mb-6">
             {message}
           </p>
 

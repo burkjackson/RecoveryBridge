@@ -416,11 +416,11 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <main id="main-content" className="min-h-screen p-4 sm:p-6 bg-gradient-to-br from-rb-blue/5 via-rb-white to-rb-blue/10">
+      <main id="main-content" className="min-h-screen p-4 sm:p-6 bg-gradient-to-br from-rb-blue/5 via-rb-white to-rb-blue/10 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
       <div className="max-w-2xl mx-auto">
           {/* Header skeleton */}
           <div className="mb-6 sm:mb-8">
-            <div className="h-8 bg-gray-200 rounded animate-pulse w-40 mb-4" />
+            <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-40 mb-4" />
           </div>
 
           {/* Profile skeleton */}
@@ -434,17 +434,17 @@ export default function ProfilePage() {
 
   if (!profile) {
     return (
-      <main id="main-content" className="min-h-screen flex items-center justify-center p-4 sm:p-6 bg-gradient-to-br from-rb-blue/5 via-rb-white to-rb-blue/10">
+      <main id="main-content" className="min-h-screen flex items-center justify-center p-4 sm:p-6 bg-gradient-to-br from-rb-blue/5 via-rb-white to-rb-blue/10 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
           <Body16>Profile not found</Body16>
         </main>
     )
   }
 
   return (
-    <main id="main-content" className="min-h-screen p-4 sm:p-6" style={{ backgroundColor: '#F8F9FA' }}>
+    <main id="main-content" className="min-h-screen p-4 sm:p-6 bg-[#F8F9FA] dark:bg-gray-900">
     <div className="max-w-2xl mx-auto">
         {/* Header */}
-        <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-6 mb-8 border border-rb-gray/10">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-4 sm:p-6 mb-8 border border-rb-gray/10 dark:border-gray-700">
           <div className="flex flex-wrap justify-between items-center gap-3">
             {/* Left: Logo and Navigation */}
             <div className="flex items-center gap-2 sm:gap-4">
@@ -463,7 +463,7 @@ export default function ProfilePage() {
                 {profile.is_admin && (
                   <button
                     onClick={() => router.push('/admin')}
-                    className="min-h-[44px] px-3 sm:px-5 py-2 sm:py-2.5 bg-gray-100 text-gray-700 rounded-full text-sm font-semibold hover:bg-gray-200 transition-all whitespace-nowrap"
+                    className="min-h-[44px] px-3 sm:px-5 py-2 sm:py-2.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full text-sm font-semibold hover:bg-gray-200 dark:hover:bg-gray-600 transition-all whitespace-nowrap"
                   >
                     Admin
                   </button>
@@ -492,9 +492,9 @@ export default function ProfilePage() {
 
         <div className="space-y-3">
           {/* Display Name */}
-          <div className="bg-white rounded-lg shadow-sm p-5 hover:shadow-md transition-all">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-5 hover:shadow-md transition-all">
             <div className="flex justify-between items-center mb-2">
-              <Body16 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Display Name</Body16>
+              <Body16 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Display Name</Body16>
               {editingField !== 'display_name' && (
                 <button
                   onClick={() => startEditing('display_name', profile.display_name)}
@@ -513,7 +513,7 @@ export default function ProfilePage() {
                   type="text"
                   value={editValue}
                   onChange={(e) => setEditValue(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rb-blue focus:border-transparent transition-all"
+                  className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-rb-blue focus:border-transparent transition-all dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400"
                 />
                 <div className="flex gap-2">
                   <button
@@ -525,27 +525,27 @@ export default function ProfilePage() {
                   </button>
                   <button
                     onClick={cancelEditing}
-                    className="px-4 py-2 border border-gray-200 rounded-lg text-sm font-medium hover:bg-gray-50 transition"
+                    className="px-4 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-700 dark:text-gray-300 transition"
                   >
                     Cancel
                   </button>
                 </div>
               </div>
             ) : (
-              <Body18 className="text-gray-900">{profile.display_name}</Body18>
+              <Body18 className="text-gray-900 dark:text-gray-100">{profile.display_name}</Body18>
             )}
           </div>
 
           {/* Email (not editable) */}
-          <div className="bg-white rounded-lg shadow-sm p-5">
-            <Body16 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Email</Body16>
-            <Body18 className="text-gray-900">{profile.email}</Body18>
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-5">
+            <Body16 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Email</Body16>
+            <Body18 className="text-gray-900 dark:text-gray-100">{profile.email}</Body18>
           </div>
 
           {/* Tagline */}
-          <div className="bg-white rounded-lg shadow-sm p-5 hover:shadow-md transition-all">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-5 hover:shadow-md transition-all">
             <div className="flex justify-between items-center mb-2">
-              <Body16 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Tagline</Body16>
+              <Body16 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Tagline</Body16>
               {editingField !== 'tagline' && (
                 <button
                   onClick={() => startEditing('tagline', profile.tagline)}
@@ -565,10 +565,10 @@ export default function ProfilePage() {
                   value={editValue}
                   onChange={(e) => setEditValue(e.target.value.slice(0, 60))}
                   maxLength={60}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rb-blue focus:border-transparent transition-all"
+                  className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-rb-blue focus:border-transparent transition-all dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400"
                   placeholder="e.g., 5 years sober, here to help"
                 />
-                <Body16 className="text-gray-500 text-xs">
+                <Body16 className="text-gray-500 dark:text-gray-500 text-xs">
                   This appears next to your name when you're available to listen. {editValue.length}/60 characters
                 </Body16>
                 <div className="flex gap-2">
@@ -581,23 +581,23 @@ export default function ProfilePage() {
                   </button>
                   <button
                     onClick={cancelEditing}
-                    className="px-4 py-2 border border-gray-200 rounded-lg text-sm font-medium hover:bg-gray-50 transition"
+                    className="px-4 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-700 dark:text-gray-300 transition"
                   >
                     Cancel
                   </button>
                 </div>
               </div>
             ) : (
-              <Body16 className="text-gray-700 leading-relaxed italic">
+              <Body16 className="text-gray-700 dark:text-gray-300 leading-relaxed italic">
                 "{profile.tagline || 'Person in Recovery'}"
               </Body16>
             )}
           </div>
 
           {/* Bio */}
-          <div className="bg-white rounded-lg shadow-sm p-5 hover:shadow-md transition-all">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-5 hover:shadow-md transition-all">
             <div className="flex justify-between items-center mb-2">
-              <Body16 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">About</Body16>
+              <Body16 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">About</Body16>
               {editingField !== 'bio' && (
                 <button
                   onClick={() => startEditing('bio', profile.bio)}
@@ -616,10 +616,10 @@ export default function ProfilePage() {
                   value={editValue}
                   onChange={(e) => setEditValue(e.target.value)}
                   rows={4}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rb-blue focus:border-transparent transition-all resize-none"
+                  className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-rb-blue focus:border-transparent transition-all resize-none dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400"
                   placeholder="Tell us about yourself..."
                 />
-                <Body16 className="text-gray-500 text-xs leading-relaxed">
+                <Body16 className="text-gray-500 dark:text-gray-500 text-xs leading-relaxed">
                   Share what brings you to RecoveryBridge, what recovery means to you, or what helps you most in your journey.
                 </Body16>
                 <div className="flex gap-2">
@@ -632,21 +632,21 @@ export default function ProfilePage() {
                   </button>
                   <button
                     onClick={cancelEditing}
-                    className="px-4 py-2 border border-gray-200 rounded-lg text-sm font-medium hover:bg-gray-50 transition"
+                    className="px-4 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-700 dark:text-gray-300 transition"
                   >
                     Cancel
                   </button>
                 </div>
               </div>
             ) : (
-              <Body16 className="text-gray-700 leading-relaxed">{profile.bio || 'No bio yet'}</Body16>
+              <Body16 className="text-gray-700 dark:text-gray-300 leading-relaxed">{profile.bio || 'No bio yet'}</Body16>
             )}
           </div>
 
           {/* User Role */}
-          <div className="bg-white rounded-lg shadow-sm p-5 hover:shadow-md transition-all">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-5 hover:shadow-md transition-all">
             <div className="flex justify-between items-center mb-2">
-              <Body16 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Role</Body16>
+              <Body16 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Role</Body16>
               {editingField !== 'user_role' && (
                 <button
                   onClick={() => startEditing('user_role', profile.user_role)}
@@ -664,7 +664,7 @@ export default function ProfilePage() {
                 <select
                   value={editValue}
                   onChange={(e) => setEditValue(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rb-blue focus:border-transparent transition-all"
+                  className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-rb-blue focus:border-transparent transition-all dark:bg-gray-700 dark:text-gray-100"
                 >
                   <option value="">Select your role...</option>
                   <option value="person_in_recovery">Person in Recovery</option>
@@ -680,14 +680,14 @@ export default function ProfilePage() {
                   </button>
                   <button
                     onClick={cancelEditing}
-                    className="px-4 py-2 border border-gray-200 rounded-lg text-sm font-medium hover:bg-gray-50 transition"
+                    className="px-4 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-700 dark:text-gray-300 transition"
                   >
                     Cancel
                   </button>
                 </div>
               </div>
             ) : (
-              <Body18 className="text-gray-900">
+              <Body18 className="text-gray-900 dark:text-gray-100">
                 {profile.user_role === 'person_in_recovery' && 'Person in Recovery'}
                 {profile.user_role === 'professional' && 'Allies in Long-Term Recovery'}
                 {profile.user_role === 'ally' && 'Recovery Support (Legacy)'}
@@ -698,9 +698,9 @@ export default function ProfilePage() {
         </div>
 
           {/* Specialty Tags */}
-          <div className="bg-white rounded-lg shadow-sm p-5 hover:shadow-md transition-all">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-5 hover:shadow-md transition-all">
             <div className="flex justify-between items-center mb-2">
-              <Body16 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Specialty Tags</Body16>
+              <Body16 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Specialty Tags</Body16>
               {!editingTags && (
                 <button
                   onClick={() => {
@@ -718,7 +718,7 @@ export default function ProfilePage() {
             </div>
             {editingTags ? (
               <div className="space-y-3">
-                <Body16 className="text-sm text-gray-600">
+                <Body16 className="text-sm text-gray-600 dark:text-gray-400">
                   Select topics you can help with. This helps seekers find the right listener.
                 </Body16>
                 <TagSelector
@@ -735,7 +735,7 @@ export default function ProfilePage() {
                   </button>
                   <button
                     onClick={() => setEditingTags(false)}
-                    className="px-4 py-2 border border-gray-200 rounded-lg text-sm font-medium hover:bg-gray-50 transition"
+                    className="px-4 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-700 dark:text-gray-300 transition"
                   >
                     Cancel
                   </button>
@@ -752,7 +752,7 @@ export default function ProfilePage() {
                     ))}
                   </div>
                 ) : (
-                  <Body16 className="text-gray-500 italic text-sm">No specialty tags set</Body16>
+                  <Body16 className="text-gray-500 dark:text-gray-500 italic text-sm">No specialty tags set</Body16>
                 )}
               </div>
             )}
@@ -767,23 +767,23 @@ export default function ProfilePage() {
         </div>
 
         {/* Email Notifications */}
-        <div className="mt-4 bg-white rounded-lg shadow-sm p-5">
+        <div className="mt-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm p-5">
           <div className="flex items-center gap-2 mb-1">
             <span className="text-xl">✉️</span>
-            <Body16 className="font-semibold text-gray-900">Email Notifications</Body16>
+            <Body16 className="font-semibold text-gray-900 dark:text-gray-100">Email Notifications</Body16>
           </div>
-          <Body16 className="text-sm text-gray-600 mb-4">
+          <Body16 className="text-sm text-gray-600 dark:text-gray-400 mb-4">
             Get an email when someone needs support and push notifications can&apos;t reach you. Your email address is never shared with other users.
           </Body16>
 
           {emailSuccess && (
-            <div className="mb-3 p-3 bg-green-50 border-l-4 border-green-500 rounded">
-              <Body16 className="text-sm text-green-700">{emailSuccess}</Body16>
+            <div className="mb-3 p-3 bg-green-50 dark:bg-green-900/20 border-l-4 border-green-500 dark:border-green-800 rounded">
+              <Body16 className="text-sm text-green-700 dark:text-green-300">{emailSuccess}</Body16>
             </div>
           )}
 
           <div className="flex items-center justify-between">
-            <label htmlFor="email-notifications" className="text-sm font-medium text-gray-700 cursor-pointer select-none">
+            <label htmlFor="email-notifications" className="text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer select-none">
               Receive email notification fallbacks
             </label>
             <button
@@ -797,7 +797,7 @@ export default function ProfilePage() {
               }}
               disabled={savingEmail}
               className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-rb-blue focus:ring-offset-2 disabled:opacity-50 ${
-                emailNotificationsEnabled ? 'bg-rb-blue' : 'bg-gray-200'
+                emailNotificationsEnabled ? 'bg-rb-blue' : 'bg-gray-200 dark:bg-gray-600'
               }`}
             >
               <span
@@ -807,21 +807,21 @@ export default function ProfilePage() {
               />
             </button>
           </div>
-          <Body16 className="text-xs text-gray-500 mt-2 italic">
+          <Body16 className="text-xs text-gray-500 dark:text-gray-500 mt-2 italic">
             Emails are sent from RecoveryBridge — you must opt in here to receive them.
           </Body16>
         </div>
 
         {/* Write a Story — shown to professionals, allies, and admins */}
         {(profile.user_role === 'professional' || profile.user_role === 'ally' || profile.is_admin) && (
-          <div className="mt-4 bg-white rounded-lg shadow-sm p-5">
+          <div className="mt-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm p-5">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-[#E8EEF2] flex items-center justify-center text-xl flex-shrink-0">
+              <div className="w-10 h-10 rounded-full bg-[#E8EEF2] dark:bg-gray-700 flex items-center justify-center text-xl flex-shrink-0">
                 ✍️
               </div>
               <div className="flex-1 min-w-0">
-                <Body16 className="font-semibold text-gray-900">Share your story</Body16>
-                <Body16 className="text-xs text-gray-500 mt-0.5">Help others by writing about your experience.</Body16>
+                <Body16 className="font-semibold text-gray-900 dark:text-gray-100">Share your story</Body16>
+                <Body16 className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Help others by writing about your experience.</Body16>
               </div>
               <div className="flex gap-2 flex-shrink-0">
                 <a
@@ -842,44 +842,44 @@ export default function ProfilePage() {
         )}
 
         {/* My Favorites */}
-        <div className="mt-4 bg-white rounded-lg shadow-sm overflow-hidden">
+        <div className="mt-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden">
           <button
             onClick={() => setFavoritesExpanded(prev => !prev)}
-            className="w-full flex items-center justify-between p-5 text-left hover:bg-gray-50 transition-colors"
+            className="w-full flex items-center justify-between p-5 text-left hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
             aria-expanded={favoritesExpanded}
           >
             <div className="flex items-center gap-2">
               <span className="text-xl">⭐</span>
-              <Body16 className="font-semibold text-gray-900">My Favorites</Body16>
+              <Body16 className="font-semibold text-gray-900 dark:text-gray-100">My Favorites</Body16>
               {!favoritesLoading && (
-                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 dark:bg-amber-900/20 text-amber-800 dark:text-amber-200">
                   {favorites.length}
                 </span>
               )}
             </div>
-            <span className={`text-gray-400 transition-transform duration-200 ${favoritesExpanded ? 'rotate-180' : ''}`}>
+            <span className={`text-gray-400 dark:text-gray-500 transition-transform duration-200 ${favoritesExpanded ? 'rotate-180' : ''}`}>
               ▼
             </span>
           </button>
 
           {favoritesExpanded && (
-            <div className="border-t border-gray-100 px-5 pb-5 pt-4">
+            <div className="border-t border-gray-100 dark:border-gray-700 px-5 pb-5 pt-4">
               {favoritesLoading ? (
                 <div className="space-y-3">
                   {[1, 2].map(i => (
                     <div key={i} className="flex items-center gap-3 animate-pulse">
-                      <div className="w-10 h-10 rounded-full bg-gray-200 flex-shrink-0"></div>
+                      <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-600 flex-shrink-0"></div>
                       <div className="flex-1">
-                        <div className="h-4 bg-gray-200 rounded w-28 mb-2"></div>
-                        <div className="h-3 bg-gray-200 rounded w-40"></div>
+                        <div className="h-4 bg-gray-200 dark:bg-gray-600 rounded w-28 mb-2"></div>
+                        <div className="h-3 bg-gray-200 dark:bg-gray-600 rounded w-40"></div>
                       </div>
                     </div>
                   ))}
                 </div>
               ) : favorites.length === 0 ? (
                 <div className="text-center py-4">
-                  <p className="text-sm text-gray-500">No favorites yet</p>
-                  <p className="text-xs text-gray-400 mt-1">
+                  <p className="text-sm text-gray-500 dark:text-gray-500">No favorites yet</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
                     After a session ends you can save people you'd like to connect with again.
                   </p>
                 </div>
@@ -902,13 +902,13 @@ export default function ProfilePage() {
 
                       {/* Info */}
                       <div className="flex-1 min-w-0">
-                        <Body16 className="font-semibold text-gray-900 truncate text-sm">
+                        <Body16 className="font-semibold text-gray-900 dark:text-gray-100 truncate text-sm">
                           {fav.favorite_profile.display_name}
                         </Body16>
                         {fav.favorite_profile.tagline ? (
-                          <p className="text-xs text-gray-500 truncate italic">&quot;{fav.favorite_profile.tagline}&quot;</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 truncate italic">&quot;{fav.favorite_profile.tagline}&quot;</p>
                         ) : fav.favorite_profile.bio ? (
-                          <p className="text-xs text-gray-500 truncate">
+                          <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
                             {fav.favorite_profile.bio.length > 50
                               ? fav.favorite_profile.bio.substring(0, 50) + '...'
                               : fav.favorite_profile.bio}
@@ -1012,45 +1012,45 @@ export default function ProfilePage() {
         */}
 
         {/* Thank-You Notes */}
-        <div className="mt-4 bg-white rounded-lg shadow-sm overflow-hidden">
+        <div className="mt-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden">
           <button
             onClick={() => setNotesExpanded(prev => !prev)}
-            className="w-full flex items-center justify-between p-5 text-left hover:bg-gray-50 transition-colors"
+            className="w-full flex items-center justify-between p-5 text-left hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
             aria-expanded={notesExpanded}
           >
             <div className="flex items-center gap-2">
               <span className="text-xl">💌</span>
-              <Body16 className="font-semibold text-gray-900">Thank-You Notes</Body16>
+              <Body16 className="font-semibold text-gray-900 dark:text-gray-100">Thank-You Notes</Body16>
               {!notesLoading && (
-                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-pink-100 text-pink-800">
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-pink-100 dark:bg-pink-900/20 text-pink-800 dark:text-pink-300">
                   {thankYouNotes.length}
                 </span>
               )}
             </div>
-            <span className={`text-gray-400 transition-transform duration-200 ${notesExpanded ? 'rotate-180' : ''}`}>
+            <span className={`text-gray-400 dark:text-gray-500 transition-transform duration-200 ${notesExpanded ? 'rotate-180' : ''}`}>
               ▼
             </span>
           </button>
 
           {notesExpanded && (
-            <div className="border-t border-gray-100 px-5 pb-5 pt-4">
+            <div className="border-t border-gray-100 dark:border-gray-700 px-5 pb-5 pt-4">
               {notesLoading ? (
                 <div className="space-y-4">
                   {[1, 2].map(i => (
                     <div key={i} className="flex items-start gap-3 animate-pulse">
-                      <div className="w-8 h-8 rounded-full bg-gray-200 flex-shrink-0 mt-0.5" />
+                      <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-600 flex-shrink-0 mt-0.5" />
                       <div className="flex-1 space-y-1.5">
-                        <div className="h-3 bg-gray-200 rounded w-24" />
-                        <div className="h-3 bg-gray-200 rounded w-full" />
-                        <div className="h-3 bg-gray-200 rounded w-3/4" />
+                        <div className="h-3 bg-gray-200 dark:bg-gray-600 rounded w-24" />
+                        <div className="h-3 bg-gray-200 dark:bg-gray-600 rounded w-full" />
+                        <div className="h-3 bg-gray-200 dark:bg-gray-600 rounded w-3/4" />
                       </div>
                     </div>
                   ))}
                 </div>
               ) : thankYouNotes.length === 0 ? (
                 <div className="text-center py-4">
-                  <p className="text-sm text-gray-500">No thank-you notes yet</p>
-                  <p className="text-xs text-gray-400 mt-1">Notes from people you&apos;ve supported will appear here.</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-500">No thank-you notes yet</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Notes from people you&apos;ve supported will appear here.</p>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -1077,10 +1077,10 @@ export default function ProfilePage() {
                         {/* Note content */}
                         <div className="flex-1 min-w-0">
                           <div className="flex items-baseline gap-2 flex-wrap">
-                            <Body16 className="text-sm font-semibold text-gray-900">{note.sender_profile.display_name}</Body16>
-                            <span className="text-xs text-gray-400">{relativeDate}</span>
+                            <Body16 className="text-sm font-semibold text-gray-900 dark:text-gray-100">{note.sender_profile.display_name}</Body16>
+                            <span className="text-xs text-gray-400 dark:text-gray-500">{relativeDate}</span>
                           </div>
-                          <p className="text-sm text-gray-700 mt-0.5 italic">&ldquo;{note.thank_you_note}&rdquo;</p>
+                          <p className="text-sm text-gray-700 dark:text-gray-300 mt-0.5 italic">&ldquo;{note.thank_you_note}&rdquo;</p>
                         </div>
                       </div>
                     )
@@ -1136,36 +1136,36 @@ export default function ProfilePage() {
       {/* Delete Confirmation Modal */}
       {showDeleteModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 max-w-md w-full shadow-2xl">
             <div className="flex items-center gap-2 mb-4">
               <span className="text-3xl" role="img" aria-label="Warning">⚠️</span>
-              <Heading1 className="text-2xl">Delete Account</Heading1>
+              <Heading1 className="text-2xl dark:text-gray-100">Delete Account</Heading1>
             </div>
 
-            <Body16 className="mb-4 text-red-700">
+            <Body16 className="mb-4 text-red-700 dark:text-red-300">
               <strong>This action cannot be undone.</strong> All your data including:
             </Body16>
 
-            <ul className="mb-4 text-sm text-rb-gray space-y-1 ml-5 list-disc">
+            <ul className="mb-4 text-sm text-rb-gray dark:text-gray-400 space-y-1 ml-5 list-disc">
               <li>Profile information</li>
               <li>Chat history</li>
               <li>Connections</li>
               <li>All account data</li>
             </ul>
 
-            <Body16 className="mb-4">
+            <Body16 className="mb-4 dark:text-gray-300">
               will be permanently deleted.
             </Body16>
 
-            <div className="bg-gray-50 p-4 rounded-lg mb-4">
-              <Body16 className="font-semibold mb-2">
-                Type <span className="text-red-600 font-mono">delete</span> to confirm:
+            <div className="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg mb-4">
+              <Body16 className="font-semibold mb-2 dark:text-gray-200">
+                Type <span className="text-red-600 dark:text-red-400 font-mono">delete</span> to confirm:
               </Body16>
               <input
                 type="text"
                 value={deleteConfirmText}
                 onChange={(e) => setDeleteConfirmText(e.target.value.toLowerCase())}
-                className="w-full px-4 py-3 border-2 border-rb-gray/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all"
+                className="w-full px-4 py-3 border-2 border-rb-gray/20 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400"
                 placeholder="Type 'delete' here"
               />
             </div>
@@ -1176,7 +1176,7 @@ export default function ProfilePage() {
                   setShowDeleteModal(false)
                   setDeleteConfirmText('')
                 }}
-                className="flex-1 px-5 py-2.5 border-2 border-rb-gray/30 rounded-full text-sm font-semibold hover:bg-rb-gray/5 transition"
+                className="flex-1 px-5 py-2.5 border-2 border-rb-gray/30 dark:border-gray-600 rounded-full text-sm font-semibold hover:bg-rb-gray/5 dark:hover:bg-gray-700 dark:text-gray-300 transition"
               >
                 Cancel
               </button>

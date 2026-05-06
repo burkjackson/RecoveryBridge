@@ -48,10 +48,10 @@ export default function LoginPage() {
   }
 
   return (
-    <main id="main-content" className="min-h-screen flex items-center justify-center p-4 sm:p-6" style={{ backgroundColor: '#F8F9FA' }}>
+    <main id="main-content" className="min-h-screen flex items-center justify-center p-4 sm:p-6 bg-[#F8F9FA] dark:bg-gray-900">
       <div className="w-full max-w-md">
         {/* Welcome Card */}
-        <div className="bg-white rounded-lg shadow-sm p-8 sm:p-10">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-8 sm:p-10">
           {/* Header */}
           <div className="text-center mb-8">
             <img
@@ -60,12 +60,12 @@ export default function LoginPage() {
               className="mx-auto mb-4"
               style={{ width: '400px' }}
             />
-            <Body16 className="text-gray-500 mb-6">Welcome back to your community</Body16>
+            <Body16 className="text-gray-500 dark:text-gray-500 mb-6">Welcome back to your community</Body16>
           </div>
 
           <form onSubmit={handleLogin} className="space-y-4" aria-label="Login form">
             <div>
-              <label htmlFor="email-input" className="block mb-2 text-sm font-medium text-gray-700">
+              <label htmlFor="email-input" className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
                 Email
               </label>
               <input
@@ -77,17 +77,17 @@ export default function LoginPage() {
                 aria-required="true"
                 aria-invalid={error ? "true" : "false"}
                 aria-describedby={error ? "login-error" : undefined}
-                className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rb-blue focus:border-transparent transition-all"
+                className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-rb-blue focus:border-transparent transition-all dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400"
                 placeholder="you@example.com"
               />
             </div>
 
             <div>
               <div className="flex justify-between items-center mb-2">
-                <label htmlFor="password-input" className="text-sm font-medium text-gray-700">
+                <label htmlFor="password-input" className="text-sm font-medium text-gray-700 dark:text-gray-300">
                   Password
                 </label>
-                <a href="/forgot-password" className="text-sm text-gray-600 hover:text-gray-900 transition">
+                <a href="/forgot-password" className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition">
                   Forgot password?
                 </a>
               </div>
@@ -101,13 +101,13 @@ export default function LoginPage() {
                   aria-required="true"
                   aria-invalid={error ? "true" : "false"}
                   aria-describedby={error ? "login-error" : undefined}
-                  className="w-full px-4 py-3 pr-12 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rb-blue focus:border-transparent transition-all"
+                  className="w-full px-4 py-3 pr-12 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-rb-blue focus:border-transparent transition-all dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400"
                   placeholder="Enter your password"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors p-1 rounded"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors p-1 rounded"
                   aria-label={showPassword ? "Hide password" : "Show password"}
                 >
                   {showPassword ? (
@@ -125,8 +125,8 @@ export default function LoginPage() {
             </div>
 
             {error && (
-              <div id="login-error" role="alert" className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                <Body16 className="text-red-600 text-sm">{error}</Body16>
+              <div id="login-error" role="alert" className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                <Body16 className="text-red-600 dark:text-red-300 text-sm">{error}</Body16>
               </div>
             )}
 
@@ -149,10 +149,10 @@ export default function LoginPage() {
             </button>
           </form>
 
-          <div className="mt-6 pt-6 border-t border-gray-100">
-            <Body16 className="text-center text-sm text-gray-600">
+          <div className="mt-6 pt-6 border-t border-gray-100 dark:border-gray-700">
+            <Body16 className="text-center text-sm text-gray-600 dark:text-gray-400">
               Don't have an account?{' '}
-              <a href="/signup" className="text-gray-900 font-medium hover:underline transition">
+              <a href="/signup" className="text-gray-900 dark:text-gray-100 font-medium hover:underline transition">
                 Sign up
               </a>
             </Body16>

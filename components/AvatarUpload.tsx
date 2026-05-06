@@ -192,7 +192,7 @@ export default function AvatarUpload({ userId, currentAvatarUrl, onUploadComplet
               className="w-24 h-24 sm:w-32 sm:h-32 rounded-full object-cover border-4 border-[#7C9EB2]"
             />
           ) : (
-            <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full bg-[#E8E4F0] flex items-center justify-center border-4 border-[#7C9EB2]">
+            <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full bg-[#E8E4F0] dark:bg-gray-700 flex items-center justify-center border-4 border-[#7C9EB2]">
               <span className="text-4xl sm:text-5xl">👤</span>
             </div>
           )}
@@ -203,7 +203,7 @@ export default function AvatarUpload({ userId, currentAvatarUrl, onUploadComplet
           htmlFor="avatar-upload"
           className={`px-4 py-2 rounded-full text-sm font-semibold cursor-pointer transition ${
             uploading
-              ? 'bg-gray-300 cursor-not-allowed'
+              ? 'bg-gray-300 dark:bg-gray-600 cursor-not-allowed'
               : 'bg-[#7C9EB2] text-white hover:bg-[#6B8DA1]'
           }`}
         >
@@ -229,17 +229,17 @@ export default function AvatarUpload({ userId, currentAvatarUrl, onUploadComplet
       {/* Crop Modal */}
       {showCropModal && imageToCrop && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] flex flex-col">
+          <div className="bg-white dark:bg-gray-800 rounded-xl max-w-2xl w-full max-h-[90vh] flex flex-col">
             {/* Header */}
-            <div className="p-4 border-b border-gray-200">
-              <h3 className="text-xl font-bold text-gray-900">Adjust Your Photo</h3>
-              <p className="text-sm text-gray-600 mt-1">
+            <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+              <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100">Adjust Your Photo</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                 Zoom and position your photo to fit the circle
               </p>
             </div>
 
             {/* Crop Area */}
-            <div className="relative h-96 bg-gray-100">
+            <div className="relative h-96 bg-gray-100 dark:bg-gray-700">
               <Cropper
                 image={imageToCrop}
                 crop={crop}
@@ -254,8 +254,8 @@ export default function AvatarUpload({ userId, currentAvatarUrl, onUploadComplet
             </div>
 
             {/* Zoom Slider */}
-            <div className="p-6 border-t border-gray-200">
-              <label className="block text-sm font-semibold text-gray-900 mb-3">
+            <div className="p-6 border-t border-gray-200 dark:border-gray-700">
+              <label className="block text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">
                 Zoom
               </label>
               <input
@@ -265,9 +265,9 @@ export default function AvatarUpload({ userId, currentAvatarUrl, onUploadComplet
                 step={0.1}
                 value={zoom}
                 onChange={(e) => setZoom(Number(e.target.value))}
-                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#7C9EB2]"
+                className="w-full h-2 bg-gray-200 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer accent-[#7C9EB2]"
               />
-              <div className="flex justify-between text-xs text-gray-500 mt-2">
+              <div className="flex justify-between text-xs text-gray-500 dark:text-gray-500 mt-2">
                 <span>1x</span>
                 <span>2x</span>
                 <span>3x</span>
@@ -275,10 +275,10 @@ export default function AvatarUpload({ userId, currentAvatarUrl, onUploadComplet
             </div>
 
             {/* Actions */}
-            <div className="p-4 border-t border-gray-200 flex gap-3 justify-end">
+            <div className="p-4 border-t border-gray-200 dark:border-gray-700 flex gap-3 justify-end">
               <button
                 onClick={handleCropCancel}
-                className="px-6 py-2 rounded-lg text-sm font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 transition"
+                className="px-6 py-2 rounded-lg text-sm font-semibold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition"
               >
                 Cancel
               </button>

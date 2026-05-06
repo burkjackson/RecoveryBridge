@@ -138,8 +138,8 @@ export default function OnboardingPage() {
   }
 
   return (
-    <main id="main-content" className="min-h-screen flex items-center justify-center p-4 sm:p-6" style={{ backgroundColor: '#F8F9FA' }}>
-      <div className="w-full max-w-2xl bg-white rounded-lg shadow-sm p-6 sm:p-8 md:p-10">
+    <main id="main-content" className="min-h-screen flex items-center justify-center p-4 sm:p-6 bg-[#F8F9FA] dark:bg-gray-900">
+      <div className="w-full max-w-2xl bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 sm:p-8 md:p-10">
 
         {/* Branding */}
         <div className="text-center mb-6">
@@ -148,7 +148,7 @@ export default function OnboardingPage() {
             alt="RecoveryBridge Logo"
             className="mx-auto mb-4 max-w-[400px] w-full"
           />
-          <Body16 className="text-gray-500">{STEP_NAMES[step - 1]}</Body16>
+          <Body16 className="text-gray-500 dark:text-gray-500">{STEP_NAMES[step - 1]}</Body16>
         </div>
 
         {/* Progress indicator */}
@@ -163,11 +163,11 @@ export default function OnboardingPage() {
           {[1, 2, 3, 4, 5].map((s) => (
             <div
               key={s}
-              className={`h-2 flex-1 rounded-full transition-all ${s <= step ? 'bg-rb-blue' : 'bg-gray-200'}`}
+              className={`h-2 flex-1 rounded-full transition-all ${s <= step ? 'bg-rb-blue' : 'bg-gray-200 dark:bg-gray-600'}`}
             />
           ))}
         </div>
-        <Body16 className="text-center text-gray-500 text-sm mb-8">Step {step} of 5</Body16>
+        <Body16 className="text-center text-gray-500 dark:text-gray-500 text-sm mb-8">Step {step} of 5</Body16>
 
         {/* Screen reader announcements for errors */}
         <div aria-live="polite" aria-atomic="true" className="sr-only">{error}</div>
@@ -176,18 +176,18 @@ export default function OnboardingPage() {
         {step === 1 && (
           <div className="text-center">
             <Heading1 className="mb-4">Welcome to RecoveryBridge</Heading1>
-            <Body16 className="mb-8 text-gray-600 leading-relaxed">
+            <Body16 className="mb-8 text-gray-600 dark:text-gray-400 leading-relaxed">
               RecoveryBridge is a safe, peer-to-peer space where people in recovery connect with
               listeners who understand the journey. Whether you're here to offer support or seek it,
               you're not alone — and you're in the right place.
             </Body16>
-            <div className="bg-amber-50 rounded-lg p-6 mb-8 border-l-4 border-amber-400 text-left">
-              <Body18 className="font-bold text-gray-900 mb-2">Age Requirement</Body18>
-              <Body16 className="text-gray-700 mb-3">
+            <div className="bg-amber-50 dark:bg-amber-900/20 rounded-lg p-6 mb-8 border-l-4 border-amber-400 dark:border-amber-800 text-left">
+              <Body18 className="font-bold text-gray-900 dark:text-gray-100 mb-2">Age Requirement</Body18>
+              <Body16 className="text-gray-700 dark:text-gray-300 mb-3">
                 RecoveryBridge is designed for adults 18 years and older. By continuing,
                 you confirm that you meet this age requirement.
               </Body16>
-              <Body16 className="text-gray-600 text-sm">
+              <Body16 className="text-gray-600 dark:text-gray-400 text-sm">
                 If you're under 18 and need support, we encourage you to reach out to
                 age-appropriate resources like the <strong>Teen Line</strong> (text TEEN to 839863)
                 or the <strong>988 Suicide & Crisis Lifeline</strong> which serves all ages.
@@ -206,7 +206,7 @@ export default function OnboardingPage() {
         {step === 2 && (
           <div>
             <Heading1 className="mb-4 text-center">How would you like to participate?</Heading1>
-            <Body16 className="mb-8 text-center text-gray-600">
+            <Body16 className="mb-8 text-center text-gray-600 dark:text-gray-400">
               You can switch between these roles anytime from your dashboard.
             </Body16>
 
@@ -228,8 +228,8 @@ export default function OnboardingPage() {
                   onClick={() => setUserRole(value)}
                   className={`w-full p-5 rounded-lg text-left transition-all relative ${
                     userRole === value
-                      ? 'border-2 border-rb-blue bg-blue-50 shadow-sm'
-                      : 'border border-gray-200 hover:border-rb-blue'
+                      ? 'border-2 border-rb-blue bg-blue-50 dark:bg-gray-700 shadow-sm'
+                      : 'border border-gray-200 dark:border-gray-600 hover:border-rb-blue dark:hover:border-rb-blue'
                   }`}
                 >
                   {userRole === value && (
@@ -239,22 +239,22 @@ export default function OnboardingPage() {
                       </svg>
                     </span>
                   )}
-                  <Body18 className="font-bold text-gray-900 mb-1">{title}</Body18>
-                  <Body16 className="text-gray-600 text-sm">{desc}</Body16>
+                  <Body18 className="font-bold text-gray-900 dark:text-gray-100 mb-1">{title}</Body18>
+                  <Body16 className="text-gray-600 dark:text-gray-400 text-sm">{desc}</Body16>
                 </button>
               ))}
             </div>
 
             {error && (
-              <div className="mb-6 p-3 bg-red-50 border-l-4 border-red-500 rounded">
-                <Body16 className="text-sm text-red-700">{error}</Body16>
+              <div className="mb-6 p-3 bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 dark:border-red-800 rounded">
+                <Body16 className="text-sm text-red-700 dark:text-red-300">{error}</Body16>
               </div>
             )}
 
             <div className="flex gap-3">
               <button
                 onClick={() => goToStep(1)}
-                className="flex-1 py-3 rounded-lg font-semibold border border-gray-300 text-gray-700 hover:border-gray-400 transition-all"
+                className="flex-1 py-3 rounded-lg font-semibold border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-gray-400 dark:hover:border-gray-500 transition-all"
               >
                 ← Back
               </button>
@@ -272,19 +272,19 @@ export default function OnboardingPage() {
         {step === 3 && (
           <div>
             <Heading1 className="mb-4 text-center">Tell us about yourself</Heading1>
-            <Body16 className="mb-6 text-center text-gray-600">
+            <Body16 className="mb-6 text-center text-gray-600 dark:text-gray-400">
               Share what you're comfortable with. This helps others understand how to connect with you.
             </Body16>
 
             {/* Privacy reminder */}
-            <div className="mb-6 p-4 bg-blue-50 border-l-4 border-rb-blue rounded">
-              <Body16 className="text-rb-dark text-sm">
+            <div className="mb-6 p-4 bg-blue-50 dark:bg-gray-700 border-l-4 border-rb-blue rounded">
+              <Body16 className="text-rb-dark dark:text-gray-100 text-sm">
                 <strong>Privacy tip:</strong> If you wish to remain anonymous, be mindful when choosing your username, profile picture, and bio.
               </Body16>
             </div>
 
             <div className="mb-8">
-              <label className="block mb-3 text-sm font-medium text-gray-700">
+              <label className="block mb-3 text-sm font-medium text-gray-700 dark:text-gray-300">
                 About You
               </label>
               <textarea
@@ -292,14 +292,14 @@ export default function OnboardingPage() {
                 onChange={(e) => setBio(e.target.value)}
                 rows={6}
                 maxLength={500}
-                className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rb-blue focus:border-transparent transition-all resize-none"
+                className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-rb-blue focus:border-transparent transition-all resize-none dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400"
                 placeholder="Share your story, what brings you here, or what you hope to offer others..."
               />
               <div className="flex justify-between items-start mt-2 gap-4">
-                <Body16 className="text-gray-500 text-sm">
+                <Body16 className="text-gray-500 dark:text-gray-500 text-sm">
                   What brings you here? What does recovery look like for you? What's one thing you'd like others to know? This appears on your profile.
                 </Body16>
-                <span className={`text-sm shrink-0 tabular-nums ${bio.length >= 450 ? 'text-amber-600 font-medium' : 'text-gray-400'}`}>
+                <span className={`text-sm shrink-0 tabular-nums ${bio.length >= 450 ? 'text-amber-600 font-medium' : 'text-gray-400 dark:text-gray-500'}`}>
                   {bio.length} / 500
                 </span>
               </div>
@@ -307,10 +307,10 @@ export default function OnboardingPage() {
 
             {/* Specialty Tags */}
             <div className="mb-8">
-              <label className="block mb-2 text-sm font-medium text-gray-700">
-                Specialty Tags <span className="text-gray-400 font-normal">(optional)</span>
+              <label className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                Specialty Tags <span className="text-gray-400 dark:text-gray-500 font-normal">(optional)</span>
               </label>
-              <Body16 className="text-gray-500 text-sm mb-3">
+              <Body16 className="text-gray-500 dark:text-gray-500 text-sm mb-3">
                 Select topics you relate to or can offer support with. This helps match you with the right people.
               </Body16>
               <TagSelector
@@ -320,15 +320,15 @@ export default function OnboardingPage() {
             </div>
 
             {error && (
-              <div className="mb-6 p-3 bg-red-50 border-l-4 border-red-500 rounded">
-                <Body16 className="text-sm text-red-700">{error}</Body16>
+              <div className="mb-6 p-3 bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 dark:border-red-800 rounded">
+                <Body16 className="text-sm text-red-700 dark:text-red-300">{error}</Body16>
               </div>
             )}
 
             <div className="flex gap-3">
               <button
                 onClick={() => goToStep(2)}
-                className="flex-1 py-3 rounded-lg font-semibold border border-gray-300 text-gray-700 hover:border-gray-400 transition-all"
+                className="flex-1 py-3 rounded-lg font-semibold border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-gray-400 dark:hover:border-gray-500 transition-all"
               >
                 ← Back
               </button>
@@ -346,83 +346,83 @@ export default function OnboardingPage() {
         {step === 4 && (
           <div>
             <Heading1 className="mb-4 text-center">Community Guidelines</Heading1>
-            <Body16 className="mb-6 text-gray-600">
+            <Body16 className="mb-6 text-gray-600 dark:text-gray-400">
               RecoveryBridge is built on the belief that connection is the antidote to addiction and we do not heal in isolation. This is a space where your story matters, your struggles are valid, and your progress—no matter how small—deserves celebration.
             </Body16>
 
-            <div className="bg-gray-50 rounded-lg p-6 mb-8 space-y-4">
+            <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-6 mb-8 space-y-4">
               <div>
-                <Body18 className="mb-2 font-semibold text-gray-900">Lead with Compassion</Body18>
-                <Body16 className="text-gray-600">
+                <Body18 className="mb-2 font-semibold text-gray-900 dark:text-gray-100">Lead with Compassion</Body18>
+                <Body16 className="text-gray-600 dark:text-gray-400">
                   We're all doing our best. Approach every conversation with compassion, remembering that everyone here is on their own unique journey. Your kindness can be someone's lifeline today.
                 </Body16>
               </div>
 
               <div>
-                <Body18 className="mb-2 font-semibold text-gray-900">Honor Sacred Trust</Body18>
-                <Body16 className="text-gray-600">
+                <Body18 className="mb-2 font-semibold text-gray-900 dark:text-gray-100">Honor Sacred Trust</Body18>
+                <Body16 className="text-gray-600 dark:text-gray-400">
                   What's shared here is sacred. Protect each other's stories and privacy as if they were your own. This trust is what makes vulnerability possible.
                 </Body16>
               </div>
 
               <div>
-                <Body18 className="mb-2 font-semibold text-gray-900">Celebrate Every Step</Body18>
-                <Body16 className="text-gray-600">
+                <Body18 className="mb-2 font-semibold text-gray-900 dark:text-gray-100">Celebrate Every Step</Body18>
+                <Body16 className="text-gray-600 dark:text-gray-400">
                   Recovery isn't linear, and every journey looks different. Whether someone is on day 1 or year 10, meet them where they are with encouragement, not advice. Your role is to listen, not to fix.
                 </Body16>
               </div>
 
               <div>
-                <Body18 className="mb-2 font-semibold text-gray-900">You Are Worth Saving</Body18>
-                <Body16 className="text-gray-600">
+                <Body18 className="mb-2 font-semibold text-gray-900 dark:text-gray-100">You Are Worth Saving</Body18>
+                <Body16 className="text-gray-600 dark:text-gray-400">
                   If you're in crisis, please reach out for immediate help: <strong>988</strong> (Suicide & Crisis Lifeline), <strong>911</strong> (Emergency), or text <strong>HOME to 741741</strong> (Crisis Text Line). RecoveryBridge is here for peer support, but your safety comes first. There's no shame in reaching out for professional help—it's a sign of strength.
                 </Body16>
               </div>
 
               <div>
-                <Body18 className="mb-2 font-semibold text-gray-900">Practice Self-Care</Body18>
-                <Body16 className="text-gray-600">
+                <Body18 className="mb-2 font-semibold text-gray-900 dark:text-gray-100">Practice Self-Care</Body18>
+                <Body16 className="text-gray-600 dark:text-gray-400">
                   You can't pour from an empty cup. It's okay to step away, set boundaries, or take breaks. Taking care of yourself isn't selfish—it's essential to your recovery.
                 </Body16>
               </div>
 
               <div>
-                <Body18 className="mb-2 font-semibold text-gray-900">Share Your Wins</Body18>
-                <Body16 className="text-gray-600">
+                <Body18 className="mb-2 font-semibold text-gray-900 dark:text-gray-100">Share Your Wins</Body18>
+                <Body16 className="text-gray-600 dark:text-gray-400">
                   Recovery is hard work and deserves recognition. Celebrate your victories—whether it's 24 hours sober, getting out of bed, or reaching out for help. We're here to cheer you on.
                 </Body16>
               </div>
 
               <div>
-                <Body18 className="mb-2 font-semibold text-gray-900">Protect Our Community</Body18>
-                <Body16 className="text-gray-600">
+                <Body18 className="mb-2 font-semibold text-gray-900 dark:text-gray-100">Protect Our Community</Body18>
+                <Body16 className="text-gray-600 dark:text-gray-400">
                   If something doesn't feel right or someone needs help, please let us know. Reporting concerns helps us keep this space safe for everyone. You're not causing trouble—you're protecting our community.
                 </Body16>
               </div>
             </div>
 
-            <label className="flex items-start gap-3 mb-6 p-4 rounded-lg bg-blue-50 border border-rb-blue cursor-pointer hover:bg-blue-100 transition-all">
+            <label className="flex items-start gap-3 mb-6 p-4 rounded-lg bg-blue-50 dark:bg-gray-700 border border-rb-blue cursor-pointer hover:bg-blue-100 dark:hover:bg-gray-600 transition-all">
               <input
                 type="checkbox"
                 checked={agreedToGuidelines}
                 onChange={(e) => setAgreedToGuidelines(e.target.checked)}
                 className="mt-1 w-5 h-5 accent-rb-blue cursor-pointer"
               />
-              <Body16 className="font-medium text-gray-900">
+              <Body16 className="font-medium text-gray-900 dark:text-gray-100">
                 I commit to showing up with compassion, honoring confidentiality, and helping create a safe space where everyone can heal and grow together.
               </Body16>
             </label>
 
             {error && (
-              <div className="mb-6 p-3 bg-red-50 border-l-4 border-red-500 rounded">
-                <Body16 className="text-sm text-red-700">{error}</Body16>
+              <div className="mb-6 p-3 bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 dark:border-red-800 rounded">
+                <Body16 className="text-sm text-red-700 dark:text-red-300">{error}</Body16>
               </div>
             )}
 
             <div className="flex gap-3">
               <button
                 onClick={() => goToStep(3)}
-                className="flex-1 py-3 rounded-lg font-semibold border border-gray-300 text-gray-700 hover:border-gray-400 transition-all"
+                className="flex-1 py-3 rounded-lg font-semibold border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-gray-400 dark:hover:border-gray-500 transition-all"
               >
                 ← Back
               </button>
@@ -441,13 +441,13 @@ export default function OnboardingPage() {
         {step === 5 && (
           <div>
             <Heading1 className="mb-2 text-center">One last thing!</Heading1>
-            <Body16 className="mb-8 text-center text-gray-600">
+            <Body16 className="mb-8 text-center text-gray-600 dark:text-gray-400">
               How did you hear about RecoveryBridge? This helps us understand how people find us.{' '}
-              <span className="text-gray-400">(optional)</span>
+              <span className="text-gray-400 dark:text-gray-500">(optional)</span>
             </Body16>
 
             <div className="mb-4">
-              <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2 px-1">Social Media</p>
+              <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-2 px-1">Social Media</p>
               <div className="grid grid-cols-2 gap-2 mb-4">
                 {[
                   { value: 'facebook', label: 'Facebook' },
@@ -459,8 +459,8 @@ export default function OnboardingPage() {
                     key={value}
                     className={`flex items-center gap-3 p-4 rounded-lg border-2 cursor-pointer transition-all ${
                       referralSource === value
-                        ? 'border-rb-blue bg-blue-50'
-                        : 'border-gray-200 hover:border-rb-blue/50'
+                        ? 'border-rb-blue bg-blue-50 dark:bg-gray-700'
+                        : 'border-gray-200 dark:border-gray-600 hover:border-rb-blue/50 dark:hover:border-rb-blue/50'
                     }`}
                   >
                     <input
@@ -471,12 +471,12 @@ export default function OnboardingPage() {
                       onChange={() => setReferralSource(value)}
                       className="w-4 h-4 accent-rb-blue"
                     />
-                    <Body16 className="font-medium text-gray-800">{label}</Body16>
+                    <Body16 className="font-medium text-gray-800 dark:text-gray-100">{label}</Body16>
                   </label>
                 ))}
               </div>
 
-              <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2 px-1">Other</p>
+              <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-2 px-1">Other</p>
               <div className="space-y-2">
                 {[
                   { value: 'podcast', label: 'Podcast', placeholder: 'Which podcast? (optional)', detail: podcastName, setDetail: setPodcastName },
@@ -489,8 +489,8 @@ export default function OnboardingPage() {
                     <label
                       className={`flex items-center gap-4 p-4 rounded-lg border-2 cursor-pointer transition-all ${
                         referralSource === value
-                          ? 'border-rb-blue bg-blue-50'
-                          : 'border-gray-200 hover:border-rb-blue/50'
+                          ? 'border-rb-blue bg-blue-50 dark:bg-gray-700'
+                          : 'border-gray-200 dark:border-gray-600 hover:border-rb-blue/50 dark:hover:border-rb-blue/50'
                       }`}
                     >
                       <input
@@ -501,7 +501,7 @@ export default function OnboardingPage() {
                         onChange={() => setReferralSource(value)}
                         className="w-4 h-4 accent-rb-blue"
                       />
-                      <Body16 className="font-medium text-gray-800">{label}</Body16>
+                      <Body16 className="font-medium text-gray-800 dark:text-gray-100">{label}</Body16>
                     </label>
                     {referralSource === value && placeholder && setDetail && (
                       <input
@@ -509,7 +509,7 @@ export default function OnboardingPage() {
                         placeholder={placeholder}
                         value={detail}
                         onChange={e => setDetail(e.target.value)}
-                        className="w-full mt-2 p-4 border-2 border-rb-blue rounded-lg text-gray-800 placeholder-gray-400 focus:outline-none focus:border-rb-blue"
+                        className="w-full mt-2 p-4 border-2 border-rb-blue rounded-lg text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-400 focus:outline-none focus:border-rb-blue dark:bg-gray-700 dark:border-gray-600"
                         maxLength={200}
                         autoFocus
                       />
@@ -522,7 +522,7 @@ export default function OnboardingPage() {
             <div className="flex gap-3 mt-6">
               <button
                 onClick={() => goToStep(4)}
-                className="flex-1 py-3 rounded-lg font-semibold border border-gray-300 text-gray-700 hover:border-gray-400 transition-all"
+                className="flex-1 py-3 rounded-lg font-semibold border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-gray-400 dark:hover:border-gray-500 transition-all"
               >
                 ← Back
               </button>

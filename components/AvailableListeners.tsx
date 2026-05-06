@@ -239,15 +239,15 @@ export default function AvailableListeners({ onCountChange, currentUserId, curre
 
   if (loading) {
     return (
-      <div className="bg-white rounded-lg p-5 shadow-sm mb-6">
-        <Body18 className="font-semibold text-gray-900 mb-4">Available Listeners</Body18>
+      <div className="bg-white dark:bg-gray-800 rounded-lg p-5 shadow-sm mb-6">
+        <Body18 className="font-semibold text-gray-900 dark:text-gray-100 mb-4">Available Listeners</Body18>
         <div className="space-y-3">
           {[1, 2, 3].map(i => (
-            <div key={i} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg animate-pulse">
-              <div className="w-10 h-10 rounded-full bg-gray-200"></div>
+            <div key={i} className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg animate-pulse">
+              <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-600"></div>
               <div className="flex-1">
-                <div className="h-4 bg-gray-200 rounded w-24 mb-2"></div>
-                <div className="h-3 bg-gray-200 rounded w-full"></div>
+                <div className="h-4 bg-gray-200 dark:bg-gray-600 rounded w-24 mb-2"></div>
+                <div className="h-3 bg-gray-200 dark:bg-gray-600 rounded w-full"></div>
               </div>
             </div>
           ))}
@@ -258,8 +258,8 @@ export default function AvailableListeners({ onCountChange, currentUserId, curre
 
   if (error) {
     return (
-      <div className="bg-white rounded-lg p-5 shadow-sm mb-6">
-        <Body18 className="font-semibold text-gray-900 mb-4">Available Listeners</Body18>
+      <div className="bg-white dark:bg-gray-800 rounded-lg p-5 shadow-sm mb-6">
+        <Body18 className="font-semibold text-gray-900 dark:text-gray-100 mb-4">Available Listeners</Body18>
         <ErrorState
           type="inline"
           message={error}
@@ -275,11 +275,11 @@ export default function AvailableListeners({ onCountChange, currentUserId, curre
 
   if (listeners.length === 0) {
     return (
-      <div className="bg-white rounded-lg p-5 shadow-sm mb-6">
-        <Body18 className="font-semibold text-gray-900 mb-3">Available Listeners</Body18>
-        <div className="text-center py-6 bg-gray-50 rounded-lg">
-          <Body16 className="text-gray-600 mb-2">No listeners available right now</Body16>
-          <Body16 className="text-sm text-gray-500">
+      <div className="bg-white dark:bg-gray-800 rounded-lg p-5 shadow-sm mb-6">
+        <Body18 className="font-semibold text-gray-900 dark:text-gray-100 mb-3">Available Listeners</Body18>
+        <div className="text-center py-6 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+          <Body16 className="text-gray-600 dark:text-gray-400 mb-2">No listeners available right now</Body16>
+          <Body16 className="text-sm text-gray-500 dark:text-gray-500">
             Check back in a few minutes, or set yourself as "Available to Listen" to help others!
           </Body16>
         </div>
@@ -288,10 +288,10 @@ export default function AvailableListeners({ onCountChange, currentUserId, curre
   }
 
   return (
-    <div className="bg-white rounded-lg p-5 shadow-sm mb-6">
+    <div className="bg-white dark:bg-gray-800 rounded-lg p-5 shadow-sm mb-6">
       <div className="flex items-center justify-between mb-4">
-        <Body18 className="font-semibold text-gray-900">Available Listeners</Body18>
-        <div className="flex items-center gap-2 px-3 py-1.5 bg-green-50 rounded-full border border-green-200">
+        <Body18 className="font-semibold text-gray-900 dark:text-gray-100">Available Listeners</Body18>
+        <div className="flex items-center gap-2 px-3 py-1.5 bg-green-50 dark:bg-green-900/20 rounded-full border border-green-200 dark:border-green-800">
           <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
           <Body16 className="text-sm text-green-700 font-semibold">
             {listeners.length} Online
@@ -303,7 +303,7 @@ export default function AvailableListeners({ onCountChange, currentUserId, curre
         {listeners.map((listener) => (
           <div
             key={listener.id}
-            className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg transition-all"
+            className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg transition-all"
           >
             {/* Avatar — clicking opens bio */}
             <button
@@ -331,7 +331,7 @@ export default function AvailableListeners({ onCountChange, currentUserId, curre
               className="flex-1 min-w-0 text-left"
             >
               <div className="flex items-center gap-2">
-                <Body16 className="font-semibold text-gray-900 truncate">
+                <Body16 className="font-semibold text-gray-900 dark:text-gray-100 truncate">
                   {listener.display_name}
                 </Body16>
                 {favoriteIds.has(listener.id) && (
@@ -343,7 +343,7 @@ export default function AvailableListeners({ onCountChange, currentUserId, curre
                   </span>
                 )}
               </div>
-              <Body16 className="text-sm text-gray-600 truncate">
+              <Body16 className="text-sm text-gray-600 dark:text-gray-400 truncate">
                 {getDisplayMessage(listener.tagline, listener.bio)}
               </Body16>
               {listener.tags && listener.tags.length > 0 && (
@@ -354,7 +354,7 @@ export default function AvailableListeners({ onCountChange, currentUserId, curre
                     </span>
                   ))}
                   {listener.tags.length > 3 && (
-                    <span className="text-[10px] text-gray-400">+{listener.tags.length - 3}</span>
+                    <span className="text-[10px] text-gray-400 dark:text-gray-500">+{listener.tags.length - 3}</span>
                   )}
                 </div>
               )}
@@ -379,8 +379,8 @@ export default function AvailableListeners({ onCountChange, currentUserId, curre
         ))}
       </div>
 
-      <div className="mt-4 pt-4 border-t border-gray-200">
-        <Body16 className="text-sm text-gray-600 text-center">
+      <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+        <Body16 className="text-sm text-gray-600 dark:text-gray-400 text-center">
           {currentRoleState === 'requesting' ? (
             <>Tap <strong>Connect</strong> next to a listener to start a session</>
           ) : (
@@ -414,7 +414,7 @@ export default function AvailableListeners({ onCountChange, currentUserId, curre
               )}
               <div>
                 {profilePreview.tagline && (
-                  <p className="text-sm italic text-gray-600">"{profilePreview.tagline}"</p>
+                  <p className="text-sm italic text-gray-600 dark:text-gray-400">"{profilePreview.tagline}"</p>
                 )}
                 <div className="flex items-center gap-2 mt-1">
                   <span className="w-2 h-2 bg-green-500 rounded-full"></span>
@@ -428,15 +428,15 @@ export default function AvailableListeners({ onCountChange, currentUserId, curre
             {/* Bio */}
             {profilePreview.bio && (
               <div>
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">About</p>
-                <p className="text-sm text-gray-700">{profilePreview.bio}</p>
+                <p className="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide mb-1">About</p>
+                <p className="text-sm text-gray-700 dark:text-gray-300">{profilePreview.bio}</p>
               </div>
             )}
 
             {/* Tags */}
             {profilePreview.tags && profilePreview.tags.length > 0 && (
               <div>
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Specialties</p>
+                <p className="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide mb-2">Specialties</p>
                 <div className="flex flex-wrap gap-2">
                   {profilePreview.tags.map(tag => (
                     <span key={tag} className="px-2.5 py-1 rounded-full text-xs font-medium bg-rb-blue/10 text-rb-blue">
@@ -449,7 +449,7 @@ export default function AvailableListeners({ onCountChange, currentUserId, curre
 
             {/* Connect button — shown when the viewer is currently seeking support */}
             {currentRoleState === 'requesting' && (
-              <div className="pt-3 border-t border-gray-100">
+              <div className="pt-3 border-t border-gray-100 dark:border-gray-700">
                 <button
                   onClick={() => {
                     setProfilePreview(null)
@@ -465,7 +465,7 @@ export default function AvailableListeners({ onCountChange, currentUserId, curre
 
             {/* Favorite toggle — only for people you've had a past session with */}
             {hasSharedSession.has(profilePreview.id) && (
-              <div className="pt-3 border-t border-gray-100">
+              <div className="pt-3 border-t border-gray-100 dark:border-gray-700">
                 <button
                   onClick={(e) => {
                     e.stopPropagation()
@@ -474,8 +474,8 @@ export default function AvailableListeners({ onCountChange, currentUserId, curre
                   disabled={togglingFavorite === profilePreview.id}
                   className={`min-h-[44px] w-full px-4 py-2.5 rounded-xl font-semibold text-sm transition-all ${
                     favoriteIds.has(profilePreview.id)
-                      ? 'bg-amber-50 border-2 border-amber-200 text-amber-800 hover:bg-amber-100'
-                      : 'bg-gray-50 border-2 border-gray-200 text-gray-600 hover:bg-gray-100'
+                      ? 'bg-amber-50 dark:bg-amber-900/20 border-2 border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300 hover:bg-amber-100'
+                      : 'bg-gray-50 dark:bg-gray-700/50 border-2 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
                   }`}
                 >
                   {togglingFavorite === profilePreview.id
