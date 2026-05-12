@@ -3,6 +3,7 @@ import './globals.css'
 import CrisisResources from '@/components/CrisisResources'
 import ServiceWorkerRegistration from '@/components/ServiceWorkerRegistration'
 import ThemeProvider from '@/components/ThemeProvider'
+import BottomNav from '@/components/BottomNav'
 
 export const metadata: Metadata = {
   title: 'RecoveryBridge',
@@ -48,6 +49,7 @@ export default function RootLayout({
           <ServiceWorkerRegistration />
           {children}
           <CrisisResources />
+          <BottomNav />
         </ThemeProvider>
       </body>
     </html>

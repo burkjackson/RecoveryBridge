@@ -671,8 +671,14 @@ function DashboardContent() {
             )}
             <div className="flex-1 min-w-0">
               <Heading1 className="text-base sm:text-xl md:text-2xl break-words mb-1">Welcome back, {profile?.display_name}!</Heading1>
-              <Body16 className="text-rb-gray dark:text-gray-400 font-medium italic text-sm mb-1">"{profile?.tagline || 'Your story matters here'}"</Body16>
-              <Body16 className="text-rb-gray dark:text-gray-400 text-xs sm:text-sm">Choose how you'd like to engage today</Body16>
+              <Body16 className="text-rb-gray dark:text-gray-400 font-medium italic text-sm mb-2">"{profile?.tagline || 'Your story matters here'}"</Body16>
+              {profile?.user_role && (
+                <span className="inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rb-blue/10 text-rb-blue dark:bg-blue-900/30 dark:text-blue-300">
+                  {profile.user_role === 'person_in_recovery' && 'Person in Recovery'}
+                  {profile.user_role === 'professional' && 'Allies in Long-Term Recovery'}
+                  {profile.user_role === 'ally' && 'Recovery Support'}
+                </span>
+              )}
             </div>
           </div>
           <div className="flex gap-3 pt-4 border-t border-gray-100 dark:border-gray-700">
@@ -708,15 +714,17 @@ function DashboardContent() {
                 <div className="flex-1 min-w-0">
                   <Body16 className="font-semibold text-rb-dark dark:text-gray-100 text-sm">You don't have to go through this alone.</Body16>
                   <Body16 className="text-rb-gray dark:text-gray-400 text-sm mt-1">Reach out anytime — support is available 24/7.</Body16>
-                  <div className="flex flex-wrap gap-2 mt-3">
-                    <a href="tel:988" className="min-h-[44px] inline-flex items-center px-4 py-2 bg-rb-blue text-white rounded-full text-sm font-semibold hover:bg-rb-blue-hover transition-colors">Call 988</a>
-                    <a href="sms:741741&body=HELLO" className="min-h-[44px] inline-flex items-center px-4 py-2 bg-white dark:bg-gray-800 border border-rb-blue text-rb-blue rounded-full text-sm font-semibold hover:bg-rb-blue-light dark:hover:bg-gray-700 transition-colors">Text HOME to 741741</a>
+                  <div className="flex flex-col gap-2 mt-3">
                     <button
                       onClick={() => { setShowPostChatBanner(false); setRoleState('requesting') }}
-                      className="min-h-[44px] inline-flex items-center px-4 py-2 bg-rb-purple/20 border border-rb-purple/40 text-rb-dark dark:text-gray-100 rounded-full text-sm font-semibold hover:bg-rb-purple/30 transition-colors"
+                      className="min-h-[44px] w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-rb-purple text-white rounded-full text-sm font-semibold hover:bg-rb-purple/90 transition-colors shadow-sm"
                     >
                       🤝 Talk to a listener again
                     </button>
+                    <div className="flex flex-wrap gap-2">
+                      <a href="tel:988" className="min-h-[44px] inline-flex items-center px-4 py-2 bg-white dark:bg-gray-800 border border-rb-blue text-rb-blue rounded-full text-sm font-semibold hover:bg-rb-blue-light dark:hover:bg-gray-700 transition-colors">Call 988</a>
+                      <a href="sms:741741&body=HELLO" className="min-h-[44px] inline-flex items-center px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-rb-gray dark:text-gray-300 rounded-full text-sm font-semibold hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">Text HOME to 741741</a>
+                    </div>
                   </div>
                 </div>
                 <button
@@ -791,17 +799,6 @@ function DashboardContent() {
           </div>
         )}
 
-        {/* Role Display */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-5 shadow-sm mb-6">
-          <Body16 className="text-xs font-semibold text-rb-gray dark:text-gray-400 uppercase tracking-wide mb-2">Your Role</Body16>
-          <Body18 className="text-rb-dark dark:text-gray-100">
-            {profile?.user_role === 'person_in_recovery' && 'Person in Recovery'}
-            {profile?.user_role === 'professional' && 'Allies in Long-Term Recovery'}
-            {profile?.user_role === 'ally' && 'Recovery Support (Legacy)'}
-            {!profile?.user_role && 'Not set'}
-          </Body18>
-        </div>
-
         {/* Error State */}
         {error.show && (
           <ErrorState
@@ -820,10 +817,10 @@ function DashboardContent() {
             onClick={handleListenerToggle}
             aria-label={profile?.role_state === 'available' ? 'You are currently available to listen. Click to go offline' : 'Make yourself available to listen and support others'}
             aria-pressed={profile?.role_state === 'available'}
-            className={`p-8 rounded-2xl text-center transition-all duration-300 transform hover:scale-[1.02] hover:-translate-y-1 ${
+            className={`p-8 rounded-2xl text-center transition-all duration-200 ${
               profile?.role_state === 'available'
                 ? 'bg-rb-blue-light dark:bg-gray-700 border-4 border-rb-blue shadow-lg animate-pulse-glow-blue'
-                : 'bg-white dark:bg-gray-800 border-4 border-rb-blue shadow-md hover:shadow-xl'
+                : 'bg-white dark:bg-gray-800 border-4 border-rb-blue shadow-md hover:shadow-xl hover:border-rb-blue-hover'
             }`}
             style={profile?.role_state === 'available' ? {
               boxShadow: '0 10px 25px -5px rgba(90, 122, 140, 0.3), 0 8px 10px -6px rgba(90, 122, 140, 0.2)'
@@ -845,10 +842,10 @@ function DashboardContent() {
             onClick={() => setRoleState(profile?.role_state === 'requesting' ? 'offline' : 'requesting')}
             aria-label={profile?.role_state === 'requesting' ? 'You are currently looking for support. Click to cancel' : 'Request support and connect with an available listener'}
             aria-pressed={profile?.role_state === 'requesting'}
-            className={`p-8 rounded-2xl text-center transition-all duration-300 transform hover:scale-[1.02] hover:-translate-y-1 ${
+            className={`p-8 rounded-2xl text-center transition-all duration-200 ${
               profile?.role_state === 'requesting'
                 ? 'bg-rb-purple-light dark:bg-gray-700 border-4 border-rb-purple shadow-lg animate-pulse-glow-purple'
-                : 'bg-white dark:bg-gray-800 border-4 border-rb-purple shadow-md hover:shadow-xl'
+                : 'bg-white dark:bg-gray-800 border-4 border-rb-purple shadow-md hover:shadow-xl hover:border-rb-purple/70'
             }`}
             style={profile?.role_state === 'requesting' ? {
               boxShadow: '0 10px 25px -5px rgba(184, 169, 201, 0.4), 0 8px 10px -6px rgba(184, 169, 201, 0.3)'
@@ -857,21 +854,31 @@ function DashboardContent() {
             <Body18 className="font-bold text-rb-purple mb-2 text-lg">I Need Support</Body18>
             <Body16 className="text-rb-gray dark:text-gray-400 text-sm mb-4">Connect with someone who understands</Body16>
             {profile?.role_state === 'requesting' ? (
-              <div className="space-y-2">
-                <div className="flex items-center justify-center gap-2 px-4 py-2 bg-white/70 dark:bg-gray-800/70 rounded-xl">
-                  <span className="w-2 h-2 bg-rb-purple rounded-full animate-pulse"></span>
-                  <Body16 className="text-sm text-rb-purple font-semibold" aria-live="polite">Finding Listener...</Body16>
+              <div className="space-y-3" aria-live="polite">
+                {/* Animated waiting indicator */}
+                <div className="flex items-center justify-center gap-1.5">
+                  <span className="w-2 h-2 bg-rb-purple rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                  <span className="w-2 h-2 bg-rb-purple rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                  <span className="w-2 h-2 bg-rb-purple rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                 </div>
-                <Body16 className="text-xs text-rb-purple" aria-live="polite">
+                <Body16 className="text-sm text-rb-purple font-semibold">Finding you a listener…</Body16>
+                <Body16 className="text-xs text-rb-purple/80 leading-relaxed">
                   {availableListenerCount > 0
-                    ? `${availableListenerCount} listener${availableListenerCount === 1 ? '' : 's'} available`
-                    : 'Notifying listeners...'}
+                    ? `${availableListenerCount} listener${availableListenerCount === 1 ? '' : 's'} notified — someone will connect shortly.`
+                    : 'Notifying all available listeners now.'}
                 </Body16>
+                <Body16 className="text-xs text-rb-gray dark:text-gray-400">Most listeners respond within 2 minutes.</Body16>
+                <Body16 className="text-xs text-rb-purple/60 mt-1">Tap to cancel</Body16>
               </div>
             ) : (
               <Body16 className="text-sm text-rb-purple font-medium">Click to find a listener</Body16>
             )}
           </button>
+        </div>
+
+        {/* Notification Settings — surfaced early so new listeners discover push opt-in */}
+        <div className="mb-4 sm:mb-6">
+          <NotificationSettings profile={profile} onProfileUpdate={setProfile} />
         </div>
 
         {/* My Favorites */}
@@ -942,9 +949,17 @@ function DashboardContent() {
         {/* Available Listeners */}
         <AvailableListeners onCountChange={setAvailableListenerCount} currentUserId={profile?.id} currentRoleState={profile?.role_state} />
 
-        {/* Notification Settings */}
-        <div className="mb-4 sm:mb-6">
-          <NotificationSettings profile={profile} onProfileUpdate={setProfile} />
+        {/* Discover more listeners */}
+        <div className="mb-6 text-center">
+          <button
+            onClick={() => router.push('/listeners')}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-rb-blue/30 text-rb-blue text-sm font-semibold hover:bg-rb-blue-light dark:hover:bg-gray-800 transition-colors"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
+            </svg>
+            Browse All Listeners
+          </button>
         </div>
 
         {/* Active Sessions */}
@@ -1016,9 +1031,6 @@ function DashboardContent() {
                             {dateLabel}{durationMin !== null && durationMin > 0 ? ` · ${durationMin} min` : ''}
                           </Body16>
                         </div>
-                        <span className="px-2 py-1 text-xs rounded-full bg-gray-200 dark:bg-gray-600 text-gray-500 dark:text-gray-400 font-medium">
-                          Ended
-                        </span>
                       </div>
                     </div>
                   )

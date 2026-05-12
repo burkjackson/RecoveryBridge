@@ -128,12 +128,12 @@ export default function SignupPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
-                    minLength={6}
+                    minLength={8}
                     aria-required="true"
                     aria-invalid={error ? "true" : "false"}
                     aria-describedby="password-help"
                     className="w-full px-4 py-3 pr-12 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-rb-blue focus:border-transparent transition-all dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400"
-                    placeholder="At least 6 characters"
+                    placeholder="At least 8 characters"
                   />
                   <button
                     type="button"
@@ -154,7 +154,7 @@ export default function SignupPage() {
                   </button>
                 </div>
                 <p id="password-help" className="text-sm text-rb-gray dark:text-gray-400 mt-1">
-                  Must be at least 6 characters
+                  Must be at least 8 characters
                 </p>
               </div>
 
