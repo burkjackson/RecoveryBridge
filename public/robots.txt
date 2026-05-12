@@ -1,0 +1,23 @@
+User-agent: *
+Allow: /
+Allow: /stories
+Allow: /safety
+Allow: /donate
+Allow: /contact
+Allow: /terms
+Allow: /privacy
+Allow: /login
+Allow: /signup
+Allow: /forgot-password
+
+Disallow: /dashboard
+Disallow: /chat/
+Disallow: /profile
+Disallow: /listeners
+Disallow: /onboarding
+Disallow: /admin
+Disallow: /reset-password
+Disallow: /api/
+Disallow: /connect
+
+Sitemap: https://recoverybridge.app/sitemap.xml

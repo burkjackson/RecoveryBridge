@@ -6,8 +6,12 @@ import ThemeProvider from '@/components/ThemeProvider'
 import BottomNav from '@/components/BottomNav'
 
 export const metadata: Metadata = {
-  title: 'RecoveryBridge',
-  description: 'Safe, peer-to-peer support for people in recovery - because connection is the antidote to addiction',
+  metadataBase: new URL('https://recoverybridge.app'),
+  title: {
+    default: 'RecoveryBridge — Free Peer Support for Addiction Recovery',
+    template: '%s | RecoveryBridge',
+  },
+  description: 'Safe, peer-to-peer support for people in recovery — because connection is the antidote to addiction.',
   manifest: '/manifest.json',
   icons: {
     icon: [
@@ -24,6 +28,15 @@ export const metadata: Metadata = {
     title: 'RecoveryBridge',
   },
   applicationName: 'RecoveryBridge',
+  openGraph: {
+    siteName: 'RecoveryBridge',
+    type: 'website',
+    locale: 'en_US',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    site: '@recoverybridge',
+  },
 }
 
 export const viewport: Viewport = {
