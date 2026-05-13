@@ -84,6 +84,7 @@ export default function AdminPage() {
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [contactedIds, setContactedIds] = useState<Set<string>>(new Set())
+  const [selectedUserIds, setSelectedUserIds] = useState<Set<string>>(new Set())
 
   // Modal states
   const [errorModal, setErrorModal] = useState({ show: false, message: '' })
@@ -167,6 +168,39 @@ export default function AdminPage() {
     if (!emails) return
     navigator.clipboard.writeText(emails)
     setCopiedId('selected')
+    setTimeout(() => setCopiedId(null), 2000)
+  }
+
+  function toggleUserSelect(id: string) {
+    setSelectedUserIds(prev => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+  }
+
+  function toggleUserSelectAll() {
+    const allIds = users.map(u => u.id)
+    const allSelected = allIds.every(id => selectedUserIds.has(id))
+    setSelectedUserIds(allSelected ? new Set() : new Set(allIds))
+  }
+
+  function copySelectedUserEmails() {
+    const emails = users
+      .filter(u => selectedUserIds.has(u.id) && u.email)
+      .map(u => u.email)
+      .join(', ')
+    if (!emails) return
+    navigator.clipboard.writeText(emails)
+    setCopiedId('users-selected')
+    setTimeout(() => setCopiedId(null), 2000)
+  }
+
+  function copyAllUserEmails() {
+    const emails = users.filter(u => u.email).map(u => u.email).join(', ')
+    if (!emails) return
+    navigator.clipboard.writeText(emails)
+    setCopiedId('users-all')
     setTimeout(() => setCopiedId(null), 2000)
   }
 
@@ -923,46 +957,111 @@ export default function AdminPage() {
           {/* Users Tab */}
           {activeTab === 'users' && (
             <div>
-              <Body18 className="mb-4">All Users ({users.length})</Body18>
-              <div className="space-y-3">
-                {users.map((user) => (
-                  <div key={user.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-                    <div className="flex items-start justify-between mb-2">
-                      <div>
-                        <Body16 className="font-semibold dark:text-gray-100">
-                          {user.display_name}
-                          {user.is_admin && <span className="ml-2 px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 text-xs rounded">Admin</span>}
-                        </Body16>
-                        <Body16 className="text-sm text-rb-gray dark:text-gray-400">
-                          {user.user_role} • {user.role_state}
-                        </Body16>
+              <div className="flex items-center justify-between mb-3">
+                <Body18>All Users ({users.length})</Body18>
+                <button
+                  onClick={copyAllUserEmails}
+                  className="min-h-[36px] px-3 py-1.5 text-sm bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-rb-gray dark:text-gray-300 rounded-lg hover:border-rb-blue hover:text-rb-blue transition"
+                >
+                  {copiedId === 'users-all' ? '✓ Copied!' : `📋 Copy all ${users.length} emails`}
+                </button>
+              </div>
+
+              {/* Selection toolbar */}
+              <div className={`flex flex-wrap items-center gap-2 mb-3 p-3 rounded-lg transition-all ${
+                selectedUserIds.size > 0 ? 'bg-rb-blue-light dark:bg-gray-700 border border-rb-blue/20 dark:border-gray-600' : 'bg-gray-50 dark:bg-gray-700/50 border border-transparent'
+              }`}>
+                <label className="flex items-center gap-2 cursor-pointer select-none min-h-[36px] pr-3 border-r border-gray-200 dark:border-gray-600">
+                  <input
+                    type="checkbox"
+                    className="w-4 h-4 rounded accent-rb-blue"
+                    checked={users.length > 0 && users.every(u => selectedUserIds.has(u.id))}
+                    onChange={toggleUserSelectAll}
+                  />
+                  <span className="text-sm text-rb-gray dark:text-gray-400 whitespace-nowrap">
+                    {selectedUserIds.size > 0 ? `${selectedUserIds.size} selected` : 'Select all'}
+                  </span>
+                </label>
+                {selectedUserIds.size > 0 ? (
+                  <>
+                    <button
+                      onClick={copySelectedUserEmails}
+                      className="min-h-[36px] px-3 py-1.5 text-sm bg-rb-blue text-white rounded-lg hover:bg-rb-blue-hover transition"
+                    >
+                      {copiedId === 'users-selected' ? '✓ Copied!' : `📋 Copy ${selectedUserIds.size} email${selectedUserIds.size !== 1 ? 's' : ''}`}
+                    </button>
+                    <button
+                      onClick={() => setSelectedUserIds(new Set())}
+                      className="min-h-[36px] px-3 py-1.5 text-sm text-rb-gray hover:text-rb-dark transition"
+                    >
+                      Clear
+                    </button>
+                  </>
+                ) : (
+                  <span className="text-xs text-rb-gray dark:text-gray-400">Select users to copy their emails</span>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                {users.map((user) => {
+                  const selected = selectedUserIds.has(user.id)
+                  return (
+                    <div
+                      key={user.id}
+                      onClick={() => toggleUserSelect(user.id)}
+                      className={`border rounded-lg p-4 cursor-pointer transition-colors ${
+                        selected
+                          ? 'bg-rb-blue-light dark:bg-gray-700 border-rb-blue/30 dark:border-gray-500'
+                          : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50'
+                      }`}
+                    >
+                      <div className="flex items-start gap-3">
+                        <input
+                          type="checkbox"
+                          className="w-4 h-4 rounded accent-rb-blue mt-1 flex-shrink-0"
+                          checked={selected}
+                          onChange={() => toggleUserSelect(user.id)}
+                          onClick={e => e.stopPropagation()}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between mb-1">
+                            <div>
+                              <span className="font-semibold text-rb-dark dark:text-gray-100 text-sm">
+                                {user.display_name}
+                              </span>
+                              {user.is_admin && <span className="ml-2 px-2 py-0.5 bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 text-xs rounded">Admin</span>}
+                            </div>
+                            <span className="text-xs text-rb-gray dark:text-gray-400 flex-shrink-0 ml-2">
+                              Joined {new Date(user.created_at).toLocaleDateString()}
+                            </span>
+                          </div>
+                          <p className="text-xs text-rb-gray dark:text-gray-400 truncate mb-2">{user.email}</p>
+                          <p className="text-xs text-gray-400 dark:text-gray-500">{user.user_role} · {user.role_state}</p>
+                        </div>
                       </div>
-                      <Body16 className="text-xs text-rb-gray dark:text-gray-400">
-                        Joined {new Date(user.created_at).toLocaleDateString()}
-                      </Body16>
+                      <div className="flex gap-2 mt-3 ml-7" onClick={e => e.stopPropagation()}>
+                        <button
+                          onClick={() => setBlockModal({
+                            show: true,
+                            userId: user.id,
+                            userName: user.display_name,
+                            fromReport: false,
+                            reportId: ''
+                          })}
+                          className="min-h-[36px] px-3 py-1.5 bg-red-500 text-white rounded text-xs hover:bg-red-600"
+                        >
+                          Block
+                        </button>
+                        <button
+                          onClick={() => deleteUser(user.id, user.display_name)}
+                          className="min-h-[36px] px-3 py-1.5 bg-gray-800 text-white rounded text-xs hover:bg-gray-900"
+                        >
+                          🗑️ Delete
+                        </button>
+                      </div>
                     </div>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => setBlockModal({
-                          show: true,
-                          userId: user.id,
-                          userName: user.display_name,
-                          fromReport: false,
-                          reportId: ''
-                        })}
-                        className="min-h-[44px] px-4 py-3 bg-red-500 text-white rounded text-sm hover:bg-red-600"
-                      >
-                        Block User
-                      </button>
-                      <button
-                        onClick={() => deleteUser(user.id, user.display_name)}
-                        className="min-h-[44px] px-4 py-3 bg-gray-800 text-white rounded text-sm hover:bg-gray-900"
-                      >
-                        🗑️ Delete User
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             </div>
           )}
