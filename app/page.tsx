@@ -177,6 +177,31 @@ export default function Home() {
             </div>
           </div>
 
+          {/* Stories Section */}
+          <div className="max-w-3xl mx-auto mb-12">
+            <div className="bg-gradient-to-br from-[#E8EEF2] to-white dark:from-gray-800 dark:to-gray-800 rounded-2xl p-8 border border-[#C8D8E4] dark:border-gray-700 shadow-lg text-center">
+              <div className="text-5xl mb-4">📖</div>
+              <h2 className="text-xl sm:text-2xl font-bold text-[#2D3436] dark:text-gray-100 mb-2">Stories from the Community</h2>
+              <p className="text-sm text-slate-500 dark:text-gray-400 leading-relaxed mb-6 max-w-md mx-auto">
+                Read stories of hope, resilience, and recovery written by people in our community.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <a
+                  href="/stories"
+                  className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#5A7A8C] text-white font-semibold rounded-full hover:bg-[#4A6A7C] transition shadow-md text-sm"
+                >
+                  Read Stories →
+                </a>
+                <a
+                  href="/stories/new"
+                  className="inline-flex items-center justify-center gap-2 px-6 py-3 border border-[#5A7A8C] text-[#5A7A8C] font-semibold rounded-full hover:bg-[#5A7A8C]/5 transition text-sm"
+                >
+                  ✍️ Share Your Story
+                </a>
+              </div>
+            </div>
+          </div>
+
           {/* Key Features */}
           <div className="max-w-4xl mx-auto mb-12">
             <h2 className="text-2xl sm:text-3xl font-bold text-rb-dark dark:text-gray-100 mb-3 text-center">
@@ -301,31 +326,6 @@ export default function Home() {
             <div className="flex items-center gap-2">
               <span className="text-base" role="img" aria-label="Gift">🎁</span>
               <span className="font-semibold">Always free</span>
-            </div>
-          </div>
-
-          {/* Stories Section */}
-          <div className="max-w-3xl mx-auto mb-12">
-            <div className="bg-gradient-to-br from-[#E8EEF2] to-white dark:from-gray-800 dark:to-gray-800 rounded-2xl p-8 border border-[#C8D8E4] dark:border-gray-700 shadow-lg text-center">
-              <div className="text-5xl mb-4">📖</div>
-              <h2 className="text-xl sm:text-2xl font-bold text-[#2D3436] dark:text-gray-100 mb-2">Stories from the Community</h2>
-              <p className="text-sm text-slate-500 dark:text-gray-400 leading-relaxed mb-6 max-w-md mx-auto">
-                Read stories of hope, resilience, and recovery written by people in our community.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                <a
-                  href="/stories"
-                  className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#5A7A8C] text-white font-semibold rounded-full hover:bg-[#4A6A7C] transition shadow-md text-sm"
-                >
-                  Read Stories →
-                </a>
-                <a
-                  href="/stories/new"
-                  className="inline-flex items-center justify-center gap-2 px-6 py-3 border border-[#5A7A8C] text-[#5A7A8C] font-semibold rounded-full hover:bg-[#5A7A8C]/5 transition text-sm"
-                >
-                  ✍️ Share Your Story
-                </a>
-              </div>
             </div>
           </div>
 
