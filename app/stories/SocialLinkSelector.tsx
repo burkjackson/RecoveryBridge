@@ -90,6 +90,10 @@ export function SocialLinkSelector({
         </span>
       </label>
 
+      <p className="text-xs text-gray-400 dark:text-gray-500 mb-2">
+        Tap the platforms you want to share — a field will appear for each one.
+      </p>
+
       <div className="flex flex-wrap gap-2 mb-3">
         {PLATFORMS.map(({ key, label, Icon }) => {
           const isActive = active.has(key)
