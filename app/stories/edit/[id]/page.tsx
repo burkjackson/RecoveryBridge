@@ -3,9 +3,10 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { marked } from 'marked'
 import { StoryTagSelector } from '../../StoryTagSelector'
 import { SocialLinkSelector } from '../../SocialLinkSelector'
-import { marked } from 'marked'
+import { RichTextEditor, stripHtml } from '../../RichTextEditor'
 import type { BlogPost } from '@/lib/types/database'
 
 const MAX_TITLE = 120
@@ -70,7 +71,10 @@ export default function EditStoryPage() {
       const typedPost = post as BlogPost
       setTitle(typedPost.title)
       setExcerpt(typedPost.excerpt ?? '')
-      setContent(typedPost.content)
+      // Convert legacy markdown to HTML so the rich editor can load it
+      const raw = typedPost.content
+      const html = raw.trimStart().startsWith('<') ? raw : String(await marked(raw))
+      setContent(html)
       setCoverUrl(typedPost.cover_image_url)
       setSavedSlug(typedPost.slug)
       setCurrentStatus(typedPost.status)
@@ -89,8 +93,7 @@ export default function EditStoryPage() {
 
   useEffect(() => {
     if (tab === 'preview') {
-      const result = marked(content || '*No content yet.*')
-      Promise.resolve(result).then((html) => setPreviewHtml(html as string))
+      setPreviewHtml(content || '<p><em>No content yet.</em></p>')
     }
   }, [tab, content])
 
@@ -98,7 +101,7 @@ export default function EditStoryPage() {
   useEffect(() => {
     if (!hasLoadedRef.current) return
     if (currentStatus === 'published') return
-    if (!title.trim() || content.trim().length < 50) return
+    if (!title.trim() || stripHtml(content).length < MIN_CONTENT) return
 
     if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current)
     autoSaveTimerRef.current = setTimeout(async () => {
@@ -153,7 +156,7 @@ export default function EditStoryPage() {
   async function handleSave(status: 'draft' | 'submitted' | 'published') {
     if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current)
     if (!title.trim()) { setErrorMsg('Please add a title before saving.'); return }
-    if (content.trim().length < MIN_CONTENT) { setErrorMsg(`Content must be at least ${MIN_CONTENT} characters.`); return }
+    if (stripHtml(content).length < MIN_CONTENT) { setErrorMsg(`Content must be at least ${MIN_CONTENT} characters.`); return }
     setErrorMsg('')
     setSaveStatus('saving')
 
@@ -288,11 +291,11 @@ export default function EditStoryPage() {
 
             {/* Content */}
             <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <label className="text-sm font-semibold text-[#2D3436]">Story *</label>
-                <span className="text-xs text-gray-400">Markdown supported</span>
-              </div>
-              <textarea value={content} onChange={(e) => setContent(e.target.value)} placeholder="Share your story…" rows={18} className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-sm text-[#2D3436] placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#5A7A8C]/30 focus:border-[#5A7A8C] transition resize-y font-mono leading-relaxed" />
+              <label className="text-sm font-semibold text-[#2D3436] block mb-1.5">Story *</label>
+              <RichTextEditor
+                content={content}
+                onChange={setContent}
+              />
             </div>
 
             {/* Social Links */}

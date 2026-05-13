@@ -2,9 +2,9 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { marked } from 'marked'
 import { StoryTagSelector } from '../StoryTagSelector'
 import { SocialLinkSelector } from '../SocialLinkSelector'
+import { RichTextEditor, stripHtml } from '../RichTextEditor'
 
 const MAX_TITLE = 120
 const MAX_EXCERPT = 300
@@ -72,8 +72,7 @@ export default function NewStoryPage() {
 
   useEffect(() => {
     if (tab === 'preview') {
-      const result = marked(content || '*No content yet.*')
-      Promise.resolve(result).then((html) => setPreviewHtml(html as string))
+      setPreviewHtml(content || '<p><em>No content yet.</em></p>')
     }
   }, [tab, content])
 
@@ -84,7 +83,7 @@ export default function NewStoryPage() {
   useEffect(() => {
     // Don't auto-save if already submitted
     if (currentStatus === 'submitted') return
-    if (!title.trim() || content.trim().length < MIN_CONTENT) return
+    if (!title.trim() || stripHtml(content).length < MIN_CONTENT) return
 
     if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current)
     autoSaveTimerRef.current = setTimeout(async () => {
@@ -160,7 +159,7 @@ export default function NewStoryPage() {
       setErrorMsg('Please add a title before saving.')
       return
     }
-    if (content.trim().length < MIN_CONTENT) {
+    if (stripHtml(content).length < MIN_CONTENT) {
       setErrorMsg(`Content must be at least ${MIN_CONTENT} characters.`)
       return
     }
@@ -181,7 +180,7 @@ export default function NewStoryPage() {
           id: savedId,
           title: title.trim(),
           excerpt: excerpt.trim() || null,
-          content: content.trim(),
+          content: content,
           cover_image_url: coverUrl,
           status,
           author_website: authorWebsite.trim() || null,
@@ -367,20 +366,11 @@ export default function NewStoryPage() {
 
             {/* Content */}
             <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <label className="text-sm font-semibold text-[#2D3436] dark:text-gray-100">Story *</label>
-                <span className="text-xs text-gray-400 dark:text-gray-500">Markdown supported</span>
-              </div>
-              <textarea
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                placeholder="Share your story, insight, or message of hope…"
-                rows={18}
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm text-[#2D3436] dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#5A7A8C]/30 focus:border-[#5A7A8C] transition resize-y font-mono leading-relaxed"
+              <label className="text-sm font-semibold text-[#2D3436] dark:text-gray-100 block mb-1.5">Story *</label>
+              <RichTextEditor
+                content={content}
+                onChange={setContent}
               />
-              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1.5">
-                Use **bold**, *italic*, ## Headings, and {">"} blockquotes for formatting.
-              </p>
             </div>
 
             {/* Social Links */}

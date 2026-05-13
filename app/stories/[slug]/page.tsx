@@ -67,7 +67,8 @@ export default async function StoryPage({ params }: Props) {
   if (!post) notFound()
 
   const typedPost = post as unknown as BlogPostWithAuthor
-  const htmlContent = await marked(typedPost.content)
+  const raw = typedPost.content
+  const htmlContent = raw.trimStart().startsWith('<') ? raw : await marked(raw)
 
   // Related stories: tag-overlap first, fall back to most recent
   let relatedPosts: BlogPostWithAuthor[] = []

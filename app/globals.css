@@ -2,6 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Tiptap placeholder */
+.tiptap p.is-editor-empty:first-child::before {
+  color: #9ca3af;
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
 /* RecoveryBridge Design System */
 :root {
   --rb-dark: #2D3436;
