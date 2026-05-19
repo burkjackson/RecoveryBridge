@@ -62,6 +62,45 @@ const TRAINING_SECTIONS = [
     ack: 'I will honor my own limits and practice self-care so I can sustainably support others.',
   },
   {
+    id: 'scope',
+    title: 'What This Is (and Isn\'t)',
+    icon: '🧭',
+    intro: "RecoveryBridge is peer support — not therapy, not sponsorship, not crisis counseling. Understanding the scope protects both you and the people you listen to.",
+    points: [
+      "You are not a therapist, sponsor, counselor, or medical professional in this role — and you shouldn't try to be.",
+      "Don't offer diagnoses, treatment advice, or medication guidance.",
+      "You're here to listen and witness, not to direct someone's recovery plan.",
+      "If someone needs professional support, gently encourage them to seek it — that's not a failure, it's good care.",
+    ],
+    ack: "I understand the scope of peer listening and won't overstep into professional roles.",
+  },
+  {
+    id: 'all-paths',
+    title: 'All Paths Are Valid',
+    icon: '🌐',
+    intro: "Recovery looks different for everyone. RecoveryBridge is not affiliated with any program, religion, or philosophy — and neither are you while you're here.",
+    points: [
+      "Don't recommend or advocate for specific recovery programs (AA, NA, SMART Recovery, faith-based, etc.) unless someone directly asks about your personal experience.",
+      "Keep your spiritual, religious, or philosophical beliefs to yourself unless you're invited to share them.",
+      "Someone's recovery path is theirs to choose — your job is to support them on it, not redirect them to yours.",
+      'Phrases like "have you tried..." or "you should look into..." steer people away from feeling heard.',
+    ],
+    ack: "I will respect every person's chosen path and keep my own program preferences and beliefs out of conversations unless asked.",
+  },
+  {
+    id: 'meet-them',
+    title: 'Meeting People Where They Are',
+    icon: '🌱',
+    intro: "Not everyone who reaches out is sober. Not everyone is trying to be. Harm reduction is a valid approach to recovery, and shame is never a tool for healing.",
+    points: [
+      "Don't shame or judge someone for still using, drinking, or struggling — they reached out, and that takes courage.",
+      "Relapse is part of many people's recovery journey. Treat it as something that happened, not a moral failure.",
+      "Your role isn't to push someone toward sobriety — it's to make them feel safe enough to keep talking.",
+      '"I\'m glad you reached out" is more powerful than any opinion about where someone should be in their recovery.',
+    ],
+    ack: "I will meet people where they are without judgment, shame, or pressure about where they \"should\" be.",
+  },
+  {
     id: 'crisis',
     title: 'When Someone Is in Crisis',
     icon: '🆘',
@@ -639,7 +678,7 @@ export default function OnboardingPage() {
 
             {!TRAINING_SECTIONS.every(s => trainingAcknowledged[s.id]) && (
               <Body16 className="text-center text-gray-400 dark:text-gray-500 text-sm mt-3">
-                Read and acknowledge all 5 sections to continue
+                Read and acknowledge all 8 sections to continue
               </Body16>
             )}
           </div>
