@@ -24,6 +24,8 @@ function DashboardContent() {
   const [connectingFavorite, setConnectingFavorite] = useState<string | null>(null)
   const [error, setError] = useState<{ show: boolean; message: string; action?: () => void }>({ show: false, message: '' })
   const [nudgeDismissed, setNudgeDismissed] = useState(false)
+  const [trainingBannerDismissed, setTrainingBannerDismissed] = useState(false)
+  const [showTrainingComplete, setShowTrainingComplete] = useState(false)
   const [recentOpen, setRecentOpen] = useState(false)
   const [showOfflineConfirm, setShowOfflineConfirm] = useState(false)
   const [showPostChatBanner, setShowPostChatBanner] = useState(false)
@@ -66,6 +68,14 @@ function DashboardContent() {
           setShowPostChatBanner(false)
         }
       }, 8000)
+      return () => clearTimeout(timer)
+    }
+  }, [searchParams])
+
+  useEffect(() => {
+    if (searchParams.get('trainingComplete') === 'true') {
+      setShowTrainingComplete(true)
+      const timer = setTimeout(() => setShowTrainingComplete(false), 6000)
       return () => clearTimeout(timer)
     }
   }, [searchParams])
@@ -770,6 +780,52 @@ function DashboardContent() {
                 </button>
               </div>
             )}
+          </div>
+        )}
+
+        {/* Training complete toast */}
+        {showTrainingComplete && (
+          <div className="mb-6 flex items-center gap-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl p-4 shadow-sm">
+            <span className="text-2xl flex-shrink-0" aria-hidden="true">✅</span>
+            <div className="flex-1 min-w-0">
+              <Body16 className="font-semibold text-green-800 dark:text-green-200 text-sm">Training complete — thank you!</Body16>
+              <Body16 className="text-green-700 dark:text-green-300 text-sm mt-0.5">You're ready to show up as a safe, empathetic listener.</Body16>
+            </div>
+            <button
+              onClick={() => setShowTrainingComplete(false)}
+              aria-label="Dismiss"
+              className="min-h-[44px] min-w-[44px] flex items-center justify-center text-green-600 dark:text-green-400 hover:text-green-900 dark:hover:text-green-200 transition-colors flex-shrink-0 -mt-1 -mr-1"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+              </svg>
+            </button>
+          </div>
+        )}
+
+        {/* Listener training nudge */}
+        {!trainingBannerDismissed && profile && !profile.listener_training_completed_at && (
+          <div className="mb-6 flex items-start gap-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4 shadow-sm">
+            <span className="text-2xl flex-shrink-0" aria-hidden="true">🤝</span>
+            <div className="flex-1 min-w-0">
+              <Body16 className="font-semibold text-blue-900 dark:text-blue-200 text-sm">Complete your listener training</Body16>
+              <Body16 className="text-blue-800 dark:text-blue-300 text-sm mt-0.5">RecoveryBridge is built on safe, empathetic listening. Take 5 minutes to read through our core principles before your first conversation.</Body16>
+              <button
+                onClick={() => router.push('/training')}
+                className="mt-3 min-h-[44px] inline-flex items-center gap-1 px-5 py-2 bg-rb-blue hover:bg-rb-blue-hover text-white rounded-full text-sm font-semibold transition-colors"
+              >
+                Start Training →
+              </button>
+            </div>
+            <button
+              onClick={() => setTrainingBannerDismissed(true)}
+              aria-label="Dismiss"
+              className="min-h-[44px] min-w-[44px] flex items-center justify-center text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-200 transition-colors flex-shrink-0 -mt-1 -mr-1"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+              </svg>
+            </button>
           </div>
         )}
 

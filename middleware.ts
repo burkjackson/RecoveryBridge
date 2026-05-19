@@ -60,7 +60,7 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // Routes that require authentication (redirect to /login if not signed in)
-  const authRoutes = ['/dashboard', '/chat', '/profile', '/listeners', '/admin']
+  const authRoutes = ['/dashboard', '/chat', '/profile', '/listeners', '/admin', '/training']
   if (authRoutes.some((route) => pathname.startsWith(route)) && !user) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
@@ -93,6 +93,7 @@ export const config = {
     '/profile/:path*',
     '/admin/:path*',
     '/listeners/:path*',
-    '/onboarding/:path*'
+    '/onboarding/:path*',
+    '/training/:path*'
   ]
 }

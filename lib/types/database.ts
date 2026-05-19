@@ -21,6 +21,7 @@ export interface Profile {
   sms_notifications_enabled: boolean
   email_notifications_enabled: boolean
   referral_source: string | null
+  listener_training_completed_at: string | null
   created_at?: string
   updated_at?: string
 }
