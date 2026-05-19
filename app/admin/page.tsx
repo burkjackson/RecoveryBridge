@@ -967,6 +967,20 @@ export default function AdminPage() {
                 </button>
               </div>
 
+              {/* Training completion summary */}
+              {(() => {
+                const trained = users.filter(u => u.listener_training_completed_at).length
+                const untrained = users.length - trained
+                return (
+                  <div className="flex items-center gap-3 mb-4 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600">
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Listener Training:</span>
+                    <span className="text-sm text-green-700 dark:text-green-400 font-medium">✓ {trained} completed</span>
+                    <span className="text-gray-300 dark:text-gray-600">·</span>
+                    <span className="text-sm text-gray-500 dark:text-gray-400">{untrained} not yet</span>
+                  </div>
+                )
+              })()}
+
               {/* Selection toolbar */}
               <div className={`flex flex-wrap items-center gap-2 mb-3 p-3 rounded-lg transition-all ${
                 selectedUserIds.size > 0 ? 'bg-rb-blue-light dark:bg-gray-700 border border-rb-blue/20 dark:border-gray-600' : 'bg-gray-50 dark:bg-gray-700/50 border border-transparent'
@@ -1036,7 +1050,14 @@ export default function AdminPage() {
                             </span>
                           </div>
                           <p className="text-xs text-rb-gray dark:text-gray-400 truncate mb-2">{user.email}</p>
-                          <p className="text-xs text-gray-400 dark:text-gray-500">{user.user_role} · {user.role_state}</p>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="text-xs text-gray-400 dark:text-gray-500">{user.user_role} · {user.role_state}</p>
+                            {user.listener_training_completed_at ? (
+                              <span className="px-1.5 py-0.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs rounded">✓ Training</span>
+                            ) : (
+                              <span className="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 text-xs rounded">No training</span>
+                            )}
+                          </div>
                         </div>
                       </div>
                       <div className="flex gap-2 mt-3 ml-7" onClick={e => e.stopPropagation()}>
