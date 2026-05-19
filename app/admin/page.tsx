@@ -52,6 +52,7 @@ interface User {
   created_at: string
   is_admin: boolean
   referral_source: string | null
+  listener_training_completed_at: string | null
 }
 
 interface AdminStory {
