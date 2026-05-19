@@ -351,7 +351,7 @@ export default function AdminPage() {
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, display_name, email, user_role, role_state, created_at, is_admin, referral_source')
+        .select('id, display_name, email, user_role, role_state, created_at, is_admin, referral_source, listener_training_completed_at')
         .gte('created_at', thirtyDaysAgo.toISOString())
         .order('created_at', { ascending: false })
         .limit(100)
