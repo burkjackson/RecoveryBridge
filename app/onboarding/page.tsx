@@ -299,7 +299,7 @@ export default function OnboardingPage() {
               listeners who understand the journey. Whether you're here to offer support or seek it,
               you're not alone — and you're in the right place.
             </Body16>
-            <div className="bg-amber-50 dark:bg-amber-900/20 rounded-lg p-6 mb-8 border-l-4 border-amber-400 dark:border-amber-800 text-left">
+            <div className="bg-amber-50 dark:bg-amber-900/20 rounded-lg p-6 mb-4 border-l-4 border-amber-400 dark:border-amber-800 text-left">
               <Body18 className="font-bold text-gray-900 dark:text-gray-100 mb-2">Age Requirement</Body18>
               <Body16 className="text-gray-700 dark:text-gray-300 mb-3">
                 RecoveryBridge is designed for adults 18 years and older. By continuing,
@@ -309,6 +309,21 @@ export default function OnboardingPage() {
                 If you're under 18 and need support, we encourage you to reach out to
                 age-appropriate resources like the <strong>Teen Line</strong> (text TEEN to 839863)
                 or the <strong>988 Suicide & Crisis Lifeline</strong> which serves all ages.
+              </Body16>
+            </div>
+
+            <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-6 mb-8 border-l-4 border-rb-blue dark:border-rb-blue text-left">
+              <Body18 className="font-bold text-gray-900 dark:text-gray-100 mb-2">Peer Support — Not Professional Advice</Body18>
+              <Body16 className="text-gray-700 dark:text-gray-300 mb-3">
+                Our listeners are everyday people who are here to listen and help —
+                but they are <strong>not licensed therapists, counselors, medical professionals, or
+                trained peer support specialists</strong>. Conversations here are informal human
+                connection, not clinical or professional care of any kind.
+              </Body16>
+              <Body16 className="text-gray-600 dark:text-gray-400 text-sm">
+                Guidance shared on RecoveryBridge may sometimes be incomplete, inaccurate, or not
+                right for your situation. Please use your own judgment, and always consult a
+                qualified professional for medical, mental health, or crisis needs.
               </Body16>
             </div>
             <button
