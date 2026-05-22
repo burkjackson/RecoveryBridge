@@ -14,6 +14,7 @@ export default function SignupPage() {
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [showSuccessModal, setShowSuccessModal] = useState(false)
+  const [ageConfirmed, setAgeConfirmed] = useState(false)
   const router = useRouter()
   const supabase = createClient()
 
@@ -28,6 +29,12 @@ export default function SignupPage() {
     e.preventDefault()
     setError('')
     setLoading(true)
+
+    if (!ageConfirmed) {
+      setError('You must confirm that you are 18 years of age or older to create an account.')
+      setLoading(false)
+      return
+    }
 
     try {
       // Create account - database unique constraint will prevent duplicates atomically
@@ -158,6 +165,21 @@ export default function SignupPage() {
                 </p>
               </div>
 
+              <div className="flex items-start gap-3">
+                <input
+                  id="age-confirm"
+                  type="checkbox"
+                  checked={ageConfirmed}
+                  onChange={(e) => setAgeConfirmed(e.target.checked)}
+                  className="mt-1 h-4 w-4 rounded border-gray-300 text-rb-blue focus:ring-rb-blue cursor-pointer"
+                  aria-required="true"
+                />
+                <label htmlFor="age-confirm" className="text-sm text-gray-700 dark:text-gray-300 cursor-pointer">
+                  I confirm that I am <strong>18 years of age or older</strong> and agree to the{' '}
+                  <a href="/terms" className="text-rb-blue hover:underline">Terms of Service</a>
+                </label>
+              </div>
+
               {error && (
                 <div id="signup-error" role="alert" className="p-3 bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 dark:border-red-800 rounded">
                   <Body16 className="text-sm text-red-700 dark:text-red-300">{error}</Body16>
@@ -166,7 +188,7 @@ export default function SignupPage() {
 
               <button
                 type="submit"
-                disabled={loading}
+                disabled={loading || !ageConfirmed}
                 className="w-full bg-gray-900 text-white py-3 rounded-lg font-semibold hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
               >
                 {loading ? (

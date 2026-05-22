@@ -73,6 +73,11 @@ export default function TermsPage() {
           {/* Eligibility */}
           <section>
             <Body18 className="font-semibold mb-3 dark:text-gray-100">Who Can Use RecoveryBridge</Body18>
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-4 mb-4">
+              <Body16 className="dark:text-gray-100">
+                <strong>You must be at least 18 years old to create an account or use RecoveryBridge.</strong> By registering, you confirm that you meet this age requirement. Accounts found to belong to minors will be terminated.
+              </Body16>
+            </div>
             <Body16 className="text-rb-gray dark:text-gray-400 mb-2">
               To use RecoveryBridge, you must:
             </Body16>
@@ -204,7 +209,7 @@ export default function TermsPage() {
           <section>
             <Body18 className="font-semibold mb-3 dark:text-gray-100">Governing Law</Body18>
             <Body16 className="text-rb-gray dark:text-gray-400">
-              These terms are governed by the laws of [Your Jurisdiction]. Any disputes will be resolved in the courts of [Your Jurisdiction].
+              These terms are governed by applicable United States federal and state law, without regard to conflicts of law principles. Any disputes arising from these terms or your use of RecoveryBridge will first be addressed through good-faith negotiation. If the parties cannot reach a resolution, disputes shall be submitted to binding arbitration or resolved in a court of competent jurisdiction in the United States.
             </Body16>
           </section>
 

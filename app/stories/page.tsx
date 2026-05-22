@@ -10,7 +10,7 @@ export const metadata: Metadata = {
     title: 'RecoveryBridge Stories',
     description: 'Stories, insights, and hope from the recovery community.',
     url: 'https://recoverybridge.app/stories',
-    images: [{ url: 'https://recoverybridge.app/og-default.png', width: 1200, height: 630 }],
+    images: [{ url: 'https://recoverybridge.app/api/og', width: 1200, height: 630 }],
   },
 }
 
