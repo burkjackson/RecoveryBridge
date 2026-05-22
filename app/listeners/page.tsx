@@ -450,7 +450,7 @@ export default function ListenersPage() {
                               👍 {listener.helpful_count} helpful
                             </span>
                           )}
-                          {(listener.sessions_count || 0) > 0 && (
+                          {(listener.sessions_count || 0) >= 2 && (
                             <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-full font-medium">
                               💬 {listener.sessions_count} session{listener.sessions_count !== 1 ? 's' : ''}
                             </span>
@@ -609,7 +609,7 @@ export default function ListenersPage() {
                     👍 Rated helpful {previewProfile.helpful_count} time{previewProfile.helpful_count !== 1 ? 's' : ''}
                   </Body16>
                 )}
-                {(previewProfile.sessions_count || 0) > 0 && (
+                {(previewProfile.sessions_count || 0) >= 2 && (
                   <Body16 className="text-sm text-gray-500 dark:text-gray-400">
                     💬 {previewProfile.sessions_count} session{previewProfile.sessions_count !== 1 ? 's' : ''} completed
                   </Body16>
