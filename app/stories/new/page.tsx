@@ -228,7 +228,7 @@ export default function NewStoryPage() {
               You need to be signed in to write a story.
             </p>
             <a
-              href="/login"
+              href="/login?redirect=/stories/new"
               className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#5A7A8C] text-white font-semibold rounded-full hover:bg-[#4A6A7C] transition text-sm"
             >
               Sign In

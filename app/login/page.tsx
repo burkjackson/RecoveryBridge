@@ -1,23 +1,34 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Heading1, Body16 } from '@/components/ui/Typography'
 
 export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
+  )
+}
+
+function LoginForm() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const router = useRouter()
+  const searchParams = useSearchParams()
   const supabase = createClient()
 
-  // Redirect already-authenticated users to dashboard
+  const redirectTo = searchParams.get('redirect') || '/dashboard'
+
+  // Redirect already-authenticated users
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user) router.push('/dashboard')
+      if (user) router.push(redirectTo)
     })
   }, [])
 
@@ -34,7 +45,7 @@ export default function LoginPage() {
 
       if (error) throw error
 
-      router.push('/dashboard')
+      router.push(redirectTo)
     } catch (error: any) {
       // Handle email confirmation error specifically
       if (error.message?.toLowerCase().includes('email not confirmed')) {
