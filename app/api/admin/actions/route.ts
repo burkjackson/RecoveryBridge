@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { sendStoryPublishedEmail, sendStoryRejectedEmail } from '@/lib/email'
+import { sendStoryPublishedEmail, sendStoryRejectedEmail, sendReportResolvedToReporter, sendReportResolvedToReported } from '@/lib/email'
 
 // 30 requests per admin per minute — generous for human use, blocks automation
 const RATE_LIMIT_WINDOW_MS = 60 * 1000
@@ -61,6 +61,17 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'reportId and status required' }, { status: 400 })
       }
 
+      // Fetch report + user emails before updating (for notifications)
+      const { data: reportData } = await supabase
+        .from('reports')
+        .select(`
+          reporter_id, reported_user_id,
+          reporter:profiles!reports_reporter_id_fkey(display_name, email),
+          reported_user:profiles!reports_reported_user_id_fkey(display_name, email)
+        `)
+        .eq('id', reportId)
+        .single()
+
       const { error: updateError } = await supabase
         .from('reports')
         .update({
@@ -79,6 +90,27 @@ export async function POST(request: NextRequest) {
         target_report_id: reportId,
         details: { status, notes },
       }])
+
+      // Fire-and-forget: notify parties when a report reaches a terminal state
+      if ((status === 'resolved' || status === 'dismissed') && reportData) {
+        const reporter = (reportData.reporter as unknown) as { display_name: string; email: string } | null
+        const reported = (reportData.reported_user as unknown) as { display_name: string; email: string } | null
+
+        if (reporter?.email) {
+          sendReportResolvedToReporter({
+            to: reporter.email,
+            reporterName: reporter.display_name,
+            status: status as 'resolved' | 'dismissed',
+          }).catch(() => { /* silent */ })
+        }
+
+        if (status === 'resolved' && reported?.email) {
+          sendReportResolvedToReported({
+            to: reported.email,
+            userName: reported.display_name,
+          }).catch(() => { /* silent */ })
+        }
+      }
 
       return NextResponse.json({ success: true })
     }

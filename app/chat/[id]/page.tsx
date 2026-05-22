@@ -75,6 +75,12 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const longPressFiredRef = useRef(false)
 
+  // Shuffle conversation starters once per page load
+  const shuffledStarters = useState(() => ({
+    seeker: [...CONVERSATION_STARTERS.seeker].sort(() => Math.random() - 0.5),
+    listener: [...CONVERSATION_STARTERS.listener].sort(() => Math.random() - 0.5),
+  }))[0]
+
   // Track which messages we've already sent read receipts for to avoid re-render loops
   const markedAsReadRef = useRef<Set<string>>(new Set())
 
@@ -820,8 +826,8 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                   <Body16 className="text-gray-500 dark:text-gray-400 text-center mb-4">Tap a prompt to start the conversation:</Body16>
                   <div className="flex flex-wrap gap-2 justify-center">
                     {(currentUserId === session?.seeker_id
-                      ? CONVERSATION_STARTERS.seeker
-                      : CONVERSATION_STARTERS.listener
+                      ? shuffledStarters.seeker
+                      : shuffledStarters.listener
                     ).map((starter) => (
                       <button
                         key={starter}

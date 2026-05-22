@@ -79,8 +79,9 @@ export const UI = {
   MIN_TOUCH_TARGET: 44,
 } as const
 
-// US time zones for quiet hours
+// Time zones for quiet hours — US + international
 export const TIMEZONES = [
+  // United States
   { value: 'America/New_York', label: 'Eastern (ET)' },
   { value: 'America/Chicago', label: 'Central (CT)' },
   { value: 'America/Denver', label: 'Mountain (MT)' },
@@ -88,6 +89,48 @@ export const TIMEZONES = [
   { value: 'America/Anchorage', label: 'Alaska (AK)' },
   { value: 'Pacific/Honolulu', label: 'Hawaii (HI)' },
   { value: 'America/Phoenix', label: 'Arizona (AZ)' },
+  // Canada
+  { value: 'America/Toronto', label: 'Toronto (ET)' },
+  { value: 'America/Vancouver', label: 'Vancouver (PT)' },
+  { value: 'America/Halifax', label: 'Halifax (AT)' },
+  // Latin America
+  { value: 'America/Mexico_City', label: 'Mexico City (CST)' },
+  { value: 'America/Bogota', label: 'Bogotá (COT)' },
+  { value: 'America/Lima', label: 'Lima (PET)' },
+  { value: 'America/Sao_Paulo', label: 'São Paulo (BRT)' },
+  { value: 'America/Argentina/Buenos_Aires', label: 'Buenos Aires (ART)' },
+  // Europe
+  { value: 'Europe/London', label: 'London (GMT/BST)' },
+  { value: 'Europe/Dublin', label: 'Dublin (GMT/IST)' },
+  { value: 'Europe/Paris', label: 'Paris (CET)' },
+  { value: 'Europe/Berlin', label: 'Berlin (CET)' },
+  { value: 'Europe/Madrid', label: 'Madrid (CET)' },
+  { value: 'Europe/Rome', label: 'Rome (CET)' },
+  { value: 'Europe/Amsterdam', label: 'Amsterdam (CET)' },
+  { value: 'Europe/Stockholm', label: 'Stockholm (CET)' },
+  { value: 'Europe/Warsaw', label: 'Warsaw (CET)' },
+  { value: 'Europe/Athens', label: 'Athens (EET)' },
+  { value: 'Europe/Istanbul', label: 'Istanbul (TRT)' },
+  { value: 'Europe/Moscow', label: 'Moscow (MSK)' },
+  // Middle East & Africa
+  { value: 'Asia/Dubai', label: 'Dubai (GST)' },
+  { value: 'Asia/Riyadh', label: 'Riyadh (AST)' },
+  { value: 'Africa/Johannesburg', label: 'Johannesburg (SAST)' },
+  { value: 'Africa/Lagos', label: 'Lagos (WAT)' },
+  { value: 'Africa/Nairobi', label: 'Nairobi (EAT)' },
+  // Asia & Pacific
+  { value: 'Asia/Kolkata', label: 'India (IST)' },
+  { value: 'Asia/Dhaka', label: 'Dhaka (BST)' },
+  { value: 'Asia/Bangkok', label: 'Bangkok (ICT)' },
+  { value: 'Asia/Singapore', label: 'Singapore (SGT)' },
+  { value: 'Asia/Shanghai', label: 'China (CST)' },
+  { value: 'Asia/Hong_Kong', label: 'Hong Kong (HKT)' },
+  { value: 'Asia/Tokyo', label: 'Tokyo (JST)' },
+  { value: 'Asia/Seoul', label: 'Seoul (KST)' },
+  { value: 'Australia/Sydney', label: 'Sydney (AEST)' },
+  { value: 'Australia/Melbourne', label: 'Melbourne (AEST)' },
+  { value: 'Australia/Perth', label: 'Perth (AWST)' },
+  { value: 'Pacific/Auckland', label: 'Auckland (NZST)' },
 ] as const
 
 // API and rate limiting (future use)

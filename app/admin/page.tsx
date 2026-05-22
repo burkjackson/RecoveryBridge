@@ -87,6 +87,13 @@ export default function AdminPage() {
   const [contactedIds, setContactedIds] = useState<Set<string>>(new Set())
   const [selectedUserIds, setSelectedUserIds] = useState<Set<string>>(new Set())
 
+  // Search/filter state
+  const [reportSearch, setReportSearch] = useState('')
+  const [reportStatusFilter, setReportStatusFilter] = useState<'all' | 'pending' | 'reviewing' | 'resolved' | 'dismissed'>('all')
+  const [userSearch, setUserSearch] = useState('')
+  const [sessionSearch, setSessionSearch] = useState('')
+  const [blockSearch, setBlockSearch] = useState('')
+
   // Modal states
   const [errorModal, setErrorModal] = useState({ show: false, message: '' })
   const [successModal, setSuccessModal] = useState({ show: false, message: '' })
@@ -677,12 +684,55 @@ export default function AdminPage() {
           {/* Reports Tab */}
           {activeTab === 'reports' && (
             <div>
-              <Body18 className="mb-4">User Reports ({reports.length})</Body18>
-              {reports.length === 0 ? (
-                <Body16 className="text-rb-gray">No reports yet</Body16>
-              ) : (
-                <div className="space-y-4">
-                  {reports.map((report) => (
+              {(() => {
+                const filteredReports = reports.filter(r => {
+                  const matchesSearch = reportSearch === '' ||
+                    (r.reporter?.display_name || '').toLowerCase().includes(reportSearch.toLowerCase()) ||
+                    (r.reported_user?.display_name || '').toLowerCase().includes(reportSearch.toLowerCase()) ||
+                    r.reason.toLowerCase().includes(reportSearch.toLowerCase())
+                  const matchesStatus = reportStatusFilter === 'all' || r.status === reportStatusFilter
+                  return matchesSearch && matchesStatus
+                })
+                return (
+                  <>
+                    <div className="flex gap-2 mb-4">
+                      <div className="relative flex-1">
+                        <input
+                          type="text"
+                          placeholder="Search by reporter, reported user, or reason…"
+                          value={reportSearch}
+                          onChange={e => setReportSearch(e.target.value)}
+                          className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-rb-blue"
+                        />
+                        {reportSearch && (
+                          <button
+                            onClick={() => setReportSearch('')}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-lg leading-none"
+                          >
+                            ×
+                          </button>
+                        )}
+                      </div>
+                      <select
+                        value={reportStatusFilter}
+                        onChange={e => setReportStatusFilter(e.target.value as 'all' | 'pending' | 'reviewing' | 'resolved' | 'dismissed')}
+                        className="w-auto px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-rb-blue"
+                      >
+                        <option value="all">All statuses</option>
+                        <option value="pending">Pending</option>
+                        <option value="reviewing">Reviewing</option>
+                        <option value="resolved">Resolved</option>
+                        <option value="dismissed">Dismissed</option>
+                      </select>
+                    </div>
+                    <Body18 className="mb-4">
+                      User Reports ({filteredReports.length === reports.length ? reports.length : `${filteredReports.length} of ${reports.length}`})
+                    </Body18>
+                    {filteredReports.length === 0 ? (
+                      <Body16 className="text-rb-gray">{reports.length === 0 ? 'No reports yet' : 'No reports match your search'}</Body16>
+                    ) : (
+                      <div className="space-y-4">
+                        {filteredReports.map((report) => (
                     <div key={report.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
                       <div className="flex items-start justify-between mb-2">
                         <div>
@@ -807,18 +857,49 @@ export default function AdminPage() {
                   ))}
                 </div>
               )}
+                </>
+              )
+            })()}
             </div>
           )}
 
           {/* Blocks Tab */}
           {activeTab === 'blocks' && (
             <div>
-              <Body18 className="mb-4">Blocked Users ({blocks.length})</Body18>
-              {blocks.length === 0 ? (
-                <Body16 className="text-rb-gray">No blocked users</Body16>
-              ) : (
-                <div className="space-y-4">
-                  {blocks.map((block) => (
+              {(() => {
+                const filteredBlocks = blocks.filter(b =>
+                  blockSearch === '' ||
+                  (b.user?.display_name || '').toLowerCase().includes(blockSearch.toLowerCase())
+                )
+                return (
+                  <>
+                    <div className="flex gap-2 mb-4">
+                      <div className="relative flex-1">
+                        <input
+                          type="text"
+                          placeholder="Search by username…"
+                          value={blockSearch}
+                          onChange={e => setBlockSearch(e.target.value)}
+                          className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-rb-blue"
+                        />
+                        {blockSearch && (
+                          <button
+                            onClick={() => setBlockSearch('')}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-lg leading-none"
+                          >
+                            ×
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                    <Body18 className="mb-4">
+                      Blocked Users ({filteredBlocks.length === blocks.length ? blocks.length : `${filteredBlocks.length} of ${blocks.length}`})
+                    </Body18>
+                    {filteredBlocks.length === 0 ? (
+                      <Body16 className="text-rb-gray">{blocks.length === 0 ? 'No blocked users' : 'No blocked users match your search'}</Body16>
+                    ) : (
+                      <div className="space-y-4">
+                        {filteredBlocks.map((block) => (
                     <div key={block.id} className="border border-red-200 dark:border-red-800 rounded-lg p-4 bg-red-50 dark:bg-red-900/20">
                       <div className="flex items-start justify-between mb-2">
                         <Body16 className="font-semibold dark:text-gray-100">
@@ -847,15 +928,47 @@ export default function AdminPage() {
                   ))}
                 </div>
               )}
+                </>
+              )
+            })()}
             </div>
           )}
 
           {/* Sessions Tab */}
           {activeTab === 'sessions' && (
             <div>
-              <Body18 className="mb-4">Chat Sessions ({sessions.length})</Body18>
-              <div className="space-y-3">
-                {sessions.map((session) => (
+              {(() => {
+                const filteredSessions = sessions.filter(s =>
+                  sessionSearch === '' ||
+                  (s.listener?.display_name || '').toLowerCase().includes(sessionSearch.toLowerCase()) ||
+                  (s.seeker?.display_name || '').toLowerCase().includes(sessionSearch.toLowerCase())
+                )
+                return (
+                  <>
+                    <div className="flex gap-2 mb-4">
+                      <div className="relative flex-1">
+                        <input
+                          type="text"
+                          placeholder="Search by listener or seeker name…"
+                          value={sessionSearch}
+                          onChange={e => setSessionSearch(e.target.value)}
+                          className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-rb-blue"
+                        />
+                        {sessionSearch && (
+                          <button
+                            onClick={() => setSessionSearch('')}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-lg leading-none"
+                          >
+                            ×
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                    <Body18 className="mb-4">
+                      Chat Sessions ({filteredSessions.length === sessions.length ? sessions.length : `${filteredSessions.length} of ${sessions.length}`})
+                    </Body18>
+                    <div className="space-y-3">
+                      {filteredSessions.map((session) => (
                   <div key={session.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
                     <div className="flex items-start justify-between mb-2">
                       <Body16 className="dark:text-gray-100">
@@ -952,6 +1065,9 @@ export default function AdminPage() {
                   </div>
                 ))}
               </div>
+                  </>
+                )
+              })()}
             </div>
           )}
 
@@ -959,13 +1075,32 @@ export default function AdminPage() {
           {activeTab === 'users' && (
             <div>
               <div className="flex items-center justify-between mb-3">
-                <Body18>All Users ({users.length})</Body18>
+                <Body18>All Users ({userSearch ? `${users.filter(u => (u.display_name || '').toLowerCase().includes(userSearch.toLowerCase()) || (u.email || '').toLowerCase().includes(userSearch.toLowerCase())).length} of ${users.length}` : users.length})</Body18>
                 <button
                   onClick={copyAllUserEmails}
                   className="min-h-[36px] px-3 py-1.5 text-sm bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-rb-gray dark:text-gray-300 rounded-lg hover:border-rb-blue hover:text-rb-blue transition"
                 >
                   {copiedId === 'users-all' ? '✓ Copied!' : `📋 Copy all ${users.length} emails`}
                 </button>
+              </div>
+              <div className="flex gap-2 mb-4">
+                <div className="relative flex-1">
+                  <input
+                    type="text"
+                    placeholder="Search by name or email…"
+                    value={userSearch}
+                    onChange={e => setUserSearch(e.target.value)}
+                    className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-rb-blue"
+                  />
+                  {userSearch && (
+                    <button
+                      onClick={() => setUserSearch('')}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-lg leading-none"
+                    >
+                      ×
+                    </button>
+                  )}
+                </div>
               </div>
 
               {/* Training completion summary */}
@@ -1018,7 +1153,11 @@ export default function AdminPage() {
               </div>
 
               <div className="space-y-2">
-                {users.map((user) => {
+                {users.filter(u =>
+                  userSearch === '' ||
+                  (u.display_name || '').toLowerCase().includes(userSearch.toLowerCase()) ||
+                  (u.email || '').toLowerCase().includes(userSearch.toLowerCase())
+                ).map((user) => {
                   const selected = selectedUserIds.has(user.id)
                   return (
                     <div
