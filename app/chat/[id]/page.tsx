@@ -973,6 +973,18 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
           </div>
         </div>
 
+        {/* Crisis Scope Notice */}
+        {session?.status === 'active' && (
+          <div className="bg-amber-50 dark:bg-amber-900/10 border-t border-amber-100 dark:border-amber-900/30 px-4 py-2">
+            <p className="max-w-4xl mx-auto text-xs text-center text-amber-800 dark:text-amber-300">
+              <strong>Peer support only</strong> — not a substitute for professional therapy, medical care, or emergency services.{' '}
+              If you or someone else is in danger,{' '}
+              <a href="tel:988" className="underline font-semibold">call or text 988</a>{' '}
+              or text <strong>HOME</strong> to <strong>741741</strong>.
+            </p>
+          </div>
+        )}
+
         {/* Message Input */}
         {session?.status === 'active' && (
           <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4">

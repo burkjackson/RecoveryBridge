@@ -318,7 +318,10 @@ export default function PeopleSeeking({ currentUserId, currentRoleState }: Peopl
                 <Body16 className="font-semibold text-gray-900 dark:text-gray-100 truncate">
                   {seeker.display_name}
                 </Body16>
-                <span className="w-2 h-2 bg-purple-500 rounded-full animate-pulse flex-shrink-0" aria-label="Seeking support"></span>
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 flex-shrink-0">
+                  <span className="w-1.5 h-1.5 bg-purple-500 rounded-full animate-pulse" aria-hidden="true"></span>
+                  <span className="text-[10px] font-medium text-purple-700 dark:text-purple-400">Seeking</span>
+                </span>
               </div>
               <Body16 className="text-sm text-gray-600 dark:text-gray-400 truncate">
                 {getDisplayMessage(seeker.tagline, seeker.bio)}
@@ -395,7 +398,7 @@ export default function PeopleSeeking({ currentUserId, currentRoleState }: Peopl
                   <p className="text-sm italic text-gray-600 dark:text-gray-400">"{profilePreview.tagline}"</p>
                 )}
                 <div className="flex items-center gap-2 mt-1">
-                  <span className="w-2 h-2 bg-purple-500 rounded-full animate-pulse"></span>
+                  <span className="w-2 h-2 bg-purple-500 rounded-full animate-pulse" aria-hidden="true"></span>
                   <span className="text-xs text-purple-600 font-medium">Seeking support</span>
                 </div>
               </div>

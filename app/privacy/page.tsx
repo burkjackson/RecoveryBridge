@@ -156,6 +156,56 @@ export default function PrivacyPage() {
             </ul>
           </section>
 
+          {/* Consumer Health Data Privacy Notice */}
+          <section className="border-2 border-blue-200 dark:border-blue-700 rounded-xl p-6">
+            <Body18 className="font-semibold mb-1 dark:text-gray-100">Consumer Health Data Privacy Notice</Body18>
+            <Body16 className="text-xs text-rb-gray dark:text-gray-400 mb-4">
+              This notice applies to residents of states with consumer health data privacy laws, including Washington (My Health My Data Act).
+            </Body16>
+
+            <Body16 className="text-rb-gray dark:text-gray-400 mb-3">
+              <strong className="text-[#2D3436] dark:text-gray-100">Health Data We Process:</strong> RecoveryBridge processes consumer health data as defined under applicable state law, including information you provide about mental health, substance use, addiction recovery status, and related personal experiences. This data is collected only to provide the peer support service.
+            </Body16>
+
+            <Body16 className="text-rb-gray dark:text-gray-400 mb-3">
+              <strong className="text-[#2D3436] dark:text-gray-100">How We Use Health Data:</strong> Your health-related information is used solely to connect you with peer support and to operate RecoveryBridge. We do not use this data for advertising, marketing profiling, or sale to third parties.
+            </Body16>
+
+            <Body16 className="text-rb-gray dark:text-gray-400 mb-3">
+              <strong className="text-[#2D3436] dark:text-gray-100">Third-Party Processors:</strong> We share limited technical data with the following service providers who are contractually required to protect your information:
+            </Body16>
+            <ul className="space-y-2 ml-6 mb-3">
+              <li className="text-rb-gray dark:text-gray-400">
+                <Body16>• <strong className="dark:text-gray-300">Supabase</strong> — database and authentication provider that stores all user data and messages</Body16>
+              </li>
+              <li className="text-rb-gray dark:text-gray-400">
+                <Body16>• <strong className="dark:text-gray-300">Vercel</strong> — application hosting; may retain server access logs (IP address, timestamp, requested path)</Body16>
+              </li>
+              <li className="text-rb-gray dark:text-gray-400">
+                <Body16>• <strong className="dark:text-gray-300">Sentry</strong> — error monitoring; captures application error reports and anonymized session replays (text masked, media blocked) only when enabled via environment configuration</Body16>
+              </li>
+            </ul>
+            <Body16 className="text-rb-gray dark:text-gray-400 mb-3">
+              None of these providers are authorized to use your health data for their own purposes beyond providing services to RecoveryBridge LLC.
+            </Body16>
+
+            <Body16 className="text-rb-gray dark:text-gray-400 mb-3">
+              <strong className="text-[#2D3436] dark:text-gray-100">Your Rights (applicable states):</strong> Depending on your state of residence, you may have the right to:
+            </Body16>
+            <ul className="space-y-2 ml-6 mb-3">
+              <li className="text-rb-gray dark:text-gray-400"><Body16>• Confirm whether we process your consumer health data</Body16></li>
+              <li className="text-rb-gray dark:text-gray-400"><Body16>• Access and obtain a copy of your health data</Body16></li>
+              <li className="text-rb-gray dark:text-gray-400"><Body16>• Delete your health data (via account deletion in profile settings)</Body16></li>
+              <li className="text-rb-gray dark:text-gray-400"><Body16>• Withdraw consent for processing</Body16></li>
+            </ul>
+
+            <Body16 className="text-rb-gray dark:text-gray-400">
+              To exercise these rights, contact us at{' '}
+              <a href="mailto:privacy@recoverybridge.app" className="text-rb-blue hover:underline">privacy@recoverybridge.app</a>.
+              We will respond within 45 days as required by applicable law.
+            </Body16>
+          </section>
+
           {/* Children's Privacy */}
           <section>
             <Body18 className="font-semibold mb-3 dark:text-gray-100">Children's Privacy</Body18>

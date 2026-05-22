@@ -372,7 +372,10 @@ export default function AvailableListeners({ onCountChange, currentUserId, curre
                   {connectingId === listener.id ? 'Connecting...' : 'Connect'}
                 </button>
               ) : (
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
+                  <span className="w-2 h-2 bg-green-500 rounded-full" aria-hidden="true"></span>
+                  <span className="text-xs font-medium text-green-700 dark:text-green-400">Online</span>
+                </div>
               )}
             </div>
           </div>
@@ -417,7 +420,7 @@ export default function AvailableListeners({ onCountChange, currentUserId, curre
                   <p className="text-sm italic text-gray-600 dark:text-gray-400">"{profilePreview.tagline}"</p>
                 )}
                 <div className="flex items-center gap-2 mt-1">
-                  <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                  <span className="w-2 h-2 bg-green-500 rounded-full" aria-hidden="true"></span>
                   <span className="text-xs text-green-600 font-medium">
                     Available to listen{profilePreview.always_available ? ' · Always Available ⚡' : ''}
                   </span>
