@@ -1,1 +1,12 @@
-{}
+{
+  "crons": [
+    {
+      "path": "/api/cleanup-sessions",
+      "schedule": "*/30 * * * *"
+    },
+    {
+      "path": "/api/scheduled-availability",
+      "schedule": "*/15 * * * *"
+    }
+  ]
+}

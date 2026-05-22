@@ -22,6 +22,7 @@ export interface Profile {
   email_notifications_enabled: boolean
   referral_source: string | null
   listener_training_completed_at: string | null
+  availability_schedule: Array<{day: number, start: string, end: string}>
   created_at?: string
   updated_at?: string
 }
@@ -197,6 +198,7 @@ export interface ProfileUpdateData {
   avatar_url?: string
   tags?: string[]
   user_role?: Profile['user_role']
+  availability_schedule?: Array<{day: number, start: string, end: string}>
 }
 
 // Database schema types

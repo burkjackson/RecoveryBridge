@@ -48,6 +48,9 @@ export default function ProfilePage() {
   const [sendingWelcomeEmail, setSendingWelcomeEmail] = useState(false)
   const [welcomeEmailSent, setWelcomeEmailSent] = useState(false)
   const [welcomeEmailError, setWelcomeEmailError] = useState<string | null>(null)
+  const [schedule, setSchedule] = useState<Array<{day: number, start: string, end: string}>>([])
+  const [savingSchedule, setSavingSchedule] = useState(false)
+  const [scheduleExpanded, setScheduleExpanded] = useState(false)
   const router = useRouter()
   const supabase = createClient()
 
@@ -57,14 +60,15 @@ export default function ProfilePage() {
     loadThankYouNotes()
   }, [])
 
-  // Sync SMS and email state when profile loads
+  // Sync SMS, email, and schedule state when profile loads
   useEffect(() => {
     if (profile) {
       setPhoneNumber(profile.phone_number || '')
       setSmsEnabled(profile.sms_notifications_enabled || false)
       setEmailNotificationsEnabled(profile.email_notifications_enabled || false)
+      setSchedule(profile.availability_schedule || [])
     }
-  }, [profile?.phone_number, profile?.sms_notifications_enabled, profile?.email_notifications_enabled])
+  }, [profile?.phone_number, profile?.sms_notifications_enabled, profile?.email_notifications_enabled, profile?.availability_schedule])
 
   async function loadProfile() {
     try {
@@ -225,6 +229,26 @@ export default function ProfilePage() {
       setEmailNotificationsEnabled(!enabled)
     } finally {
       setSavingEmail(false)
+    }
+  }
+
+  async function handleSaveSchedule() {
+    if (!profile) return
+    setSavingSchedule(true)
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .update({ availability_schedule: schedule })
+        .eq('id', profile.id)
+        .select()
+        .single()
+      if (error) throw error
+      if (data) setProfile(data)
+    } catch (err) {
+      console.error('Error saving schedule:', err)
+      setErrorModal({ show: true, message: 'Could not save schedule. Please try again.' })
+    } finally {
+      setSavingSchedule(false)
     }
   }
 
@@ -764,6 +788,105 @@ export default function ProfilePage() {
             profile={profile}
             onProfileUpdate={(updatedProfile) => setProfile(updatedProfile)}
           />
+        </div>
+
+        {/* Scheduled Availability */}
+        <div className="mt-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden">
+          <button
+            onClick={() => setScheduleExpanded(prev => !prev)}
+            className="w-full flex items-center justify-between px-5 py-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+            aria-expanded={scheduleExpanded}
+          >
+            <div className="flex items-center gap-3">
+              <span className="text-lg" aria-hidden="true">🗓️</span>
+              <div className="text-left">
+                <Body16 className="font-semibold text-gray-900 dark:text-gray-100 text-sm">Scheduled Availability</Body16>
+                <Body16 className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                  {schedule.length === 0
+                    ? 'No windows set'
+                    : `${schedule.length} window${schedule.length !== 1 ? 's' : ''} set`}
+                </Body16>
+              </div>
+            </div>
+            <span className={`text-gray-400 dark:text-gray-500 transition-transform duration-200 ${scheduleExpanded ? 'rotate-180' : ''}`}>▾</span>
+          </button>
+
+          {scheduleExpanded && (
+            <div className="px-5 pb-5 border-t border-gray-100 dark:border-gray-700">
+              <Body16 className="text-xs text-gray-500 dark:text-gray-400 mt-4 mb-4 leading-relaxed">
+                Set weekly windows when you plan to be available. You&apos;ll get a push notification at the start of each window as a reminder to go available.
+                Uses your quiet hours timezone.
+              </Body16>
+
+              <div className="space-y-2 mb-4">
+                {schedule.map((w, i) => (
+                  <div key={i} className="flex items-center gap-2 flex-wrap">
+                    <select
+                      value={w.day}
+                      onChange={e => {
+                        const next = [...schedule]
+                        next[i] = { ...next[i], day: Number(e.target.value) }
+                        setSchedule(next)
+                      }}
+                      className="px-2 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-rb-blue"
+                    >
+                      {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map((d, idx) => (
+                        <option key={d} value={idx}>{d}</option>
+                      ))}
+                    </select>
+                    <input
+                      type="time"
+                      value={w.start}
+                      onChange={e => {
+                        const next = [...schedule]
+                        next[i] = { ...next[i], start: e.target.value }
+                        setSchedule(next)
+                      }}
+                      className="px-2 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-rb-blue"
+                    />
+                    <span className="text-sm text-gray-500 dark:text-gray-400">to</span>
+                    <input
+                      type="time"
+                      value={w.end}
+                      onChange={e => {
+                        const next = [...schedule]
+                        next[i] = { ...next[i], end: e.target.value }
+                        setSchedule(next)
+                      }}
+                      className="px-2 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-rb-blue"
+                    />
+                    <button
+                      onClick={() => setSchedule(prev => prev.filter((_, idx) => idx !== i))}
+                      aria-label="Remove window"
+                      className="p-1.5 rounded-lg text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex items-center gap-3">
+                {schedule.length < 7 && (
+                  <button
+                    onClick={() => setSchedule(prev => [...prev, { day: 1, start: '19:00', end: '21:00' }])}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-rb-blue border border-rb-blue/30 rounded-lg hover:bg-rb-blue-light dark:hover:bg-gray-700 transition-colors"
+                  >
+                    + Add window
+                  </button>
+                )}
+                <button
+                  onClick={handleSaveSchedule}
+                  disabled={savingSchedule}
+                  className="px-4 py-1.5 text-sm font-semibold text-white bg-rb-blue hover:bg-rb-blue-hover rounded-lg transition-colors disabled:opacity-50"
+                >
+                  {savingSchedule ? 'Saving…' : 'Save'}
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Email Notifications */}

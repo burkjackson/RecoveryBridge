@@ -20,6 +20,7 @@ interface Listener {
   always_available: boolean
   last_heartbeat_at: string | null
   helpful_count?: number
+  sessions_count?: number
 }
 
 export default function ListenersPage() {
@@ -124,9 +125,21 @@ export default function ListenersPage() {
           helpfulCounts.set(f.to_user_id, (helpfulCounts.get(f.to_user_id) || 0) + 1)
         })
 
+        const { data: sessionRows } = await supabase
+          .from('sessions')
+          .select('listener_id')
+          .in('listener_id', listenerIds)
+          .eq('status', 'ended')
+
+        const sessionCounts = new Map<string, number>()
+        sessionRows?.forEach(s => {
+          sessionCounts.set(s.listener_id, (sessionCounts.get(s.listener_id) || 0) + 1)
+        })
+
         const listenersWithCounts = onlineListeners.map(l => ({
           ...l,
           helpful_count: helpfulCounts.get(l.id) || 0,
+          sessions_count: sessionCounts.get(l.id) || 0,
         }))
 
         setListeners(listenersWithCounts)
@@ -437,6 +450,11 @@ export default function ListenersPage() {
                               👍 {listener.helpful_count} helpful
                             </span>
                           )}
+                          {(listener.sessions_count || 0) > 0 && (
+                            <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-full font-medium">
+                              💬 {listener.sessions_count} session{listener.sessions_count !== 1 ? 's' : ''}
+                            </span>
+                          )}
                         </div>
                         {listener.bio && (
                           <Body16 className="text-sm text-rb-gray leading-relaxed line-clamp-2">
@@ -589,6 +607,11 @@ export default function ListenersPage() {
                 {(previewProfile.helpful_count || 0) > 0 && (
                   <Body16 className="text-sm text-amber-700">
                     👍 Rated helpful {previewProfile.helpful_count} time{previewProfile.helpful_count !== 1 ? 's' : ''}
+                  </Body16>
+                )}
+                {(previewProfile.sessions_count || 0) > 0 && (
+                  <Body16 className="text-sm text-gray-500 dark:text-gray-400">
+                    💬 {previewProfile.sessions_count} session{previewProfile.sessions_count !== 1 ? 's' : ''} completed
                   </Body16>
                 )}
               </div>
