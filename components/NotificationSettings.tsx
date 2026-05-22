@@ -27,6 +27,7 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
   const [loading, setLoading] = useState(false)
   const [showIOSInstructions, setShowIOSInstructions] = useState(false)
   const [showInstructionsModal, setShowInstructionsModal] = useState(false)
+  const [showNotificationContext, setShowNotificationContext] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [alwaysAvailable, setAlwaysAvailable] = useState(profile?.always_available || false)
@@ -440,6 +441,45 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
             </div>
           )}
 
+          {/* Pre-permission context screen */}
+          {showNotificationContext && !isSubscribed && (
+            <div className="mb-4 p-4 bg-white dark:bg-gray-800 rounded-xl border-2 border-rb-blue/30">
+              <Body16 className="font-semibold text-gray-900 dark:text-gray-100 mb-3">
+                Before we ask for permission…
+              </Body16>
+              <ul className="space-y-2 mb-4">
+                {[
+                  'You\'ll only be notified when a seeker needs support',
+                  'No marketing, reminders, or unrelated messages — ever',
+                  'You can turn this off anytime from this screen',
+                ].map((point) => (
+                  <li key={point} className="flex gap-2 text-sm text-gray-700 dark:text-gray-300">
+                    <span className="text-green-500 flex-shrink-0 mt-0.5">✓</span>
+                    {point}
+                  </li>
+                ))}
+              </ul>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setShowNotificationContext(false)}
+                  className="flex-1 min-h-[44px] py-2 rounded-full border border-gray-300 dark:border-gray-600 text-sm text-gray-600 dark:text-gray-400 hover:border-gray-400 transition"
+                >
+                  Not now
+                </button>
+                <button
+                  onClick={() => {
+                    setShowNotificationContext(false)
+                    handleEnableNotifications()
+                  }}
+                  disabled={loading || permission === 'denied' || (isMobile && !isPWA)}
+                  className="flex-1 min-h-[44px] py-2 rounded-full bg-gradient-to-r from-[#3B82F6] to-[#2563EB] text-white text-sm font-semibold hover:shadow-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {loading ? 'Enabling…' : 'Enable now'}
+                </button>
+              </div>
+            </div>
+          )}
+
           {isSubscribed ? (
             <div className="flex flex-col items-center justify-center text-center space-y-3">
               <div className="flex items-center justify-center gap-2">
@@ -470,14 +510,16 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
             </div>
           ) : (
             <div className="flex flex-col items-center gap-3">
+              {!showNotificationContext && (
               <button
-                onClick={handleEnableNotifications}
+                onClick={() => setShowNotificationContext(true)}
                 disabled={loading || permission === 'denied' || (isMobile && !isPWA)}
                 aria-label={loading ? 'Enabling notifications...' : 'Enable push notifications'}
                 className="min-h-[44px] px-6 py-2.5 bg-gradient-to-r from-[#3B82F6] to-[#2563EB] text-white rounded-full text-sm font-semibold hover:shadow-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? 'Enabling...' : 'Enable Notifications'}
               </button>
+              )}
               {!isPWA && isMobile && (
                 <Body16 className="text-xs text-amber-700 dark:text-amber-300 text-center">
                   Button disabled - install as PWA first

@@ -23,21 +23,9 @@ export default function ThemeProvider({ children }: { children: React.ReactNode 
 
   useEffect(() => {
     const stored = localStorage.getItem('rb-theme') as Theme | null
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
-    const resolved = stored ?? (mediaQuery.matches ? 'dark' : 'light')
+    const resolved = stored ?? 'light'
     setTheme(resolved)
     document.documentElement.classList.toggle('dark', resolved === 'dark')
-
-    // Follow OS changes only when the user hasn't set a manual preference
-    const handleSystemChange = (e: MediaQueryListEvent) => {
-      if (localStorage.getItem('rb-theme')) return
-      const next: Theme = e.matches ? 'dark' : 'light'
-      setTheme(next)
-      document.documentElement.classList.toggle('dark', next === 'dark')
-    }
-
-    mediaQuery.addEventListener('change', handleSystemChange)
-    return () => mediaQuery.removeEventListener('change', handleSystemChange)
   }, [])
 
   const toggleTheme = () => {

@@ -55,7 +55,7 @@ export default function RootLayout({
     <html lang="en">
       <head>
         {/* Prevent flash of incorrect theme */}
-        <script dangerouslySetInnerHTML={{ __html: `(function(){var s=localStorage.getItem('rb-theme');var p=window.matchMedia('(prefers-color-scheme: dark)').matches;if(s==='dark'||(s===null&&p)){document.documentElement.classList.add('dark');}})();` }} />
+        <script dangerouslySetInnerHTML={{ __html: `(function(){if(localStorage.getItem('rb-theme')==='dark'){document.documentElement.classList.add('dark');}})();` }} />
       </head>
       <body>
         <ThemeProvider>

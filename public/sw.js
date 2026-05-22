@@ -1,12 +1,17 @@
 // RecoveryBridge Service Worker for Push Notifications
 // This enables background notifications even when the browser tab is closed
 
-const CACHE_NAME = 'recoverybridge-v8'
+const CACHE_NAME = 'recoverybridge-v9'
+const OFFLINE_URL = '/offline'
 
-// Install event - cache essential resources
+// Install event - pre-cache offline fallback page
 self.addEventListener('install', (event) => {
   console.log('Service Worker installing...')
-  self.skipWaiting() // Activate immediately
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then((cache) => cache.addAll([OFFLINE_URL]))
+      .then(() => self.skipWaiting())
+  )
 })
 
 // Activate event - clean up old caches and take control
@@ -106,6 +111,17 @@ self.addEventListener('notificationclick', (event) => {
         return clients.openWindow(urlToOpen)
       }
     })
+  )
+})
+
+// Fetch event - serve offline page when navigation fails
+self.addEventListener('fetch', (event) => {
+  if (event.request.mode !== 'navigate') return
+
+  event.respondWith(
+    fetch(event.request).catch(() =>
+      caches.match(OFFLINE_URL)
+    )
   )
 })
 

@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import { Heading1, Body16, Body18 } from '@/components/ui/Typography'
 import TagSelector from '@/components/TagSelector'
 
-const STEP_NAMES = ['Welcome', 'Your Role', 'Your Profile', 'Community Guidelines', 'Listener Training', 'One Last Thing']
+const STEP_NAMES = ['Welcome', 'Our Community', 'Your Role', 'Your Profile', 'Community Guidelines', 'Listener Training', 'One Last Thing']
 
 const TRAINING_SECTIONS = [
   {
@@ -174,35 +174,37 @@ export default function OnboardingPage() {
     if (step === 1) {
       goToStep(2)
     } else if (step === 2) {
+      goToStep(3)
+    } else if (step === 3) {
       if (!userRole) {
         setError('Please select a role')
         return
       }
       setError('')
-      goToStep(3)
-    } else if (step === 3) {
+      goToStep(4)
+    } else if (step === 4) {
       if (!bio.trim()) {
         setError('Please tell us a bit about yourself')
         return
       }
       setError('')
-      goToStep(4)
-    } else if (step === 4) {
+      goToStep(5)
+    } else if (step === 5) {
       if (!agreedToGuidelines) {
         setError('Please agree to the community guidelines')
         return
       }
       setError('')
-      goToStep(5)
-    } else if (step === 5) {
+      goToStep(6)
+    } else if (step === 6) {
       const allAcknowledged = TRAINING_SECTIONS.every(s => trainingAcknowledged[s.id])
       if (!allAcknowledged) {
         setError('Please read and acknowledge all sections to continue')
         return
       }
       setError('')
-      goToStep(6)
-    } else if (step === 6) {
+      goToStep(7)
+    } else if (step === 7) {
       await completeOnboarding()
     }
   }
@@ -275,17 +277,17 @@ export default function OnboardingPage() {
           role="progressbar"
           aria-valuenow={step}
           aria-valuemin={1}
-          aria-valuemax={6}
-          aria-label={`Step ${step} of 6`}
+          aria-valuemax={7}
+          aria-label={`Step ${step} of 7`}
         >
-          {[1, 2, 3, 4, 5, 6].map((s) => (
+          {[1, 2, 3, 4, 5, 6, 7].map((s) => (
             <div
               key={s}
               className={`h-2 flex-1 rounded-full transition-all ${s <= step ? 'bg-rb-blue' : 'bg-gray-200 dark:bg-gray-600'}`}
             />
           ))}
         </div>
-        <Body16 className="text-center text-gray-500 dark:text-gray-500 text-sm mb-8">Step {step} of 6</Body16>
+        <Body16 className="text-center text-gray-500 dark:text-gray-500 text-sm mb-8">Step {step} of 7</Body16>
 
         {/* Screen reader announcements for errors */}
         <div aria-live="polite" aria-atomic="true" className="sr-only">{error}</div>
@@ -335,8 +337,67 @@ export default function OnboardingPage() {
           </div>
         )}
 
-        {/* Step 2: Role Selection */}
+        {/* Step 2: Our Community */}
         {step === 2 && (
+          <div>
+            <Heading1 className="mb-2 text-center">You&rsquo;re in good company</Heading1>
+            <Body16 className="mb-6 text-center text-gray-600 dark:text-gray-400">
+              RecoveryBridge is built by people who believe connection is the antidote to addiction.
+            </Body16>
+
+            {/* Trust pillars */}
+            <div className="space-y-3 mb-6">
+              {[
+                {
+                  icon: '🔒',
+                  title: 'Private by design',
+                  body: 'Your conversations are never shared, sold, or used for advertising. You choose what to share and with whom.',
+                },
+                {
+                  icon: '🤝',
+                  title: 'Peer-to-peer, not transactional',
+                  body: 'Everyone here has lived experience with recovery — as seekers, supporters, or both. Nobody is being paid to listen.',
+                },
+                {
+                  icon: '🌱',
+                  title: 'All paths are welcome',
+                  body: "No judgment about where you are in your journey. Day 1 or year 10 — you belong here.",
+                },
+                {
+                  icon: '🆘',
+                  title: 'Crisis resources always available',
+                  body: 'The 988 Lifeline and Crisis Text Line are always one tap away inside the app.',
+                },
+              ].map(({ icon, title, body }) => (
+                <div key={title} className="flex gap-4 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl border border-gray-100 dark:border-gray-700">
+                  <span className="text-2xl flex-shrink-0 mt-0.5" aria-hidden="true">{icon}</span>
+                  <div>
+                    <Body16 className="font-semibold text-gray-900 dark:text-gray-100 mb-1">{title}</Body16>
+                    <Body16 className="text-sm text-gray-600 dark:text-gray-400">{body}</Body16>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => goToStep(1)}
+                className="flex-1 py-3 rounded-lg font-semibold border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-gray-400 dark:hover:border-gray-500 transition-all"
+              >
+                ← Back
+              </button>
+              <button
+                onClick={handleNext}
+                className="flex-1 bg-rb-blue text-white py-3 rounded-lg font-semibold hover:bg-rb-blue-hover transition-all"
+              >
+                Continue →
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Step 3: Role Selection */}
+        {step === 3 && (
           <div>
             <Heading1 className="mb-4 text-center">How would you like to participate?</Heading1>
             <Body16 className="mb-8 text-center text-gray-600 dark:text-gray-400">
@@ -386,7 +447,7 @@ export default function OnboardingPage() {
 
             <div className="flex gap-3">
               <button
-                onClick={() => goToStep(1)}
+                onClick={() => goToStep(2)}
                 className="flex-1 py-3 rounded-lg font-semibold border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-gray-400 dark:hover:border-gray-500 transition-all"
               >
                 ← Back
@@ -401,8 +462,8 @@ export default function OnboardingPage() {
           </div>
         )}
 
-        {/* Step 3: Bio */}
-        {step === 3 && (
+        {/* Step 4: Bio */}
+        {step === 4 && (
           <div>
             <Heading1 className="mb-4 text-center">Tell us about yourself</Heading1>
             <Body16 className="mb-6 text-center text-gray-600 dark:text-gray-400">
@@ -460,7 +521,7 @@ export default function OnboardingPage() {
 
             <div className="flex gap-3">
               <button
-                onClick={() => goToStep(2)}
+                onClick={() => goToStep(3)}
                 className="flex-1 py-3 rounded-lg font-semibold border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-gray-400 dark:hover:border-gray-500 transition-all"
               >
                 ← Back
@@ -475,8 +536,8 @@ export default function OnboardingPage() {
           </div>
         )}
 
-        {/* Step 4: Community Guidelines */}
-        {step === 4 && (
+        {/* Step 5: Community Guidelines */}
+        {step === 5 && (
           <div>
             <Heading1 className="mb-4 text-center">Community Guidelines</Heading1>
             <Body16 className="mb-6 text-gray-600 dark:text-gray-400">
@@ -554,7 +615,7 @@ export default function OnboardingPage() {
 
             <div className="flex gap-3">
               <button
-                onClick={() => goToStep(3)}
+                onClick={() => goToStep(4)}
                 className="flex-1 py-3 rounded-lg font-semibold border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-gray-400 dark:hover:border-gray-500 transition-all"
               >
                 ← Back
@@ -570,8 +631,8 @@ export default function OnboardingPage() {
           </div>
         )}
 
-        {/* Step 5: Listener Training */}
-        {step === 5 && (
+        {/* Step 6: Listener Training */}
+        {step === 6 && (
           <div>
             <Heading1 className="mb-3 text-center">Listener Training</Heading1>
             <Body16 className="text-center text-gray-600 dark:text-gray-400 leading-relaxed mb-6">
@@ -678,7 +739,7 @@ export default function OnboardingPage() {
 
             <div className="flex gap-3">
               <button
-                onClick={() => goToStep(4)}
+                onClick={() => goToStep(5)}
                 className="flex-1 py-3 rounded-lg font-semibold border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-gray-400 dark:hover:border-gray-500 transition-all"
               >
                 ← Back
@@ -699,8 +760,8 @@ export default function OnboardingPage() {
           </div>
         )}
 
-        {/* Step 6: How did you hear about us? */}
-        {step === 6 && (
+        {/* Step 7: How did you hear about us? */}
+        {step === 7 && (
           <div>
             <Heading1 className="mb-2 text-center">One last thing!</Heading1>
             <Body16 className="mb-8 text-center text-gray-600 dark:text-gray-400">
@@ -783,7 +844,7 @@ export default function OnboardingPage() {
 
             <div className="flex gap-3 mt-6">
               <button
-                onClick={() => goToStep(5)}
+                onClick={() => goToStep(6)}
                 className="flex-1 py-3 rounded-lg font-semibold border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-gray-400 dark:hover:border-gray-500 transition-all"
               >
                 ← Back

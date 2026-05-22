@@ -72,6 +72,8 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   // --- V2: Reactions ---
   const [reactions, setReactions] = useState<Reaction[]>([])
   const [reactionPickerMessageId, setReactionPickerMessageId] = useState<string | null>(null)
+  const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const longPressFiredRef = useRef(false)
 
   // Track which messages we've already sent read receipts for to avoid re-render loops
   const markedAsReadRef = useRef<Set<string>>(new Set())
@@ -862,6 +864,21 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                           setReactionPickerMessageId(
                             reactionPickerMessageId === message.id ? null : message.id
                           )
+                        }}
+                        onTouchStart={(e) => {
+                          longPressFiredRef.current = false
+                          longPressTimerRef.current = setTimeout(() => {
+                            longPressFiredRef.current = true
+                            setReactionPickerMessageId(
+                              reactionPickerMessageId === message.id ? null : message.id
+                            )
+                          }, 500)
+                        }}
+                        onTouchEnd={() => {
+                          if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current)
+                        }}
+                        onTouchMove={() => {
+                          if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current)
                         }}
                       >
                         <Body16 className="!text-white">

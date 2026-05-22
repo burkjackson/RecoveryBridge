@@ -936,20 +936,26 @@ function DashboardContent() {
             <Body16 className="text-rb-gray dark:text-gray-400 text-sm mb-4">Connect with someone who understands</Body16>
             {profile?.role_state === 'requesting' ? (
               <div className="space-y-3" aria-live="polite">
-                {/* Animated waiting indicator */}
-                <div className="flex items-center justify-center gap-1.5">
-                  <span className="w-2 h-2 bg-rb-purple rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                  <span className="w-2 h-2 bg-rb-purple rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                  <span className="w-2 h-2 bg-rb-purple rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                {/* Breathing animation */}
+                <div className="flex items-center justify-center py-1">
+                  <div className="relative flex items-center justify-center w-12 h-12">
+                    <span className="absolute inset-0 rounded-full bg-rb-purple/20 animate-ping" style={{ animationDuration: '1.8s' }} aria-hidden="true" />
+                    <span className="w-6 h-6 rounded-full bg-rb-purple/50" aria-hidden="true" />
+                  </div>
                 </div>
                 <Body16 className="text-sm text-rb-purple font-semibold">Finding you a listener…</Body16>
                 <Body16 className="text-xs text-rb-purple/80 leading-relaxed">
                   {availableListenerCount > 0
-                    ? `${availableListenerCount} listener${availableListenerCount === 1 ? '' : 's'} notified — someone will connect shortly.`
+                    ? `${availableListenerCount} listener${availableListenerCount === 1 ? '' : 's'} notified`
                     : 'Notifying all available listeners now.'}
                 </Body16>
-                <Body16 className="text-xs text-rb-gray dark:text-gray-400">Most listeners respond within 2 minutes.</Body16>
-                <Body16 className="text-xs text-rb-purple/60 mt-1">Tap to cancel</Body16>
+                <Body16 className="text-xs text-rb-gray dark:text-gray-400">Usually under 2 minutes</Body16>
+                <div className="inline-flex items-center gap-1.5 mt-1 px-3 py-1.5 rounded-full border-2 border-rb-purple/40 text-xs font-medium text-rb-purple/70">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                  Tap to cancel request
+                </div>
               </div>
             ) : (
               <Body16 className="text-sm text-rb-purple font-medium">Click to find a listener</Body16>
@@ -994,7 +1000,7 @@ function DashboardContent() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <Body16 className="font-semibold text-rb-dark dark:text-gray-100 truncate">{fp.display_name}</Body16>
-                        <span className={`w-2 h-2 rounded-full flex-shrink-0 ${isOnline ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-600'}`}></span>
+                        <span className={`w-2 h-2 rounded-full flex-shrink-0 ${isOnline ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-600'}`} aria-hidden="true"></span>
                       </div>
                       <Body16 className="text-sm text-rb-gray dark:text-gray-400">
                         {isOnline ? 'Available now' : 'Offline'}
