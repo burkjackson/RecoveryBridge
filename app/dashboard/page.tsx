@@ -829,31 +829,56 @@ function DashboardContent() {
           </div>
         )}
 
-        {/* Onboarding Nudge Banner */}
-        {!nudgeDismissed && profile && (!profile.user_role || !profile.bio) && (
-          <div className="mb-6 flex items-start gap-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4 shadow-sm">
-            <span className="text-2xl flex-shrink-0" aria-hidden="true">✏️</span>
-            <div className="flex-1 min-w-0">
-              <Body16 className="font-semibold text-amber-900 dark:text-amber-200 text-sm">Finish setting up your profile</Body16>
-              <Body16 className="text-amber-800 dark:text-amber-300 text-sm mt-0.5">Choose your role and add a bio so others can find and connect with you.</Body16>
+        {/* Profile Completeness Nudge */}
+        {!nudgeDismissed && profile && (() => {
+          const fields = [
+            !!profile.user_role,
+            !!profile.bio,
+            !!(profile.tags && profile.tags.length > 0),
+            !!profile.avatar_url,
+          ]
+          const completed = fields.filter(Boolean).length
+          if (completed === fields.length) return null
+          const pct = Math.round((completed / fields.length) * 100)
+          const missing = [
+            !profile.user_role && 'role',
+            !profile.bio && 'bio',
+            (!profile.tags || profile.tags.length === 0) && 'specialty tags',
+            !profile.avatar_url && 'photo',
+          ].filter(Boolean) as string[]
+          const missingText = missing.length === 1
+            ? missing[0]
+            : missing.slice(0, -1).join(', ') + ' and ' + missing[missing.length - 1]
+          return (
+            <div className="mb-6 flex items-start gap-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4 shadow-sm">
+              <span className="text-2xl flex-shrink-0" aria-hidden="true">✏️</span>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <Body16 className="font-semibold text-amber-900 dark:text-amber-200 text-sm">Your profile is {pct}% complete</Body16>
+                  <div className="flex-1 h-1.5 bg-amber-200 dark:bg-amber-800 rounded-full overflow-hidden">
+                    <div className="h-full bg-amber-500 rounded-full transition-all" style={{ width: `${pct}%` }} />
+                  </div>
+                </div>
+                <Body16 className="text-amber-800 dark:text-amber-300 text-sm mt-0.5">Add your {missingText} so others can find and connect with you.</Body16>
+                <button
+                  onClick={() => router.push('/profile')}
+                  className="mt-3 min-h-[44px] inline-flex items-center gap-1 px-5 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-full text-sm font-semibold transition-colors"
+                >
+                  Complete Profile →
+                </button>
+              </div>
               <button
-                onClick={() => router.push('/onboarding')}
-                className="mt-3 min-h-[44px] inline-flex items-center gap-1 px-5 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-full text-sm font-semibold transition-colors"
+                onClick={() => setNudgeDismissed(true)}
+                aria-label="Dismiss"
+                className="min-h-[44px] min-w-[44px] flex items-center justify-center text-amber-600 dark:text-amber-400 hover:text-amber-900 dark:hover:text-amber-200 transition-colors flex-shrink-0 -mt-1 -mr-1"
               >
-                Complete Setup →
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
               </button>
             </div>
-            <button
-              onClick={() => setNudgeDismissed(true)}
-              aria-label="Dismiss"
-              className="min-h-[44px] min-w-[44px] flex items-center justify-center text-amber-600 dark:text-amber-400 hover:text-amber-900 dark:hover:text-amber-200 transition-colors flex-shrink-0 -mt-1 -mr-1"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-              </svg>
-            </button>
-          </div>
-        )}
+          )
+        })()}
 
         {/* Error State */}
         {error.show && (

@@ -9,7 +9,7 @@ import { RichTextEditor, stripHtml } from '../RichTextEditor'
 const MAX_TITLE = 120
 const MAX_EXCERPT = 300
 const MIN_CONTENT = 50
-const ELIGIBLE_ROLES = ['professional', 'ally']
+const ELIGIBLE_ROLES = ['professional', 'ally', 'person_in_recovery']
 
 type Tab = 'write' | 'preview'
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'error'
@@ -246,16 +246,16 @@ export default function NewStoryPage() {
         <div className="flex-1 flex items-center justify-center px-4">
           <div className="text-center max-w-md">
             <div className="text-4xl mb-4">✍️</div>
-            <h2 className="text-xl font-bold text-[#2D3436] dark:text-gray-100 mb-2">Stories are for listeners</h2>
+            <h2 className="text-xl font-bold text-[#2D3436] dark:text-gray-100 mb-2">Complete your profile first</h2>
             <p className="text-sm text-[#4A5568] dark:text-gray-400 mb-6">
-              Only verified listeners and recovery professionals can write stories for the community.
-              If you believe this is a mistake, reach out to us.
+              Stories are open to everyone in the RecoveryBridge community — people in recovery, listeners, and professionals.
+              Finish setting up your profile to get started.
             </p>
             <a
-              href="https://recoverybridge.app/contact"
+              href="/onboarding"
               className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#5A7A8C] text-white font-semibold rounded-full hover:bg-[#4A6A7C] transition text-sm"
             >
-              Contact Us
+              Complete Setup →
             </a>
           </div>
         </div>

@@ -62,7 +62,9 @@ export async function middleware(request: NextRequest) {
   // Routes that require authentication (redirect to /login if not signed in)
   const authRoutes = ['/dashboard', '/chat', '/profile', '/listeners', '/admin', '/training']
   if (authRoutes.some((route) => pathname.startsWith(route)) && !user) {
-    return NextResponse.redirect(new URL('/login', request.url))
+    const loginUrl = new URL('/login', request.url)
+    loginUrl.searchParams.set('redirect', pathname)
+    return NextResponse.redirect(loginUrl)
   }
 
   // Onboarding requires auth but redirects to /signup instead
