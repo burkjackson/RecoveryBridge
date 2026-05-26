@@ -172,7 +172,9 @@ function LoginForm() {
           {/* Stories link */}
           <div className="mt-4 text-center">
             <a
-              href="/stories"
+              href="https://blog.recoverybridge.app"
+              target="_blank"
+              rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 text-xs text-[#5A7A8C] hover:text-[#4A6A7C] transition"
             >
               📖 Read recovery stories from our community →

@@ -27,8 +27,8 @@ const NAV_ITEMS = [
   },
   {
     label: 'Stories',
-    href: '/stories',
-    matchPrefix: '/stories',
+    href: 'https://blog.recoverybridge.app',
+    matchPrefix: '__external_blog__',
     icon: (active: boolean) => (
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill={active ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={active ? 0 : 1.75} className="w-6 h-6" aria-hidden="true">
         <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
@@ -69,7 +69,7 @@ export default function BottomNav() {
           return (
             <button
               key={item.href}
-              onClick={() => router.push(item.href)}
+              onClick={() => item.href.startsWith('http') ? window.open(item.href, '_blank', 'noopener,noreferrer') : router.push(item.href)}
               aria-label={item.label}
               aria-current={active ? 'page' : undefined}
               className={`flex flex-col items-center justify-center gap-1 flex-1 py-2 min-h-[56px] text-xs font-medium transition-colors ${
