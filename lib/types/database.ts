@@ -25,6 +25,7 @@ export interface Profile {
   availability_schedule: Array<{day: number, start: string, end: string}>
   consent_version: string | null
   consent_accepted_at: string | null
+  age_confirmed: boolean | null
   created_at?: string
   updated_at?: string
 }

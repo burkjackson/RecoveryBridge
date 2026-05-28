@@ -48,6 +48,7 @@ export default function SignupPage() {
             display_name: displayName,
             consent_version: CONSENT_VERSION,
             consent_accepted_at: new Date().toISOString(),
+            age_confirmed: true,
           },
           emailRedirectTo: siteUrl,
         },

@@ -133,6 +133,7 @@ export default function OnboardingPage() {
   const [error, setError] = useState('')
   const [consentVersion, setConsentVersion] = useState<string | null>(null)
   const [consentAcceptedAt, setConsentAcceptedAt] = useState<string | null>(null)
+  const [ageConfirmed, setAgeConfirmed] = useState(false)
   const router = useRouter()
   const supabase = createClient()
 
@@ -160,6 +161,7 @@ export default function OnboardingPage() {
     setUserId(user.id)
     setConsentVersion((user.user_metadata?.consent_version as string) ?? null)
     setConsentAcceptedAt((user.user_metadata?.consent_accepted_at as string) ?? null)
+    setAgeConfirmed((user.user_metadata?.age_confirmed as boolean) ?? false)
 
     const { data: profile } = await supabase
       .from('profiles')
@@ -230,6 +232,7 @@ export default function OnboardingPage() {
           listener_training_completed_at: new Date().toISOString(),
           consent_version: consentVersion,
           consent_accepted_at: consentAcceptedAt,
+          age_confirmed: ageConfirmed,
           referral_source: referralSource === 'other'
             ? (otherReferral.trim() || 'other')
             : referralSource === 'podcast'
