@@ -7,6 +7,39 @@
  *  Bump this (and the "Last updated" date in /terms and /privacy) whenever the legal docs change. */
 export const CONSENT_VERSION = '2026-05-28'
 
+/** Phrases that suggest a user may be in acute crisis. Matched word-by-word against
+ *  message text to surface 988/crisis resources in chat. Intentionally high-recall —
+ *  a false positive just shows supportive resources, which is low-harm. */
+const CRISIS_PHRASES = [
+  'kill myself',
+  'killing myself',
+  'want to die',
+  'wanna die',
+  'end my life',
+  'ending my life',
+  'end it all',
+  'take my own life',
+  'suicidal',
+  'suicide',
+  'better off dead',
+  'no reason to live',
+  "don't want to be here anymore",
+  'dont want to be here anymore',
+  'hurt myself',
+  'harm myself',
+  'self harm',
+  'self-harm',
+  'overdose',
+  'wanna overdose',
+]
+
+/** Returns true if the text contains language suggesting acute crisis. Case-insensitive,
+ *  ignores surrounding punctuation. Used to surface crisis resources in chat. */
+export function containsCrisisLanguage(text: string): boolean {
+  const normalized = text.toLowerCase().replace(/[^a-z\s']/g, ' ')
+  return CRISIS_PHRASES.some((phrase) => normalized.includes(phrase))
+}
+
 // Time constants in milliseconds
 export const TIME = {
   /** How often to send heartbeat signals when available (30 seconds) */

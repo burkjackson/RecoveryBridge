@@ -8,7 +8,7 @@ import Modal from '@/components/Modal'
 import { SkeletonChatMessage } from '@/components/Skeleton'
 import ErrorState from '@/components/ErrorState'
 import { PrivacyBadge } from '@/components/Footer'
-import { TIME, VALIDATION, CONVERSATION_STARTERS, REACTIONS } from '@/lib/constants'
+import { TIME, VALIDATION, CONVERSATION_STARTERS, REACTIONS, containsCrisisLanguage } from '@/lib/constants'
 import type { ChatMessage as Message, Session, MessageReaction as Reaction } from '@/lib/types/database'
 
 export default function ChatPage({ params }: { params: Promise<{ id: string }> }) {
@@ -72,6 +72,9 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   // --- V2: Reactions ---
   const [reactions, setReactions] = useState<Reaction[]>([])
   const [reactionPickerMessageId, setReactionPickerMessageId] = useState<string | null>(null)
+  // Crisis safety net: id of the most recent crisis-language message the user dismissed.
+  // A newer crisis message re-shows the banner.
+  const [dismissedCrisisMsgId, setDismissedCrisisMsgId] = useState<string | null>(null)
   const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const longPressFiredRef = useRef(false)
 
@@ -724,6 +727,13 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
     )
   }
 
+  // Most recent message (from either party) containing crisis language, if any.
+  const latestCrisisMessage = [...messages].reverse().find((m) => containsCrisisLanguage(m.content))
+  const showCrisisBanner =
+    session?.status === 'active' &&
+    !!latestCrisisMessage &&
+    latestCrisisMessage.id !== dismissedCrisisMsgId
+
   return (
     <>
       <main id="main-content" className="min-h-screen flex flex-col bg-[#F8F9FA] dark:bg-gray-900">
@@ -997,6 +1007,32 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
         </div>
 
         {/* Crisis Scope Notice */}
+        {/* Crisis safety net — surfaces when crisis language is detected in the conversation */}
+        {showCrisisBanner && (
+          <div className="bg-red-50 dark:bg-red-900/20 border-t-2 border-red-300 dark:border-red-800 px-4 py-3" role="alert">
+            <div className="max-w-4xl mx-auto flex items-start gap-3">
+              <span className="text-xl shrink-0" aria-hidden="true">🆘</span>
+              <div className="flex-1 text-sm text-red-900 dark:text-red-200">
+                <p className="font-semibold mb-1">It sounds like things may be really hard right now. You don't have to face this alone.</p>
+                <p>
+                  Reach a trained counselor 24/7:{' '}
+                  <a href="tel:988" className="underline font-bold">call or text 988</a>,{' '}
+                  text <strong>HOME</strong> to{' '}
+                  <a href="sms:741741" className="underline font-bold">741741</a>, or{' '}
+                  <a href="tel:911" className="underline font-bold">call 911</a> in immediate danger.
+                </p>
+              </div>
+              <button
+                onClick={() => setDismissedCrisisMsgId(latestCrisisMessage!.id)}
+                className="shrink-0 text-red-700 dark:text-red-300 hover:text-red-900 dark:hover:text-red-100 text-xl leading-none"
+                aria-label="Dismiss crisis resources"
+              >
+                ×
+              </button>
+            </div>
+          </div>
+        )}
+
         {session?.status === 'active' && (
           <div className="bg-amber-50 dark:bg-amber-900/10 border-t border-amber-100 dark:border-amber-900/30 px-4 py-2">
             <p className="max-w-4xl mx-auto text-xs text-center text-amber-800 dark:text-amber-300">
