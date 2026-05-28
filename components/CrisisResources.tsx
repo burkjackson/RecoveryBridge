@@ -1,17 +1,56 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { usePathname } from 'next/navigation'
 
 export default function CrisisResources() {
   const [isOpen, setIsOpen] = useState(false)
   const pathname = usePathname()
   const isChat = pathname?.startsWith('/chat')
+  const triggerRef = useRef<HTMLButtonElement>(null)
+  const dialogRef = useRef<HTMLDivElement>(null)
+
+  // Focus management: trap focus in the dialog, close on Escape, restore focus on close.
+  useEffect(() => {
+    if (!isOpen) return
+
+    const previouslyFocused = document.activeElement as HTMLElement | null
+    const dialog = dialogRef.current
+    dialog?.querySelector<HTMLElement>('button, a[href]')?.focus()
+
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') {
+        setIsOpen(false)
+        return
+      }
+      if (e.key !== 'Tab' || !dialog) return
+      const focusable = Array.from(
+        dialog.querySelectorAll<HTMLElement>('button, a[href], [tabindex]:not([tabindex="-1"])')
+      ).filter((el) => !el.hasAttribute('disabled'))
+      if (focusable.length === 0) return
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault()
+        last.focus()
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault()
+        first.focus()
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown)
+      ;(previouslyFocused ?? triggerRef.current)?.focus()
+    }
+  }, [isOpen])
 
   return (
     <>
       {/* Floating Crisis Button - Always Visible */}
       <button
+        ref={triggerRef}
         onClick={() => setIsOpen(true)}
         className={`fixed right-6 z-50 bg-red-600 hover:bg-red-700 text-white px-4 py-3 rounded-full shadow-lg transition-all hover:scale-105 flex items-center gap-2 font-semibold ${isChat ? 'bottom-24' : 'bottom-6'}`}
         aria-label="Access crisis resources and emergency contacts"
@@ -28,6 +67,7 @@ export default function CrisisResources() {
         >
           <div className="min-h-full flex items-start sm:items-center justify-center p-4">
             <div
+              ref={dialogRef}
               role="dialog"
               aria-labelledby="crisis-modal-title"
               aria-modal="true"
@@ -62,7 +102,7 @@ export default function CrisisResources() {
             {/* Crisis Resources List */}
             <div className="space-y-4 mb-6">
               {/* 988 Suicide & Crisis Lifeline */}
-              <div className="bg-red-50 border-2 border-red-200 rounded-xl p-4">
+              <div className="bg-red-50 dark:bg-red-900/20 border-2 border-red-200 dark:border-red-800 rounded-xl p-4">
                 <h3 className="font-bold text-rb-dark dark:text-gray-100 mb-2 text-lg">
                   988 Suicide & Crisis Lifeline
                 </h3>
@@ -102,7 +142,7 @@ export default function CrisisResources() {
               </div>
 
               {/* SAMHSA National Helpline */}
-              <div className="bg-purple-50 border-2 border-purple-200 rounded-xl p-4">
+              <div className="bg-purple-50 dark:bg-purple-900/20 border-2 border-purple-200 dark:border-purple-800 rounded-xl p-4">
                 <h3 className="font-bold text-rb-dark dark:text-gray-100 mb-2 text-lg">
                   SAMHSA National Helpline
                 </h3>
@@ -124,7 +164,7 @@ export default function CrisisResources() {
               </div>
 
               {/* Emergency Services */}
-              <div className="bg-orange-50 border-2 border-orange-200 rounded-xl p-4">
+              <div className="bg-orange-50 dark:bg-orange-900/20 border-2 border-orange-200 dark:border-orange-800 rounded-xl p-4">
                 <h3 className="font-bold text-rb-dark dark:text-gray-100 mb-2 text-lg">
                   Emergency Services
                 </h3>

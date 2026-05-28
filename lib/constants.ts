@@ -3,6 +3,10 @@
  * Centralized configuration for timeouts, thresholds, and limits
  */
 
+/** Version of the Terms of Service / Privacy Policy a user consents to at signup.
+ *  Bump this (and the "Last updated" date in /terms and /privacy) whenever the legal docs change. */
+export const CONSENT_VERSION = '2026-05-28'
+
 // Time constants in milliseconds
 export const TIME = {
   /** How often to send heartbeat signals when available (30 seconds) */

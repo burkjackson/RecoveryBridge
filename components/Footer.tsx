@@ -59,7 +59,7 @@ export default function Footer({ className = '' }: FooterProps) {
             </span>
           </div>
           <p className="text-sm text-rb-gray dark:text-gray-400 max-w-md mx-auto">
-            Your data is encrypted and never shared with third parties. We're committed to protecting your privacy.
+            Your data is encrypted and never sold. We share it only with trusted service providers who help us run RecoveryBridge. We're committed to protecting your privacy.
           </p>
         </div>
 
@@ -167,7 +167,7 @@ export function CompactFooter({ className = '' }: FooterProps) {
         <span>•</span>
         <a href="/terms" className="hover:text-rb-blue transition">Terms</a>
         <span>•</span>
-        <span className="text-gray-400 dark:text-gray-500">🔒 Encrypted & Private</span>
+        <span className="text-gray-400 dark:text-gray-500">🔒 Private & Confidential</span>
       </div>
     </footer>
   )

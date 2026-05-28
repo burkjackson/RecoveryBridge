@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { Heading1, Body16 } from '@/components/ui/Typography'
 import Modal from '@/components/Modal'
+import { CONSENT_VERSION } from '@/lib/constants'
 
 export default function SignupPage() {
   const [email, setEmail] = useState('')
@@ -45,6 +46,8 @@ export default function SignupPage() {
         options: {
           data: {
             display_name: displayName,
+            consent_version: CONSENT_VERSION,
+            consent_accepted_at: new Date().toISOString(),
           },
           emailRedirectTo: siteUrl,
         },
@@ -177,6 +180,8 @@ export default function SignupPage() {
                 <label htmlFor="age-confirm" className="text-sm text-gray-700 dark:text-gray-300 cursor-pointer">
                   I confirm that I am <strong>18 years of age or older</strong> and agree to the{' '}
                   <a href="/terms" className="text-rb-blue hover:underline">Terms of Service</a>
+                  {' '}and{' '}
+                  <a href="/privacy" className="text-rb-blue hover:underline">Privacy Policy</a>
                 </label>
               </div>
 

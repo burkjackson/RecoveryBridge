@@ -19,7 +19,7 @@ export default function TermsPage() {
             ← Back
           </button>
           <Heading1 className="mb-2 dark:text-gray-100">Terms of Service</Heading1>
-          <Body16 className="text-rb-gray dark:text-gray-400">Last updated: {new Date().toLocaleDateString()}</Body16>
+          <Body16 className="text-rb-gray dark:text-gray-400">Last updated: May 28, 2026</Body16>
         </div>
 
         {/* Content */}

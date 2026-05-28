@@ -12,6 +12,15 @@ const MIGRATED_STORY_SLUGS = [
 ]
 
 const nextConfig = {
+  // Load Sentry's server SDK and its OpenTelemetry/Prisma instrumentation at runtime
+  // via Node require instead of bundling them with webpack. Bundling this tree makes
+  // `next dev` route compilation extremely slow.
+  serverExternalPackages: [
+    '@sentry/nextjs',
+    '@sentry/node',
+    '@prisma/instrumentation',
+    '@opentelemetry/instrumentation',
+  ],
   async redirects() {
     return [
       // Migrated stories -> their exact blog posts (preserves SEO link equity)

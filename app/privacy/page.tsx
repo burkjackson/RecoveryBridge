@@ -19,7 +19,7 @@ export default function PrivacyPage() {
             ← Back
           </button>
           <Heading1 className="mb-2 dark:text-gray-100">Privacy Policy</Heading1>
-          <Body16 className="text-rb-gray dark:text-gray-400">Last updated: {new Date().toLocaleDateString()}</Body16>
+          <Body16 className="text-rb-gray dark:text-gray-400">Last updated: May 28, 2026</Body16>
         </div>
 
         {/* Content */}
@@ -123,7 +123,7 @@ export default function PrivacyPage() {
             </Body16>
             <ul className="space-y-2 ml-6">
               <li className="text-rb-gray dark:text-gray-400">
-                <Body16>• End-to-end encryption for messages</Body16>
+                <Body16>• Messages encrypted in transit (TLS) and at rest</Body16>
               </li>
               <li className="text-rb-gray dark:text-gray-400">
                 <Body16>• Secure data storage with encryption at rest</Body16>
