@@ -15,9 +15,9 @@ module.exports = {
         // Blue color scale - WCAG AA compliant
         'rb-blue': {
           light: '#E8EEF2',
-          DEFAULT: '#5A7A8C', // Main blue - WCAG AA compliant (was #7C9EB2)
-          hover: '#4A6A7C', // Hover state - darker (was #6B8DA1)
-          dark: '#3A5A6C',
+          DEFAULT: '#4A6A7C', // Main blue - AA on white (5.8:1) and on rb-blue-light (5:1)
+          hover: '#3A5A6C', // Hover state - darker
+          dark: '#2E4754',
         },
         // Purple accents
         'rb-purple': {

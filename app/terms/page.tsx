@@ -1,6 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { Heading1, Body16, Body18 } from '@/components/ui/Typography'
 import { CompactFooter } from '@/components/Footer'
 
@@ -12,12 +13,20 @@ export default function TermsPage() {
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="mb-6 sm:mb-8">
-          <button
-            onClick={() => router.back()}
-            className="inline-block min-h-[44px] py-3 text-sm text-rb-blue hover:text-rb-blue-hover transition mb-4"
-          >
-            ← Back
-          </button>
+          <div className="flex items-center gap-4 mb-4">
+            <button
+              onClick={() => router.back()}
+              className="inline-block min-h-[44px] py-3 text-sm text-rb-blue hover:text-rb-blue-hover transition"
+            >
+              ← Back
+            </button>
+            <Link
+              href="/"
+              className="inline-block min-h-[44px] py-3 text-sm text-rb-blue hover:text-rb-blue-hover transition"
+            >
+              Home
+            </Link>
+          </div>
           <Heading1 className="mb-2 dark:text-gray-100">Terms of Service</Heading1>
           <Body16 className="text-rb-gray dark:text-gray-400">Last updated: May 28, 2026</Body16>
         </div>

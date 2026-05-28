@@ -34,27 +34,27 @@ export default function SafetyPage() {
         {/* Content */}
         <div className="bg-white dark:bg-gray-800 rounded-xl sm:rounded-2xl p-6 sm:p-8 shadow-sm space-y-6">
           {/* Crisis Resources - Most Important */}
-          <section className="bg-red-50 border-2 border-red-300 rounded-lg p-4 sm:p-6">
+          <section className="bg-red-50 dark:bg-red-900/20 border-2 border-red-300 dark:border-red-800 rounded-lg p-4 sm:p-6">
             <div className="flex items-start gap-3 mb-3">
               <span className="text-3xl" role="img" aria-label="Emergency">🆘</span>
               <div className="flex-1">
-                <Body18 className="font-bold text-red-900 mb-2">If You're in Crisis</Body18>
-                <Body16 className="text-red-800 mb-3">
+                <Body18 className="font-bold text-red-900 dark:text-red-200 mb-2">If You're in Crisis</Body18>
+                <Body16 className="text-red-800 dark:text-red-300 mb-3">
                   RecoveryBridge is peer support, not crisis intervention. If you're having thoughts of harming yourself or others, please reach out for immediate help:
                 </Body16>
               </div>
             </div>
             <div className="space-y-3 ml-12">
               <div>
-                <Body16 className="font-semibold">988 Suicide & Crisis Lifeline</Body16>
+                <Body16 className="font-semibold dark:text-gray-100">988 Suicide & Crisis Lifeline</Body16>
                 <Body16 className="text-sm text-rb-gray dark:text-gray-400">Call or text 988 • Available 24/7</Body16>
               </div>
               <div>
-                <Body16 className="font-semibold">Crisis Text Line</Body16>
+                <Body16 className="font-semibold dark:text-gray-100">Crisis Text Line</Body16>
                 <Body16 className="text-sm text-rb-gray dark:text-gray-400">Text HOME to 741741 • Available 24/7</Body16>
               </div>
               <div>
-                <Body16 className="font-semibold">Emergency Services</Body16>
+                <Body16 className="font-semibold dark:text-gray-100">Emergency Services</Body16>
                 <Body16 className="text-sm text-rb-gray dark:text-gray-400">Call 911 for immediate danger</Body16>
               </div>
             </div>
