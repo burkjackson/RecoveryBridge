@@ -477,36 +477,15 @@ export default function AdminPage() {
   async function loadTranscript(sessionId: string, reportId?: string) {
     setTranscriptLoading(sessionId)
     try {
-      const { data: messages, error } = await supabase
-        .from('messages')
-        .select('id, sender_id, content, created_at')
-        .eq('session_id', sessionId)
-        .order('created_at', { ascending: true })
-      if (error) throw error
+      // Server-side: verifies admin, fetches messages, and writes the audit log atomically
+      const { messages, profiles } = await adminFetch({ action: 'load_transcript', sessionId, reportId })
 
-      const senderIds = [...new Set((messages || []).map(m => m.sender_id))]
-      if (senderIds.length > 0) {
-        const { data: profileData } = await supabase
-          .from('profiles')
-          .select('id, display_name')
-          .in('id', senderIds)
-        const map: Record<string, string> = {}
-        profileData?.forEach(p => { map[p.id] = p.display_name })
-        setTranscriptProfiles(prev => ({ ...prev, ...map }))
+      if (profiles && Object.keys(profiles).length > 0) {
+        setTranscriptProfiles(prev => ({ ...prev, ...profiles }))
       }
 
       setTranscriptMessages(prev => ({ ...prev, [sessionId]: messages || [] }))
       setExpandedTranscript(sessionId)
-
-      // Audit log every transcript view
-      const { data: { user } } = await supabase.auth.getUser()
-      await supabase.from('admin_logs').insert([{
-        admin_id: user?.id,
-        action_type: 'transcript_viewed',
-        target_session_id: sessionId,
-        target_report_id: reportId || null,
-        details: { report_id: reportId || null },
-      }])
     } catch (err) {
       console.error('Error loading transcript:', err)
       setErrorModal({ show: true, message: 'Could not load the transcript. Please try again.' })

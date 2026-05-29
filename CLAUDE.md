@@ -423,7 +423,7 @@ All tables have RLS enabled. Key policies:
 
 ## Known Issues & Technical Debt
 
-1. **Admin auth is client-side only** — The admin page checks `is_admin` on the client. RLS policies enforce it server-side, but the admin check in middleware should be hardened.
+1. **Admin auth** — Enforced server-side: `middleware.ts` gates the `/admin` route by querying `is_admin`, and all admin mutations go through API routes (`/api/admin/actions`, `/api/admin/delete-user`) that verify the Bearer token → `getUser` → `is_admin` (403 otherwise) plus rate limiting. Transcript views are loaded and audit-logged server-side via the `load_transcript` action. The client-side `is_admin` check only hides UI; it is not the security boundary.
 
 2. **SMS feature disabled** — All SMS code is written and tested but commented out in `route.ts` and `profile/page.tsx`. Waiting for Twilio account verification. To re-enable:
    - Uncomment import and SMS block in `app/api/notifications/send/route.ts`

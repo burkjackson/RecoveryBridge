@@ -48,6 +48,8 @@ export default function ProfilePage() {
   const [sendingWelcomeEmail, setSendingWelcomeEmail] = useState(false)
   const [welcomeEmailSent, setWelcomeEmailSent] = useState(false)
   const [welcomeEmailError, setWelcomeEmailError] = useState<string | null>(null)
+  const [exportingData, setExportingData] = useState(false)
+  const [exportError, setExportError] = useState<string | null>(null)
   const [schedule, setSchedule] = useState<Array<{day: number, start: string, end: string}>>([])
   const [savingSchedule, setSavingSchedule] = useState(false)
   const [scheduleExpanded, setScheduleExpanded] = useState(false)
@@ -366,6 +368,32 @@ export default function ProfilePage() {
       setWelcomeEmailError('Could not send email. Please try again.')
     } finally {
       setSendingWelcomeEmail(false)
+    }
+  }
+
+  async function handleExportData() {
+    setExportingData(true)
+    setExportError(null)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.access_token) throw new Error('Not authenticated')
+      const res = await fetch('/api/account/export', {
+        headers: { 'Authorization': `Bearer ${session.access_token}` },
+      })
+      if (!res.ok) throw new Error('Failed to export')
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `recoverybridge-data-${new Date().toISOString().slice(0, 10)}.json`
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      URL.revokeObjectURL(url)
+    } catch {
+      setExportError('Could not export your data. Please try again.')
+    } finally {
+      setExportingData(false)
     }
   }
 
@@ -1199,6 +1227,23 @@ export default function ProfilePage() {
           )}
           {welcomeEmailError && (
             <p className="text-sm text-red-500">{welcomeEmailError}</p>
+          )}
+        </div>
+
+        {/* Download My Data */}
+        <div className="mt-4 flex flex-col items-center gap-2">
+          <button
+            onClick={handleExportData}
+            disabled={exportingData}
+            className="min-h-[44px] px-6 py-2.5 text-rb-blue text-sm font-medium hover:text-white hover:bg-rb-blue border border-rb-blue rounded-full transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {exportingData ? 'Preparing…' : 'Download My Data'}
+          </button>
+          <p className="text-xs text-rb-gray dark:text-gray-400 text-center max-w-xs">
+            Download a copy of all your account data as a JSON file.
+          </p>
+          {exportError && (
+            <p className="text-sm text-red-500">{exportError}</p>
           )}
         </div>
 

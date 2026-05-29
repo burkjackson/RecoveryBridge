@@ -26,6 +26,8 @@ export interface Profile {
   consent_version: string | null
   consent_accepted_at: string | null
   age_confirmed: boolean | null
+  health_data_consent: boolean | null
+  health_data_consent_at: string | null
   created_at?: string
   updated_at?: string
 }

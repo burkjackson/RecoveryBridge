@@ -16,6 +16,7 @@ export default function SignupPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [showSuccessModal, setShowSuccessModal] = useState(false)
   const [ageConfirmed, setAgeConfirmed] = useState(false)
+  const [healthDataConsent, setHealthDataConsent] = useState(false)
   const router = useRouter()
   const supabase = createClient()
 
@@ -37,6 +38,12 @@ export default function SignupPage() {
       return
     }
 
+    if (!healthDataConsent) {
+      setError('Please consent to the collection of your health-related information so we can provide peer support.')
+      setLoading(false)
+      return
+    }
+
     try {
       // Create account - database unique constraint will prevent duplicates atomically
       const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? (typeof window !== 'undefined' ? window.location.origin : '')
@@ -49,6 +56,8 @@ export default function SignupPage() {
             consent_version: CONSENT_VERSION,
             consent_accepted_at: new Date().toISOString(),
             age_confirmed: true,
+            health_data_consent: true,
+            health_data_consent_at: new Date().toISOString(),
           },
           emailRedirectTo: siteUrl,
         },
@@ -186,6 +195,21 @@ export default function SignupPage() {
                 </label>
               </div>
 
+              <div className="flex items-start gap-3">
+                <input
+                  id="health-consent"
+                  type="checkbox"
+                  checked={healthDataConsent}
+                  onChange={(e) => setHealthDataConsent(e.target.checked)}
+                  className="mt-1 h-4 w-4 rounded border-gray-300 text-rb-blue focus:ring-rb-blue cursor-pointer"
+                  aria-required="true"
+                />
+                <label htmlFor="health-consent" className="text-sm text-gray-700 dark:text-gray-300 cursor-pointer">
+                  I consent to RecoveryBridge collecting and processing my <strong>health-related information</strong> (such as mental health, substance use, and recovery details I choose to share) for the purpose of providing peer support. See the{' '}
+                  <a href="/privacy" className="text-rb-blue hover:underline">Consumer Health Data Privacy Notice</a>. You can withdraw consent anytime by deleting your account.
+                </label>
+              </div>
+
               {error && (
                 <div id="signup-error" role="alert" className="p-3 bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 dark:border-red-800 rounded">
                   <Body16 className="text-sm text-red-700 dark:text-red-300">{error}</Body16>
@@ -194,7 +218,7 @@ export default function SignupPage() {
 
               <button
                 type="submit"
-                disabled={loading || !ageConfirmed}
+                disabled={loading || !ageConfirmed || !healthDataConsent}
                 className="w-full bg-gray-900 text-white py-3 rounded-lg font-semibold hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
               >
                 {loading ? (

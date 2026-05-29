@@ -199,6 +199,42 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: true })
     }
 
+    if (action === 'load_transcript') {
+      const { sessionId, reportId } = body
+      if (!sessionId) {
+        return NextResponse.json({ error: 'sessionId required' }, { status: 400 })
+      }
+
+      const { data: messages, error: messagesError } = await supabase
+        .from('messages')
+        .select('id, sender_id, content, created_at')
+        .eq('session_id', sessionId)
+        .order('created_at', { ascending: true })
+
+      if (messagesError) throw messagesError
+
+      const senderIds = [...new Set((messages || []).map((m) => m.sender_id))]
+      let profiles: Record<string, string> = {}
+      if (senderIds.length > 0) {
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('id, display_name')
+          .in('id', senderIds)
+        profileData?.forEach((p) => { profiles[p.id] = p.display_name })
+      }
+
+      // Audit log is written server-side so viewing a transcript is always recorded
+      await supabase.from('admin_logs').insert([{
+        admin_id: admin.id,
+        action_type: 'transcript_viewed',
+        target_session_id: sessionId,
+        target_report_id: reportId || null,
+        details: { report_id: reportId || null },
+      }])
+
+      return NextResponse.json({ success: true, messages: messages || [], profiles })
+    }
+
     if (action === 'publish_story') {
       const { storyId } = body
       if (!storyId) {

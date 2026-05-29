@@ -134,6 +134,8 @@ export default function OnboardingPage() {
   const [consentVersion, setConsentVersion] = useState<string | null>(null)
   const [consentAcceptedAt, setConsentAcceptedAt] = useState<string | null>(null)
   const [ageConfirmed, setAgeConfirmed] = useState(false)
+  const [healthDataConsent, setHealthDataConsent] = useState(false)
+  const [healthDataConsentAt, setHealthDataConsentAt] = useState<string | null>(null)
   const router = useRouter()
   const supabase = createClient()
 
@@ -162,6 +164,8 @@ export default function OnboardingPage() {
     setConsentVersion((user.user_metadata?.consent_version as string) ?? null)
     setConsentAcceptedAt((user.user_metadata?.consent_accepted_at as string) ?? null)
     setAgeConfirmed((user.user_metadata?.age_confirmed as boolean) ?? false)
+    setHealthDataConsent((user.user_metadata?.health_data_consent as boolean) ?? false)
+    setHealthDataConsentAt((user.user_metadata?.health_data_consent_at as string) ?? null)
 
     const { data: profile } = await supabase
       .from('profiles')
@@ -233,6 +237,8 @@ export default function OnboardingPage() {
           consent_version: consentVersion,
           consent_accepted_at: consentAcceptedAt,
           age_confirmed: ageConfirmed,
+          health_data_consent: healthDataConsent,
+          health_data_consent_at: healthDataConsentAt,
           referral_source: referralSource === 'other'
             ? (otherReferral.trim() || 'other')
             : referralSource === 'podcast'
