@@ -6,7 +6,25 @@ import { useRouter } from 'next/navigation'
 import { Heading1, Body16, Body18 } from '@/components/ui/Typography'
 import TagSelector from '@/components/TagSelector'
 
-const STEP_NAMES = ['Welcome', 'Our Community', 'Your Role', 'Your Profile', 'Community Guidelines', 'Listener Training', 'One Last Thing']
+// Step metadata keyed by step id. The visible sequence depends on the user's
+// intent — people who only want support skip the listener-specific steps.
+const STEP_META: Record<string, string> = {
+  welcome: 'Welcome',
+  intent: 'What brings you here',
+  community: 'Our Community',
+  role: 'About You',
+  profile: 'Your Profile',
+  guidelines: 'Community Guidelines',
+  training: 'Listener Training',
+  referral: 'One Last Thing',
+}
+
+const SEEKER_STEPS = ['welcome', 'intent', 'profile', 'guidelines']
+const LISTENER_STEPS = ['welcome', 'intent', 'community', 'role', 'profile', 'guidelines', 'training', 'referral']
+
+function getSteps(intent: string): string[] {
+  return intent === 'seeking' ? SEEKER_STEPS : LISTENER_STEPS
+}
 
 const TRAINING_SECTIONS = [
   {
@@ -116,7 +134,8 @@ const TRAINING_SECTIONS = [
 ]
 
 export default function OnboardingPage() {
-  const [step, setStep] = useState(1)
+  const [stepIndex, setStepIndex] = useState(0)
+  const [intent, setIntent] = useState('')
   const [userId, setUserId] = useState<string | null>(null)
   const [displayName, setDisplayName] = useState('')
   const [bio, setBio] = useState('')
@@ -143,9 +162,24 @@ export default function OnboardingPage() {
     checkUser()
   }, [])
 
-  function goToStep(n: number) {
-    setStep(n)
+  const steps = getSteps(intent)
+  const currentKey = steps[stepIndex] ?? 'welcome'
+  const totalSteps = steps.length
+  const isLastStep = stepIndex === totalSteps - 1
+
+  function scrollTop() {
     window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  function back() {
+    setError('')
+    setStepIndex((i) => Math.max(0, i - 1))
+    scrollTop()
+  }
+
+  function advance() {
+    setStepIndex((i) => i + 1)
+    scrollTop()
   }
 
   async function checkUser(retryCount = 0) {
@@ -181,41 +215,41 @@ export default function OnboardingPage() {
   }
 
   async function handleNext() {
-    if (step === 1) {
-      goToStep(2)
-    } else if (step === 2) {
-      goToStep(3)
-    } else if (step === 3) {
+    if (currentKey === 'intent') {
+      if (!intent) {
+        setError('Please choose what brings you here')
+        return
+      }
+    } else if (currentKey === 'role') {
       if (!userRole) {
         setError('Please select a role')
         return
       }
-      setError('')
-      goToStep(4)
-    } else if (step === 4) {
-      if (!bio.trim()) {
+    } else if (currentKey === 'profile') {
+      // Bio is required for listeners (it shows on their profile) but optional
+      // for seekers — they're reminded later via the dashboard profile nudge.
+      if (intent !== 'seeking' && !bio.trim()) {
         setError('Please tell us a bit about yourself')
         return
       }
-      setError('')
-      goToStep(5)
-    } else if (step === 5) {
+    } else if (currentKey === 'guidelines') {
       if (!agreedToGuidelines) {
         setError('Please agree to the community guidelines')
         return
       }
-      setError('')
-      goToStep(6)
-    } else if (step === 6) {
+    } else if (currentKey === 'training') {
       const allAcknowledged = TRAINING_SECTIONS.every(s => trainingAcknowledged[s.id])
       if (!allAcknowledged) {
         setError('Please read and acknowledge all sections to continue')
         return
       }
-      setError('')
-      goToStep(7)
-    } else if (step === 7) {
+    }
+
+    setError('')
+    if (isLastStep) {
       await completeOnboarding()
+    } else {
+      advance()
     }
   }
 
@@ -230,10 +264,15 @@ export default function OnboardingPage() {
         .from('profiles')
         .update({
           bio,
-          user_role: userRole,
+          // Seekers skip the role step — default them to person_in_recovery.
+          user_role: userRole || 'person_in_recovery',
           role_state: 'offline',
           tags: tags.length > 0 ? tags : null,
-          listener_training_completed_at: new Date().toISOString(),
+          // Only mark training complete for paths that actually include it.
+          // Seekers complete it just-in-time when they first choose to listen.
+          listener_training_completed_at: steps.includes('training')
+            ? new Date().toISOString()
+            : null,
           consent_version: consentVersion,
           consent_accepted_at: consentAcceptedAt,
           age_confirmed: ageConfirmed,
@@ -283,32 +322,32 @@ export default function OnboardingPage() {
             alt="RecoveryBridge Logo"
             className="mx-auto mb-4 max-w-[400px] w-full"
           />
-          <Body16 className="text-gray-500 dark:text-gray-500">{STEP_NAMES[step - 1]}</Body16>
+          <Body16 className="text-gray-500 dark:text-gray-500">{STEP_META[currentKey]}</Body16>
         </div>
 
         {/* Progress indicator */}
         <div
           className="flex gap-2 mb-3"
           role="progressbar"
-          aria-valuenow={step}
+          aria-valuenow={stepIndex + 1}
           aria-valuemin={1}
-          aria-valuemax={7}
-          aria-label={`Step ${step} of 7`}
+          aria-valuemax={totalSteps}
+          aria-label={`Step ${stepIndex + 1} of ${totalSteps}`}
         >
-          {[1, 2, 3, 4, 5, 6, 7].map((s) => (
+          {steps.map((key, i) => (
             <div
-              key={s}
-              className={`h-2 flex-1 rounded-full transition-all ${s <= step ? 'bg-rb-blue' : 'bg-gray-200 dark:bg-gray-600'}`}
+              key={key}
+              className={`h-2 flex-1 rounded-full transition-all ${i <= stepIndex ? 'bg-rb-blue' : 'bg-gray-200 dark:bg-gray-600'}`}
             />
           ))}
         </div>
-        <Body16 className="text-center text-gray-500 dark:text-gray-500 text-sm mb-8">Step {step} of 7</Body16>
+        <Body16 className="text-center text-gray-500 dark:text-gray-500 text-sm mb-8">Step {stepIndex + 1} of {totalSteps}</Body16>
 
         {/* Screen reader announcements for errors */}
         <div aria-live="polite" aria-atomic="true" className="sr-only">{error}</div>
 
-        {/* Step 1: Welcome */}
-        {step === 1 && (
+        {/* Step: Welcome */}
+        {currentKey === 'welcome' && (
           <div className="text-center">
             <Heading1 className="mb-4">Welcome to RecoveryBridge</Heading1>
             <Body16 className="mb-8 text-gray-600 dark:text-gray-400 leading-relaxed">
@@ -352,8 +391,87 @@ export default function OnboardingPage() {
           </div>
         )}
 
-        {/* Step 2: Our Community */}
-        {step === 2 && (
+        {/* Step: Intent */}
+        {currentKey === 'intent' && (
+          <div>
+            <Heading1 className="mb-4 text-center">What brings you here?</Heading1>
+            <Body16 className="mb-8 text-center text-gray-600 dark:text-gray-400">
+              This just helps us set things up for you. You can change your mind anytime from your dashboard.
+            </Body16>
+
+            <div className="space-y-3 mb-8">
+              {[
+                {
+                  value: 'seeking',
+                  icon: '💬',
+                  title: 'I’m looking for support',
+                  desc: 'Connect with a listener who understands what you’re going through.',
+                },
+                {
+                  value: 'listening',
+                  icon: '🤝',
+                  title: 'I want to support others',
+                  desc: 'Be there to listen for people who reach out. Includes a short listener training.',
+                },
+                {
+                  value: 'both',
+                  icon: '💙',
+                  title: 'Both',
+                  desc: 'I may seek support and offer it to others. Includes the listener training.',
+                },
+              ].map(({ value, icon, title, desc }) => (
+                <button
+                  key={value}
+                  onClick={() => { setIntent(value); setError('') }}
+                  className={`w-full p-5 rounded-lg text-left transition-all relative ${
+                    intent === value
+                      ? 'border-2 border-rb-blue bg-blue-50 dark:bg-gray-700 shadow-sm'
+                      : 'border border-gray-200 dark:border-gray-600 hover:border-rb-blue dark:hover:border-rb-blue'
+                  }`}
+                >
+                  {intent === value && (
+                    <span className="absolute top-3 right-3 text-rb-blue">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                    </span>
+                  )}
+                  <div className="flex items-start gap-3">
+                    <span className="text-2xl flex-shrink-0" aria-hidden="true">{icon}</span>
+                    <div>
+                      <Body18 className="font-bold text-gray-900 dark:text-gray-100 mb-1">{title}</Body18>
+                      <Body16 className="text-gray-600 dark:text-gray-400 text-sm">{desc}</Body16>
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+
+            {error && (
+              <div className="mb-6 p-3 bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 dark:border-red-800 rounded">
+                <Body16 className="text-sm text-red-700 dark:text-red-300">{error}</Body16>
+              </div>
+            )}
+
+            <div className="flex gap-3">
+              <button
+                onClick={back}
+                className="flex-1 py-3 rounded-lg font-semibold border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-gray-400 dark:hover:border-gray-500 transition-all"
+              >
+                ← Back
+              </button>
+              <button
+                onClick={handleNext}
+                className="flex-1 bg-gray-900 text-white py-3 rounded-lg font-semibold hover:bg-gray-800 transition-all"
+              >
+                Continue →
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Step: Our Community */}
+        {currentKey === 'community' && (
           <div>
             <Heading1 className="mb-2 text-center">You&rsquo;re in good company</Heading1>
             <Body16 className="mb-6 text-center text-gray-600 dark:text-gray-400">
@@ -396,7 +514,7 @@ export default function OnboardingPage() {
 
             <div className="flex gap-3">
               <button
-                onClick={() => goToStep(1)}
+                onClick={back}
                 className="flex-1 py-3 rounded-lg font-semibold border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-gray-400 dark:hover:border-gray-500 transition-all"
               >
                 ← Back
@@ -411,12 +529,12 @@ export default function OnboardingPage() {
           </div>
         )}
 
-        {/* Step 3: Role Selection */}
-        {step === 3 && (
+        {/* Step: Role Selection */}
+        {currentKey === 'role' && (
           <div>
-            <Heading1 className="mb-4 text-center">How would you like to participate?</Heading1>
+            <Heading1 className="mb-4 text-center">Which best describes you?</Heading1>
             <Body16 className="mb-8 text-center text-gray-600 dark:text-gray-400">
-              You can switch between these roles anytime from your dashboard.
+              This shows on your listener profile. You can change it anytime from your dashboard.
             </Body16>
 
             <div className="space-y-3 mb-8">
@@ -462,7 +580,7 @@ export default function OnboardingPage() {
 
             <div className="flex gap-3">
               <button
-                onClick={() => goToStep(2)}
+                onClick={back}
                 className="flex-1 py-3 rounded-lg font-semibold border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-gray-400 dark:hover:border-gray-500 transition-all"
               >
                 ← Back
@@ -477,12 +595,14 @@ export default function OnboardingPage() {
           </div>
         )}
 
-        {/* Step 4: Bio */}
-        {step === 4 && (
+        {/* Step: Profile */}
+        {currentKey === 'profile' && (
           <div>
             <Heading1 className="mb-4 text-center">Tell us about yourself</Heading1>
             <Body16 className="mb-6 text-center text-gray-600 dark:text-gray-400">
-              Share what you're comfortable with. This helps others understand how to connect with you.
+              {intent === 'seeking'
+                ? "Totally optional — share only what you're comfortable with. You can skip this and add it later anytime."
+                : 'Share what you\'re comfortable with. This helps others understand how to connect with you.'}
             </Body16>
 
             {/* Privacy reminder */}
@@ -494,7 +614,7 @@ export default function OnboardingPage() {
 
             <div className="mb-8">
               <label className="block mb-3 text-sm font-medium text-gray-700 dark:text-gray-300">
-                About You
+                About You {intent === 'seeking' && <span className="text-gray-400 dark:text-gray-500 font-normal">(optional)</span>}
               </label>
               <textarea
                 value={bio}
@@ -536,7 +656,7 @@ export default function OnboardingPage() {
 
             <div className="flex gap-3">
               <button
-                onClick={() => goToStep(3)}
+                onClick={back}
                 className="flex-1 py-3 rounded-lg font-semibold border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-gray-400 dark:hover:border-gray-500 transition-all"
               >
                 ← Back
@@ -551,8 +671,8 @@ export default function OnboardingPage() {
           </div>
         )}
 
-        {/* Step 5: Community Guidelines */}
-        {step === 5 && (
+        {/* Step: Community Guidelines */}
+        {currentKey === 'guidelines' && (
           <div>
             <Heading1 className="mb-4 text-center">Community Guidelines</Heading1>
             <Body16 className="mb-6 text-gray-600 dark:text-gray-400">
@@ -630,24 +750,34 @@ export default function OnboardingPage() {
 
             <div className="flex gap-3">
               <button
-                onClick={() => goToStep(4)}
+                onClick={back}
                 className="flex-1 py-3 rounded-lg font-semibold border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-gray-400 dark:hover:border-gray-500 transition-all"
               >
                 ← Back
               </button>
               <button
                 onClick={handleNext}
-                disabled={!agreedToGuidelines}
+                disabled={!agreedToGuidelines || saving}
                 className="flex-1 bg-gray-900 text-white py-3 rounded-lg font-semibold hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
               >
-                Continue →
+                {saving ? (
+                  <span className="flex items-center justify-center">
+                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Saving...
+                  </span>
+                ) : (
+                  isLastStep ? 'Complete Setup' : 'Continue →'
+                )}
               </button>
             </div>
           </div>
         )}
 
-        {/* Step 6: Listener Training */}
-        {step === 6 && (
+        {/* Step: Listener Training */}
+        {currentKey === 'training' && (
           <div>
             <Heading1 className="mb-3 text-center">Listener Training</Heading1>
             <Body16 className="text-center text-gray-600 dark:text-gray-400 leading-relaxed mb-6">
@@ -754,7 +884,7 @@ export default function OnboardingPage() {
 
             <div className="flex gap-3">
               <button
-                onClick={() => goToStep(5)}
+                onClick={back}
                 className="flex-1 py-3 rounded-lg font-semibold border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-gray-400 dark:hover:border-gray-500 transition-all"
               >
                 ← Back
@@ -775,8 +905,8 @@ export default function OnboardingPage() {
           </div>
         )}
 
-        {/* Step 7: How did you hear about us? */}
-        {step === 7 && (
+        {/* Step: How did you hear about us? */}
+        {currentKey === 'referral' && (
           <div>
             <Heading1 className="mb-2 text-center">One last thing!</Heading1>
             <Body16 className="mb-8 text-center text-gray-600 dark:text-gray-400">
@@ -859,7 +989,7 @@ export default function OnboardingPage() {
 
             <div className="flex gap-3 mt-6">
               <button
-                onClick={() => goToStep(6)}
+                onClick={back}
                 className="flex-1 py-3 rounded-lg font-semibold border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-gray-400 dark:hover:border-gray-500 transition-all"
               >
                 ← Back

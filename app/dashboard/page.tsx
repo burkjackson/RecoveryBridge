@@ -508,6 +508,13 @@ function DashboardContent() {
   // Called when listener clicks the "I'm Here To Listen" button.
   // If they're available and want to go offline, check if any seekers are waiting first.
   async function handleListenerToggle() {
+    // Require listener training before anyone can go available to listen.
+    // Seekers who skipped training during onboarding complete it just-in-time here.
+    if (profile && profile.role_state !== 'available' && !profile.listener_training_completed_at) {
+      router.push('/training')
+      return
+    }
+
     if (profile?.role_state === 'available') {
       // Check for seekers currently in requesting state
       try {
