@@ -1247,6 +1247,22 @@ export default function ProfilePage() {
           )}
         </div>
 
+        {/* Support RecoveryBridge */}
+        <div className="mt-8 bg-rb-blue-light dark:bg-gray-800 border border-rb-blue/20 dark:border-gray-700 rounded-2xl p-5 text-center">
+          <p className="text-sm font-semibold text-rb-dark dark:text-gray-100 mb-1">
+            💙 RecoveryBridge is free — and always will be.
+          </p>
+          <p className="text-sm text-rb-gray dark:text-gray-400 mb-4">
+            If it&apos;s meant something to you and you&apos;re able, a tax-deductible gift helps keep it that way. No pressure, ever.
+          </p>
+          <a
+            href="/donate"
+            className="inline-flex items-center gap-2 px-6 py-2.5 bg-rb-blue text-white text-sm font-semibold rounded-full hover:bg-rb-blue-hover transition shadow-sm"
+          >
+            Support Us
+          </a>
+        </div>
+
         {/* Delete Account */}
         <div className="mt-4 flex justify-center">
           <button

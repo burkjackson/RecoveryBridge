@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation'
 import Footer from '@/components/Footer'
 
-const KOFI_URL = 'https://ko-fi.com/recoverybridge'
+const DONATE_URL = 'https://donate.mazloweb.com/donate/recoverybridge-primary-campaign'
 
 export default function DonatePage() {
   const router = useRouter()
@@ -42,12 +42,20 @@ export default function DonatePage() {
               No paywalls. No premium tiers. No subscriptions. Every person who needs connection
               should be able to find it here, regardless of their circumstances.
             </p>
-            <p className="text-slate-600 dark:text-gray-300 leading-relaxed text-center">
+            <p className="text-slate-600 dark:text-gray-300 leading-relaxed text-center mb-4">
               But keeping the lights on does cost money — servers, infrastructure, and the time
               it takes to build and maintain a platform worthy of the people who trust it.
               If RecoveryBridge has meant something to you, and you're in a position to help,
               even a small contribution goes a long way toward keeping this community alive.
             </p>
+            <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl p-4 text-center">
+              <p className="text-sm text-slate-700 dark:text-gray-200 leading-relaxed">
+                <strong>Your gift is tax-deductible.</strong> RecoveryBridge is a fiscally sponsored
+                project of <strong>Fiscal Sponsorship Allies</strong>, a registered 501(c)(3) nonprofit.
+                Donations are tax-deductible to the fullest extent allowed by law, and you'll receive
+                a receipt for your records.
+              </p>
+            </div>
           </div>
 
           {/* What your support covers */}
@@ -72,16 +80,16 @@ export default function DonatePage() {
             </div>
           </div>
 
-          {/* Ko-fi CTA */}
+          {/* Donate CTA */}
           <div className="text-center mb-6">
             <a
-              href={KOFI_URL}
+              href={DONATE_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-3 px-10 py-4 bg-[#FF5E5B] hover:bg-[#e54e4b] text-white rounded-2xl font-bold text-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 hover:-translate-y-1"
+              className="inline-flex items-center gap-3 px-10 py-4 bg-rb-blue hover:bg-rb-blue-hover text-white rounded-2xl font-bold text-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 hover:-translate-y-1"
             >
-              <span className="text-2xl" role="img" aria-label="Coffee">☕</span>
-              Support Us on Ko-fi
+              <span className="text-2xl" role="img" aria-label="Heart">💙</span>
+              Donate Now
             </a>
             <p className="text-sm text-slate-500 dark:text-gray-400 mt-3">
               One-time or monthly — whatever feels right. Every bit helps.

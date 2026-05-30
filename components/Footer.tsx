@@ -66,15 +66,13 @@ export default function Footer({ className = '' }: FooterProps) {
         {/* Support Us Button */}
         <div className="text-center mb-6">
           <a
-            href="https://ko-fi.com/recoverybridge"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-blue-500 text-white font-semibold rounded-full hover:bg-blue-600 transition shadow-md"
+            href="/donate"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-rb-blue text-white font-semibold rounded-full hover:bg-rb-blue-hover transition shadow-md"
           >
-            <span>Please Support Us</span>
+            <span>💙 Donate</span>
           </a>
           <p className="text-xs text-rb-gray dark:text-gray-400 mt-2">
-            RecoveryBridge is free for everyone. Your support keeps it that way.
+            RecoveryBridge is free for everyone. Your tax-deductible gift keeps it that way.
           </p>
         </div>
 

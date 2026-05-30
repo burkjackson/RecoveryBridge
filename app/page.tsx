@@ -74,6 +74,17 @@ export default function Home() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
+      {/* Top bar */}
+      <header className="w-full flex justify-end px-4 sm:px-6 pt-4">
+        <Link
+          href="/donate"
+          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold text-rb-blue border border-rb-blue/30 bg-white/70 dark:bg-gray-800/70 dark:text-blue-300 dark:border-blue-400/30 hover:bg-rb-blue hover:text-white hover:border-rb-blue dark:hover:bg-rb-blue dark:hover:text-white transition-all shadow-sm"
+        >
+          <span role="img" aria-label="Heart">💙</span>
+          Donate
+        </Link>
+      </header>
+
       {/* Hero Section */}
       <div className="flex-1 flex items-start justify-center pt-10 sm:pt-14 p-4 sm:p-6">
         <div className="max-w-4xl w-full text-center">

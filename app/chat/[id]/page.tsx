@@ -1416,6 +1416,16 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                       </button>
                     </div>
                   )}
+
+                  {/* Gentle, optional support nudge */}
+                  <div className="mt-6 pt-4 border-t border-gray-100 dark:border-gray-700">
+                    <Body16 className="text-xs text-gray-400 dark:text-gray-500">
+                      RecoveryBridge is free thanks to people like you.{' '}
+                      <a href="/donate" className="text-rb-blue dark:text-blue-400 font-semibold hover:underline">
+                        Consider giving back 💙
+                      </a>
+                    </Body16>
+                  </div>
                 </div>
               ) : (
                 <>
