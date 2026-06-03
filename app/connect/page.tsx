@@ -82,8 +82,20 @@ function ConnectInner() {
       .maybeSingle()
 
     if (!seeker || seeker.role_state !== 'requesting') {
-      setStatus('This person has already found support.')
-      setTimeout(() => router.replace('/dashboard'), 2000)
+      // Distinguish: did they find a listener, or did they go offline/cancel?
+      const { data: activeSession } = await supabase
+        .from('sessions')
+        .select('id')
+        .eq('seeker_id', seekerId)
+        .eq('status', 'active')
+        .maybeSingle()
+
+      if (activeSession) {
+        setStatus('This person is already in a chat session with another listener.')
+      } else {
+        setStatus('This person is no longer waiting for support — they may have stepped away.')
+      }
+      setTimeout(() => router.replace('/dashboard'), 3000)
       return
     }
 

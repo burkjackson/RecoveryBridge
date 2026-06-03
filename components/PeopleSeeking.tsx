@@ -172,6 +172,22 @@ export default function PeopleSeeking({ currentUserId, currentRoleState }: Peopl
         return
       }
 
+      // Confirm seeker is still waiting before creating a session
+      const { data: seeker } = await supabase
+        .from('profiles')
+        .select('role_state')
+        .eq('id', seekerId)
+        .maybeSingle()
+
+      if (!seeker || seeker.role_state !== 'requesting') {
+        setErrorModal({ show: true, message: 'This person is no longer waiting for support. The list will refresh.' })
+        setConnecting(null)
+        isConnecting.current = false
+        // Refresh the seeker list
+        await loadPeopleSeeking()
+        return
+      }
+
       // Create session: current user is listener, requesting user is seeker
       const { data: session, error } = await supabase
         .from('sessions')
