@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { sendStoryPublishedEmail, sendStoryRejectedEmail, sendReportResolvedToReporter, sendReportResolvedToReported } from '@/lib/email'
+import { sendReportResolvedToReporter, sendReportResolvedToReported } from '@/lib/email'
 
 // 30 requests per admin per minute — generous for human use, blocks automation
 const RATE_LIMIT_WINDOW_MS = 60 * 1000
@@ -223,180 +223,16 @@ export async function POST(request: NextRequest) {
         profileData?.forEach((p) => { profiles[p.id] = p.display_name })
       }
 
-      // Audit log is written server-side so viewing a transcript is always recorded
-      await supabase.from('admin_logs').insert([{
+      // Audit log is written server-side — fire-and-forget so it doesn't block the response
+      supabase.from('admin_logs').insert([{
         admin_id: admin.id,
         action_type: 'transcript_viewed',
         target_session_id: sessionId,
         target_report_id: reportId || null,
         details: { report_id: reportId || null },
-      }])
+      }]).then(() => {}).catch(() => {})
 
       return NextResponse.json({ success: true, messages: messages || [], profiles })
-    }
-
-    if (action === 'publish_story') {
-      const { storyId } = body
-      if (!storyId) {
-        return NextResponse.json({ error: 'storyId required' }, { status: 400 })
-      }
-
-      // Fetch story + author details before updating (for email)
-      const { data: storyForEmail } = await supabase
-        .from('blog_posts')
-        .select(`
-          title, slug, author_id,
-          author:profiles!author_id(display_name, email)
-        `)
-        .eq('id', storyId)
-        .single()
-
-      const { error: publishError } = await supabase
-        .from('blog_posts')
-        .update({
-          status: 'published',
-          published_at: new Date().toISOString(),
-          rejection_note: null,
-        })
-        .eq('id', storyId)
-
-      if (publishError) throw publishError
-
-      await supabase.from('admin_logs').insert([{
-        admin_id: admin.id,
-        action_type: 'story_published',
-        details: { story_id: storyId },
-      }])
-
-      // Fire-and-forget: email the author (non-blocking, never fails the request)
-      if (storyForEmail) {
-        const authorProfile = (storyForEmail.author as unknown) as { display_name: string; email: string } | null
-        if (authorProfile?.email) {
-          sendStoryPublishedEmail({
-            to: authorProfile.email,
-            authorName: authorProfile.display_name,
-            storyTitle: storyForEmail.title,
-            storySlug: storyForEmail.slug,
-          }).catch(() => { /* silent */ })
-        }
-      }
-
-      return NextResponse.json({ success: true })
-    }
-
-    if (action === 'reject_story') {
-      const { storyId, rejectionNote } = body
-      if (!storyId) {
-        return NextResponse.json({ error: 'storyId required' }, { status: 400 })
-      }
-
-      // Fetch story + author details before updating (for email)
-      const { data: storyForRejectEmail } = await supabase
-        .from('blog_posts')
-        .select(`
-          title, author_id,
-          author:profiles!author_id(display_name, email)
-        `)
-        .eq('id', storyId)
-        .single()
-
-      const { error: rejectError } = await supabase
-        .from('blog_posts')
-        .update({
-          status: 'draft',
-          rejection_note: rejectionNote ?? null,
-        })
-        .eq('id', storyId)
-
-      if (rejectError) throw rejectError
-
-      await supabase.from('admin_logs').insert([{
-        admin_id: admin.id,
-        action_type: 'story_rejected',
-        details: { story_id: storyId, note: rejectionNote },
-      }])
-
-      // Fire-and-forget: email the author (non-blocking, never fails the request)
-      if (storyForRejectEmail) {
-        const authorProfile = (storyForRejectEmail.author as unknown) as { display_name: string; email: string } | null
-        if (authorProfile?.email) {
-          sendStoryRejectedEmail({
-            to: authorProfile.email,
-            authorName: authorProfile.display_name,
-            storyTitle: storyForRejectEmail.title,
-            storyId,
-            rejectionNote: rejectionNote ?? null,
-          }).catch(() => { /* silent */ })
-        }
-      }
-
-      return NextResponse.json({ success: true })
-    }
-
-    if (action === 'unpublish_story') {
-      const { storyId } = body
-      if (!storyId) {
-        return NextResponse.json({ error: 'storyId required' }, { status: 400 })
-      }
-
-      const { error: unpublishError } = await supabase
-        .from('blog_posts')
-        .update({ status: 'draft', published_at: null })
-        .eq('id', storyId)
-
-      if (unpublishError) throw unpublishError
-
-      await supabase.from('admin_logs').insert([{
-        admin_id: admin.id,
-        action_type: 'story_unpublished',
-        details: { story_id: storyId },
-      }])
-
-      return NextResponse.json({ success: true })
-    }
-
-    if (action === 'pin_story') {
-      const { storyId } = body
-      if (!storyId) {
-        return NextResponse.json({ error: 'storyId required' }, { status: 400 })
-      }
-
-      const { error: pinError } = await supabase
-        .from('blog_posts')
-        .update({ is_pinned: true })
-        .eq('id', storyId)
-
-      if (pinError) throw pinError
-
-      await supabase.from('admin_logs').insert([{
-        admin_id: admin.id,
-        action_type: 'story_pinned',
-        details: { story_id: storyId },
-      }])
-
-      return NextResponse.json({ success: true })
-    }
-
-    if (action === 'unpin_story') {
-      const { storyId } = body
-      if (!storyId) {
-        return NextResponse.json({ error: 'storyId required' }, { status: 400 })
-      }
-
-      const { error: unpinError } = await supabase
-        .from('blog_posts')
-        .update({ is_pinned: false })
-        .eq('id', storyId)
-
-      if (unpinError) throw unpinError
-
-      await supabase.from('admin_logs').insert([{
-        admin_id: admin.id,
-        action_type: 'story_unpinned',
-        details: { story_id: storyId },
-      }])
-
-      return NextResponse.json({ success: true })
     }
 
     return NextResponse.json({ error: 'Unknown action' }, { status: 400 })

@@ -47,27 +47,16 @@ function ConnectInner() {
       return
     }
 
-    // Check if listener is blocked
-    const { data: blockCheck } = await supabase
-      .from('user_blocks')
-      .select('id')
-      .eq('user_id', user.id)
-      .eq('is_active', true)
-      .maybeSingle()
+    // Check block status and existing session in parallel
+    const [{ data: blockCheck }, { data: existingSession }] = await Promise.all([
+      supabase.from('user_blocks').select('id').eq('user_id', user.id).eq('is_active', true).maybeSingle(),
+      supabase.from('sessions').select('id').eq('listener_id', user.id).eq('seeker_id', seekerId).eq('status', 'active').maybeSingle(),
+    ])
 
     if (blockCheck) {
       router.replace('/dashboard')
       return
     }
-
-    // Check if there's already an active session between these two users
-    const { data: existingSession } = await supabase
-      .from('sessions')
-      .select('id')
-      .eq('listener_id', user.id)
-      .eq('seeker_id', seekerId)
-      .eq('status', 'active')
-      .maybeSingle()
 
     if (existingSession) {
       router.replace(`/chat/${existingSession.id}`)

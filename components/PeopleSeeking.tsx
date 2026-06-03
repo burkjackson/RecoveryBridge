@@ -50,47 +50,14 @@ export default function PeopleSeeking({ currentUserId, currentRoleState }: Peopl
     }
   }, [currentRoleState])
 
-  // Real-time: refresh when profiles change (someone starts/stops requesting)
+  // Real-time: refresh when profiles change or a new session is created
   useEffect(() => {
     if (currentRoleState !== 'available') return
 
     const channel = supabase
-      .channel('people-seeking-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'profiles',
-        },
-        () => {
-          loadPeopleSeeking()
-        }
-      )
-      .subscribe()
-
-    return () => {
-      supabase.removeChannel(channel)
-    }
-  }, [supabase, currentRoleState])
-
-  // Also refresh when sessions change (seeker gets connected)
-  useEffect(() => {
-    if (currentRoleState !== 'available') return
-
-    const channel = supabase
-      .channel('people-seeking-sessions')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'sessions',
-        },
-        () => {
-          loadPeopleSeeking()
-        }
-      )
+      .channel('people-seeking-realtime')
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles' }, () => { loadPeopleSeeking() })
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'sessions' }, () => { loadPeopleSeeking() })
       .subscribe()
 
     return () => {
@@ -159,25 +126,17 @@ export default function PeopleSeeking({ currentUserId, currentRoleState }: Peopl
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
 
-      // Check if listener is blocked
-      const { data: blockCheck } = await supabase
-        .from('user_blocks')
-        .select('id, reason')
-        .eq('user_id', user.id)
-        .maybeSingle()
+      // Check block status and seeker availability in parallel
+      const [{ data: blockCheck }, { data: seeker }] = await Promise.all([
+        supabase.from('user_blocks').select('id, reason').eq('user_id', user.id).maybeSingle(),
+        supabase.from('profiles').select('role_state').eq('id', seekerId).maybeSingle(),
+      ])
 
       if (blockCheck) {
         setBlockModal({ show: true, reason: blockCheck.reason })
         setConnecting(null)
         return
       }
-
-      // Confirm seeker is still waiting before creating a session
-      const { data: seeker } = await supabase
-        .from('profiles')
-        .select('role_state')
-        .eq('id', seekerId)
-        .maybeSingle()
 
       if (!seeker || seeker.role_state !== 'requesting') {
         setErrorModal({ show: true, message: 'This person is no longer waiting for support. The list will refresh.' })

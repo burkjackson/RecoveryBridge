@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { Heading1, Body16, Body18 } from '@/components/ui/Typography'
@@ -102,8 +102,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
 
   useEffect(() => {
     if (session && currentUserId) {
-      loadMessages()
-      loadReactions()
+      loadMessages() // also calls loadReactions() internally with the fetched IDs
       const cleanup = subscribeToMessages()
       return cleanup
     }
@@ -143,8 +142,10 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
 
       // Seeker goes offline; listener returns to available so they can take more sessions
       if (session) {
-        await supabase.from('profiles').update({ role_state: 'offline' }).eq('id', session.seeker_id)
-        await supabase.from('profiles').update({ role_state: 'available' }).eq('id', session.listener_id)
+        await Promise.all([
+          supabase.from('profiles').update({ role_state: 'offline' }).eq('id', session.seeker_id),
+          supabase.from('profiles').update({ role_state: 'available' }).eq('id', session.listener_id),
+        ])
       }
 
       setInactivityModal(false)
@@ -266,27 +267,27 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
         const lastMsg = data[data.length - 1]
         setLastActivityTime(new Date(lastMsg.created_at).getTime())
       }
+      // Pass IDs directly to avoid a redundant query in loadReactions
+      if (data?.length) loadReactions(data.map((m) => m.id))
     } catch (error) {
       console.error('Error loading messages:', error)
     }
   }
 
   // --- V2: Load reactions for this session's messages ---
-  async function loadReactions() {
+  // Accepts pre-fetched messageIds from loadMessages to avoid an extra round trip
+  async function loadReactions(messageIds?: string[]) {
     try {
-      // Get all message IDs for this session, then load their reactions
-      const { data: msgs } = await supabase
-        .from('messages')
-        .select('id')
-        .eq('session_id', sessionId)
+      const ids = messageIds ?? (
+        await supabase.from('messages').select('id').eq('session_id', sessionId)
+      ).data?.map((m) => m.id) ?? []
 
-      if (!msgs || msgs.length === 0) return
+      if (ids.length === 0) return
 
-      const messageIds = msgs.map((m) => m.id)
       const { data, error } = await supabase
         .from('message_reactions')
         .select('*')
-        .in('message_id', messageIds)
+        .in('message_id', ids)
 
       if (error) throw error
       setReactions(data || [])
@@ -565,8 +566,10 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
 
       // Seeker goes offline; listener returns to available so they can take more sessions
       if (session) {
-        await supabase.from('profiles').update({ role_state: 'offline' }).eq('id', session.seeker_id)
-        await supabase.from('profiles').update({ role_state: 'available' }).eq('id', session.listener_id)
+        await Promise.all([
+          supabase.from('profiles').update({ role_state: 'offline' }).eq('id', session.seeker_id),
+          supabase.from('profiles').update({ role_state: 'available' }).eq('id', session.listener_id),
+        ])
       }
 
       setFeedbackModal(true)
@@ -728,7 +731,11 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   }
 
   // Most recent message (from either party) containing crisis language, if any.
-  const latestCrisisMessage = [...messages].reverse().find((m) => containsCrisisLanguage(m.content))
+  // Only re-scan when the message list changes, not on every re-render
+  const latestCrisisMessage = useMemo(
+    () => [...messages].reverse().find((m) => containsCrisisLanguage(m.content)),
+    [messages]
+  )
   const showCrisisBanner =
     session?.status === 'active' &&
     !!latestCrisisMessage &&

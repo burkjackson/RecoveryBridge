@@ -1,16 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
-
 // Self-service data export (CCPA/GDPR access right). Returns all data tied to
 // the authenticated user as a downloadable JSON file. Users get only their own
 // data — auth is the user's own bearer token, never an admin action.
 export async function GET(request: NextRequest) {
   try {
+    // Create client per-request (consistent with all other API routes)
+    const supabaseAdmin = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    )
+
     const authHeader = request.headers.get('authorization')
     const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null
     if (!token) {
@@ -33,7 +34,6 @@ export async function GET(request: NextRequest) {
       feedbackReceived,
       favorites,
       pushSubscriptions,
-      blogPosts,
       reportsFiled,
     ] = await Promise.all([
       supabaseAdmin.from('profiles').select('*').eq('id', userId).single(),
@@ -44,7 +44,6 @@ export async function GET(request: NextRequest) {
       supabaseAdmin.from('session_feedback').select('*').eq('to_user_id', userId),
       supabaseAdmin.from('user_favorites').select('*').eq('user_id', userId),
       supabaseAdmin.from('push_subscriptions').select('*').eq('user_id', userId),
-      supabaseAdmin.from('blog_posts').select('*').eq('author_id', userId),
       supabaseAdmin.from('reports').select('*').eq('reporter_id', userId),
     ])
 
@@ -64,7 +63,6 @@ export async function GET(request: NextRequest) {
       feedback_received: feedbackReceived.data ?? [],
       favorites: favorites.data ?? [],
       push_subscriptions: pushSubscriptions.data ?? [],
-      blog_posts: blogPosts.data ?? [],
       reports_filed: reportsFiled.data ?? [],
     }
 
