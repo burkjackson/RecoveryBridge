@@ -474,7 +474,7 @@ export async function sendReportResolvedToReporter({
           <p style="margin:0 0 28px 0;font-size:16px;color:#4A5568;line-height:1.6;">${body}</p>
           <hr style="border:none;border-top:1px solid #E8F0F4;margin:0 0 20px 0;" />
           <p style="margin:0;font-size:12px;color:#718096;line-height:1.6;text-align:center;">
-            Questions? Contact us at <a href="mailto:support@recoverybridge.app" style="color:#5A7A8C;">support@recoverybridge.app</a>
+            Questions? Contact us at <a href="mailto:admin@recoverybridge.app" style="color:#5A7A8C;">admin@recoverybridge.app</a>
           </p>
         </td></tr>
       </table>
@@ -520,7 +520,7 @@ export async function sendReportResolvedToReported({
             A report was submitted about your account activity on RecoveryBridge and has been reviewed by our moderation team. If your account remains active, you may continue using the platform. Please review our <a href="${APP_URL}/terms" style="color:#5A7A8C;">Community Guidelines</a> to ensure future interactions meet our standards.
           </p>
           <p style="margin:0 0 28px 0;font-size:16px;color:#4A5568;line-height:1.6;">
-            If you believe this was in error, please contact us at <a href="mailto:support@recoverybridge.app" style="color:#5A7A8C;">support@recoverybridge.app</a>.
+            If you believe this was in error, please contact us at <a href="mailto:admin@recoverybridge.app" style="color:#5A7A8C;">admin@recoverybridge.app</a>.
           </p>
           <hr style="border:none;border-top:1px solid #E8F0F4;margin:0 0 20px 0;" />
           <p style="margin:0;font-size:12px;color:#718096;line-height:1.6;text-align:center;">RecoveryBridge moderation team</p>

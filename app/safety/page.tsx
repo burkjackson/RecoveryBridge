@@ -222,8 +222,8 @@ export default function SafetyPage() {
             <div className="bg-gray-100 dark:bg-gray-700 rounded-lg p-4">
               <Body16 className="dark:text-gray-100">
                 <strong>How to report:</strong> Use the 🚩 Report button during a chat, or contact us at{' '}
-                <a href="mailto:safety@recoverybridge.app" className="text-rb-blue hover:underline">
-                  safety@recoverybridge.app
+                <a href="mailto:admin@recoverybridge.app" className="text-rb-blue hover:underline">
+                  admin@recoverybridge.app
                 </a>
               </Body16>
             </div>
@@ -273,8 +273,8 @@ export default function SafetyPage() {
             <Body18 className="font-semibold mb-2 dark:text-gray-100">Questions About Safety?</Body18>
             <Body16 className="text-rb-gray dark:text-gray-400">
               If you have questions or concerns about safety on RecoveryBridge, please contact us at{' '}
-              <a href="mailto:safety@recoverybridge.app" className="text-rb-blue hover:underline">
-                safety@recoverybridge.app
+              <a href="mailto:admin@recoverybridge.app" className="text-rb-blue hover:underline">
+                admin@recoverybridge.app
               </a>
             </Body16>
           </section>

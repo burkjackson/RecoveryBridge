@@ -210,7 +210,7 @@ export default function PrivacyPage() {
 
             <Body16 className="text-rb-gray dark:text-gray-400">
               To exercise these rights, contact us at{' '}
-              <a href="mailto:privacy@recoverybridge.app" className="text-rb-blue hover:underline">privacy@recoverybridge.app</a>.
+              <a href="mailto:admin@recoverybridge.app" className="text-rb-blue hover:underline">admin@recoverybridge.app</a>.
               We will respond within 45 days as required by applicable law.
             </Body16>
           </section>
@@ -236,8 +236,8 @@ export default function PrivacyPage() {
             <Body18 className="font-semibold mb-2 dark:text-gray-100">Questions About Privacy?</Body18>
             <Body16 className="text-rb-gray dark:text-gray-400">
               If you have questions about this privacy policy or how we handle your data, please contact us at{' '}
-              <a href="mailto:privacy@recoverybridge.app" className="text-rb-blue hover:underline">
-                privacy@recoverybridge.app
+              <a href="mailto:admin@recoverybridge.app" className="text-rb-blue hover:underline">
+                admin@recoverybridge.app
               </a>
             </Body16>
           </section>
