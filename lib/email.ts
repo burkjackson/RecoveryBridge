@@ -1,6 +1,7 @@
 import { Resend } from 'resend'
 
 const FROM_ADDRESS = 'RecoveryBridge <notifications@contact.recoverybridge.app>'
+const REPLY_TO = 'admin@recoverybridge.app'
 const APP_URL = 'https://recoverybridge.app'
 const STORIES_URL = 'https://recoverybridge.app/stories'
 
@@ -178,6 +179,7 @@ export async function sendNewUserNotification({
     const resend = new Resend(process.env.RESEND_API_KEY)
     const { error } = await resend.emails.send({
       from: FROM_ADDRESS,
+      replyTo: REPLY_TO,
       to: adminEmail,
       subject: `🎉 New sign-up: ${displayName}`,
       html,
@@ -277,6 +279,7 @@ export async function sendStoryPublishedEmail({
     const resend = new Resend(process.env.RESEND_API_KEY)
     const { error } = await resend.emails.send({
       from: FROM_ADDRESS,
+      replyTo: REPLY_TO,
       to,
       subject: `🎉 Your story "${storyTitle}" is now live on RecoveryBridge`,
       html,
@@ -382,6 +385,7 @@ export async function sendStoryRejectedEmail({
     const resend = new Resend(process.env.RESEND_API_KEY)
     const { error } = await resend.emails.send({
       from: FROM_ADDRESS,
+      replyTo: REPLY_TO,
       to,
       subject: `Your story "${storyTitle}" needs a revision`,
       html,
@@ -419,6 +423,7 @@ export async function sendSupportRequestEmail({
 
     const { error } = await resend.emails.send({
       from: FROM_ADDRESS,
+      replyTo: REPLY_TO,
       to,
       subject,
       html,
@@ -485,7 +490,7 @@ export async function sendReportResolvedToReporter({
 
   try {
     const resend = new Resend(process.env.RESEND_API_KEY)
-    const { error } = await resend.emails.send({ from: FROM_ADDRESS, to, subject, html })
+    const { error } = await resend.emails.send({ from: FROM_ADDRESS, replyTo: REPLY_TO, to, subject, html })
     if (error) { console.error('Resend error (report resolved — reporter):', error); return { success: false } }
     return { success: true }
   } catch (err) {
@@ -535,6 +540,7 @@ export async function sendReportResolvedToReported({
     const resend = new Resend(process.env.RESEND_API_KEY)
     const { error } = await resend.emails.send({
       from: FROM_ADDRESS,
+      replyTo: REPLY_TO,
       to,
       subject: 'Account notice from RecoveryBridge',
       html,
