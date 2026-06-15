@@ -26,7 +26,7 @@ interface AvailableListenersProps {
   currentRoleState?: string | null
 }
 
-export default function AvailableListeners({ onCountChange, currentUserId, currentRoleState }: AvailableListenersProps) {
+export default function AvailableListeners({ onCountChange, currentUserId }: AvailableListenersProps) {
   const router = useRouter()
   const [listeners, setListeners] = useState<Listener[]>([])
   const [loading, setLoading] = useState(true)
@@ -300,7 +300,7 @@ export default function AvailableListeners({ onCountChange, currentUserId, curre
       </div>
 
       <div className="space-y-2">
-        {listeners.map((listener) => (
+        {listeners.slice(0, 5).map((listener) => (
           <div
             key={listener.id}
             className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg transition-all"
@@ -360,23 +360,17 @@ export default function AvailableListeners({ onCountChange, currentUserId, curre
               )}
             </button>
 
-            {/* Right side: Connect button (when seeking) or online dot */}
+            {/* Right side: Connect — opens a profile preview first so it takes two
+                taps to start a session (avoids accidental connects) */}
             <div className="flex-shrink-0">
-              {currentRoleState === 'requesting' ? (
-                <button
-                  onClick={() => connectWithListener(listener.id)}
-                  disabled={connectingId === listener.id}
-                  aria-label={`Connect with ${listener.display_name}`}
-                  className="min-h-[44px] px-4 py-2 rounded-lg text-sm font-semibold bg-rb-blue text-white hover:bg-rb-blue-hover disabled:opacity-60 transition-all whitespace-nowrap"
-                >
-                  {connectingId === listener.id ? 'Connecting...' : 'Connect'}
-                </button>
-              ) : (
-                <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
-                  <span className="w-2 h-2 bg-green-500 rounded-full" aria-hidden="true"></span>
-                  <span className="text-xs font-medium text-green-700 dark:text-green-400">Online</span>
-                </div>
-              )}
+              <button
+                onClick={() => setProfilePreview(listener)}
+                disabled={connectingId === listener.id}
+                aria-label={`View ${listener.display_name}'s profile and connect`}
+                className="min-h-[44px] px-4 py-2 rounded-lg text-sm font-semibold bg-rb-blue text-white hover:bg-rb-blue-hover disabled:opacity-60 transition-all whitespace-nowrap"
+              >
+                {connectingId === listener.id ? 'Connecting...' : 'Connect'}
+              </button>
             </div>
           </div>
         ))}
@@ -384,10 +378,9 @@ export default function AvailableListeners({ onCountChange, currentUserId, curre
 
       <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
         <Body16 className="text-sm text-gray-600 dark:text-gray-400 text-center">
-          {currentRoleState === 'requesting' ? (
-            <>Tap <strong>Connect</strong> next to a listener to start a session</>
-          ) : (
-            <>Click <strong>&ldquo;I Need Support&rdquo;</strong> above to connect with an available listener</>
+          Tap a listener to view their profile, then <strong>Connect</strong> to start a private chat.
+          {listeners.length > 5 && (
+            <> Showing 5 of {listeners.length} — use <strong>Browse All Listeners</strong> to see everyone.</>
           )}
         </Body16>
       </div>
@@ -398,8 +391,15 @@ export default function AvailableListeners({ onCountChange, currentUserId, curre
           isOpen={!!profilePreview}
           onClose={() => setProfilePreview(null)}
           title={profilePreview.display_name}
-          confirmText="Close"
+          type="confirm"
+          confirmText="Connect"
+          cancelText="Close"
           confirmStyle="primary"
+          onConfirm={() => {
+            const id = profilePreview.id
+            setProfilePreview(null)
+            connectWithListener(id)
+          }}
         >
           <div className="space-y-4">
             {/* Avatar + status */}
@@ -447,22 +447,6 @@ export default function AvailableListeners({ onCountChange, currentUserId, curre
                     </span>
                   ))}
                 </div>
-              </div>
-            )}
-
-            {/* Connect button — shown when the viewer is currently seeking support */}
-            {currentRoleState === 'requesting' && (
-              <div className="pt-3 border-t border-gray-100 dark:border-gray-700">
-                <button
-                  onClick={() => {
-                    setProfilePreview(null)
-                    connectWithListener(profilePreview.id)
-                  }}
-                  disabled={connectingId === profilePreview.id}
-                  className="min-h-[44px] w-full px-4 py-2.5 rounded-xl font-semibold text-sm bg-rb-blue text-white hover:bg-rb-blue-hover disabled:opacity-60 transition-all"
-                >
-                  {connectingId === profilePreview.id ? 'Connecting...' : `Connect with ${profilePreview.display_name}`}
-                </button>
               </div>
             )}
 
