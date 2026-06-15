@@ -108,7 +108,7 @@ export default function Home() {
           </div>
 
           {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row justify-center items-center gap-3 mb-12">
+          <div className="flex flex-col sm:flex-row justify-center items-center gap-3 mb-5">
             <Link
               href="/signup"
               className="w-full sm:w-auto px-10 py-4 rounded-full bg-rb-blue hover:bg-rb-blue-hover text-white font-bold text-lg shadow-lg hover:shadow-xl transition-all duration-200 text-center"
@@ -123,29 +123,30 @@ export default function Home() {
             </Link>
           </div>
 
-          {/* Mission Statement Card */}
-          <div className="max-w-3xl mx-auto mb-12">
-            <div className="bg-gradient-to-r from-rb-blue-light to-rb-purple-light dark:from-gray-800 dark:to-gray-800 rounded-2xl p-8 shadow-lg border-2 border-rb-blue-light dark:border-gray-700">
-              <h2 className="text-2xl sm:text-3xl font-bold text-rb-dark dark:text-gray-100 mb-6 text-center">
-                Our Mission
-              </h2>
-              <p className="text-base text-rb-gray dark:text-gray-400 text-center mb-4 leading-relaxed">
-                We believe that we do not heal in isolation.
-                RecoveryBridge exists to create a safe space where your story matters, your struggles are valid, and your
-                progress—no matter how small—deserves celebration.
-              </p>
-              <p className="text-base text-rb-gray dark:text-gray-400 text-center mb-4 leading-relaxed">
-                Every conversation here is built on empathy, respect, and the shared understanding that healing takes courage.
-                We&apos;re here to remind you that <strong>you are worth saving</strong>, that recovery is stronger together,
-                and that showing up—even on the hardest days—is an act of bravery.
-              </p>
-              <p className="text-base text-rb-gray dark:text-gray-400 text-center leading-relaxed">
-                This is not just an app. It&apos;s a community of people who understand that recovery isn&apos;t linear,
-                that every journey looks different, and that sometimes the most powerful thing we can do is simply listen
-                with compassion and be present for one another.
-              </p>
-            </div>
-          </div>
+          {/* Trust strip — above-the-fold promises, right at the decision point */}
+          <ul
+            aria-label="Our promises to you"
+            className="flex flex-wrap items-center justify-center gap-x-3 gap-y-2 mb-12"
+          >
+            <li className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/80 dark:bg-gray-800/70 backdrop-blur-sm border border-rb-blue-light dark:border-gray-700 shadow-sm text-sm font-semibold text-rb-dark dark:text-gray-200">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="w-5 h-5 text-rb-blue dark:text-blue-300" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+              </svg>
+              100% free
+            </li>
+            <li className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/80 dark:bg-gray-800/70 backdrop-blur-sm border border-rb-blue-light dark:border-gray-700 shadow-sm text-sm font-semibold text-rb-dark dark:text-gray-200">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="w-5 h-5 text-rb-blue dark:text-blue-300" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 0 0 5.636 5.636m12.728 12.728A9 9 0 0 1 5.636 5.636m12.728 12.728L5.636 5.636" />
+              </svg>
+              No ads
+            </li>
+            <li className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/80 dark:bg-gray-800/70 backdrop-blur-sm border border-rb-blue-light dark:border-gray-700 shadow-sm text-sm font-semibold text-rb-dark dark:text-gray-200">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="w-5 h-5 text-rb-blue dark:text-blue-300" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
+              </svg>
+              Never sold
+            </li>
+          </ul>
 
           {/* How It Works */}
           <div className="max-w-4xl mx-auto mb-12">
@@ -185,6 +186,40 @@ export default function Home() {
                   Share what&apos;s on your mind—no judgment, no pressure. Your listener is here because they&apos;ve been there too.
                 </p>
               </div>
+            </div>
+          </div>
+
+          {/* Repeat primary CTA — right after the 3 steps, the peak-intent moment */}
+          <div className="flex justify-center mb-12">
+            <Link
+              href="/signup"
+              className="w-full sm:w-auto px-10 py-4 rounded-full bg-rb-blue hover:bg-rb-blue-hover text-white font-bold text-lg shadow-lg hover:shadow-xl transition-all duration-200 text-center"
+            >
+              Get Started — It&apos;s Free
+            </Link>
+          </div>
+
+          {/* Mission Statement Card */}
+          <div className="max-w-3xl mx-auto mb-12">
+            <div className="bg-gradient-to-r from-rb-blue-light to-rb-purple-light dark:from-gray-800 dark:to-gray-800 rounded-2xl p-8 shadow-lg border-2 border-rb-blue-light dark:border-gray-700">
+              <h2 className="text-2xl sm:text-3xl font-bold text-rb-dark dark:text-gray-100 mb-6 text-center">
+                Our Mission
+              </h2>
+              <p className="text-base text-rb-gray dark:text-gray-400 text-center mb-4 leading-relaxed">
+                We believe that we do not heal in isolation.
+                RecoveryBridge exists to create a safe space where your story matters, your struggles are valid, and your
+                progress—no matter how small—deserves celebration.
+              </p>
+              <p className="text-base text-rb-gray dark:text-gray-400 text-center mb-4 leading-relaxed">
+                Every conversation here is built on empathy, respect, and the shared understanding that healing takes courage.
+                We&apos;re here to remind you that <strong>you are worth saving</strong>, that recovery is stronger together,
+                and that showing up—even on the hardest days—is an act of bravery.
+              </p>
+              <p className="text-base text-rb-gray dark:text-gray-400 text-center leading-relaxed">
+                This is not just an app. It&apos;s a community of people who understand that recovery isn&apos;t linear,
+                that every journey looks different, and that sometimes the most powerful thing we can do is simply listen
+                with compassion and be present for one another.
+              </p>
             </div>
           </div>
 
@@ -318,22 +353,15 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Trust Indicators */}
-          <div className="inline-flex flex-wrap items-center justify-center gap-4 text-sm text-rb-gray dark:text-gray-400 mb-8 bg-white dark:bg-gray-800 rounded-full px-6 py-3 shadow-md border border-rb-blue-light dark:border-gray-700">
-            <div className="flex items-center gap-2">
-              <span className="text-base" role="img" aria-label="Lock">🔒</span>
-              <span className="font-semibold">Private &amp; secure</span>
-            </div>
-            <span className="hidden sm:inline text-rb-gray dark:text-gray-400">•</span>
-            <div className="flex items-center gap-2">
-              <span className="text-base" role="img" aria-label="Checkmark">✓</span>
-              <span className="font-semibold">Always confidential</span>
-            </div>
-            <span className="hidden sm:inline text-rb-gray dark:text-gray-400">•</span>
-            <div className="flex items-center gap-2">
-              <span className="text-base" role="img" aria-label="Gift">🎁</span>
-              <span className="font-semibold">Always free</span>
-            </div>
+          {/* Repeat primary CTA — closing prompt before social/footer */}
+          <div className="flex flex-col items-center gap-3 mb-12">
+            <p className="text-lg font-semibold text-rb-dark dark:text-gray-100">Ready when you are.</p>
+            <Link
+              href="/signup"
+              className="w-full sm:w-auto px-10 py-4 rounded-full bg-rb-blue hover:bg-rb-blue-hover text-white font-bold text-lg shadow-lg hover:shadow-xl transition-all duration-200 text-center"
+            >
+              Get Started — It&apos;s Free
+            </Link>
           </div>
 
           {/* Social */}
