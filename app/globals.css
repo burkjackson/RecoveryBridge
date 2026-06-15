@@ -222,3 +222,19 @@ select:focus-visible {
   outline-offset: 2px;
   box-shadow: 0 0 0 6px rgba(255, 255, 255, 0.3);
 }
+
+/* Respect users who prefer reduced motion.
+   Neutralizes the animated gradient, pulse-glow, ping, slide-in, typing, and
+   spinner animations (and transitions) for vestibular/motion sensitivity.
+   Loading states still read via text ("Signing in…", "Connecting…") and static
+   indicators, so no functional feedback is lost. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
