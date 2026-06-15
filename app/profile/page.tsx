@@ -526,7 +526,7 @@ export default function ProfilePage() {
             {/* Right: Sign Out */}
             <button
               onClick={handleSignOut}
-              className="min-h-[44px] px-3 sm:px-5 py-2 sm:py-2.5 bg-gray-900 text-white rounded-full text-sm font-semibold hover:bg-gray-800 transition-all whitespace-nowrap"
+              className="min-h-[44px] px-3 sm:px-5 py-2 sm:py-2.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-full text-sm font-semibold hover:bg-gray-100 dark:hover:bg-gray-700 transition-all whitespace-nowrap"
             >
               Sign Out
             </button>
@@ -571,7 +571,7 @@ export default function ProfilePage() {
                   <button
                     onClick={() => handleSave('display_name')}
                     disabled={saving}
-                    className="px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800 disabled:opacity-50 transition-all"
+                    className="px-4 py-2 bg-rb-blue text-white rounded-lg text-sm font-medium hover:bg-rb-blue-hover disabled:opacity-50 transition-all"
                   >
                     {saving ? 'Saving...' : 'Save'}
                   </button>
@@ -627,7 +627,7 @@ export default function ProfilePage() {
                   <button
                     onClick={() => handleSave('tagline')}
                     disabled={saving}
-                    className="px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800 disabled:opacity-50 transition-all"
+                    className="px-4 py-2 bg-rb-blue text-white rounded-lg text-sm font-medium hover:bg-rb-blue-hover disabled:opacity-50 transition-all"
                   >
                     {saving ? 'Saving...' : 'Save'}
                   </button>
@@ -678,7 +678,7 @@ export default function ProfilePage() {
                   <button
                     onClick={() => handleSave('bio')}
                     disabled={saving}
-                    className="px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800 disabled:opacity-50 transition-all"
+                    className="px-4 py-2 bg-rb-blue text-white rounded-lg text-sm font-medium hover:bg-rb-blue-hover disabled:opacity-50 transition-all"
                   >
                     {saving ? 'Saving...' : 'Save'}
                   </button>
@@ -726,7 +726,7 @@ export default function ProfilePage() {
                   <button
                     onClick={() => handleSave('user_role')}
                     disabled={saving}
-                    className="px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800 disabled:opacity-50 transition-all"
+                    className="px-4 py-2 bg-rb-blue text-white rounded-lg text-sm font-medium hover:bg-rb-blue-hover disabled:opacity-50 transition-all"
                   >
                     {saving ? 'Saving...' : 'Save'}
                   </button>
@@ -781,7 +781,7 @@ export default function ProfilePage() {
                   <button
                     onClick={handleSaveTags}
                     disabled={savingTags}
-                    className="px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800 disabled:opacity-50 transition-all"
+                    className="px-4 py-2 bg-rb-blue text-white rounded-lg text-sm font-medium hover:bg-rb-blue-hover disabled:opacity-50 transition-all"
                   >
                     {savingTags ? 'Saving...' : 'Save'}
                   </button>

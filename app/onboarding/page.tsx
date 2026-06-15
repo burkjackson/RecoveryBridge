@@ -462,7 +462,7 @@ export default function OnboardingPage() {
               </button>
               <button
                 onClick={handleNext}
-                className="flex-1 bg-gray-900 text-white py-3 rounded-lg font-semibold hover:bg-gray-800 transition-all"
+                className="flex-1 bg-rb-blue text-white py-3 rounded-lg font-semibold hover:bg-rb-blue-hover transition-all"
               >
                 Continue →
               </button>
@@ -587,7 +587,7 @@ export default function OnboardingPage() {
               </button>
               <button
                 onClick={handleNext}
-                className="flex-1 bg-gray-900 text-white py-3 rounded-lg font-semibold hover:bg-gray-800 transition-all"
+                className="flex-1 bg-rb-blue text-white py-3 rounded-lg font-semibold hover:bg-rb-blue-hover transition-all"
               >
                 Continue →
               </button>
@@ -663,7 +663,7 @@ export default function OnboardingPage() {
               </button>
               <button
                 onClick={handleNext}
-                className="flex-1 bg-gray-900 text-white py-3 rounded-lg font-semibold hover:bg-gray-800 transition-all"
+                className="flex-1 bg-rb-blue text-white py-3 rounded-lg font-semibold hover:bg-rb-blue-hover transition-all"
               >
                 Continue →
               </button>
@@ -758,7 +758,7 @@ export default function OnboardingPage() {
               <button
                 onClick={handleNext}
                 disabled={!agreedToGuidelines || saving}
-                className="flex-1 bg-gray-900 text-white py-3 rounded-lg font-semibold hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                className="flex-1 bg-rb-blue text-white py-3 rounded-lg font-semibold hover:bg-rb-blue-hover disabled:opacity-40 disabled:cursor-not-allowed transition-all"
               >
                 {saving ? (
                   <span className="flex items-center justify-center">
@@ -891,7 +891,7 @@ export default function OnboardingPage() {
               </button>
               <button
                 onClick={handleNext}
-                className="flex-1 bg-gray-900 text-white py-3 rounded-lg font-semibold hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                className="flex-1 bg-rb-blue text-white py-3 rounded-lg font-semibold hover:bg-rb-blue-hover disabled:opacity-40 disabled:cursor-not-allowed transition-all"
               >
                 Continue →
               </button>
@@ -997,7 +997,7 @@ export default function OnboardingPage() {
               <button
                 onClick={handleNext}
                 disabled={saving}
-                className="flex-1 bg-gray-900 text-white py-3 rounded-lg font-semibold hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                className="flex-1 bg-rb-blue text-white py-3 rounded-lg font-semibold hover:bg-rb-blue-hover disabled:opacity-50 disabled:cursor-not-allowed transition-all"
               >
                 {saving ? (
                   <span className="flex items-center justify-center">

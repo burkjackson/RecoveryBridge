@@ -669,7 +669,7 @@ function DashboardContent() {
               <ThemeToggle />
               <button
                 onClick={handleSignOut}
-                className="min-h-[44px] px-4 sm:px-6 py-2 sm:py-2.5 bg-gray-900 text-white rounded-full text-sm font-semibold hover:bg-gray-800 transition-all whitespace-nowrap"
+                className="min-h-[44px] px-4 sm:px-6 py-2 sm:py-2.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-full text-sm font-semibold hover:bg-gray-100 dark:hover:bg-gray-700 transition-all whitespace-nowrap"
               >
                 Sign Out
               </button>

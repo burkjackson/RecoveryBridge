@@ -100,7 +100,7 @@ export default function ResetPasswordPage() {
               </Body16>
               <a
                 href="/forgot-password"
-                className="inline-block px-6 py-3 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800 transition-all"
+                className="inline-block px-6 py-3 bg-rb-blue text-white rounded-lg font-medium hover:bg-rb-blue-hover transition-all"
               >
                 Request New Reset Link
               </a>
@@ -205,7 +205,7 @@ export default function ResetPasswordPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-gray-900 text-white py-3 rounded-lg font-medium hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              className="w-full bg-rb-blue text-white py-3 rounded-lg font-medium hover:bg-rb-blue-hover disabled:opacity-50 disabled:cursor-not-allowed transition-all"
             >
               {loading ? (
                 <span className="flex items-center justify-center">

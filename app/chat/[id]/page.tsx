@@ -795,7 +795,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
             ) : (
               <button
                 onClick={returnToDashboard}
-                className="min-h-[44px] px-4 py-2 text-sm bg-gray-900 hover:bg-gray-800 text-white rounded-lg transition-all font-semibold"
+                className="min-h-[44px] px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-all font-semibold"
               >
                 ← Back to Dashboard
               </button>
@@ -1070,7 +1070,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                   type="submit"
                   disabled={!newMessage.trim() || sending}
                   aria-label={sending ? "Sending message..." : "Send message"}
-                  className="min-h-[44px] px-6 py-3 rounded-lg font-semibold bg-gray-900 text-white hover:bg-gray-800 disabled:opacity-50 transition-all"
+                  className="min-h-[44px] px-6 py-3 rounded-lg font-semibold bg-rb-blue text-white hover:bg-rb-blue-hover disabled:opacity-50 transition-all"
                 >
                   {sending ? (
                     <span className="flex items-center gap-2">
