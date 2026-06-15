@@ -223,14 +223,17 @@ export async function POST(request: NextRequest) {
         profileData?.forEach((p) => { profiles[p.id] = p.display_name })
       }
 
-      // Audit log is written server-side — fire-and-forget so it doesn't block the response
-      supabase.from('admin_logs').insert([{
-        admin_id: admin.id,
-        action_type: 'transcript_viewed',
-        target_session_id: sessionId,
-        target_report_id: reportId || null,
-        details: { report_id: reportId || null },
-      }]).then(() => {}).catch(() => {})
+      // Audit log is written server-side — fire-and-forget so it doesn't block the response.
+      // Wrap in Promise.resolve: the Supabase builder is a PromiseLike (no .catch of its own).
+      Promise.resolve(
+        supabase.from('admin_logs').insert([{
+          admin_id: admin.id,
+          action_type: 'transcript_viewed',
+          target_session_id: sessionId,
+          target_report_id: reportId || null,
+          details: { report_id: reportId || null },
+        }])
+      ).catch(() => {})
 
       return NextResponse.json({ success: true, messages: messages || [], profiles })
     }
