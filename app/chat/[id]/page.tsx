@@ -836,6 +836,12 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
           aria-label="Chat messages"
         >
           <div className="max-w-4xl mx-auto space-y-3">
+            {/* Scope & safety notice — shown once at the top of the thread; scrolls away with the conversation */}
+            <p className="text-xs text-center text-gray-400 dark:text-gray-500 max-w-md mx-auto leading-relaxed px-2 pb-1">
+              <strong className="font-semibold text-gray-500 dark:text-gray-400">Peer support only</strong> — not a substitute for professional therapy, medical care, or emergency services. If you or someone else is in danger,{' '}
+              <a href="tel:988" className="underline">call or text 988</a> or text <strong>HOME</strong> to <strong>741741</strong>.
+            </p>
+
             {messages.length === 0 ? (
               /* --- V2: Conversation Starters --- */
               session?.status === 'active' ? (
@@ -1037,17 +1043,6 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                 ×
               </button>
             </div>
-          </div>
-        )}
-
-        {session?.status === 'active' && (
-          <div className="bg-amber-50 dark:bg-amber-900/10 border-t border-amber-100 dark:border-amber-900/30 px-4 py-2">
-            <p className="max-w-4xl mx-auto text-xs text-center text-amber-800 dark:text-amber-300">
-              <strong>Peer support only</strong> — not a substitute for professional therapy, medical care, or emergency services.{' '}
-              If you or someone else is in danger,{' '}
-              <a href="tel:988" className="underline font-semibold">call or text 988</a>{' '}
-              or text <strong>HOME</strong> to <strong>741741</strong>.
-            </p>
           </div>
         )}
 
