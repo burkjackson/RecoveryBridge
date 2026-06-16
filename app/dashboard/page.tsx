@@ -650,6 +650,21 @@ function DashboardContent() {
     )
   }
 
+  // Consolidate banners into a single prioritized slot so users never face a
+  // stack of competing colored banners. Highest priority shows; lower-priority
+  // ones surface once the higher one is dismissed or resolved.
+  const profileIncomplete = !!(
+    profile &&
+    !(profile.user_role && profile.bio && profile.tags && profile.tags.length > 0 && profile.avatar_url)
+  )
+  const activeBanner: 'error' | 'postChat' | 'trainingComplete' | 'training' | 'profile' | null =
+    error.show ? 'error'
+    : showPostChatBanner ? 'postChat'
+    : showTrainingComplete ? 'trainingComplete'
+    : profile && !profile.listener_training_completed_at && !trainingBannerDismissed ? 'training'
+    : profile && !nudgeDismissed && profileIncomplete ? 'profile'
+    : null
+
   return (
     <main id="main-content" className="min-h-screen p-4 sm:p-6 bg-[#F8F9FA] dark:bg-gray-900">
       <div className="max-w-6xl mx-auto">
@@ -709,7 +724,7 @@ function DashboardContent() {
         </div>
 
         {/* Post-chat check-in banner (seekers returning from a session) */}
-        {showPostChatBanner && (
+        {activeBanner === 'postChat' && (
           <div className={`mb-6 rounded-xl p-4 shadow-sm border ${postChatFeeling === 'struggling' ? 'bg-purple-50 dark:bg-purple-900/20 border-rb-purple/40' : 'bg-blue-50 dark:bg-blue-900/20 border-rb-blue/30 dark:border-blue-800'}`}>
             {postChatFeeling === 'good' ? (
               <div className="flex items-center gap-3">
@@ -791,7 +806,7 @@ function DashboardContent() {
         )}
 
         {/* Training complete toast */}
-        {showTrainingComplete && (
+        {activeBanner === 'trainingComplete' && (
           <div className="mb-6 flex items-center gap-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl p-4 shadow-sm">
             <span className="text-2xl flex-shrink-0" aria-hidden="true">✅</span>
             <div className="flex-1 min-w-0">
@@ -811,7 +826,7 @@ function DashboardContent() {
         )}
 
         {/* Listener training nudge */}
-        {!trainingBannerDismissed && profile && !profile.listener_training_completed_at && (
+        {activeBanner === 'training' && (
           <div className="mb-6 flex items-start gap-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4 shadow-sm">
             <span className="text-2xl flex-shrink-0" aria-hidden="true">🤝</span>
             <div className="flex-1 min-w-0">
@@ -837,7 +852,7 @@ function DashboardContent() {
         )}
 
         {/* Profile Completeness Nudge */}
-        {!nudgeDismissed && profile && (() => {
+        {activeBanner === 'profile' && profile && (() => {
           const fields = [
             !!profile.user_role,
             !!profile.bio,
@@ -888,7 +903,7 @@ function DashboardContent() {
         })()}
 
         {/* Error State */}
-        {error.show && (
+        {activeBanner === 'error' && (
           <ErrorState
             type="banner"
             message={error.message}
