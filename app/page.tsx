@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import Footer from '@/components/Footer'
+import ProductPreview from '@/components/ProductPreview'
 
 export const metadata: Metadata = {
   title: 'RecoveryBridge — Free Peer Support for Addiction Recovery',
@@ -96,7 +97,7 @@ export default function Home() {
               className="mx-auto mb-5"
               style={{ width: '500px', maxWidth: '90%' }}
             />
-            <h1 className="text-2xl sm:text-3xl font-bold text-rb-dark dark:text-gray-100 mb-2">
+            <h1 className="text-heading-2 sm:text-heading-1 text-rb-dark dark:text-gray-100 mb-2">
               Free Peer Support for Addiction Recovery
             </h1>
             <p className="text-xl sm:text-2xl text-rb-gray dark:text-gray-400 italic mb-4">
@@ -122,6 +123,9 @@ export default function Home() {
               Log In
             </Link>
           </div>
+
+          {/* See the product without bloating the page — opens a popup mock */}
+          <ProductPreview />
 
           {/* Trust strip — above-the-fold promises, right at the decision point */}
           <ul
@@ -150,7 +154,7 @@ export default function Home() {
 
           {/* How It Works */}
           <div className="max-w-4xl mx-auto mb-12">
-            <h2 className="text-2xl sm:text-3xl font-bold text-rb-dark dark:text-gray-100 mb-3 text-center">
+            <h2 className="text-heading-2 text-rb-dark dark:text-gray-100 mb-3 text-center">
               How It Works
             </h2>
             <p className="text-base text-rb-gray dark:text-gray-400 text-center mb-8 max-w-2xl mx-auto leading-relaxed">
@@ -161,7 +165,7 @@ export default function Home() {
                 <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-r from-rb-blue to-rb-blue-dark text-white rounded-full flex items-center justify-center text-2xl font-bold shadow-md">
                   1
                 </div>
-                <h3 className="font-bold text-rb-dark dark:text-gray-100 mb-2 text-lg">Ask for Support</h3>
+                <h3 className="text-heading-3 text-rb-dark dark:text-gray-100 mb-2">Ask for Support</h3>
                 <p className="text-sm text-rb-gray dark:text-gray-400 leading-relaxed">
                   When you need to connect, tap &ldquo;I Need Support.&rdquo; Available listeners are notified instantly—no waiting, no scheduling.
                 </p>
@@ -171,7 +175,7 @@ export default function Home() {
                 <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-r from-rb-blue to-rb-blue-dark text-white rounded-full flex items-center justify-center text-2xl font-bold shadow-md">
                   2
                 </div>
-                <h3 className="font-bold text-rb-dark dark:text-gray-100 mb-2 text-lg">A Listener Shows Up</h3>
+                <h3 className="text-heading-3 text-rb-dark dark:text-gray-100 mb-2">A Listener Shows Up</h3>
                 <p className="text-sm text-rb-gray dark:text-gray-400 leading-relaxed">
                   A volunteer listener accepts and a private, one-on-one chat begins. No audience. No records shared. Just the two of you.
                 </p>
@@ -181,7 +185,7 @@ export default function Home() {
                 <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-r from-rb-blue to-rb-blue-dark text-white rounded-full flex items-center justify-center text-2xl font-bold shadow-md">
                   3
                 </div>
-                <h3 className="font-bold text-rb-dark dark:text-gray-100 mb-2 text-lg">Talk Freely</h3>
+                <h3 className="text-heading-3 text-rb-dark dark:text-gray-100 mb-2">Talk Freely</h3>
                 <p className="text-sm text-rb-gray dark:text-gray-400 leading-relaxed">
                   Share what&apos;s on your mind—no judgment, no pressure. Your listener is here because they&apos;ve been there too.
                 </p>
@@ -202,7 +206,7 @@ export default function Home() {
           {/* Mission Statement Card */}
           <div className="max-w-3xl mx-auto mb-12">
             <div className="bg-gradient-to-r from-rb-blue-light to-rb-purple-light dark:from-gray-800 dark:to-gray-800 rounded-2xl p-8 shadow-lg border-2 border-rb-blue-light dark:border-gray-700">
-              <h2 className="text-2xl sm:text-3xl font-bold text-rb-dark dark:text-gray-100 mb-6 text-center">
+              <h2 className="text-heading-2 text-rb-dark dark:text-gray-100 mb-6 text-center">
                 Our Mission
               </h2>
               <p className="text-base text-rb-gray dark:text-gray-400 text-center mb-4 leading-relaxed">
@@ -227,7 +231,7 @@ export default function Home() {
           <div className="max-w-3xl mx-auto mb-12">
             <div className="bg-gradient-to-br from-[#E8EEF2] to-white dark:from-gray-800 dark:to-gray-800 rounded-2xl p-8 border border-[#C8D8E4] dark:border-gray-700 shadow-lg text-center">
               <div className="text-5xl mb-4">📖</div>
-              <h2 className="text-xl sm:text-2xl font-bold text-[#2D3436] dark:text-gray-100 mb-2">Stories from the Community</h2>
+              <h2 className="text-heading-2 text-[#2D3436] dark:text-gray-100 mb-2">Stories from the Community</h2>
               <p className="text-sm text-slate-500 dark:text-gray-400 leading-relaxed mb-6 max-w-md mx-auto">
                 Read stories of hope, resilience, and recovery written by people in our community.
               </p>
@@ -246,7 +250,7 @@ export default function Home() {
 
           {/* Key Features */}
           <div className="max-w-4xl mx-auto mb-12">
-            <h2 className="text-2xl sm:text-3xl font-bold text-rb-dark dark:text-gray-100 mb-3 text-center">
+            <h2 className="text-heading-2 text-rb-dark dark:text-gray-100 mb-3 text-center">
               Built for Real Life
             </h2>
             <p className="text-base text-rb-gray dark:text-gray-400 text-center mb-8 max-w-2xl mx-auto leading-relaxed">
@@ -256,7 +260,7 @@ export default function Home() {
               <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-md border border-rb-blue-light dark:border-gray-700 text-left flex gap-4 items-start">
                 <span className="text-3xl flex-shrink-0" role="img" aria-label="Magnifying glass">🔍</span>
                 <div>
-                  <h3 className="font-bold text-rb-dark dark:text-gray-100 mb-1">Find the Right Listener</h3>
+                  <h3 className="text-heading-4 text-rb-dark dark:text-gray-100 mb-1">Find the Right Listener</h3>
                   <p className="text-sm text-rb-gray dark:text-gray-400 leading-relaxed">Browse a directory of listeners by specialty—early recovery, relapse prevention, grief, trauma, veterans support, and more. Read their bios and choose someone who resonates with your journey before you even connect.</p>
                 </div>
               </div>
@@ -264,7 +268,7 @@ export default function Home() {
               <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-md border border-rb-blue-light dark:border-gray-700 text-left flex gap-4 items-start">
                 <span className="text-3xl flex-shrink-0" role="img" aria-label="Bell">🔔</span>
                 <div>
-                  <h3 className="font-bold text-rb-dark dark:text-gray-100 mb-1">Instant Listener Alerts</h3>
+                  <h3 className="text-heading-4 text-rb-dark dark:text-gray-100 mb-1">Instant Listener Alerts</h3>
                   <p className="text-sm text-rb-gray dark:text-gray-400 leading-relaxed">The moment you ask for support, available listeners are notified in real time—on their phone or computer. If no one connects right away, we keep notifying listeners every couple of minutes until someone shows up.</p>
                 </div>
               </div>
@@ -272,7 +276,7 @@ export default function Home() {
               <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-md border border-rb-blue-light dark:border-gray-700 text-left flex gap-4 items-start">
                 <span className="text-3xl flex-shrink-0" role="img" aria-label="Speech bubble">💬</span>
                 <div>
-                  <h3 className="font-bold text-rb-dark dark:text-gray-100 mb-1">Real-Time Private Chat</h3>
+                  <h3 className="text-heading-4 text-rb-dark dark:text-gray-100 mb-1">Real-Time Private Chat</h3>
                   <p className="text-sm text-rb-gray dark:text-gray-400 leading-relaxed">Once connected, you&apos;re in a live one-on-one conversation. Messages appear instantly, just like texting a friend—but with someone who truly understands.</p>
                 </div>
               </div>
@@ -280,7 +284,7 @@ export default function Home() {
               <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-md border border-rb-blue-light dark:border-gray-700 text-left flex gap-4 items-start">
                 <span className="text-3xl flex-shrink-0" role="img" aria-label="Mobile phone">📱</span>
                 <div>
-                  <h3 className="font-bold text-rb-dark dark:text-gray-100 mb-1">Works Like a Mobile App</h3>
+                  <h3 className="text-heading-4 text-rb-dark dark:text-gray-100 mb-1">Works Like a Mobile App</h3>
                   <p className="text-sm text-rb-gray dark:text-gray-400 leading-relaxed">Install RecoveryBridge on your phone&apos;s home screen for instant access—no app store required. It works offline-ready and feels native on iOS and Android.</p>
                 </div>
               </div>
@@ -288,7 +292,7 @@ export default function Home() {
               <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-md border border-rb-blue-light dark:border-gray-700 text-left flex gap-4 items-start">
                 <span className="text-3xl flex-shrink-0" role="img" aria-label="Calendar with check">🗓️</span>
                 <div>
-                  <h3 className="font-bold text-rb-dark dark:text-gray-100 mb-1">Listeners Set Their Own Schedule</h3>
+                  <h3 className="text-heading-4 text-rb-dark dark:text-gray-100 mb-1">Listeners Set Their Own Schedule</h3>
                   <p className="text-sm text-rb-gray dark:text-gray-400 leading-relaxed">Volunteers control when they&apos;re available. Set quiet hours so you&apos;re not disturbed overnight, and step in whenever you have capacity to give back.</p>
                 </div>
               </div>
@@ -296,7 +300,7 @@ export default function Home() {
               <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-md border border-rb-blue-light dark:border-gray-700 text-left flex gap-4 items-start">
                 <span className="text-3xl flex-shrink-0" role="img" aria-label="Shield">🛡️</span>
                 <div>
-                  <h3 className="font-bold text-rb-dark dark:text-gray-100 mb-1">Safe &amp; Moderated</h3>
+                  <h3 className="text-heading-4 text-rb-dark dark:text-gray-100 mb-1">Safe &amp; Moderated</h3>
                   <p className="text-sm text-rb-gray dark:text-gray-400 leading-relaxed">Community safety guidelines, user reporting, and an active moderation team keep RecoveryBridge a respectful and supportive space for everyone.</p>
                 </div>
               </div>
@@ -307,7 +311,7 @@ export default function Home() {
           <div className="max-w-3xl mx-auto mb-12">
             <div className="bg-gradient-to-br from-rb-blue to-rb-blue-dark rounded-2xl p-8 shadow-xl text-center">
               <div className="text-5xl mb-4">🎧</div>
-              <h2 className="text-2xl sm:text-3xl font-bold text-white mb-3">
+              <h2 className="text-heading-2 text-white mb-3">
                 Are You in Long-Term Recovery?
               </h2>
               <p className="text-base text-white/90 leading-relaxed mb-3 max-w-xl mx-auto">
@@ -327,7 +331,7 @@ export default function Home() {
 
           {/* Who We Serve */}
           <div className="max-w-3xl mx-auto mb-12">
-            <h2 className="text-2xl sm:text-3xl font-bold text-rb-dark dark:text-gray-100 mb-6 text-center">
+            <h2 className="text-heading-2 text-rb-dark dark:text-gray-100 mb-6 text-center">
               Who RecoveryBridge Serves
             </h2>
             <div className="bg-gradient-to-br from-white to-rb-blue-light dark:from-gray-800 dark:to-gray-800 rounded-2xl p-8 shadow-lg border-2 border-rb-blue-light dark:border-gray-700">
