@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, Suspense } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Heading1, Body16, Body18 } from '@/components/ui/Typography'
+import { Heading1, Heading2, Heading4, Body16, Body18 } from '@/components/ui/Typography'
 import { SkeletonRoleCard } from '@/components/Skeleton'
 import ErrorState from '@/components/ErrorState'
 import Footer from '@/components/Footer'
@@ -702,7 +702,7 @@ function DashboardContent() {
               />
             )}
             <div className="flex-1 min-w-0">
-              <Heading1 className="text-base sm:text-xl md:text-2xl break-words mb-1">Welcome back, {profile?.display_name}!</Heading1>
+              <Heading2 className="break-words mb-1">Welcome back, {profile?.display_name}!</Heading2>
               <Body16 className="text-rb-gray dark:text-gray-400 font-medium italic text-sm mb-2">"{profile?.tagline || 'Your story matters here'}"</Body16>
               {profile?.user_role && (
                 <span className="inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rb-blue/10 text-rb-blue dark:bg-blue-900/30 dark:text-blue-300">
@@ -929,7 +929,7 @@ function DashboardContent() {
               boxShadow: '0 10px 25px -5px rgba(90, 122, 140, 0.3), 0 8px 10px -6px rgba(90, 122, 140, 0.2)'
             } : {}}
           >
-            <Body18 className="font-bold text-rb-blue mb-2 text-lg">I'm Here To Listen</Body18>
+            <Heading4 className="text-rb-blue mb-2">I'm Here To Listen</Heading4>
             <Body16 className="text-rb-gray dark:text-gray-400 text-sm mb-4">Offer support and connection to others</Body16>
             {profile?.role_state === 'available' ? (
               <div className="flex items-center justify-center gap-2 px-4 py-2 bg-white/70 dark:bg-gray-800/70 rounded-xl">
@@ -954,7 +954,7 @@ function DashboardContent() {
               boxShadow: '0 10px 25px -5px rgba(184, 169, 201, 0.4), 0 8px 10px -6px rgba(184, 169, 201, 0.3)'
             } : {}}
           >
-            <Body18 className="font-bold text-rb-purple mb-2 text-lg">I Need Support</Body18>
+            <Heading4 className="text-rb-purple mb-2">I Need Support</Heading4>
             <Body16 className="text-rb-gray dark:text-gray-400 text-sm mb-4">Connect with someone who understands</Body16>
             {profile?.role_state === 'requesting' ? (
               <div className="space-y-3" aria-live="polite">
@@ -995,7 +995,7 @@ function DashboardContent() {
           <div className="bg-white dark:bg-gray-800 rounded-lg p-5 shadow-sm mb-6">
             <div className="flex items-center gap-2 mb-4">
               <span className="text-amber-400 text-lg">⭐</span>
-              <Body18 className="font-semibold text-rb-dark dark:text-gray-100">My Favorites</Body18>
+              <Heading4 className="text-rb-dark dark:text-gray-100">My Favorites</Heading4>
             </div>
             <div className="space-y-2">
               {favorites.map(fav => {
@@ -1074,7 +1074,7 @@ function DashboardContent() {
         {/* Active Sessions */}
         {activeSessions.length > 0 && (
           <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm mb-8">
-            <Body18 className="font-semibold text-rb-dark dark:text-gray-100 mb-4">Active Conversations</Body18>
+            <Heading4 className="text-rb-dark dark:text-gray-100 mb-4">Active Conversations</Heading4>
             <div className="space-y-2" role="list" aria-label="Active chat sessions">
               {activeSessions.map((session) => (
                 <button
@@ -1109,7 +1109,7 @@ function DashboardContent() {
               aria-expanded={recentOpen}
               className="w-full flex items-center justify-between px-6 py-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
             >
-              <Body18 className="font-semibold text-rb-dark dark:text-gray-100">Recent Conversations</Body18>
+              <Heading4 className="text-rb-dark dark:text-gray-100">Recent Conversations</Heading4>
               <span className={`text-gray-400 dark:text-gray-500 transition-transform duration-200 ${recentOpen ? 'rotate-180' : ''}`}>
                 ▾
               </span>
@@ -1172,7 +1172,7 @@ function DashboardContent() {
           <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-sm w-full p-6">
             <div className="text-center mb-5">
               <span className="text-4xl block mb-3" aria-hidden="true">🙏</span>
-              <h2 id="offline-confirm-title" className="text-lg font-bold text-rb-dark dark:text-gray-100 mb-2">
+              <h2 id="offline-confirm-title" className="heading-4 text-rb-dark dark:text-gray-100 mb-2">
                 Someone is waiting for support
               </h2>
               <p className="text-sm text-rb-gray dark:text-gray-400 leading-relaxed">

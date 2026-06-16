@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
-import { Heading1, Body16, Body18 } from '@/components/ui/Typography'
+import { Heading1, Heading2, Body16, Body18 } from '@/components/ui/Typography'
 import AvatarUpload from '@/components/AvatarUpload'
 import Modal from '@/components/Modal'
 import { SkeletonProfile } from '@/components/Skeleton'
@@ -1294,7 +1294,7 @@ export default function ProfilePage() {
           <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 max-w-md w-full shadow-2xl">
             <div className="flex items-center gap-2 mb-4">
               <span className="text-3xl" role="img" aria-label="Warning">⚠️</span>
-              <Heading1 className="text-2xl dark:text-gray-100">Delete Account</Heading1>
+              <Heading2 className="dark:text-gray-100">Delete Account</Heading2>
             </div>
 
             <Body16 className="mb-4 text-red-700 dark:text-red-300">

@@ -290,7 +290,7 @@ export default function ListenersPage() {
             </button>
             <div className="flex items-center gap-3 mb-2">
               <span className="text-3xl" role="img" aria-label="Headphones">🎧</span>
-              <Heading1 className="text-2xl sm:text-3xl">Available Listeners</Heading1>
+              <Heading1>Available Listeners</Heading1>
             </div>
             <Body16 className="text-rb-gray italic">&ldquo;Your story matters here&rdquo;</Body16>
             <Body16 className="text-rb-gray mt-2">Connect with someone who&apos;s here to support you</Body16>
