@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { Heading1, Body16, Body18 } from '@/components/ui/Typography'
@@ -151,7 +152,7 @@ export default function TrainingPage() {
       <div className="w-full max-w-2xl bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 sm:p-8 md:p-10">
 
         <div className="text-center mb-6">
-          <img src="/logo-with-text.png" alt="RecoveryBridge Logo" className="mx-auto mb-4 max-w-[400px] w-full" />
+          <Image src="/logo-with-text.png" alt="RecoveryBridge Logo" width={400} height={190} className="mx-auto mb-4 max-w-[400px] w-full h-auto" />
           <Body16 className="text-gray-500 dark:text-gray-500">Listener Training</Body16>
         </div>
 

@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Image from 'next/image'
 import Link from 'next/link'
 import Footer from '@/components/Footer'
 import ProductPreview from '@/components/ProductPreview'
@@ -92,11 +93,13 @@ export default function Home() {
         <div className="max-w-4xl w-full text-center">
           {/* Logo/Title */}
           <div className="mb-8 sm:mb-10">
-            <img
+            <Image
               src="/logo-with-text.png"
               alt="RecoveryBridge"
-              className="mx-auto mb-5"
-              style={{ width: '500px', maxWidth: '90%' }}
+              width={500}
+              height={238}
+              priority
+              className="mx-auto mb-5 max-w-[90%] h-auto"
             />
             <h1 className="text-heading-2 sm:text-heading-1 text-rb-dark dark:text-gray-100 mb-2">
               Free Peer Support for Addiction Recovery

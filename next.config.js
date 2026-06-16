@@ -12,6 +12,15 @@ const MIGRATED_STORY_SLUGS = [
 ]
 
 const nextConfig = {
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '**.supabase.co',
+        pathname: '/storage/v1/object/public/**',
+      },
+    ],
+  },
   // Load Sentry's server SDK and its OpenTelemetry/Prisma instrumentation at runtime
   // via Node require instead of bundling them with webpack. Bundling this tree makes
   // `next dev` route compilation extremely slow.

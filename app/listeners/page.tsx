@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { TIME, SPECIALTY_TAGS } from '@/lib/constants'
+import Image from 'next/image'
 import { Heading1, Body16, Body18 } from '@/components/ui/Typography'
 import Modal from '@/components/Modal'
 import { SkeletonListenerCard } from '@/components/Skeleton'
@@ -417,9 +418,11 @@ export default function ListenersPage() {
                     <div className="flex gap-4 items-start">
                       {/* Avatar */}
                       {listener.avatar_url ? (
-                        <img
+                        <Image
                           src={listener.avatar_url}
                           alt={listener.display_name}
+                          width={80}
+                          height={80}
                           className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover border-3 border-rb-blue flex-shrink-0 shadow-md"
                         />
                       ) : (
@@ -583,9 +586,11 @@ export default function ListenersPage() {
               {/* Avatar */}
               <div className="flex justify-center">
                 {previewProfile.avatar_url ? (
-                  <img
+                  <Image
                     src={previewProfile.avatar_url}
                     alt={previewProfile.display_name}
+                    width={96}
+                    height={96}
                     className="w-24 h-24 rounded-full object-cover border-4 border-rb-blue shadow-lg"
                   />
                 ) : (

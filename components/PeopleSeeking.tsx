@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { Body16, Body18 } from '@/components/ui/Typography'
 import ErrorState from '@/components/ErrorState'
 import Modal from '@/components/Modal'
@@ -271,9 +272,11 @@ export default function PeopleSeeking({ currentUserId, currentRoleState }: Peopl
               className="flex-shrink-0 rounded-full focus:outline-none focus:ring-2 focus:ring-purple-400"
             >
               {seeker.avatar_url ? (
-                <img
+                <Image
                   src={seeker.avatar_url}
                   alt={seeker.display_name}
+                  width={40}
+                  height={40}
                   className="w-10 h-10 rounded-full object-cover"
                 />
               ) : (
@@ -358,9 +361,11 @@ export default function PeopleSeeking({ currentUserId, currentRoleState }: Peopl
             {/* Avatar + name */}
             <div className="flex items-center gap-3">
               {profilePreview.avatar_url ? (
-                <img
+                <Image
                   src={profilePreview.avatar_url}
                   alt={profilePreview.display_name}
+                  width={56}
+                  height={56}
                   className="w-14 h-14 rounded-full object-cover flex-shrink-0"
                 />
               ) : (

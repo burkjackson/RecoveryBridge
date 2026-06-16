@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { Heading1, Heading2, Body16, Body18 } from '@/components/ui/Typography'
 import AvatarUpload from '@/components/AvatarUpload'
 import Modal from '@/components/Modal'
@@ -1011,9 +1012,11 @@ export default function ProfilePage() {
                     <div key={fav.id} className="flex items-center gap-3">
                       {/* Avatar */}
                       {fav.favorite_profile.avatar_url ? (
-                        <img
+                        <Image
                           src={fav.favorite_profile.avatar_url}
                           alt={fav.favorite_profile.display_name}
+                          width={40}
+                          height={40}
                           className="w-10 h-10 rounded-full object-cover flex-shrink-0"
                         />
                       ) : (
@@ -1185,9 +1188,11 @@ export default function ProfilePage() {
                       <div key={note.id} className="flex items-start gap-3">
                         {/* Avatar */}
                         {note.sender_profile.avatar_url ? (
-                          <img
+                          <Image
                             src={note.sender_profile.avatar_url}
                             alt={note.sender_profile.display_name}
+                            width={32}
+                            height={32}
                             className="w-8 h-8 rounded-full object-cover flex-shrink-0 mt-0.5"
                           />
                         ) : (

@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { Heading1, Body16, Body18 } from '@/components/ui/Typography'
 import Modal from '@/components/Modal'
 import { SkeletonChatMessage } from '@/components/Skeleton'
@@ -1322,9 +1323,11 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
               {/* Avatar */}
               {otherUserProfile.avatar_url ? (
                 <div className="flex justify-center">
-                  <img
+                  <Image
                     src={otherUserProfile.avatar_url}
                     alt={otherUserName}
+                    width={96}
+                    height={96}
                     className="w-24 h-24 rounded-full object-cover border-4 border-rb-blue shadow-lg"
                   />
                 </div>

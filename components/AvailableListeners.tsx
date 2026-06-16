@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import Image from 'next/image'
 import { Body16, Body18 } from '@/components/ui/Typography'
 import ErrorState from '@/components/ErrorState'
 import Modal from '@/components/Modal'
@@ -309,9 +310,11 @@ export default function AvailableListeners({ onCountChange, currentUserId, curre
         {currentUserProfile?.role_state === 'available' && (
           <div className="flex items-center gap-3 p-3 rounded-lg border-2 border-dashed border-rb-blue/40 bg-rb-blue-light/40 dark:bg-gray-700/40">
             {currentUserProfile.avatar_url ? (
-              <img
+              <Image
                 src={currentUserProfile.avatar_url}
                 alt={currentUserProfile.display_name}
+                width={40}
+                height={40}
                 className="w-10 h-10 rounded-full object-cover flex-shrink-0"
               />
             ) : (
@@ -360,9 +363,11 @@ export default function AvailableListeners({ onCountChange, currentUserId, curre
               className="flex-shrink-0"
             >
               {listener.avatar_url ? (
-                <img
+                <Image
                   src={listener.avatar_url}
                   alt={listener.display_name}
+                  width={40}
+                  height={40}
                   className="w-10 h-10 rounded-full object-cover hover:opacity-80 transition-opacity"
                 />
               ) : (
@@ -453,9 +458,11 @@ export default function AvailableListeners({ onCountChange, currentUserId, curre
             {/* Avatar + status */}
             <div className="flex items-center gap-3">
               {profilePreview.avatar_url ? (
-                <img
+                <Image
                   src={profilePreview.avatar_url}
                   alt={profilePreview.display_name}
+                  width={56}
+                  height={56}
                   className="w-14 h-14 rounded-full object-cover flex-shrink-0"
                 />
               ) : (

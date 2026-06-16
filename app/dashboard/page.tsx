@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, Suspense } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter, useSearchParams } from 'next/navigation'
+import Image from 'next/image'
 import { Heading1, Heading2, Heading4, Body16, Body18 } from '@/components/ui/Typography'
 import { SkeletonRoleCard } from '@/components/Skeleton'
 import ErrorState from '@/components/ErrorState'
@@ -695,9 +696,11 @@ function DashboardContent() {
           <div className="flex gap-3 items-start mb-4">
             {/* Avatar */}
             {profile?.avatar_url && (
-              <img
+              <Image
                 src={profile.avatar_url}
                 alt={profile.display_name}
+                width={80}
+                height={80}
                 className="w-14 h-14 sm:w-20 sm:h-20 rounded-full object-cover border-4 border-rb-blue flex-shrink-0 shadow-md"
               />
             )}
@@ -1010,7 +1013,7 @@ function DashboardContent() {
                   <div key={fav.id} className="flex items-center gap-3 p-3 bg-amber-50/40 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-800/40 rounded-lg">
                     {/* Avatar */}
                     {fp.avatar_url ? (
-                      <img src={fp.avatar_url} alt={fp.display_name}
+                      <Image src={fp.avatar_url} alt={fp.display_name} width={40} height={40}
                         className="w-10 h-10 rounded-full object-cover flex-shrink-0" />
                     ) : (
                       <div className="w-10 h-10 rounded-full bg-rb-blue flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
