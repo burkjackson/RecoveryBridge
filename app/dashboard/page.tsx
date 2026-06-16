@@ -1041,7 +1041,7 @@ function DashboardContent() {
         )}
 
         {/* Available Listeners */}
-        <AvailableListeners onCountChange={setAvailableListenerCount} currentUserId={profile?.id} currentRoleState={profile?.role_state} />
+        <AvailableListeners onCountChange={setAvailableListenerCount} currentUserId={profile?.id} currentRoleState={profile?.role_state} currentUserProfile={profile} />
 
         {/* Discover more listeners */}
         <div className="mb-6 text-center">

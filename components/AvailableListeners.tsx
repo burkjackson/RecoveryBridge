@@ -7,6 +7,7 @@ import { Body16, Body18 } from '@/components/ui/Typography'
 import ErrorState from '@/components/ErrorState'
 import Modal from '@/components/Modal'
 import { TIME, UI } from '@/lib/constants'
+import type { Profile } from '@/lib/types/database'
 
 interface Listener {
   id: string
@@ -24,9 +25,10 @@ interface AvailableListenersProps {
   onCountChange?: (count: number) => void
   currentUserId?: string
   currentRoleState?: string | null
+  currentUserProfile?: Profile | null
 }
 
-export default function AvailableListeners({ onCountChange, currentUserId }: AvailableListenersProps) {
+export default function AvailableListeners({ onCountChange, currentUserId, currentUserProfile }: AvailableListenersProps) {
   const router = useRouter()
   const [listeners, setListeners] = useState<Listener[]>([])
   const [loading, setLoading] = useState(true)
@@ -273,7 +275,9 @@ export default function AvailableListeners({ onCountChange, currentUserId }: Ava
     )
   }
 
-  if (listeners.length === 0) {
+  // When the current user is available themselves, fall through to the main view
+  // so we can show their own "You're visible" card even if no one else is online.
+  if (listeners.length === 0 && currentUserProfile?.role_state !== 'available') {
     return (
       <div className="bg-white dark:bg-gray-800 rounded-lg p-5 shadow-sm mb-6">
         <Body18 className="font-semibold text-gray-900 dark:text-gray-100 mb-3">Available Listeners</Body18>
@@ -300,6 +304,50 @@ export default function AvailableListeners({ onCountChange, currentUserId }: Ava
       </div>
 
       <div className="space-y-2">
+        {/* Your own card — confirms you're listed and shows how seekers see you.
+            Not connectable (no Connect button); use Edit profile instead. */}
+        {currentUserProfile?.role_state === 'available' && (
+          <div className="flex items-center gap-3 p-3 rounded-lg border-2 border-dashed border-rb-blue/40 bg-rb-blue-light/40 dark:bg-gray-700/40">
+            {currentUserProfile.avatar_url ? (
+              <img
+                src={currentUserProfile.avatar_url}
+                alt={currentUserProfile.display_name}
+                className="w-10 h-10 rounded-full object-cover flex-shrink-0"
+              />
+            ) : (
+              <div className="w-10 h-10 rounded-full bg-rb-blue flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                {currentUserProfile.display_name.charAt(0).toUpperCase()}
+              </div>
+            )}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <Body16 className="font-semibold text-gray-900 dark:text-gray-100 truncate">{currentUserProfile.display_name}</Body16>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide bg-rb-blue text-white flex-shrink-0">You</span>
+                <span className="w-2 h-2 bg-green-500 rounded-full flex-shrink-0" aria-hidden="true"></span>
+              </div>
+              <Body16 className="text-xs text-rb-gray dark:text-gray-400">
+                You&apos;re visible to people seeking support right now — this is how they see you.
+              </Body16>
+            </div>
+            <button
+              onClick={() => router.push('/profile')}
+              aria-label="Edit your profile"
+              className="min-h-[44px] px-3 py-2 rounded-lg text-sm font-semibold border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all flex-shrink-0 whitespace-nowrap"
+            >
+              Edit profile
+            </button>
+          </div>
+        )}
+
+        {/* If you're the only one available, reassure rather than show an empty list */}
+        {listeners.length === 0 && (
+          <div className="text-center py-4">
+            <Body16 className="text-sm text-rb-gray dark:text-gray-400">
+              You&apos;re the only listener online right now — seekers can still reach you.
+            </Body16>
+          </div>
+        )}
+
         {listeners.slice(0, 5).map((listener) => (
           <div
             key={listener.id}
