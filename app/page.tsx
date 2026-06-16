@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import Footer from '@/components/Footer'
 import ProductPreview from '@/components/ProductPreview'
+import FaqAccordion from '@/components/FaqAccordion'
 
 export const metadata: Metadata = {
   title: 'RecoveryBridge — Free Peer Support for Addiction Recovery',
@@ -227,6 +228,9 @@ export default function Home() {
             </div>
           </div>
 
+          {/* FAQ Accordion */}
+          <FaqAccordion />
+
           {/* Stories Section */}
           <div className="max-w-3xl mx-auto mb-12">
             <div className="bg-gradient-to-br from-[#E8EEF2] to-white dark:from-gray-800 dark:to-gray-800 rounded-2xl p-8 border border-[#C8D8E4] dark:border-gray-700 shadow-lg text-center">
@@ -326,34 +330,6 @@ export default function Home() {
               >
                 Become a Listener →
               </Link>
-            </div>
-          </div>
-
-          {/* Who We Serve */}
-          <div className="max-w-3xl mx-auto mb-12">
-            <h2 className="text-heading-2 text-rb-dark dark:text-gray-100 mb-6 text-center">
-              Who RecoveryBridge Serves
-            </h2>
-            <div className="bg-gradient-to-br from-white to-rb-blue-light dark:from-gray-800 dark:to-gray-800 rounded-2xl p-8 shadow-lg border-2 border-rb-blue-light dark:border-gray-700">
-              <ul className="space-y-8">
-                <li className="flex flex-col items-center text-center">
-                  <span className="text-5xl mb-3" role="img" aria-label="Star">🌟</span>
-                  <strong className="text-rb-dark dark:text-gray-100 mb-2 text-lg">Person in Recovery</strong>
-                  <p className="text-sm text-rb-gray dark:text-gray-400 leading-relaxed">From substance abuse, behavioral addictions, or any form of recovery journey</p>
-                </li>
-                <div className="border-t border-rb-blue-light dark:border-gray-700"></div>
-                <li className="flex flex-col items-center text-center">
-                  <span className="text-5xl mb-3" role="img" aria-label="Handshake">🤝</span>
-                  <strong className="text-rb-dark dark:text-gray-100 mb-2 text-lg">Allies &amp; Long-Term Recovery Advocates</strong>
-                  <p className="text-sm text-rb-gray dark:text-gray-400 leading-relaxed">Supporters who may not be in recovery themselves but are deeply committed to the cause—family members, friends, community advocates, and others who want to show up for people on their journey</p>
-                </li>
-                <div className="border-t border-rb-blue-light dark:border-gray-700"></div>
-                <li className="flex flex-col items-center text-center">
-                  <span className="text-5xl mb-3" role="img" aria-label="Stethoscope">🩺</span>
-                  <strong className="text-rb-dark dark:text-gray-100 mb-2 text-lg">Recovery Professionals</strong>
-                  <p className="text-sm text-rb-gray dark:text-gray-400 leading-relaxed">Counselors, coaches, social workers, and healthcare providers who want to extend their reach and support people between sessions</p>
-                </li>
-              </ul>
             </div>
           </div>
 
