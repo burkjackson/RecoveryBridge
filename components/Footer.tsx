@@ -9,6 +9,19 @@ export default function Footer({ className = '' }: FooterProps) {
   return (
     <footer className={`mt-8 pt-6 pb-24 px-4 border-t border-gray-200 dark:border-gray-700 ${className}`}>
       <div className="max-w-4xl mx-auto">
+        {/* Support Us Button */}
+        <div className="text-center mb-6">
+          <a
+            href="/donate"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-rb-blue text-white font-semibold rounded-full hover:bg-rb-blue-hover transition shadow-md"
+          >
+            <span>💙 Donate</span>
+          </a>
+          <p className="text-xs text-rb-gray dark:text-gray-400 mt-2">
+            RecoveryBridge is free for everyone. Your tax-deductible gift keeps it that way.
+          </p>
+        </div>
+
         {/* Social */}
         <div className="flex flex-wrap justify-center gap-3 mb-6">
           <a
@@ -60,19 +73,6 @@ export default function Footer({ className = '' }: FooterProps) {
           </div>
           <p className="text-sm text-rb-gray dark:text-gray-400 max-w-md mx-auto">
             Your data is encrypted and never sold. We share it only with trusted service providers who help us run RecoveryBridge. We're committed to protecting your privacy.
-          </p>
-        </div>
-
-        {/* Support Us Button */}
-        <div className="text-center mb-6">
-          <a
-            href="/donate"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-rb-blue text-white font-semibold rounded-full hover:bg-rb-blue-hover transition shadow-md"
-          >
-            <span>💙 Donate</span>
-          </a>
-          <p className="text-xs text-rb-gray dark:text-gray-400 mt-2">
-            RecoveryBridge is free for everyone. Your tax-deductible gift keeps it that way.
           </p>
         </div>
 
