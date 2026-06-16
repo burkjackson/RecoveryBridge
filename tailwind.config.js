@@ -26,9 +26,18 @@ module.exports = {
         },
       },
       fontSize: {
-        'heading-1': ['30px', { lineHeight: '1.2', fontWeight: '700' }],
-        'body-16': ['16px', { lineHeight: '1.5', fontWeight: '400' }],
-        'body-18': ['18px', { lineHeight: '1.5', fontWeight: '600' }],
+        // Semantic type scale — prefer these (or the Typography components /
+        // utility classes) over ad-hoc text-2xl/text-3xl so hierarchy stays
+        // consistent across the app.
+        'display': ['44px', { lineHeight: '1.05', fontWeight: '800' }],   // hero moments
+        'heading-1': ['30px', { lineHeight: '1.2', fontWeight: '700' }],  // page titles
+        'heading-2': ['24px', { lineHeight: '1.25', fontWeight: '700' }], // section titles
+        'heading-3': ['20px', { lineHeight: '1.3', fontWeight: '600' }],  // subsections / card titles
+        'heading-4': ['18px', { lineHeight: '1.35', fontWeight: '600' }], // small headings / labels
+        'body-18': ['18px', { lineHeight: '1.5', fontWeight: '600' }],    // large body
+        'body-16': ['16px', { lineHeight: '1.5', fontWeight: '400' }],    // default body
+        'body-14': ['14px', { lineHeight: '1.5', fontWeight: '400' }],    // secondary body
+        'caption': ['12px', { lineHeight: '1.4', fontWeight: '500' }],    // captions / metadata
       },
     },
   },

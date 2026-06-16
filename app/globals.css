@@ -33,17 +33,41 @@ body {
   color: #F9FAFB;
 }
 
-/* Typography Utilities */
+/* Typography Utilities — semantic type scale (pairs with components/ui/Typography) */
+.display {
+  @apply text-display text-rb-dark;
+}
+
 .heading-1 {
   @apply text-heading-1 text-rb-dark;
+}
+
+.heading-2 {
+  @apply text-heading-2 text-rb-dark;
+}
+
+.heading-3 {
+  @apply text-heading-3 text-rb-dark;
+}
+
+.heading-4 {
+  @apply text-heading-4 text-rb-dark;
+}
+
+.body-18 {
+  @apply text-body-18 text-rb-dark;
 }
 
 .body-16 {
   @apply text-body-16 text-rb-gray;
 }
 
-.body-18 {
-  @apply text-body-18 text-rb-dark;
+.body-14 {
+  @apply text-body-14 text-rb-gray;
+}
+
+.caption {
+  @apply text-caption text-rb-gray;
 }
 
 /* Accessibility - Skip to Main Content Link */
