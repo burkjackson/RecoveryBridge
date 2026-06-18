@@ -698,6 +698,20 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
     return grouped
   }
 
+  // Most recent message (from either party) containing crisis language, if any.
+  // Only re-scan when the message list changes, not on every re-render.
+  // NOTE: This hook must run on every render — keep it ABOVE the early `loading`
+  // return below, or React throws "Rendered more hooks than during the previous
+  // render" the moment loading flips false (crashes the whole chat page).
+  const latestCrisisMessage = useMemo(
+    () => [...messages].reverse().find((m) => containsCrisisLanguage(m.content)),
+    [messages]
+  )
+  const showCrisisBanner =
+    session?.status === 'active' &&
+    !!latestCrisisMessage &&
+    latestCrisisMessage.id !== dismissedCrisisMsgId
+
   if (loading) {
     return (
       <>
@@ -730,17 +744,6 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
       </>
     )
   }
-
-  // Most recent message (from either party) containing crisis language, if any.
-  // Only re-scan when the message list changes, not on every re-render
-  const latestCrisisMessage = useMemo(
-    () => [...messages].reverse().find((m) => containsCrisisLanguage(m.content)),
-    [messages]
-  )
-  const showCrisisBanner =
-    session?.status === 'active' &&
-    !!latestCrisisMessage &&
-    latestCrisisMessage.id !== dismissedCrisisMsgId
 
   return (
     <>
