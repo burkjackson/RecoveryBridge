@@ -101,13 +101,17 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
     }
   }, [sessionId])
 
+  // Depend on session?.id (stable) rather than the whole session object, which is
+  // replaced on every realtime sessions UPDATE. Otherwise a status change (e.g.
+  // active -> ended) tears down and rebuilds the channel, reloads all messages,
+  // and can drop an in-flight typing/read broadcast mid-conversation.
   useEffect(() => {
     if (session && currentUserId) {
       loadMessages() // also calls loadReactions() internally with the fetched IDs
       const cleanup = subscribeToMessages()
       return cleanup
     }
-  }, [session, currentUserId])
+  }, [session?.id, currentUserId])
 
   useEffect(() => {
     if (messages.length > prevMessageCountRef.current) {
@@ -121,7 +125,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
     if (messages.length > 0 && currentUserId && session?.status === 'active') {
       markMessagesAsRead()
     }
-  }, [messages, currentUserId])
+  }, [messages, currentUserId, session?.status])
 
   // Close reaction picker when tapping outside
   useEffect(() => {
