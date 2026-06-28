@@ -334,7 +334,7 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
   if (!supported && !isMobile) {
     return (
       <div className="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-700">
-        <Body16 className="text-sm text-rb-gray dark:text-gray-400">
+        <Body16 className="text-sm text-rb-gray dark:text-gray-300">
           <strong>🔔 Push notifications</strong> aren&apos;t supported in this browser. Try Chrome or Edge for desktop notifications.
         </Body16>
       </div>
@@ -350,10 +350,10 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
             <Body16 className="font-semibold text-[#2D3436] dark:text-gray-100 mb-2">
               Enable Notifications on iOS
             </Body16>
-            <Body16 className="text-sm text-rb-gray dark:text-gray-400 mb-2">
+            <Body16 className="text-sm text-rb-gray dark:text-gray-300 mb-2">
               To receive notifications on iPhone/iPad, you need to install RecoveryBridge to your home screen:
             </Body16>
-            <ol className="text-sm text-rb-gray dark:text-gray-400 space-y-1 ml-4">
+            <ol className="text-sm text-rb-gray dark:text-gray-300 space-y-1 ml-4">
               <li>1. Tap the <strong>Share</strong> button (□↑) in Safari</li>
               <li>2. Scroll down and tap <strong>"Add to Home Screen"</strong></li>
               <li>3. Tap <strong>"Add"</strong></li>
@@ -379,7 +379,7 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
           <span className="text-2xl">🔔</span>
           <div>
             <Body16 className="font-semibold text-[#2D3436] dark:text-gray-100">Push Notifications</Body16>
-            <Body16 className="text-xs text-rb-gray dark:text-gray-400">
+            <Body16 className="text-xs text-rb-gray dark:text-gray-300">
               {isSubscribed ? (
                 <span className="text-green-700 font-medium">✓ Enabled{alwaysAvailable ? ' · Always Available' : ''}</span>
               ) : (
@@ -388,13 +388,13 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
             </Body16>
           </div>
         </div>
-        <span className="text-gray-400 dark:text-gray-500 text-sm flex-shrink-0">{expanded ? '▲' : '▼'}</span>
+        <span className="text-gray-400 dark:text-gray-300 text-sm flex-shrink-0">{expanded ? '▲' : '▼'}</span>
       </button>
 
       {/* Collapsible Body */}
       {expanded && (
         <div className="px-4 pb-4">
-          <Body16 className="text-sm text-rb-gray dark:text-gray-400 mb-3">
+          <Body16 className="text-sm text-rb-gray dark:text-gray-300 mb-3">
             Get notified when someone needs support, even when RecoveryBridge isn&apos;t open.
           </Body16>
 
@@ -462,7 +462,7 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
               <div className="flex gap-2">
                 <button
                   onClick={() => setShowNotificationContext(false)}
-                  className="flex-1 min-h-[44px] py-2 rounded-full border border-gray-300 dark:border-gray-600 text-sm text-gray-600 dark:text-gray-400 hover:border-gray-400 transition"
+                  className="flex-1 min-h-[44px] py-2 rounded-full border border-gray-300 dark:border-gray-600 text-sm text-gray-600 dark:text-gray-300 hover:border-gray-400 transition"
                 >
                   Not now
                 </button>
@@ -558,14 +558,14 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
                   <label
                     htmlFor="alwaysAvailable"
                     className={`block font-medium ${
-                      !isSubscribed ? 'text-gray-400 dark:text-gray-500' : 'text-gray-900 dark:text-gray-100 cursor-pointer'
+                      !isSubscribed ? 'text-gray-400 dark:text-gray-300' : 'text-gray-900 dark:text-gray-100 cursor-pointer'
                     }`}
                   >
                     Always Available to Listen
                   </label>
                   <button
                     onClick={() => setShowAlwaysAvailableInfo(!showAlwaysAvailableInfo)}
-                    className="text-gray-500 dark:text-gray-500 text-sm flex items-center gap-1 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+                    className="text-gray-500 dark:text-gray-300 text-sm flex items-center gap-1 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
                     type="button"
                     aria-expanded={showAlwaysAvailableInfo}
                     aria-label="Toggle Always Available details"
@@ -577,7 +577,7 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
                 {/* Collapsible dropdown content */}
                 {showAlwaysAvailableInfo && (
                   <div className="mt-3 space-y-2">
-                    <Body16 className="text-sm text-gray-600 dark:text-gray-400">
+                    <Body16 className="text-sm text-gray-600 dark:text-gray-300">
                       When you&apos;re marked as &quot;Available to Listen&quot;, this keeps you online indefinitely. You&apos;ll receive push notifications when someone needs support, even when the app is closed.
                     </Body16>
 
@@ -621,7 +621,7 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
                   <label htmlFor="quietHours" className="block font-medium text-gray-900 dark:text-gray-100 cursor-pointer">
                     Quiet Hours
                   </label>
-                  <Body16 className="text-xs text-gray-500 dark:text-gray-500 mt-0.5">
+                  <Body16 className="text-xs text-gray-500 dark:text-gray-300 mt-0.5">
                     Pause notifications during set hours (e.g., overnight)
                   </Body16>
 

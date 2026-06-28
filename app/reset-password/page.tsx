@@ -75,7 +75,7 @@ export default function ResetPasswordPage() {
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
-            <Body16 className="mt-4 text-gray-600 dark:text-gray-400">Verifying reset link...</Body16>
+            <Body16 className="mt-4 text-gray-600 dark:text-gray-300">Verifying reset link...</Body16>
           </div>
         </div>
       </main>
@@ -95,7 +95,7 @@ export default function ResetPasswordPage() {
                 </svg>
               </div>
               <Heading1 className="text-2xl mb-3">Invalid or Expired Link</Heading1>
-              <Body16 className="text-gray-600 dark:text-gray-400 mb-6">
+              <Body16 className="text-gray-600 dark:text-gray-300 mb-6">
                 This password reset link is invalid or has expired. Password reset links are only valid for 1 hour.
               </Body16>
               <a
@@ -117,7 +117,7 @@ export default function ResetPasswordPage() {
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-8 sm:p-10">
           <div className="mb-8">
             <Heading1 className="text-2xl mb-2">Create New Password</Heading1>
-            <Body16 className="text-gray-600 dark:text-gray-400">
+            <Body16 className="text-gray-600 dark:text-gray-300">
               Choose a strong password for your account.
             </Body16>
           </div>
@@ -157,7 +157,7 @@ export default function ResetPasswordPage() {
                   )}
                 </button>
               </div>
-              <Body16 className="text-xs text-gray-500 dark:text-gray-500 mt-1">Must be at least 6 characters</Body16>
+              <Body16 className="text-xs text-gray-500 dark:text-gray-300 mt-1">Must be at least 6 characters</Body16>
             </div>
 
             <div>

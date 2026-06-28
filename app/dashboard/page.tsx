@@ -706,7 +706,7 @@ function DashboardContent() {
             )}
             <div className="flex-1 min-w-0">
               <Heading2 className="break-words mb-1">Welcome back, {profile?.display_name}!</Heading2>
-              <Body16 className="text-rb-gray dark:text-gray-400 font-medium italic text-sm mb-2">"{profile?.tagline || 'Your story matters here'}"</Body16>
+              <Body16 className="text-rb-gray dark:text-gray-300 font-medium italic text-sm mb-2">"{profile?.tagline || 'Your story matters here'}"</Body16>
               {profile?.user_role && (
                 <span className="inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rb-blue/10 text-rb-blue dark:bg-blue-900/30 dark:text-blue-300">
                   {profile.user_role === 'person_in_recovery' && 'Person in Recovery'}
@@ -736,7 +736,7 @@ function DashboardContent() {
                 <button
                   onClick={() => setShowPostChatBanner(false)}
                   aria-label="Dismiss"
-                  className="min-h-[44px] min-w-[44px] flex items-center justify-center text-rb-gray dark:text-gray-400 hover:text-rb-dark dark:hover:text-gray-100 transition-colors flex-shrink-0"
+                  className="min-h-[44px] min-w-[44px] flex items-center justify-center text-rb-gray dark:text-gray-300 hover:text-rb-dark dark:hover:text-gray-100 transition-colors flex-shrink-0"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                     <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
@@ -748,7 +748,7 @@ function DashboardContent() {
                 <span className="text-2xl flex-shrink-0" aria-hidden="true">🤝</span>
                 <div className="flex-1 min-w-0">
                   <Body16 className="font-semibold text-rb-dark dark:text-gray-100 text-sm">You don't have to go through this alone.</Body16>
-                  <Body16 className="text-rb-gray dark:text-gray-400 text-sm mt-1">Reach out anytime — support is available 24/7.</Body16>
+                  <Body16 className="text-rb-gray dark:text-gray-300 text-sm mt-1">Reach out anytime — support is available 24/7.</Body16>
                   <div className="flex flex-col gap-2 mt-3">
                     <button
                       onClick={() => { setShowPostChatBanner(false); setRoleState('requesting') }}
@@ -765,7 +765,7 @@ function DashboardContent() {
                 <button
                   onClick={() => setShowPostChatBanner(false)}
                   aria-label="Dismiss"
-                  className="min-h-[44px] min-w-[44px] flex items-center justify-center text-rb-gray dark:text-gray-400 hover:text-rb-dark dark:hover:text-gray-100 transition-colors flex-shrink-0 -mt-1 -mr-1"
+                  className="min-h-[44px] min-w-[44px] flex items-center justify-center text-rb-gray dark:text-gray-300 hover:text-rb-dark dark:hover:text-gray-100 transition-colors flex-shrink-0 -mt-1 -mr-1"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                     <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
@@ -797,7 +797,7 @@ function DashboardContent() {
                 <button
                   onClick={() => setShowPostChatBanner(false)}
                   aria-label="Dismiss"
-                  className="min-h-[44px] min-w-[44px] flex items-center justify-center text-rb-gray dark:text-gray-400 hover:text-rb-dark dark:hover:text-gray-100 transition-colors flex-shrink-0 -mt-1 -mr-1"
+                  className="min-h-[44px] min-w-[44px] flex items-center justify-center text-rb-gray dark:text-gray-300 hover:text-rb-dark dark:hover:text-gray-100 transition-colors flex-shrink-0 -mt-1 -mr-1"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                     <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
@@ -933,7 +933,7 @@ function DashboardContent() {
             } : {}}
           >
             <Heading4 className="text-rb-blue mb-2">I'm Here To Listen</Heading4>
-            <Body16 className="text-rb-gray dark:text-gray-400 text-sm mb-4">Offer support and connection to others</Body16>
+            <Body16 className="text-rb-gray dark:text-gray-300 text-sm mb-4">Offer support and connection to others</Body16>
             {profile?.role_state === 'available' ? (
               <div className="flex items-center justify-center gap-2 px-4 py-2 bg-white/70 dark:bg-gray-800/70 rounded-xl">
                 <span className="w-2 h-2 bg-rb-blue rounded-full animate-pulse"></span>
@@ -958,7 +958,7 @@ function DashboardContent() {
             } : {}}
           >
             <Heading4 className="text-rb-purple mb-2">I Need Support</Heading4>
-            <Body16 className="text-rb-gray dark:text-gray-400 text-sm mb-4">Connect with someone who understands</Body16>
+            <Body16 className="text-rb-gray dark:text-gray-300 text-sm mb-4">Connect with someone who understands</Body16>
             {profile?.role_state === 'requesting' ? (
               <div className="space-y-3" aria-live="polite">
                 {/* Breathing animation */}
@@ -974,7 +974,7 @@ function DashboardContent() {
                     ? `${availableListenerCount} listener${availableListenerCount === 1 ? '' : 's'} notified`
                     : 'Notifying all available listeners now.'}
                 </Body16>
-                <Body16 className="text-xs text-rb-gray dark:text-gray-400">Usually under 2 minutes</Body16>
+                <Body16 className="text-xs text-rb-gray dark:text-gray-300">Usually under 2 minutes</Body16>
                 <div className="inline-flex items-center gap-1.5 mt-1 px-3 py-1.5 rounded-full border-2 border-rb-purple/40 text-xs font-medium text-rb-purple/70">
                   <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                     <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
@@ -1027,7 +1027,7 @@ function DashboardContent() {
                         <Body16 className="font-semibold text-rb-dark dark:text-gray-100 truncate">{fp.display_name}</Body16>
                         <span className={`w-2 h-2 rounded-full flex-shrink-0 ${isOnline ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-600'}`} aria-hidden="true"></span>
                       </div>
-                      <Body16 className="text-sm text-rb-gray dark:text-gray-400">
+                      <Body16 className="text-sm text-rb-gray dark:text-gray-300">
                         {isOnline ? 'Available now' : 'Offline'}
                       </Body16>
                     </div>
@@ -1092,11 +1092,11 @@ function DashboardContent() {
                       <Body16 className="font-medium text-rb-dark dark:text-gray-100 mb-1">
                         {session.otherUserName}
                       </Body16>
-                      <Body16 className="text-sm text-rb-gray dark:text-gray-400">
+                      <Body16 className="text-sm text-rb-gray dark:text-gray-300">
                         Continue your conversation
                       </Body16>
                     </div>
-                    <span className="text-gray-400 dark:text-gray-500">→</span>
+                    <span className="text-gray-400 dark:text-gray-300">→</span>
                   </div>
                 </button>
               ))}
@@ -1113,7 +1113,7 @@ function DashboardContent() {
               className="w-full flex items-center justify-between px-6 py-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
             >
               <Heading4 className="text-rb-dark dark:text-gray-100">Recent Conversations</Heading4>
-              <span className={`text-gray-400 dark:text-gray-500 transition-transform duration-200 ${recentOpen ? 'rotate-180' : ''}`}>
+              <span className={`text-gray-400 dark:text-gray-300 transition-transform duration-200 ${recentOpen ? 'rotate-180' : ''}`}>
                 ▾
               </span>
             </button>
@@ -1139,7 +1139,7 @@ function DashboardContent() {
                           <Body16 className="font-medium text-rb-dark dark:text-gray-100 mb-0.5">
                             {session.otherUserName}
                           </Body16>
-                          <Body16 className="text-sm text-rb-gray dark:text-gray-400">
+                          <Body16 className="text-sm text-rb-gray dark:text-gray-300">
                             {dateLabel}{durationMin !== null && durationMin > 0 ? ` · ${durationMin} min` : ''}
                           </Body16>
                         </div>
@@ -1178,7 +1178,7 @@ function DashboardContent() {
               <h2 id="offline-confirm-title" className="heading-4 text-rb-dark dark:text-gray-100 mb-2">
                 Someone is waiting for support
               </h2>
-              <p className="text-sm text-rb-gray dark:text-gray-400 leading-relaxed">
+              <p className="text-sm text-rb-gray dark:text-gray-300 leading-relaxed">
                 There are people looking for a listener right now. Are you sure you want to go offline?
               </p>
             </div>

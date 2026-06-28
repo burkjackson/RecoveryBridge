@@ -340,7 +340,7 @@ export default function ListenersPage() {
               {/* Tag filters */}
               {showFilters && (
                 <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
-                  <Body16 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Filter by topic</Body16>
+                  <Body16 className="text-xs font-semibold text-gray-500 dark:text-gray-300 uppercase tracking-wide mb-2">Filter by topic</Body16>
                   {availableTags.length > 0 ? (
                     <div className="flex flex-wrap gap-2">
                       {availableTags.map(tag => (
@@ -350,7 +350,7 @@ export default function ListenersPage() {
                           className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
                             selectedTags.includes(tag)
                               ? 'bg-rb-blue text-white shadow-sm'
-                              : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
+                              : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                           }`}
                           aria-pressed={selectedTags.includes(tag)}
                         >
@@ -367,7 +367,7 @@ export default function ListenersPage() {
                       )}
                     </div>
                   ) : (
-                    <Body16 className="text-sm text-gray-400 dark:text-gray-500 italic">No listeners have set specialty tags yet</Body16>
+                    <Body16 className="text-sm text-gray-400 dark:text-gray-300 italic">No listeners have set specialty tags yet</Body16>
                   )}
                 </div>
               )}
@@ -454,7 +454,7 @@ export default function ListenersPage() {
                             </span>
                           )}
                           {(listener.sessions_count || 0) >= 2 && (
-                            <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-full font-medium">
+                            <span className="text-xs text-gray-500 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-full font-medium">
                               💬 {listener.sessions_count} session{listener.sessions_count !== 1 ? 's' : ''}
                             </span>
                           )}
@@ -473,7 +473,7 @@ export default function ListenersPage() {
                                 className={`px-2 py-0.5 rounded-full text-xs font-medium ${
                                   currentUserTags?.includes(tag)
                                     ? 'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-300'
-                                    : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
+                                    : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
                                 }`}
                               >
                                 {tag}
@@ -615,7 +615,7 @@ export default function ListenersPage() {
                   </Body16>
                 )}
                 {(previewProfile.sessions_count || 0) >= 2 && (
-                  <Body16 className="text-sm text-gray-500 dark:text-gray-400">
+                  <Body16 className="text-sm text-gray-500 dark:text-gray-300">
                     💬 {previewProfile.sessions_count} session{previewProfile.sessions_count !== 1 ? 's' : ''} completed
                   </Body16>
                 )}
@@ -633,7 +633,7 @@ export default function ListenersPage() {
               {/* Tags */}
               {previewProfile.tags && previewProfile.tags.length > 0 && (
                 <div>
-                  <Body16 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Topics</Body16>
+                  <Body16 className="text-xs font-semibold text-gray-500 dark:text-gray-300 uppercase tracking-wide mb-2">Topics</Body16>
                   <div className="flex flex-wrap gap-1.5">
                     {previewProfile.tags.map(tag => (
                       <span
@@ -661,7 +661,7 @@ export default function ListenersPage() {
                 </div>
               ) : (
                 <div className="text-center py-4">
-                  <Body16 className="text-gray-500 dark:text-gray-400 italic">
+                  <Body16 className="text-gray-500 dark:text-gray-300 italic">
                     {previewProfile.display_name} hasn&apos;t added a bio yet.
                   </Body16>
                 </div>

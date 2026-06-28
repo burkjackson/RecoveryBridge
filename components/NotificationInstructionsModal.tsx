@@ -29,7 +29,7 @@ export default function NotificationInstructionsModal({
           <Heading1 className="text-2xl dark:text-gray-100">Enable Notifications</Heading1>
           <button
             onClick={onClose}
-            className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition p-2"
+            className="text-gray-400 dark:text-gray-300 hover:text-gray-600 dark:hover:text-gray-300 transition p-2"
             aria-label="Close instructions"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -72,7 +72,7 @@ function IOSInstructions() {
         </Body16>
       </div>
 
-      <Body16 className="text-gray-600 dark:text-gray-400 mb-6">
+      <Body16 className="text-gray-600 dark:text-gray-300 mb-6">
         Follow these steps to get instant notifications when someone needs support:
       </Body16>
 
@@ -144,7 +144,7 @@ function AndroidInstructions() {
         </Body16>
       </div>
 
-      <Body16 className="text-gray-600 dark:text-gray-400 mb-6">
+      <Body16 className="text-gray-600 dark:text-gray-300 mb-6">
         Follow these quick steps:
       </Body16>
 
@@ -199,7 +199,7 @@ function DesktopInstructions() {
         </Body16>
       </div>
 
-      <Body16 className="text-gray-600 dark:text-gray-400 mb-6">
+      <Body16 className="text-gray-600 dark:text-gray-300 mb-6">
         Two options — pick whichever works best for you:
       </Body16>
 

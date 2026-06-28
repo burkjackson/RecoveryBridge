@@ -98,7 +98,7 @@ export default function SignupPage() {
                 className="mx-auto mb-4"
                 style={{ width: '400px' }}
               />
-              <Body16 className="text-gray-500 dark:text-gray-500 mb-6">Create your account</Body16>
+              <Body16 className="text-gray-500 dark:text-gray-300 mb-6">Create your account</Body16>
             </div>
 
             <form onSubmit={handleSignup} className="space-y-4" aria-label="Sign up form">
@@ -173,7 +173,7 @@ export default function SignupPage() {
                     )}
                   </button>
                 </div>
-                <p id="password-help" className="text-sm text-rb-gray dark:text-gray-400 mt-1">
+                <p id="password-help" className="text-sm text-rb-gray dark:text-gray-300 mt-1">
                   Must be at least 8 characters
                 </p>
               </div>
@@ -236,7 +236,7 @@ export default function SignupPage() {
             </form>
 
             <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-              <Body16 className="text-center text-gray-600 dark:text-gray-400">
+              <Body16 className="text-center text-gray-600 dark:text-gray-300">
                 Already have an account?{' '}
                 <a href="/login" className="text-rb-blue font-semibold hover:underline transition">
                   Log in

@@ -43,12 +43,12 @@ export default function ForgotPasswordPage() {
                 </svg>
               </div>
               <Heading1 className="text-2xl mb-3">Check Your Email</Heading1>
-              <Body16 className="text-gray-600 dark:text-gray-400">
+              <Body16 className="text-gray-600 dark:text-gray-300">
                 We've sent a password reset link to <strong>{email}</strong>
               </Body16>
             </div>
 
-            <div className="space-y-4 text-sm text-gray-600 dark:text-gray-400">
+            <div className="space-y-4 text-sm text-gray-600 dark:text-gray-300">
               <p>Click the link in the email to reset your password. The link will expire in 1 hour.</p>
               <p>Don't see the email? Check your spam folder or try again with a different email address.</p>
             </div>
@@ -73,11 +73,11 @@ export default function ForgotPasswordPage() {
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-8 sm:p-10">
           {/* Header */}
           <div className="mb-8">
-            <a href="/login" className="inline-flex items-center gap-1 text-sm text-gray-500 dark:text-gray-500 hover:text-gray-900 dark:hover:text-gray-100 transition mb-4">
+            <a href="/login" className="inline-flex items-center gap-1 text-sm text-gray-500 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 transition mb-4">
               ← Back to Login
             </a>
             <Heading1 className="text-2xl mb-2">Reset Your Password</Heading1>
-            <Body16 className="text-gray-600 dark:text-gray-400">
+            <Body16 className="text-gray-600 dark:text-gray-300">
               Enter your email address and we'll send you a link to reset your password.
             </Body16>
           </div>

@@ -93,7 +93,7 @@ export default function Modal({
           </h2>
           <button
             onClick={onClose}
-            className="text-rb-gray dark:text-gray-400 hover:text-rb-dark dark:hover:text-gray-100 text-2xl leading-none transition focus:outline-none focus:ring-2 focus:ring-rb-blue rounded"
+            className="text-rb-gray dark:text-gray-300 hover:text-rb-dark dark:hover:text-gray-100 text-2xl leading-none transition focus:outline-none focus:ring-2 focus:ring-rb-blue rounded"
             aria-label="Close modal"
           >
             ×

@@ -84,7 +84,7 @@ export default function ProductPreview() {
               <button
                 onClick={() => setOpen(false)}
                 aria-label="Close preview"
-                className="absolute top-3 right-3 w-9 h-9 flex items-center justify-center rounded-full text-rb-gray dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 text-2xl leading-none transition-colors"
+                className="absolute top-3 right-3 w-9 h-9 flex items-center justify-center rounded-full text-rb-gray dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 text-2xl leading-none transition-colors"
               >
                 ×
               </button>
@@ -93,7 +93,7 @@ export default function ProductPreview() {
               <h2 id="product-preview-title" className="text-lg font-bold text-rb-dark dark:text-gray-100 pr-8">
                 A peek inside RecoveryBridge
               </h2>
-              <p className="text-sm text-rb-gray dark:text-gray-400 mt-1 mb-4">
+              <p className="text-sm text-rb-gray dark:text-gray-300 mt-1 mb-4">
                 This is what a private, one-on-one conversation feels like — a real person who gets it, in real time.
               </p>
 
@@ -108,7 +108,7 @@ export default function ProductPreview() {
                     <p className="text-sm font-bold text-rb-dark dark:text-gray-100 leading-tight">Jordan</p>
                     <div className="flex items-center gap-1.5">
                       <span className="w-2 h-2 rounded-full bg-green-500" aria-hidden="true" />
-                      <span className="text-xs text-rb-gray dark:text-gray-400">Active now</span>
+                      <span className="text-xs text-rb-gray dark:text-gray-300">Active now</span>
                     </div>
                   </div>
                   <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-[11px] font-medium text-green-800 dark:text-green-300">
@@ -145,7 +145,7 @@ export default function ProductPreview() {
 
                 {/* Mock input (non-interactive) */}
                 <div className="flex items-center gap-2 p-3 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-                  <div className="flex-1 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 text-sm text-gray-400 dark:text-gray-500 select-none">
+                  <div className="flex-1 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 text-sm text-gray-400 dark:text-gray-300 select-none">
                     Type a message…
                   </div>
                   <div className="px-4 py-2 rounded-lg bg-rb-blue text-white text-sm font-semibold select-none" aria-hidden="true">
@@ -154,7 +154,7 @@ export default function ProductPreview() {
                 </div>
               </div>
 
-              <p className="text-[11px] text-gray-400 dark:text-gray-500 text-center mt-3">
+              <p className="text-[11px] text-gray-400 dark:text-gray-300 text-center mt-3">
                 Sample conversation — illustrative only.
               </p>
 

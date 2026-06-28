@@ -322,7 +322,7 @@ export default function OnboardingPage() {
             alt="RecoveryBridge Logo"
             className="mx-auto mb-4 max-w-[400px] w-full"
           />
-          <Body16 className="text-gray-500 dark:text-gray-500">{STEP_META[currentKey]}</Body16>
+          <Body16 className="text-gray-500 dark:text-gray-300">{STEP_META[currentKey]}</Body16>
         </div>
 
         {/* Progress indicator */}
@@ -341,7 +341,7 @@ export default function OnboardingPage() {
             />
           ))}
         </div>
-        <Body16 className="text-center text-gray-500 dark:text-gray-500 text-sm mb-8">Step {stepIndex + 1} of {totalSteps}</Body16>
+        <Body16 className="text-center text-gray-500 dark:text-gray-300 text-sm mb-8">Step {stepIndex + 1} of {totalSteps}</Body16>
 
         {/* Screen reader announcements for errors */}
         <div aria-live="polite" aria-atomic="true" className="sr-only">{error}</div>
@@ -350,7 +350,7 @@ export default function OnboardingPage() {
         {currentKey === 'welcome' && (
           <div className="text-center">
             <Heading1 className="mb-4">Welcome to RecoveryBridge</Heading1>
-            <Body16 className="mb-8 text-gray-600 dark:text-gray-400 leading-relaxed">
+            <Body16 className="mb-8 text-gray-600 dark:text-gray-300 leading-relaxed">
               RecoveryBridge is a safe, peer-to-peer space where people in recovery connect with
               listeners who understand the journey. Whether you're here to offer support or seek it,
               you're not alone — and you're in the right place.
@@ -361,7 +361,7 @@ export default function OnboardingPage() {
                 RecoveryBridge is designed for adults 18 years and older. By continuing,
                 you confirm that you meet this age requirement.
               </Body16>
-              <Body16 className="text-gray-600 dark:text-gray-400 text-sm">
+              <Body16 className="text-gray-600 dark:text-gray-300 text-sm">
                 If you're under 18 and need support, we encourage you to reach out to
                 age-appropriate resources like the <strong>Teen Line</strong> (text TEEN to 839863)
                 or the <strong>988 Suicide & Crisis Lifeline</strong> which serves all ages.
@@ -376,7 +376,7 @@ export default function OnboardingPage() {
                 trained peer support specialists</strong>. Conversations here are informal human
                 connection, not clinical or professional care of any kind.
               </Body16>
-              <Body16 className="text-gray-600 dark:text-gray-400 text-sm">
+              <Body16 className="text-gray-600 dark:text-gray-300 text-sm">
                 Guidance shared on RecoveryBridge may sometimes be incomplete, inaccurate, or not
                 right for your situation. Please use your own judgment, and always consult a
                 qualified professional for medical, mental health, or crisis needs.
@@ -395,7 +395,7 @@ export default function OnboardingPage() {
         {currentKey === 'intent' && (
           <div>
             <Heading1 className="mb-4 text-center">What brings you here?</Heading1>
-            <Body16 className="mb-8 text-center text-gray-600 dark:text-gray-400">
+            <Body16 className="mb-8 text-center text-gray-600 dark:text-gray-300">
               This just helps us set things up for you. You can change your mind anytime from your dashboard.
             </Body16>
 
@@ -440,7 +440,7 @@ export default function OnboardingPage() {
                     <span className="text-2xl flex-shrink-0" aria-hidden="true">{icon}</span>
                     <div>
                       <Body18 className="font-bold text-gray-900 dark:text-gray-100 mb-1">{title}</Body18>
-                      <Body16 className="text-gray-600 dark:text-gray-400 text-sm">{desc}</Body16>
+                      <Body16 className="text-gray-600 dark:text-gray-300 text-sm">{desc}</Body16>
                     </div>
                   </div>
                 </button>
@@ -474,7 +474,7 @@ export default function OnboardingPage() {
         {currentKey === 'community' && (
           <div>
             <Heading1 className="mb-2 text-center">You&rsquo;re in good company</Heading1>
-            <Body16 className="mb-6 text-center text-gray-600 dark:text-gray-400">
+            <Body16 className="mb-6 text-center text-gray-600 dark:text-gray-300">
               RecoveryBridge is built by people who believe connection is the antidote to addiction.
             </Body16>
 
@@ -506,7 +506,7 @@ export default function OnboardingPage() {
                   <span className="text-2xl flex-shrink-0 mt-0.5" aria-hidden="true">{icon}</span>
                   <div>
                     <Body16 className="font-semibold text-gray-900 dark:text-gray-100 mb-1">{title}</Body16>
-                    <Body16 className="text-sm text-gray-600 dark:text-gray-400">{body}</Body16>
+                    <Body16 className="text-sm text-gray-600 dark:text-gray-300">{body}</Body16>
                   </div>
                 </div>
               ))}
@@ -533,7 +533,7 @@ export default function OnboardingPage() {
         {currentKey === 'role' && (
           <div>
             <Heading1 className="mb-4 text-center">Which best describes you?</Heading1>
-            <Body16 className="mb-8 text-center text-gray-600 dark:text-gray-400">
+            <Body16 className="mb-8 text-center text-gray-600 dark:text-gray-300">
               This shows on your listener profile. You can change it anytime from your dashboard.
             </Body16>
 
@@ -567,7 +567,7 @@ export default function OnboardingPage() {
                     </span>
                   )}
                   <Body18 className="font-bold text-gray-900 dark:text-gray-100 mb-1">{title}</Body18>
-                  <Body16 className="text-gray-600 dark:text-gray-400 text-sm">{desc}</Body16>
+                  <Body16 className="text-gray-600 dark:text-gray-300 text-sm">{desc}</Body16>
                 </button>
               ))}
             </div>
@@ -599,7 +599,7 @@ export default function OnboardingPage() {
         {currentKey === 'profile' && (
           <div>
             <Heading1 className="mb-4 text-center">Tell us about yourself</Heading1>
-            <Body16 className="mb-6 text-center text-gray-600 dark:text-gray-400">
+            <Body16 className="mb-6 text-center text-gray-600 dark:text-gray-300">
               {intent === 'seeking'
                 ? "Totally optional — share only what you're comfortable with. You can skip this and add it later anytime."
                 : 'Share what you\'re comfortable with. This helps others understand how to connect with you.'}
@@ -614,7 +614,7 @@ export default function OnboardingPage() {
 
             <div className="mb-8">
               <label className="block mb-3 text-sm font-medium text-gray-700 dark:text-gray-300">
-                About You {intent === 'seeking' && <span className="text-gray-400 dark:text-gray-500 font-normal">(optional)</span>}
+                About You {intent === 'seeking' && <span className="text-gray-400 dark:text-gray-300 font-normal">(optional)</span>}
               </label>
               <textarea
                 value={bio}
@@ -625,10 +625,10 @@ export default function OnboardingPage() {
                 placeholder="Share your story, what brings you here, or what you hope to offer others..."
               />
               <div className="flex justify-between items-start mt-2 gap-4">
-                <Body16 className="text-gray-500 dark:text-gray-500 text-sm">
+                <Body16 className="text-gray-500 dark:text-gray-300 text-sm">
                   What brings you here? What does recovery look like for you? What's one thing you'd like others to know? This appears on your profile.
                 </Body16>
-                <span className={`text-sm shrink-0 tabular-nums ${bio.length >= 450 ? 'text-amber-600 font-medium' : 'text-gray-400 dark:text-gray-500'}`}>
+                <span className={`text-sm shrink-0 tabular-nums ${bio.length >= 450 ? 'text-amber-600 font-medium' : 'text-gray-400 dark:text-gray-300'}`}>
                   {bio.length} / 500
                 </span>
               </div>
@@ -637,9 +637,9 @@ export default function OnboardingPage() {
             {/* Specialty Tags */}
             <div className="mb-8">
               <label className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-                Specialty Tags <span className="text-gray-400 dark:text-gray-500 font-normal">(optional)</span>
+                Specialty Tags <span className="text-gray-400 dark:text-gray-300 font-normal">(optional)</span>
               </label>
-              <Body16 className="text-gray-500 dark:text-gray-500 text-sm mb-3">
+              <Body16 className="text-gray-500 dark:text-gray-300 text-sm mb-3">
                 Select topics you relate to or can offer support with. This helps match you with the right people.
               </Body16>
               <TagSelector
@@ -675,56 +675,56 @@ export default function OnboardingPage() {
         {currentKey === 'guidelines' && (
           <div>
             <Heading1 className="mb-4 text-center">Community Guidelines</Heading1>
-            <Body16 className="mb-6 text-gray-600 dark:text-gray-400">
+            <Body16 className="mb-6 text-gray-600 dark:text-gray-300">
               RecoveryBridge is built on the belief that connection is the antidote to addiction and we do not heal in isolation. This is a space where your story matters, your struggles are valid, and your progress—no matter how small—deserves celebration.
             </Body16>
 
             <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-6 mb-8 space-y-4">
               <div>
                 <Body18 className="mb-2 font-semibold text-gray-900 dark:text-gray-100">Lead with Compassion</Body18>
-                <Body16 className="text-gray-600 dark:text-gray-400">
+                <Body16 className="text-gray-600 dark:text-gray-300">
                   We're all doing our best. Approach every conversation with compassion, remembering that everyone here is on their own unique journey. Your kindness can be someone's lifeline today.
                 </Body16>
               </div>
 
               <div>
                 <Body18 className="mb-2 font-semibold text-gray-900 dark:text-gray-100">Honor Sacred Trust</Body18>
-                <Body16 className="text-gray-600 dark:text-gray-400">
+                <Body16 className="text-gray-600 dark:text-gray-300">
                   What's shared here is sacred. Protect each other's stories and privacy as if they were your own. This trust is what makes vulnerability possible.
                 </Body16>
               </div>
 
               <div>
                 <Body18 className="mb-2 font-semibold text-gray-900 dark:text-gray-100">Celebrate Every Step</Body18>
-                <Body16 className="text-gray-600 dark:text-gray-400">
+                <Body16 className="text-gray-600 dark:text-gray-300">
                   Recovery isn't linear, and every journey looks different. Whether someone is on day 1 or year 10, meet them where they are with encouragement, not advice. Your role is to listen, not to fix.
                 </Body16>
               </div>
 
               <div>
                 <Body18 className="mb-2 font-semibold text-gray-900 dark:text-gray-100">You Are Worth Saving</Body18>
-                <Body16 className="text-gray-600 dark:text-gray-400">
+                <Body16 className="text-gray-600 dark:text-gray-300">
                   If you're in crisis, please reach out for immediate help: <strong>988</strong> (Suicide & Crisis Lifeline), <strong>911</strong> (Emergency), or text <strong>HOME to 741741</strong> (Crisis Text Line). RecoveryBridge is here for peer support, but your safety comes first. There's no shame in reaching out for professional help—it's a sign of strength.
                 </Body16>
               </div>
 
               <div>
                 <Body18 className="mb-2 font-semibold text-gray-900 dark:text-gray-100">Practice Self-Care</Body18>
-                <Body16 className="text-gray-600 dark:text-gray-400">
+                <Body16 className="text-gray-600 dark:text-gray-300">
                   You can't pour from an empty cup. It's okay to step away, set boundaries, or take breaks. Taking care of yourself isn't selfish—it's essential to your recovery.
                 </Body16>
               </div>
 
               <div>
                 <Body18 className="mb-2 font-semibold text-gray-900 dark:text-gray-100">Share Your Wins</Body18>
-                <Body16 className="text-gray-600 dark:text-gray-400">
+                <Body16 className="text-gray-600 dark:text-gray-300">
                   Recovery is hard work and deserves recognition. Celebrate your victories—whether it's 24 hours sober, getting out of bed, or reaching out for help. We're here to cheer you on.
                 </Body16>
               </div>
 
               <div>
                 <Body18 className="mb-2 font-semibold text-gray-900 dark:text-gray-100">Protect Our Community</Body18>
-                <Body16 className="text-gray-600 dark:text-gray-400">
+                <Body16 className="text-gray-600 dark:text-gray-300">
                   If something doesn't feel right or someone needs help, please let us know. Reporting concerns helps us keep this space safe for everyone. You're not causing trouble—you're protecting our community.
                 </Body16>
               </div>
@@ -780,7 +780,7 @@ export default function OnboardingPage() {
         {currentKey === 'training' && (
           <div>
             <Heading1 className="mb-3 text-center">Listener Training</Heading1>
-            <Body16 className="text-center text-gray-600 dark:text-gray-400 leading-relaxed mb-6">
+            <Body16 className="text-center text-gray-600 dark:text-gray-300 leading-relaxed mb-6">
               Before you start supporting others, take a few minutes to read through these core principles.
               RecoveryBridge is built on safe, empathetic listening — and so are you.
             </Body16>
@@ -793,7 +793,7 @@ export default function OnboardingPage() {
                   className={`text-xs px-2 py-1 rounded-full font-medium transition-all ${
                     trainingAcknowledged[s.id]
                       ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                      : 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400'
+                      : 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-300'
                   }`}
                 >
                   {trainingAcknowledged[s.id] ? '✓ ' : ''}{s.title}
@@ -827,7 +827,7 @@ export default function OnboardingPage() {
                           {section.title}
                         </Body18>
                       </div>
-                      <span className="text-gray-400 dark:text-gray-500 text-sm ml-2 shrink-0">
+                      <span className="text-gray-400 dark:text-gray-300 text-sm ml-2 shrink-0">
                         {isAcked ? (
                           <span className="text-green-600 dark:text-green-400">✓</span>
                         ) : (
@@ -898,7 +898,7 @@ export default function OnboardingPage() {
             </div>
 
             {!TRAINING_SECTIONS.every(s => trainingAcknowledged[s.id]) && (
-              <Body16 className="text-center text-gray-400 dark:text-gray-500 text-sm mt-3">
+              <Body16 className="text-center text-gray-400 dark:text-gray-300 text-sm mt-3">
                 Read and acknowledge all 8 sections to continue
               </Body16>
             )}
@@ -909,13 +909,13 @@ export default function OnboardingPage() {
         {currentKey === 'referral' && (
           <div>
             <Heading1 className="mb-2 text-center">One last thing!</Heading1>
-            <Body16 className="mb-8 text-center text-gray-600 dark:text-gray-400">
+            <Body16 className="mb-8 text-center text-gray-600 dark:text-gray-300">
               How did you hear about RecoveryBridge? This helps us understand how people find us.{' '}
-              <span className="text-gray-400 dark:text-gray-500">(optional)</span>
+              <span className="text-gray-400 dark:text-gray-300">(optional)</span>
             </Body16>
 
             <div className="mb-4">
-              <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-2 px-1">Social Media</p>
+              <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-300 mb-2 px-1">Social Media</p>
               <div className="grid grid-cols-2 gap-2 mb-4">
                 {[
                   { value: 'facebook', label: 'Facebook' },
@@ -944,7 +944,7 @@ export default function OnboardingPage() {
                 ))}
               </div>
 
-              <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-2 px-1">Other</p>
+              <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-300 mb-2 px-1">Other</p>
               <div className="space-y-2">
                 {[
                   { value: 'podcast', label: 'Podcast', placeholder: 'Which podcast? (optional)', detail: podcastName, setDetail: setPodcastName },

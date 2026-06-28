@@ -157,7 +157,7 @@ export function SkeletonPage({ message = "Loading..." }: { message?: string }) {
           <Skeleton className="w-16 h-16 rounded-full" />
         </div>
         {/* Message */}
-        <p className="text-rb-gray dark:text-gray-400" role="status" aria-live="polite">
+        <p className="text-rb-gray dark:text-gray-300" role="status" aria-live="polite">
           {message}
         </p>
       </div>

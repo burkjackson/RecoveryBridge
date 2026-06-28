@@ -72,7 +72,7 @@ export default function FaqAccordion() {
               }`}
             >
               <div className="overflow-hidden">
-                <p className="px-5 pb-4 pt-1 text-sm text-rb-gray dark:text-gray-400 leading-relaxed">
+                <p className="px-5 pb-4 pt-1 text-sm text-rb-gray dark:text-gray-300 leading-relaxed">
                   {faq.a}
                 </p>
               </div>

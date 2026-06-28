@@ -761,7 +761,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                 <button
                   onClick={() => setProfileModal(true)}
                   aria-label={`View ${otherUserName}'s profile`}
-                  className="min-h-[32px] min-w-[32px] p-1.5 text-gray-400 dark:text-gray-500 hover:text-rb-blue hover:bg-blue-50 dark:hover:bg-gray-700 rounded-full transition-all"
+                  className="min-h-[32px] min-w-[32px] p-1.5 text-gray-400 dark:text-gray-300 hover:text-rb-blue hover:bg-blue-50 dark:hover:bg-gray-700 rounded-full transition-all"
                   title="View profile"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -774,10 +774,10 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                   {session?.status === 'active' ? (
                     <>
                       <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" aria-label="Active"></span>
-                      <Body16 className="text-sm text-gray-600 dark:text-gray-400">Active session</Body16>
+                      <Body16 className="text-sm text-gray-600 dark:text-gray-300">Active session</Body16>
                     </>
                   ) : (
-                    <Body16 className="text-sm text-gray-600 dark:text-gray-400">Session ended</Body16>
+                    <Body16 className="text-sm text-gray-600 dark:text-gray-300">Session ended</Body16>
                   )}
                 </div>
                 <PrivacyBadge />
@@ -845,8 +845,8 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
         >
           <div className="max-w-4xl mx-auto space-y-3">
             {/* Scope & safety notice — shown once at the top of the thread; scrolls away with the conversation */}
-            <p className="text-xs text-center text-gray-400 dark:text-gray-500 max-w-md mx-auto leading-relaxed px-2 pb-1">
-              <strong className="font-semibold text-gray-500 dark:text-gray-400">Peer support only</strong> — not a substitute for professional therapy, medical care, or emergency services. If you or someone else is in danger,{' '}
+            <p className="text-xs text-center text-gray-400 dark:text-gray-300 max-w-md mx-auto leading-relaxed px-2 pb-1">
+              <strong className="font-semibold text-gray-500 dark:text-gray-300">Peer support only</strong> — not a substitute for professional therapy, medical care, or emergency services. If you or someone else is in danger,{' '}
               <a href="tel:988" className="underline">call or text 988</a> or text <strong>HOME</strong> to <strong>741741</strong>.
             </p>
 
@@ -854,7 +854,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
               /* --- V2: Conversation Starters --- */
               session?.status === 'active' ? (
                 <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
-                  <Body16 className="text-gray-500 dark:text-gray-400 text-center mb-4">Tap a prompt to start the conversation:</Body16>
+                  <Body16 className="text-gray-500 dark:text-gray-300 text-center mb-4">Tap a prompt to start the conversation:</Body16>
                   <div className="flex flex-wrap gap-2 justify-center">
                     {(currentUserId === session?.seeker_id
                       ? shuffledStarters.seeker
@@ -873,7 +873,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                 </div>
               ) : (
                 <div className="bg-white dark:bg-gray-800 rounded-lg p-8 text-center shadow-sm">
-                  <Body16 className="text-gray-600 dark:text-gray-400">No messages in this session.</Body16>
+                  <Body16 className="text-gray-600 dark:text-gray-300">No messages in this session.</Body16>
                 </div>
               )
             ) : (
@@ -975,7 +975,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                               className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs border transition-all ${
                                 msgReactions[r.key].byMe
                                   ? 'bg-blue-50 dark:bg-blue-900/30 border-blue-300 dark:border-blue-700 text-blue-700 dark:text-blue-300'
-                                  : 'bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400'
+                                  : 'bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300'
                               }`}
                               aria-label={`${r.label} ${msgReactions[r.key].count}`}
                             >
@@ -1098,7 +1098,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                   ? 'text-red-500 font-semibold'
                   : newMessage.length > VALIDATION.MAX_MESSAGE_LENGTH * 0.9
                   ? 'text-amber-500'
-                  : 'text-gray-300 dark:text-gray-500'
+                  : 'text-gray-300 dark:text-gray-300'
               }`}>
                 {newMessage.length}/{VALIDATION.MAX_MESSAGE_LENGTH}
               </p>
@@ -1189,7 +1189,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                 </h2>
                 <button
                   onClick={() => setReportModal(false)}
-                  className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 text-2xl leading-none"
+                  className="text-gray-400 dark:text-gray-300 hover:text-gray-600 dark:hover:text-gray-300 text-2xl leading-none"
                   aria-label="Close"
                 >
                   &times;
@@ -1198,7 +1198,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
 
               {reportStep === 'reason' && (
                 <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">Select a reason for your report:</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">Select a reason for your report:</p>
                   <div className="space-y-2">
                     {REPORT_REASONS.map((reason) => (
                       <button
@@ -1218,10 +1218,10 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
 
               {reportStep === 'details' && (
                 <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+                  <p className="text-sm text-gray-600 dark:text-gray-300 mb-1">
                     Reason: <span className="font-medium">{reportReason}</span>
                   </p>
-                  <p className="text-sm text-gray-500 dark:text-gray-500 mb-3">Add any additional details (optional):</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-300 mb-3">Add any additional details (optional):</p>
                   <textarea
                     value={reportDetails}
                     onChange={(e) => setReportDetails(e.target.value)}
@@ -1256,7 +1256,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                       <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">Details: {reportDetails.trim()}</p>
                     )}
                   </div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                  <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
                     Our team will review this report. False reports may result in action against your account.
                   </p>
                   <div className="flex gap-3">
@@ -1376,7 +1376,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                 </div>
               ) : (
                 <div className="text-center py-4">
-                  <Body16 className="text-gray-500 dark:text-gray-400 italic">
+                  <Body16 className="text-gray-500 dark:text-gray-300 italic">
                     {otherUserName} hasn't added a bio yet.
                   </Body16>
                 </div>
@@ -1393,8 +1393,8 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                 <div className="py-4">
                   <span className="text-5xl block mb-3">🙏</span>
                   <Body18 className="font-bold text-gray-900 dark:text-gray-100 mb-2">Thank you!</Body18>
-                  <Body16 className="text-gray-600 dark:text-gray-400">Your feedback helps our community.</Body16>
-                  <Body16 className="text-gray-400 dark:text-gray-500 text-sm mt-2">One more thing...</Body16>
+                  <Body16 className="text-gray-600 dark:text-gray-300">Your feedback helps our community.</Body16>
+                  <Body16 className="text-gray-400 dark:text-gray-300 text-sm mt-2">One more thing...</Body16>
                 </div>
               ) : favoriteStep ? (
                 <div className="py-2">
@@ -1402,14 +1402,14 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                   <Body18 className="font-bold text-gray-900 dark:text-gray-100 mb-2">
                     Save {otherUserName}?
                   </Body18>
-                  <Body16 className="text-gray-600 dark:text-gray-400 mb-6">
+                  <Body16 className="text-gray-600 dark:text-gray-300 mb-6">
                     Add them to your favorites so you can find them quickly next time.
                   </Body16>
 
                   {alreadyFavorited || favoriteAdded ? (
                     <div className="py-3">
                       <Body16 className="text-amber-700 dark:text-amber-300 font-semibold">⭐ Already in your favorites!</Body16>
-                      <Body16 className="text-gray-400 dark:text-gray-500 text-sm mt-1">Returning to dashboard...</Body16>
+                      <Body16 className="text-gray-400 dark:text-gray-300 text-sm mt-1">Returning to dashboard...</Body16>
                     </div>
                   ) : (
                     <div className="space-y-3">
@@ -1422,7 +1422,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                       </button>
                       <button
                         onClick={returnToDashboard}
-                        className="min-h-[44px] w-full px-4 py-2.5 bg-gray-100 dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 rounded-xl font-semibold hover:bg-gray-200 dark:hover:bg-gray-600 transition-all text-sm"
+                        className="min-h-[44px] w-full px-4 py-2.5 bg-gray-100 dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-300 rounded-xl font-semibold hover:bg-gray-200 dark:hover:bg-gray-600 transition-all text-sm"
                       >
                         Not now
                       </button>
@@ -1431,7 +1431,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
 
                   {/* Gentle, optional support nudge */}
                   <div className="mt-6 pt-4 border-t border-gray-100 dark:border-gray-700">
-                    <Body16 className="text-xs text-gray-400 dark:text-gray-500">
+                    <Body16 className="text-xs text-gray-400 dark:text-gray-300">
                       RecoveryBridge is free thanks to people like you.{' '}
                       <a href="/donate" className="text-rb-blue dark:text-blue-400 font-semibold hover:underline">
                         Consider giving back 💙
@@ -1450,22 +1450,22 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                   )}
 
                   {/* --- V2: Session Summary Card --- */}
-                  <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 mb-4 text-sm text-gray-600 dark:text-gray-400">
+                  <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 mb-4 text-sm text-gray-600 dark:text-gray-300">
                     <div className="flex items-center justify-center gap-4">
                       <span>Duration: {getSessionDuration()}</span>
-                      <span className="text-gray-300 dark:text-gray-600">|</span>
+                      <span className="text-gray-300 dark:text-gray-300">|</span>
                       <span>{messages.length} message{messages.length !== 1 ? 's' : ''}</span>
                     </div>
                   </div>
 
-                  <Body16 className="text-gray-600 dark:text-gray-400 mb-4">
+                  <Body16 className="text-gray-600 dark:text-gray-300 mb-4">
                     Was this conversation helpful?
                   </Body16>
 
                   {/* Thank-you note — only visible to seekers */}
                   {session && currentUserId === session.seeker_id && (
                     <div className="mb-4 text-left">
-                      <label htmlFor="thank-you-note" className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1.5">
+                      <label htmlFor="thank-you-note" className="block text-xs font-semibold text-gray-500 dark:text-gray-300 uppercase tracking-wide mb-1.5">
                         💌 Leave a note for your listener <span className="font-normal normal-case">(optional)</span>
                       </label>
                       <textarea
@@ -1478,7 +1478,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                       />
                       <p className={`text-xs text-right mt-0.5 ${
                         thankYouNote.length >= 300 ? 'text-red-500' :
-                        thankYouNote.length >= 250 ? 'text-amber-500' : 'text-gray-400 dark:text-gray-500'
+                        thankYouNote.length >= 250 ? 'text-amber-500' : 'text-gray-400 dark:text-gray-300'
                       }`}>
                         {thankYouNote.length} / 300
                       </p>
@@ -1494,14 +1494,14 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                     </button>
                     <button
                       onClick={() => submitFeedback(false)}
-                      className="min-h-[44px] flex-1 px-5 py-3 bg-gray-50 dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 rounded-xl font-semibold hover:bg-gray-100 dark:hover:bg-gray-600 hover:border-gray-300 transition-all text-lg"
+                      className="min-h-[44px] flex-1 px-5 py-3 bg-gray-50 dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 rounded-xl font-semibold hover:bg-gray-100 dark:hover:bg-gray-600 hover:border-gray-300 transition-all text-lg"
                     >
                       👎 No
                     </button>
                   </div>
                   <button
                     onClick={skipFeedback}
-                    className="min-h-[44px] w-full px-4 py-2.5 bg-gray-100 dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 rounded-xl font-semibold hover:bg-gray-200 dark:hover:bg-gray-600 hover:border-gray-300 transition-all text-sm"
+                    className="min-h-[44px] w-full px-4 py-2.5 bg-gray-100 dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-300 rounded-xl font-semibold hover:bg-gray-200 dark:hover:bg-gray-600 hover:border-gray-300 transition-all text-sm"
                   >
                     Skip Feedback
                   </button>

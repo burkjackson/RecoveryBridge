@@ -75,7 +75,7 @@ export default function BottomNav() {
               className={`flex flex-col items-center justify-center gap-1 flex-1 py-2 min-h-[56px] text-xs font-medium transition-colors ${
                 active
                   ? 'text-rb-blue dark:text-blue-400'
-                  : 'text-gray-400 dark:text-gray-500 hover:text-rb-gray dark:hover:text-gray-300'
+                  : 'text-gray-400 dark:text-gray-300 hover:text-rb-gray dark:hover:text-gray-300'
               }`}
             >
               {item.icon(active)}

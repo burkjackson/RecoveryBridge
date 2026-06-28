@@ -39,7 +39,7 @@ export default function TagSelector({ selectedTags, onChange, disabled }: TagSel
                 isSelected
                   ? 'bg-rb-blue text-white shadow-sm'
                   : isDisabled
-                    ? 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed'
+                    ? 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-300 cursor-not-allowed'
                     : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 hover:text-gray-900 dark:hover:text-gray-100'
               }`}
               aria-pressed={isSelected}
@@ -49,7 +49,7 @@ export default function TagSelector({ selectedTags, onChange, disabled }: TagSel
           )
         })}
       </div>
-      <Body16 className="text-xs text-gray-500 dark:text-gray-500 mt-2">
+      <Body16 className="text-xs text-gray-500 dark:text-gray-300 mt-2">
         {selectedTags.length}/{MAX_SPECIALTY_TAGS} selected
       </Body16>
     </div>

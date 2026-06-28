@@ -283,8 +283,8 @@ export default function AvailableListeners({ onCountChange, currentUserId, curre
       <div className="bg-white dark:bg-gray-800 rounded-lg p-5 shadow-sm mb-6">
         <Body18 className="font-semibold text-gray-900 dark:text-gray-100 mb-3">Available Listeners</Body18>
         <div className="text-center py-6 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-          <Body16 className="text-gray-600 dark:text-gray-400 mb-2">No listeners available right now</Body16>
-          <Body16 className="text-sm text-gray-500 dark:text-gray-500">
+          <Body16 className="text-gray-600 dark:text-gray-300 mb-2">No listeners available right now</Body16>
+          <Body16 className="text-sm text-gray-500 dark:text-gray-300">
             Check back in a few minutes, or set yourself as "Available to Listen" to help others!
           </Body16>
         </div>
@@ -328,7 +328,7 @@ export default function AvailableListeners({ onCountChange, currentUserId, curre
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide bg-rb-blue text-white flex-shrink-0">You</span>
                 <span className="w-2 h-2 bg-green-500 rounded-full flex-shrink-0" aria-hidden="true"></span>
               </div>
-              <Body16 className="text-xs text-rb-gray dark:text-gray-400">
+              <Body16 className="text-xs text-rb-gray dark:text-gray-300">
                 You&apos;re visible to people seeking support right now — this is how they see you.
               </Body16>
             </div>
@@ -345,7 +345,7 @@ export default function AvailableListeners({ onCountChange, currentUserId, curre
         {/* If you're the only one available, reassure rather than show an empty list */}
         {listeners.length === 0 && (
           <div className="text-center py-4">
-            <Body16 className="text-sm text-rb-gray dark:text-gray-400">
+            <Body16 className="text-sm text-rb-gray dark:text-gray-300">
               You&apos;re the only listener online right now — seekers can still reach you.
             </Body16>
           </div>
@@ -396,7 +396,7 @@ export default function AvailableListeners({ onCountChange, currentUserId, curre
                   </span>
                 )}
               </div>
-              <Body16 className="text-sm text-gray-600 dark:text-gray-400 truncate">
+              <Body16 className="text-sm text-gray-600 dark:text-gray-300 truncate">
                 {getDisplayMessage(listener.tagline, listener.bio)}
               </Body16>
               {listener.tags && listener.tags.length > 0 && (
@@ -407,7 +407,7 @@ export default function AvailableListeners({ onCountChange, currentUserId, curre
                     </span>
                   ))}
                   {listener.tags.length > 3 && (
-                    <span className="text-[10px] text-gray-400 dark:text-gray-500">+{listener.tags.length - 3}</span>
+                    <span className="text-[10px] text-gray-400 dark:text-gray-300">+{listener.tags.length - 3}</span>
                   )}
                 </div>
               )}
@@ -430,7 +430,7 @@ export default function AvailableListeners({ onCountChange, currentUserId, curre
       </div>
 
       <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-        <Body16 className="text-sm text-gray-600 dark:text-gray-400 text-center">
+        <Body16 className="text-sm text-gray-600 dark:text-gray-300 text-center">
           Tap a listener to view their profile, then <strong>Connect</strong> to start a private chat.
           {listeners.length > 5 && (
             <> Showing 5 of {listeners.length} — use <strong>Browse All Listeners</strong> to see everyone.</>
@@ -472,7 +472,7 @@ export default function AvailableListeners({ onCountChange, currentUserId, curre
               )}
               <div>
                 {profilePreview.tagline && (
-                  <p className="text-sm italic text-gray-600 dark:text-gray-400">"{profilePreview.tagline}"</p>
+                  <p className="text-sm italic text-gray-600 dark:text-gray-300">"{profilePreview.tagline}"</p>
                 )}
                 <div className="flex items-center gap-2 mt-1">
                   <span className="w-2 h-2 bg-green-500 rounded-full" aria-hidden="true"></span>
@@ -486,7 +486,7 @@ export default function AvailableListeners({ onCountChange, currentUserId, curre
             {/* Bio */}
             {profilePreview.bio && (
               <div>
-                <p className="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide mb-1">About</p>
+                <p className="text-xs font-semibold text-gray-500 dark:text-gray-300 uppercase tracking-wide mb-1">About</p>
                 <p className="text-sm text-gray-700 dark:text-gray-300">{profilePreview.bio}</p>
               </div>
             )}
@@ -494,7 +494,7 @@ export default function AvailableListeners({ onCountChange, currentUserId, curre
             {/* Tags */}
             {profilePreview.tags && profilePreview.tags.length > 0 && (
               <div>
-                <p className="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide mb-2">Specialties</p>
+                <p className="text-xs font-semibold text-gray-500 dark:text-gray-300 uppercase tracking-wide mb-2">Specialties</p>
                 <div className="flex flex-wrap gap-2">
                   {profilePreview.tags.map(tag => (
                     <span key={tag} className="px-2.5 py-1 rounded-full text-xs font-medium bg-rb-blue/10 text-rb-blue">
@@ -517,7 +517,7 @@ export default function AvailableListeners({ onCountChange, currentUserId, curre
                   className={`min-h-[44px] w-full px-4 py-2.5 rounded-xl font-semibold text-sm transition-all ${
                     favoriteIds.has(profilePreview.id)
                       ? 'bg-amber-50 dark:bg-amber-900/20 border-2 border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300 hover:bg-amber-100'
-                      : 'bg-gray-50 dark:bg-gray-700/50 border-2 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+                      : 'bg-gray-50 dark:bg-gray-700/50 border-2 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
                   }`}
                 >
                   {togglingFavorite === profilePreview.id

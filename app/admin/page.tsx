@@ -672,7 +672,7 @@ export default function AdminPage() {
                           <Body16 className="font-semibold dark:text-gray-100">
                             {report.reporter?.display_name || 'Unknown'} reported {report.reported_user?.display_name || 'Unknown'}
                           </Body16>
-                          <Body16 className="text-sm text-rb-gray dark:text-gray-400">
+                          <Body16 className="text-sm text-rb-gray dark:text-gray-300">
                             {new Date(report.created_at).toLocaleString()}
                           </Body16>
                         </div>
@@ -843,7 +843,7 @@ export default function AdminPage() {
                         </span>
                       </div>
                       <Body16 className="mb-2 dark:text-gray-300"><strong>Reason:</strong> {block.reason}</Body16>
-                      <Body16 className="text-sm text-rb-gray dark:text-gray-400 mb-3">
+                      <Body16 className="text-sm text-rb-gray dark:text-gray-300 mb-3">
                         Blocked: {new Date(block.blocked_at).toLocaleString()}
                         {block.expires_at && ` • Expires: ${new Date(block.expires_at).toLocaleString()}`}
                       </Body16>
@@ -913,7 +913,7 @@ export default function AdminPage() {
                         {session.status}
                       </span>
                     </div>
-                    <Body16 className="text-sm text-rb-gray dark:text-gray-400 mb-2">
+                    <Body16 className="text-sm text-rb-gray dark:text-gray-300 mb-2">
                       Started: {new Date(session.created_at).toLocaleString()}
                     </Body16>
                     <div className="flex gap-2 flex-wrap">
@@ -945,7 +945,7 @@ export default function AdminPage() {
                             setTranscriptConfirm({ show: true, sessionId: session.id })
                           }
                         }}
-                        className="min-h-[44px] px-4 py-3 border border-gray-300 dark:border-gray-600 text-rb-gray dark:text-gray-400 rounded text-sm hover:bg-gray-50 dark:hover:bg-gray-700"
+                        className="min-h-[44px] px-4 py-3 border border-gray-300 dark:border-gray-600 text-rb-gray dark:text-gray-300 rounded text-sm hover:bg-gray-50 dark:hover:bg-gray-700"
                       >
                         💬 {expandedTranscript === session.id ? 'Hide Transcript' : 'View Transcript'}
                       </button>
@@ -1044,8 +1044,8 @@ export default function AdminPage() {
                   <div className="flex items-center gap-3 mb-4 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600">
                     <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Listener Training:</span>
                     <span className="text-sm text-green-700 dark:text-green-400 font-medium">✓ {trained} completed</span>
-                    <span className="text-gray-300 dark:text-gray-600">·</span>
-                    <span className="text-sm text-gray-500 dark:text-gray-400">{untrained} not yet</span>
+                    <span className="text-gray-300 dark:text-gray-300">·</span>
+                    <span className="text-sm text-gray-500 dark:text-gray-300">{untrained} not yet</span>
                   </div>
                 )
               })()}
@@ -1061,7 +1061,7 @@ export default function AdminPage() {
                     checked={users.length > 0 && users.every(u => selectedUserIds.has(u.id))}
                     onChange={toggleUserSelectAll}
                   />
-                  <span className="text-sm text-rb-gray dark:text-gray-400 whitespace-nowrap">
+                  <span className="text-sm text-rb-gray dark:text-gray-300 whitespace-nowrap">
                     {selectedUserIds.size > 0 ? `${selectedUserIds.size} selected` : 'Select all'}
                   </span>
                 </label>
@@ -1081,7 +1081,7 @@ export default function AdminPage() {
                     </button>
                   </>
                 ) : (
-                  <span className="text-xs text-rb-gray dark:text-gray-400">Select users to copy their emails</span>
+                  <span className="text-xs text-rb-gray dark:text-gray-300">Select users to copy their emails</span>
                 )}
               </div>
 
@@ -1118,17 +1118,17 @@ export default function AdminPage() {
                               </span>
                               {user.is_admin && <span className="ml-2 px-2 py-0.5 bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 text-xs rounded">Admin</span>}
                             </div>
-                            <span className="text-xs text-rb-gray dark:text-gray-400 flex-shrink-0 ml-2">
+                            <span className="text-xs text-rb-gray dark:text-gray-300 flex-shrink-0 ml-2">
                               Joined {new Date(user.created_at).toLocaleDateString()}
                             </span>
                           </div>
-                          <p className="text-xs text-rb-gray dark:text-gray-400 truncate mb-2">{user.email}</p>
+                          <p className="text-xs text-rb-gray dark:text-gray-300 truncate mb-2">{user.email}</p>
                           <div className="flex items-center gap-2 flex-wrap">
-                            <p className="text-xs text-gray-400 dark:text-gray-500">{user.user_role} · {user.role_state}</p>
+                            <p className="text-xs text-gray-400 dark:text-gray-300">{user.user_role} · {user.role_state}</p>
                             {user.listener_training_completed_at ? (
                               <span className="px-1.5 py-0.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs rounded">✓ Training</span>
                             ) : (
-                              <span className="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 text-xs rounded">No training</span>
+                              <span className="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-300 text-xs rounded">No training</span>
                             )}
                           </div>
                         </div>
@@ -1182,7 +1182,7 @@ export default function AdminPage() {
                         checked={signups.length > 0 && signups.every(u => selectedIds.has(u.id))}
                         onChange={toggleSelectAll}
                       />
-                      <span className="text-sm text-rb-gray dark:text-gray-400 whitespace-nowrap">
+                      <span className="text-sm text-rb-gray dark:text-gray-300 whitespace-nowrap">
                         {selectedIds.size > 0 ? `${selectedIds.size} selected` : 'Select all'}
                       </span>
                     </label>
@@ -1209,7 +1209,7 @@ export default function AdminPage() {
                         </button>
                       </>
                     ) : (
-                      <span className="text-xs text-rb-gray dark:text-gray-400">Select users to copy emails or mark as contacted</span>
+                      <span className="text-xs text-rb-gray dark:text-gray-300">Select users to copy emails or mark as contacted</span>
                     )}
                   </div>
 
@@ -1250,7 +1250,7 @@ export default function AdminPage() {
                               </td>
                               <td className="py-3 pr-4">
                                 <div className="flex items-center gap-2 flex-wrap">
-                                  <span className={`font-medium ${contacted ? 'text-rb-gray dark:text-gray-500' : 'text-rb-dark dark:text-gray-100'}`}>
+                                  <span className={`font-medium ${contacted ? 'text-rb-gray dark:text-gray-300' : 'text-rb-dark dark:text-gray-100'}`}>
                                     {user.display_name}
                                   </span>
                                   {user.is_admin && (
@@ -1269,7 +1269,7 @@ export default function AdminPage() {
                               </td>
                               <td className="py-3 pr-4">
                                 <div className="flex items-center gap-2">
-                                  <span className="text-rb-gray dark:text-gray-400 font-mono text-xs break-all">
+                                  <span className="text-rb-gray dark:text-gray-300 font-mono text-xs break-all">
                                     {user.email || '—'}
                                   </span>
                                   {user.email && (
@@ -1283,13 +1283,13 @@ export default function AdminPage() {
                                   )}
                                 </div>
                               </td>
-                              <td className="py-3 pr-4 hidden sm:table-cell text-rb-gray dark:text-gray-400">
+                              <td className="py-3 pr-4 hidden sm:table-cell text-rb-gray dark:text-gray-300">
                                 {user.user_role === 'person_in_recovery' ? 'Person in Recovery'
                                   : user.user_role === 'professional' ? 'Allies in Long-Term Recovery'
                                   : user.user_role === 'ally' ? 'Recovery Support'
                                   : <span className="italic text-gray-400">Not set</span>}
                               </td>
-                              <td className="py-3 pr-4 hidden lg:table-cell text-rb-gray dark:text-gray-400 text-xs">
+                              <td className="py-3 pr-4 hidden lg:table-cell text-rb-gray dark:text-gray-300 text-xs">
                                 {user.referral_source === 'facebook' ? '👍 Facebook'
                                   : user.referral_source === 'instagram' ? '📸 Instagram'
                                   : user.referral_source === 'threads' ? '🧵 Threads'
@@ -1300,7 +1300,7 @@ export default function AdminPage() {
                                   : user.referral_source === 'other' ? '💬 Other'
                                   : <span className="italic text-gray-300">—</span>}
                               </td>
-                              <td className="py-3 hidden md:table-cell text-rb-gray dark:text-gray-400 text-xs">
+                              <td className="py-3 hidden md:table-cell text-rb-gray dark:text-gray-300 text-xs">
                                 {new Date(user.created_at).toLocaleString('en-US', {
                                   month: 'short', day: 'numeric', year: 'numeric',
                                   hour: 'numeric', minute: '2-digit', hour12: true,

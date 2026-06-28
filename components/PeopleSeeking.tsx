@@ -238,8 +238,8 @@ export default function PeopleSeeking({ currentUserId, currentRoleState }: Peopl
       <div className="bg-white dark:bg-gray-800 rounded-lg p-5 shadow-sm mb-6">
         <Body18 className="font-semibold text-gray-900 dark:text-gray-100 mb-3">People Seeking Support</Body18>
         <div className="text-center py-6 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-          <Body16 className="text-gray-600 dark:text-gray-400 mb-2">No one is seeking support right now</Body16>
-          <Body16 className="text-sm text-gray-500 dark:text-gray-500">
+          <Body16 className="text-gray-600 dark:text-gray-300 mb-2">No one is seeking support right now</Body16>
+          <Body16 className="text-sm text-gray-500 dark:text-gray-300">
             You&apos;ll be notified when someone needs help
           </Body16>
         </div>
@@ -301,7 +301,7 @@ export default function PeopleSeeking({ currentUserId, currentRoleState }: Peopl
                   <span className="text-[10px] font-medium text-purple-700 dark:text-purple-400">Seeking</span>
                 </span>
               </div>
-              <Body16 className="text-sm text-gray-600 dark:text-gray-400 truncate">
+              <Body16 className="text-sm text-gray-600 dark:text-gray-300 truncate">
                 {getDisplayMessage(seeker.tagline, seeker.bio)}
               </Body16>
               {seeker.tags && seeker.tags.length > 0 && (
@@ -312,7 +312,7 @@ export default function PeopleSeeking({ currentUserId, currentRoleState }: Peopl
                     </span>
                   ))}
                   {seeker.tags.length > 3 && (
-                    <span className="text-[10px] text-gray-400 dark:text-gray-500">+{seeker.tags.length - 3}</span>
+                    <span className="text-[10px] text-gray-400 dark:text-gray-300">+{seeker.tags.length - 3}</span>
                   )}
                 </div>
               )}
@@ -375,7 +375,7 @@ export default function PeopleSeeking({ currentUserId, currentRoleState }: Peopl
               )}
               <div>
                 {profilePreview.tagline && (
-                  <p className="text-sm italic text-gray-600 dark:text-gray-400">"{profilePreview.tagline}"</p>
+                  <p className="text-sm italic text-gray-600 dark:text-gray-300">"{profilePreview.tagline}"</p>
                 )}
                 <div className="flex items-center gap-2 mt-1">
                   <span className="w-2 h-2 bg-purple-500 rounded-full animate-pulse" aria-hidden="true"></span>
@@ -387,7 +387,7 @@ export default function PeopleSeeking({ currentUserId, currentRoleState }: Peopl
             {/* Bio */}
             {profilePreview.bio && (
               <div>
-                <p className="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide mb-1">About</p>
+                <p className="text-xs font-semibold text-gray-500 dark:text-gray-300 uppercase tracking-wide mb-1">About</p>
                 <p className="text-sm text-gray-700 dark:text-gray-300">{profilePreview.bio}</p>
               </div>
             )}
@@ -395,7 +395,7 @@ export default function PeopleSeeking({ currentUserId, currentRoleState }: Peopl
             {/* Tags */}
             {profilePreview.tags && profilePreview.tags.length > 0 && (
               <div>
-                <p className="text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wide mb-2">Topics</p>
+                <p className="text-xs font-semibold text-gray-500 dark:text-gray-300 uppercase tracking-wide mb-2">Topics</p>
                 <div className="flex flex-wrap gap-2">
                   {profilePreview.tags.map(tag => (
                     <span key={tag} className="px-2.5 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-700">
@@ -427,7 +427,7 @@ export default function PeopleSeeking({ currentUserId, currentRoleState }: Peopl
             {blockModal.reason}
           </p>
         </div>
-        <p className="text-sm text-rb-gray dark:text-gray-400">
+        <p className="text-sm text-rb-gray dark:text-gray-300">
           Please contact support for more information.
         </p>
       </Modal>
@@ -448,7 +448,7 @@ export default function PeopleSeeking({ currentUserId, currentRoleState }: Peopl
             This happens sometimes! Please try again in a moment.
           </p>
           {errorModal.message && (
-            <p className="text-xs text-rb-gray dark:text-gray-400 mt-2">
+            <p className="text-xs text-rb-gray dark:text-gray-300 mt-2">
               Technical details: {errorModal.message}
             </p>
           )}

@@ -34,7 +34,7 @@ export default function ErrorState({
           </h2>
 
           {/* Message */}
-          <p className="text-rb-gray dark:text-gray-400 mb-6">
+          <p className="text-rb-gray dark:text-gray-300 mb-6">
             {message}
           </p>
 

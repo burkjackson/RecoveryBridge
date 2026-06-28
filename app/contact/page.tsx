@@ -51,7 +51,7 @@ export default function ContactPage() {
               <span className="text-3xl" role="img" aria-label="Success">✓</span>
             </div>
             <Heading1 className="mb-3 dark:text-gray-100">Thanks for reaching out!</Heading1>
-            <Body16 className="text-rb-gray dark:text-gray-400 mb-6">
+            <Body16 className="text-rb-gray dark:text-gray-300 mb-6">
               Your email client should open with a pre-filled message. Send it and we'll get back to you as soon as possible.
             </Body16>
             <div className="flex gap-3 justify-center">
@@ -86,7 +86,7 @@ export default function ContactPage() {
             ← Back
           </button>
           <Heading1 className="mb-2 dark:text-gray-100">Contact Us</Heading1>
-          <Body16 className="text-rb-gray dark:text-gray-400">We'd love to hear from you</Body16>
+          <Body16 className="text-rb-gray dark:text-gray-300">We'd love to hear from you</Body16>
         </div>
 
         {/* Contact Info */}
@@ -94,7 +94,7 @@ export default function ContactPage() {
           <Body16 className="mb-2 dark:text-gray-100">
             <strong>📧 Email:</strong> admin@recoverybridge.app
           </Body16>
-          <Body16 className="text-sm text-rb-gray dark:text-gray-400">
+          <Body16 className="text-sm text-rb-gray dark:text-gray-300">
             We typically respond within 24-48 hours. For urgent safety concerns, please use our crisis resources or contact emergency services.
           </Body16>
         </div>
@@ -181,7 +181,7 @@ export default function ContactPage() {
 
             {/* Privacy Note */}
             <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
-              <Body16 className="text-xs text-rb-gray dark:text-gray-400">
+              <Body16 className="text-xs text-rb-gray dark:text-gray-300">
                 <strong>Privacy Note:</strong> Your message will be sent via email. We'll only use your contact information to respond to your inquiry. See our{' '}
                 <a href="/privacy" className="text-rb-blue hover:underline">Privacy Policy</a> for more details.
               </Body16>
@@ -201,7 +201,7 @@ export default function ContactPage() {
         {/* Additional Help */}
         <div className="mt-6 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-700 rounded-lg p-4">
           <Body18 className="font-semibold mb-2 dark:text-gray-100">🆘 Need Immediate Help?</Body18>
-          <Body16 className="text-sm text-rb-gray dark:text-gray-400 mb-3">
+          <Body16 className="text-sm text-rb-gray dark:text-gray-300 mb-3">
             If you're experiencing a mental health crisis, please don't wait for an email response:
           </Body16>
           <div className="space-y-2">

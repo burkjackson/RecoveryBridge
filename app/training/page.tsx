@@ -153,12 +153,12 @@ export default function TrainingPage() {
 
         <div className="text-center mb-6">
           <Image src="/logo-with-text.png" alt="RecoveryBridge Logo" width={400} height={190} className="mx-auto mb-4 max-w-[400px] w-full h-auto" />
-          <Body16 className="text-gray-500 dark:text-gray-500">Listener Training</Body16>
+          <Body16 className="text-gray-500 dark:text-gray-300">Listener Training</Body16>
         </div>
 
         <div className="mb-6">
           <Heading1 className="mb-3 text-center">Listener Training</Heading1>
-          <Body16 className="text-center text-gray-600 dark:text-gray-400 leading-relaxed">
+          <Body16 className="text-center text-gray-600 dark:text-gray-300 leading-relaxed">
             RecoveryBridge is a space built on safe, empathetic listening. Take a few minutes to read
             through these core principles — and acknowledge each one before you begin.
           </Body16>
@@ -172,7 +172,7 @@ export default function TrainingPage() {
               className={`text-xs px-2 py-1 rounded-full font-medium transition-all ${
                 acknowledged[s.id]
                   ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                  : 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400'
+                  : 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-300'
               }`}
             >
               {acknowledged[s.id] ? '✓ ' : ''}{s.title}
@@ -206,7 +206,7 @@ export default function TrainingPage() {
                       {section.title}
                     </Body18>
                   </div>
-                  <span className="text-gray-400 dark:text-gray-500 text-sm ml-2 shrink-0">
+                  <span className="text-gray-400 dark:text-gray-300 text-sm ml-2 shrink-0">
                     {isAcked
                       ? <span className="text-green-600 dark:text-green-400">✓</span>
                       : <span>{isOpen ? '▲' : '▼'}</span>
@@ -269,7 +269,7 @@ export default function TrainingPage() {
         </button>
 
         {!allAcknowledged && (
-          <Body16 className="text-center text-gray-400 dark:text-gray-500 text-sm mt-3">
+          <Body16 className="text-center text-gray-400 dark:text-gray-300 text-sm mt-3">
             Read and acknowledge all 8 sections to continue
           </Body16>
         )}
@@ -277,7 +277,7 @@ export default function TrainingPage() {
         <div className="mt-6 text-center">
           <button
             onClick={() => router.push('/dashboard')}
-            className="text-sm text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+            className="text-sm text-gray-400 dark:text-gray-300 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
           >
             ← Back to dashboard
           </button>

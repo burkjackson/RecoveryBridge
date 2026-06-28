@@ -212,15 +212,15 @@ export default function HistoryPage() {
         <div className="grid grid-cols-3 gap-4 mb-6">
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 text-center border border-rb-gray/10 dark:border-gray-700">
             <p className="text-3xl font-bold text-rb-dark dark:text-white mb-1">{totalSessions}</p>
-            <Body16 className="text-xs text-rb-gray dark:text-gray-400 font-medium">Total Sessions</Body16>
+            <Body16 className="text-xs text-rb-gray dark:text-gray-300 font-medium">Total Sessions</Body16>
           </div>
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 text-center border border-rb-gray/10 dark:border-gray-700">
             <p className="text-3xl font-bold text-rb-blue dark:text-blue-400 mb-1">{asListener}</p>
-            <Body16 className="text-xs text-rb-gray dark:text-gray-400 font-medium">As Listener</Body16>
+            <Body16 className="text-xs text-rb-gray dark:text-gray-300 font-medium">As Listener</Body16>
           </div>
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 text-center border border-rb-gray/10 dark:border-gray-700">
             <p className="text-3xl font-bold text-rb-purple dark:text-purple-400 mb-1">{asSeeker}</p>
-            <Body16 className="text-xs text-rb-gray dark:text-gray-400 font-medium">As Seeker</Body16>
+            <Body16 className="text-xs text-rb-gray dark:text-gray-300 font-medium">As Seeker</Body16>
           </div>
         </div>
 
@@ -268,7 +268,7 @@ export default function HistoryPage() {
                         <Body16 className="text-sm font-semibold text-rb-dark dark:text-gray-100">
                           {dateStr}
                         </Body16>
-                        <span className="text-xs text-rb-gray dark:text-gray-400">{timeStr}</span>
+                        <span className="text-xs text-rb-gray dark:text-gray-300">{timeStr}</span>
                       </div>
 
                       {/* Other person */}
@@ -278,7 +278,7 @@ export default function HistoryPage() {
 
                       {/* Meta row: duration + feedback badge */}
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="text-xs text-rb-gray dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2.5 py-0.5 rounded-full">
+                        <span className="text-xs text-rb-gray dark:text-gray-300 bg-gray-100 dark:bg-gray-700 px-2.5 py-0.5 rounded-full">
                           ⏱ {duration}
                         </span>
                         {receivedFeedback?.helpful === true && (

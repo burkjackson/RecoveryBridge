@@ -27,7 +27,7 @@ export default function DonatePage() {
             <h1 className="text-3xl sm:text-4xl font-bold text-slate-700 dark:text-gray-100 mb-3">
               Support Our Mission
             </h1>
-            <p className="text-lg text-slate-600 dark:text-gray-400 italic">
+            <p className="text-lg text-slate-600 dark:text-gray-300 italic">
               "We do not heal in isolation."
             </p>
           </div>
@@ -65,17 +65,17 @@ export default function DonatePage() {
               <div>
                 <div className="text-3xl mb-2" role="img" aria-label="Server">🖥️</div>
                 <p className="text-sm font-semibold text-slate-700 dark:text-gray-100">Hosting & Infrastructure</p>
-                <p className="text-xs text-slate-500 dark:text-gray-400 mt-1">Keeping the platform fast, reliable, and secure</p>
+                <p className="text-xs text-slate-500 dark:text-gray-300 mt-1">Keeping the platform fast, reliable, and secure</p>
               </div>
               <div>
                 <div className="text-3xl mb-2" role="img" aria-label="Lock">🔒</div>
                 <p className="text-sm font-semibold text-slate-700 dark:text-gray-100">Privacy & Security</p>
-                <p className="text-xs text-slate-500 dark:text-gray-400 mt-1">Protecting every conversation and every user</p>
+                <p className="text-xs text-slate-500 dark:text-gray-300 mt-1">Protecting every conversation and every user</p>
               </div>
               <div>
                 <div className="text-3xl mb-2" role="img" aria-label="Wrench">🛠️</div>
                 <p className="text-sm font-semibold text-slate-700 dark:text-gray-100">Development</p>
-                <p className="text-xs text-slate-500 dark:text-gray-400 mt-1">Building new features that serve the community better</p>
+                <p className="text-xs text-slate-500 dark:text-gray-300 mt-1">Building new features that serve the community better</p>
               </div>
             </div>
           </div>
@@ -91,7 +91,7 @@ export default function DonatePage() {
               <span className="text-2xl" role="img" aria-label="Heart">💙</span>
               Donate Now
             </a>
-            <p className="text-sm text-slate-500 dark:text-gray-400 mt-3">
+            <p className="text-sm text-slate-500 dark:text-gray-300 mt-3">
               One-time or monthly — whatever feels right. Every bit helps.
             </p>
           </div>

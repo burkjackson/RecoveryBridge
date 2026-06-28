@@ -547,7 +547,7 @@ export default function ProfilePage() {
           {/* Display Name */}
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-5 hover:shadow-md transition-all">
             <div className="flex justify-between items-center mb-2">
-              <Body16 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Display Name</Body16>
+              <Body16 className="text-xs font-semibold text-gray-500 dark:text-gray-300 uppercase tracking-wide">Display Name</Body16>
               {editingField !== 'display_name' && (
                 <button
                   onClick={() => startEditing('display_name', profile.display_name)}
@@ -591,14 +591,14 @@ export default function ProfilePage() {
 
           {/* Email (not editable) */}
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-5">
-            <Body16 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Email</Body16>
+            <Body16 className="text-xs font-semibold text-gray-500 dark:text-gray-300 uppercase tracking-wide mb-2">Email</Body16>
             <Body18 className="text-gray-900 dark:text-gray-100">{profile.email}</Body18>
           </div>
 
           {/* Tagline */}
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-5 hover:shadow-md transition-all">
             <div className="flex justify-between items-center mb-2">
-              <Body16 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Tagline</Body16>
+              <Body16 className="text-xs font-semibold text-gray-500 dark:text-gray-300 uppercase tracking-wide">Tagline</Body16>
               {editingField !== 'tagline' && (
                 <button
                   onClick={() => startEditing('tagline', profile.tagline)}
@@ -621,7 +621,7 @@ export default function ProfilePage() {
                   className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-rb-blue focus:border-transparent transition-all dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400"
                   placeholder="e.g., 5 years sober, here to help"
                 />
-                <Body16 className="text-gray-500 dark:text-gray-500 text-xs">
+                <Body16 className="text-gray-500 dark:text-gray-300 text-xs">
                   This appears next to your name when you're available to listen. {editValue.length}/60 characters
                 </Body16>
                 <div className="flex gap-2">
@@ -650,7 +650,7 @@ export default function ProfilePage() {
           {/* Bio */}
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-5 hover:shadow-md transition-all">
             <div className="flex justify-between items-center mb-2">
-              <Body16 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">About</Body16>
+              <Body16 className="text-xs font-semibold text-gray-500 dark:text-gray-300 uppercase tracking-wide">About</Body16>
               {editingField !== 'bio' && (
                 <button
                   onClick={() => startEditing('bio', profile.bio)}
@@ -672,7 +672,7 @@ export default function ProfilePage() {
                   className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-rb-blue focus:border-transparent transition-all resize-none dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400"
                   placeholder="Tell us about yourself..."
                 />
-                <Body16 className="text-gray-500 dark:text-gray-500 text-xs leading-relaxed">
+                <Body16 className="text-gray-500 dark:text-gray-300 text-xs leading-relaxed">
                   Share what brings you to RecoveryBridge, what recovery means to you, or what helps you most in your journey.
                 </Body16>
                 <div className="flex gap-2">
@@ -699,7 +699,7 @@ export default function ProfilePage() {
           {/* User Role */}
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-5 hover:shadow-md transition-all">
             <div className="flex justify-between items-center mb-2">
-              <Body16 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Role</Body16>
+              <Body16 className="text-xs font-semibold text-gray-500 dark:text-gray-300 uppercase tracking-wide">Role</Body16>
               {editingField !== 'user_role' && (
                 <button
                   onClick={() => startEditing('user_role', profile.user_role)}
@@ -753,7 +753,7 @@ export default function ProfilePage() {
           {/* Specialty Tags */}
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-5 hover:shadow-md transition-all">
             <div className="flex justify-between items-center mb-2">
-              <Body16 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Specialty Tags</Body16>
+              <Body16 className="text-xs font-semibold text-gray-500 dark:text-gray-300 uppercase tracking-wide">Specialty Tags</Body16>
               {!editingTags && (
                 <button
                   onClick={() => {
@@ -771,7 +771,7 @@ export default function ProfilePage() {
             </div>
             {editingTags ? (
               <div className="space-y-3">
-                <Body16 className="text-sm text-gray-600 dark:text-gray-400">
+                <Body16 className="text-sm text-gray-600 dark:text-gray-300">
                   Select topics you can help with. This helps seekers find the right listener.
                 </Body16>
                 <TagSelector
@@ -805,7 +805,7 @@ export default function ProfilePage() {
                     ))}
                   </div>
                 ) : (
-                  <Body16 className="text-gray-500 dark:text-gray-500 italic text-sm">No specialty tags set</Body16>
+                  <Body16 className="text-gray-500 dark:text-gray-300 italic text-sm">No specialty tags set</Body16>
                 )}
               </div>
             )}
@@ -830,19 +830,19 @@ export default function ProfilePage() {
               <span className="text-lg" aria-hidden="true">🗓️</span>
               <div className="text-left">
                 <Body16 className="font-semibold text-gray-900 dark:text-gray-100 text-sm">Scheduled Availability</Body16>
-                <Body16 className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                <Body16 className="text-xs text-gray-500 dark:text-gray-300 mt-0.5">
                   {schedule.length === 0
                     ? 'No windows set'
                     : `${schedule.length} window${schedule.length !== 1 ? 's' : ''} set`}
                 </Body16>
               </div>
             </div>
-            <span className={`text-gray-400 dark:text-gray-500 transition-transform duration-200 ${scheduleExpanded ? 'rotate-180' : ''}`}>▾</span>
+            <span className={`text-gray-400 dark:text-gray-300 transition-transform duration-200 ${scheduleExpanded ? 'rotate-180' : ''}`}>▾</span>
           </button>
 
           {scheduleExpanded && (
             <div className="px-5 pb-5 border-t border-gray-100 dark:border-gray-700">
-              <Body16 className="text-xs text-gray-500 dark:text-gray-400 mt-4 mb-4 leading-relaxed">
+              <Body16 className="text-xs text-gray-500 dark:text-gray-300 mt-4 mb-4 leading-relaxed">
                 Set weekly windows when you plan to be available. You&apos;ll get a push notification at the start of each window as a reminder to go available.
                 Uses your quiet hours timezone.
               </Body16>
@@ -873,7 +873,7 @@ export default function ProfilePage() {
                       }}
                       className="px-2 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-rb-blue"
                     />
-                    <span className="text-sm text-gray-500 dark:text-gray-400">to</span>
+                    <span className="text-sm text-gray-500 dark:text-gray-300">to</span>
                     <input
                       type="time"
                       value={w.end}
@@ -924,7 +924,7 @@ export default function ProfilePage() {
             <span className="text-xl">✉️</span>
             <Body16 className="font-semibold text-gray-900 dark:text-gray-100">Email Notifications</Body16>
           </div>
-          <Body16 className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+          <Body16 className="text-sm text-gray-600 dark:text-gray-300 mb-4">
             Get an email when someone needs support and push notifications can&apos;t reach you. Your email address is never shared with other users.
           </Body16>
 
@@ -959,7 +959,7 @@ export default function ProfilePage() {
               />
             </button>
           </div>
-          <Body16 className="text-xs text-gray-500 dark:text-gray-500 mt-2 italic">
+          <Body16 className="text-xs text-gray-500 dark:text-gray-300 mt-2 italic">
             Emails are sent from RecoveryBridge — you must opt in here to receive them.
           </Body16>
         </div>
@@ -980,7 +980,7 @@ export default function ProfilePage() {
                 </span>
               )}
             </div>
-            <span className={`text-gray-400 dark:text-gray-500 transition-transform duration-200 ${favoritesExpanded ? 'rotate-180' : ''}`}>
+            <span className={`text-gray-400 dark:text-gray-300 transition-transform duration-200 ${favoritesExpanded ? 'rotate-180' : ''}`}>
               ▼
             </span>
           </button>
@@ -1001,8 +1001,8 @@ export default function ProfilePage() {
                 </div>
               ) : favorites.length === 0 ? (
                 <div className="text-center py-4">
-                  <p className="text-sm text-gray-500 dark:text-gray-500">No favorites yet</p>
-                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                  <p className="text-sm text-gray-500 dark:text-gray-300">No favorites yet</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-300 mt-1">
                     After a session ends you can save people you'd like to connect with again.
                   </p>
                 </div>
@@ -1031,9 +1031,9 @@ export default function ProfilePage() {
                           {fav.favorite_profile.display_name}
                         </Body16>
                         {fav.favorite_profile.tagline ? (
-                          <p className="text-xs text-gray-500 dark:text-gray-400 truncate italic">&quot;{fav.favorite_profile.tagline}&quot;</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-300 truncate italic">&quot;{fav.favorite_profile.tagline}&quot;</p>
                         ) : fav.favorite_profile.bio ? (
-                          <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                          <p className="text-xs text-gray-500 dark:text-gray-300 truncate">
                             {fav.favorite_profile.bio.length > 50
                               ? fav.favorite_profile.bio.substring(0, 50) + '...'
                               : fav.favorite_profile.bio}
@@ -1152,7 +1152,7 @@ export default function ProfilePage() {
                 </span>
               )}
             </div>
-            <span className={`text-gray-400 dark:text-gray-500 transition-transform duration-200 ${notesExpanded ? 'rotate-180' : ''}`}>
+            <span className={`text-gray-400 dark:text-gray-300 transition-transform duration-200 ${notesExpanded ? 'rotate-180' : ''}`}>
               ▼
             </span>
           </button>
@@ -1174,8 +1174,8 @@ export default function ProfilePage() {
                 </div>
               ) : thankYouNotes.length === 0 ? (
                 <div className="text-center py-4">
-                  <p className="text-sm text-gray-500 dark:text-gray-500">No thank-you notes yet</p>
-                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Notes from people you&apos;ve supported will appear here.</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-300">No thank-you notes yet</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-300 mt-1">Notes from people you&apos;ve supported will appear here.</p>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -1205,7 +1205,7 @@ export default function ProfilePage() {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-baseline gap-2 flex-wrap">
                             <Body16 className="text-sm font-semibold text-gray-900 dark:text-gray-100">{note.sender_profile.display_name}</Body16>
-                            <span className="text-xs text-gray-400 dark:text-gray-500">{relativeDate}</span>
+                            <span className="text-xs text-gray-400 dark:text-gray-300">{relativeDate}</span>
                           </div>
                           <p className="text-sm text-gray-700 dark:text-gray-300 mt-0.5 italic">&ldquo;{note.thank_you_note}&rdquo;</p>
                         </div>
@@ -1244,7 +1244,7 @@ export default function ProfilePage() {
           >
             {exportingData ? 'Preparing…' : 'Download My Data'}
           </button>
-          <p className="text-xs text-rb-gray dark:text-gray-400 text-center max-w-xs">
+          <p className="text-xs text-rb-gray dark:text-gray-300 text-center max-w-xs">
             Download a copy of all your account data as a JSON file.
           </p>
           {exportError && (
@@ -1257,7 +1257,7 @@ export default function ProfilePage() {
           <p className="text-sm font-semibold text-rb-dark dark:text-gray-100 mb-1">
             💙 RecoveryBridge is free — and always will be.
           </p>
-          <p className="text-sm text-rb-gray dark:text-gray-400 mb-4">
+          <p className="text-sm text-rb-gray dark:text-gray-300 mb-4">
             If it&apos;s meant something to you and you&apos;re able, a tax-deductible gift helps keep it that way. No pressure, ever.
           </p>
           <a
@@ -1306,7 +1306,7 @@ export default function ProfilePage() {
               <strong>This action cannot be undone.</strong> All your data including:
             </Body16>
 
-            <ul className="mb-4 text-sm text-rb-gray dark:text-gray-400 space-y-1 ml-5 list-disc">
+            <ul className="mb-4 text-sm text-rb-gray dark:text-gray-300 space-y-1 ml-5 list-disc">
               <li>Profile information</li>
               <li>Chat history</li>
               <li>Connections</li>

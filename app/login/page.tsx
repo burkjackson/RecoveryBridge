@@ -71,7 +71,7 @@ function LoginForm() {
               className="mx-auto mb-4"
               style={{ width: '400px' }}
             />
-            <Body16 className="text-gray-500 dark:text-gray-500 mb-6">Welcome back to your community</Body16>
+            <Body16 className="text-gray-500 dark:text-gray-300 mb-6">Welcome back to your community</Body16>
           </div>
 
           <form onSubmit={handleLogin} className="space-y-4" aria-label="Login form">
@@ -98,7 +98,7 @@ function LoginForm() {
                 <label htmlFor="password-input" className="text-sm font-medium text-gray-700 dark:text-gray-300">
                   Password
                 </label>
-                <a href="/forgot-password" className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition">
+                <a href="/forgot-password" className="text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 transition">
                   Forgot password?
                 </a>
               </div>
@@ -161,7 +161,7 @@ function LoginForm() {
           </form>
 
           <div className="mt-6 pt-6 border-t border-gray-100 dark:border-gray-700">
-            <Body16 className="text-center text-sm text-gray-600 dark:text-gray-400">
+            <Body16 className="text-center text-sm text-gray-600 dark:text-gray-300">
               Don't have an account?{' '}
               <a href="/signup" className="text-gray-900 dark:text-gray-100 font-medium hover:underline transition">
                 Sign up

@@ -87,7 +87,7 @@ export default function CrisisResources() {
               </div>
               <button
                 onClick={() => setIsOpen(false)}
-                className="text-rb-gray dark:text-gray-400 hover:text-rb-dark dark:hover:text-gray-100 text-2xl leading-none"
+                className="text-rb-gray dark:text-gray-300 hover:text-rb-dark dark:hover:text-gray-100 text-2xl leading-none"
                 aria-label="Close crisis resources"
               >
                 ×
@@ -116,7 +116,7 @@ export default function CrisisResources() {
                       988
                     </a>
                   </p>
-                  <p className="text-sm text-rb-gray dark:text-gray-400">24/7 • Free & Confidential</p>
+                  <p className="text-sm text-rb-gray dark:text-gray-300">24/7 • Free & Confidential</p>
                 </div>
               </div>
 
@@ -137,7 +137,7 @@ export default function CrisisResources() {
                       741741
                     </a>
                   </p>
-                  <p className="text-sm text-rb-gray dark:text-gray-400">24/7 • Free & Confidential</p>
+                  <p className="text-sm text-rb-gray dark:text-gray-300">24/7 • Free & Confidential</p>
                 </div>
               </div>
 
@@ -156,10 +156,10 @@ export default function CrisisResources() {
                       1-800-662-4357
                     </a>
                   </p>
-                  <p className="text-sm text-rb-gray dark:text-gray-400">
+                  <p className="text-sm text-rb-gray dark:text-gray-300">
                     Treatment referral & information service
                   </p>
-                  <p className="text-sm text-rb-gray dark:text-gray-400">24/7 • Free & Confidential</p>
+                  <p className="text-sm text-rb-gray dark:text-gray-300">24/7 • Free & Confidential</p>
                 </div>
               </div>
 
@@ -178,7 +178,7 @@ export default function CrisisResources() {
                       911
                     </a>
                   </p>
-                  <p className="text-sm text-rb-gray dark:text-gray-400">For immediate life-threatening emergencies</p>
+                  <p className="text-sm text-rb-gray dark:text-gray-300">For immediate life-threatening emergencies</p>
                 </div>
               </div>
             </div>
