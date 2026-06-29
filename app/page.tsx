@@ -81,7 +81,7 @@ export default function Home() {
       <header className="w-full flex justify-end px-4 sm:px-6 pt-4">
         <Link
           href="/donate"
-          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold text-rb-blue border border-rb-blue/30 bg-white/70 dark:bg-gray-800/70 dark:text-blue-300 dark:border-blue-400/30 hover:bg-rb-blue hover:text-white hover:border-rb-blue dark:hover:bg-rb-blue dark:hover:text-white transition-all shadow-sm"
+          className="inline-flex items-center gap-2 px-6 py-3 rounded-full text-base font-bold text-rb-blue border-2 border-rb-blue/40 bg-white/70 dark:bg-gray-800/70 dark:text-blue-300 dark:border-blue-400/40 hover:bg-rb-blue hover:text-white hover:border-rb-blue dark:hover:bg-rb-blue dark:hover:text-white transition-all shadow-sm"
         >
           <span role="img" aria-label="Heart">💙</span>
           Donate
@@ -107,8 +107,8 @@ export default function Home() {
             <p className="text-xl sm:text-2xl text-rb-gray dark:text-gray-300 italic mb-4">
               &ldquo;Connection is the antidote to addiction&rdquo;
             </p>
-            <p className="text-base sm:text-lg text-rb-gray dark:text-gray-300 max-w-2xl mx-auto leading-relaxed">
-              A <strong>peer-to-peer support platform</strong> for the moments when you need to connect with someone who truly gets it — not a hotline, not a therapist, but a real person who has walked a similar road and is ready to listen. <strong>Private. Free. Available now.</strong>
+            <p className="text-base sm:text-lg text-rb-gray dark:text-gray-300 max-w-xl mx-auto leading-relaxed">
+              Connect with someone who truly gets it — not a hotline, not a therapist, but a real person who has walked a similar road. <strong>Private. Free. Available now.</strong>
             </p>
           </div>
 
@@ -165,7 +165,7 @@ export default function Home() {
               RecoveryBridge connects people who need support with volunteer listeners—in real time, through private one-on-one chat. No appointments. No waiting rooms. Just a real person, ready to listen.
             </p>
             <div className="grid sm:grid-cols-3 gap-6">
-              <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border-2 border-rb-blue-light dark:border-gray-700 hover:shadow-2xl hover:border-rb-blue transition-all duration-300 transform hover:-translate-y-2">
+              <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-md border border-rb-blue-light dark:border-gray-700 hover:shadow-lg transition-shadow duration-300">
                 <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-r from-rb-blue to-rb-blue-dark text-white rounded-full flex items-center justify-center text-2xl font-bold shadow-md">
                   1
                 </div>
@@ -175,7 +175,7 @@ export default function Home() {
                 </p>
               </div>
 
-              <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border-2 border-rb-blue-light dark:border-gray-700 hover:shadow-2xl hover:border-rb-blue transition-all duration-300 transform hover:-translate-y-2">
+              <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-md border border-rb-blue-light dark:border-gray-700 hover:shadow-lg transition-shadow duration-300">
                 <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-r from-rb-blue to-rb-blue-dark text-white rounded-full flex items-center justify-center text-2xl font-bold shadow-md">
                   2
                 </div>
@@ -185,7 +185,7 @@ export default function Home() {
                 </p>
               </div>
 
-              <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border-2 border-rb-blue-light dark:border-gray-700 hover:shadow-2xl hover:border-rb-blue transition-all duration-300 transform hover:-translate-y-2">
+              <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-md border border-rb-blue-light dark:border-gray-700 hover:shadow-lg transition-shadow duration-300">
                 <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-r from-rb-blue to-rb-blue-dark text-white rounded-full flex items-center justify-center text-2xl font-bold shadow-md">
                   3
                 </div>
@@ -197,38 +197,13 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Repeat primary CTA — right after the 3 steps, the peak-intent moment */}
-          <div className="flex justify-center mb-12">
-            <Link
-              href="/signup"
-              className="w-full sm:w-auto px-10 py-4 rounded-full bg-rb-blue hover:bg-rb-blue-hover text-white font-bold text-lg shadow-lg hover:shadow-xl transition-all duration-200 text-center"
-            >
-              Get Started — It&apos;s Free
-            </Link>
-          </div>
-
-          {/* Mission Statement Card */}
-          <div className="max-w-3xl mx-auto mb-12">
-            <div className="bg-gradient-to-r from-rb-blue-light to-rb-purple-light dark:from-gray-800 dark:to-gray-800 rounded-2xl p-8 shadow-lg border-2 border-rb-blue-light dark:border-gray-700">
-              <h2 className="text-heading-2 text-rb-dark dark:text-gray-100 mb-6 text-center">
-                Our Mission
-              </h2>
-              <p className="text-base text-rb-gray dark:text-gray-300 text-center mb-4 leading-relaxed">
-                We believe that we do not heal in isolation.
-                RecoveryBridge exists to create a safe space where your story matters, your struggles are valid, and your
-                progress—no matter how small—deserves celebration.
-              </p>
-              <p className="text-base text-rb-gray dark:text-gray-300 text-center mb-4 leading-relaxed">
-                Every conversation here is built on empathy, respect, and the shared understanding that healing takes courage.
-                We&apos;re here to remind you that <strong>you are worth saving</strong>, that recovery is stronger together,
-                and that showing up—even on the hardest days—is an act of bravery.
-              </p>
-              <p className="text-base text-rb-gray dark:text-gray-300 text-center leading-relaxed">
-                This is not just an app. It&apos;s a community of people who understand that recovery isn&apos;t linear,
-                that every journey looks different, and that sometimes the most powerful thing we can do is simply listen
-                with compassion and be present for one another.
-              </p>
-            </div>
+          {/* Mission Statement — quiet band, no heavy card */}
+          <div className="max-w-2xl mx-auto mb-12 text-center">
+            <p className="text-lg sm:text-xl text-rb-dark dark:text-gray-100 leading-relaxed">
+              We don&apos;t heal in isolation. RecoveryBridge is a community built on the
+              belief that <strong>you are worth saving</strong>—that recovery is stronger
+              together, and showing up on the hardest days is an act of bravery.
+            </p>
           </div>
 
           {/* FAQ Accordion */}
@@ -263,7 +238,7 @@ export default function Home() {
             <p className="text-base text-rb-gray dark:text-gray-300 text-center mb-8 max-w-2xl mx-auto leading-relaxed">
               RecoveryBridge is designed around the realities of recovery—the unexpected hard moments, the need for privacy, and the power of being truly heard.
             </p>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            <div className="grid sm:grid-cols-2 gap-5 max-w-3xl mx-auto">
               <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-md border border-rb-blue-light dark:border-gray-700 text-left flex gap-4 items-start">
                 <span className="text-3xl flex-shrink-0" role="img" aria-label="Magnifying glass">🔍</span>
                 <div>
@@ -285,22 +260,6 @@ export default function Home() {
                 <div>
                   <h3 className="text-heading-4 text-rb-dark dark:text-gray-100 mb-1">Real-Time Private Chat</h3>
                   <p className="text-sm text-rb-gray dark:text-gray-300 leading-relaxed">Once connected, you&apos;re in a live one-on-one conversation. Messages appear instantly, just like texting a friend—but with someone who truly understands.</p>
-                </div>
-              </div>
-
-              <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-md border border-rb-blue-light dark:border-gray-700 text-left flex gap-4 items-start">
-                <span className="text-3xl flex-shrink-0" role="img" aria-label="Mobile phone">📱</span>
-                <div>
-                  <h3 className="text-heading-4 text-rb-dark dark:text-gray-100 mb-1">Works Like a Mobile App</h3>
-                  <p className="text-sm text-rb-gray dark:text-gray-300 leading-relaxed">Install RecoveryBridge on your phone&apos;s home screen for instant access—no app store required. It works offline-ready and feels native on iOS and Android.</p>
-                </div>
-              </div>
-
-              <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-md border border-rb-blue-light dark:border-gray-700 text-left flex gap-4 items-start">
-                <span className="text-3xl flex-shrink-0" role="img" aria-label="Calendar with check">🗓️</span>
-                <div>
-                  <h3 className="text-heading-4 text-rb-dark dark:text-gray-100 mb-1">Listeners Set Their Own Schedule</h3>
-                  <p className="text-sm text-rb-gray dark:text-gray-300 leading-relaxed">Volunteers control when they&apos;re available. Set quiet hours so you&apos;re not disturbed overnight, and step in whenever you have capacity to give back.</p>
                 </div>
               </div>
 

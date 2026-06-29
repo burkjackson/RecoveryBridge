@@ -13,7 +13,7 @@ export default function Footer({ className = '' }: FooterProps) {
         <div className="text-center mb-6">
           <a
             href="/donate"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-rb-blue text-white font-semibold rounded-full hover:bg-rb-blue-hover transition shadow-md"
+            className="inline-flex items-center gap-2 px-8 py-4 bg-rb-blue text-white font-bold text-lg rounded-full hover:bg-rb-blue-hover transition shadow-md"
           >
             <span>💙 Donate</span>
           </a>
