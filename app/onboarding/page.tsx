@@ -19,7 +19,7 @@ const STEP_META: Record<string, string> = {
   referral: 'One Last Thing',
 }
 
-const SEEKER_STEPS = ['welcome', 'intent', 'profile', 'guidelines']
+const SEEKER_STEPS = ['welcome', 'intent', 'profile', 'guidelines', 'referral']
 const LISTENER_STEPS = ['welcome', 'intent', 'community', 'role', 'profile', 'guidelines', 'training', 'referral']
 
 function getSteps(intent: string): string[] {
@@ -290,7 +290,7 @@ export default function OnboardingPage() {
 
       if (error) throw error
 
-      // Send welcome email (fire and forget — don't block navigation)
+      // Send welcome email + admin notification (fire and forget — don't block navigation)
       const { data: { session } } = await supabase.auth.getSession()
       if (session?.access_token) {
         fetch('/api/email/welcome', {
@@ -300,6 +300,14 @@ export default function OnboardingPage() {
             'Authorization': `Bearer ${session.access_token}`,
           },
           body: JSON.stringify({ displayName, userRole }),
+        }).catch(() => {})
+
+        fetch('/api/admin/notify-signup', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+          },
         }).catch(() => {})
       }
 

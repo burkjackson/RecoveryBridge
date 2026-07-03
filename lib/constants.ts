@@ -7,6 +7,42 @@
  *  Bump this (and the "Last updated" date in /terms and /privacy) whenever the legal docs change. */
 export const CONSENT_VERSION = '2026-05-28'
 
+export interface ParsedReferralSource {
+  emoji: string
+  label: string
+  detail: string | null
+}
+
+const REFERRAL_SOURCE_LABELS: Record<string, { emoji: string; label: string }> = {
+  facebook: { emoji: '👍', label: 'Facebook' },
+  instagram: { emoji: '📸', label: 'Instagram' },
+  threads: { emoji: '🧵', label: 'Threads' },
+  tiktok: { emoji: '🎵', label: 'TikTok' },
+  podcast: { emoji: '🎙️', label: 'Podcast' },
+  website_blog: { emoji: '🌐', label: 'Website/Blog' },
+  search_engine: { emoji: '🔍', label: 'Search Engine' },
+  friend_family: { emoji: '🤝', label: 'Friend/Family' },
+  other: { emoji: '💬', label: 'Other' },
+}
+
+/** Parses the profiles.referral_source value set during onboarding. Podcast and
+ *  website entries carry an optional "prefix: detail" suffix, while "Other" with
+ *  a typed detail is stored as the raw free text itself (see onboarding/page.tsx). */
+export function parseReferralSource(raw: string | null | undefined): ParsedReferralSource | null {
+  if (!raw) return null
+
+  if (raw in REFERRAL_SOURCE_LABELS) {
+    return { ...REFERRAL_SOURCE_LABELS[raw], detail: null }
+  }
+  if (raw.startsWith('podcast: ')) {
+    return { ...REFERRAL_SOURCE_LABELS.podcast, detail: raw.slice('podcast: '.length) }
+  }
+  if (raw.startsWith('website: ')) {
+    return { ...REFERRAL_SOURCE_LABELS.website_blog, detail: raw.slice('website: '.length) }
+  }
+  return { ...REFERRAL_SOURCE_LABELS.other, detail: raw }
+}
+
 /** Phrases that suggest a user may be in acute crisis. Matched word-by-word against
  *  message text to surface 988/crisis resources in chat. Intentionally high-recall —
  *  a false positive just shows supportive resources, which is low-harm. */

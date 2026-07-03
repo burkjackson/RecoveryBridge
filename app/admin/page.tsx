@@ -7,6 +7,7 @@ import { Heading1, Body16, Body18 } from '@/components/ui/Typography'
 import Modal from '@/components/Modal'
 import { SkeletonAdminRow } from '@/components/Skeleton'
 import { CompactFooter } from '@/components/Footer'
+import { parseReferralSource } from '@/lib/constants'
 
 interface Report {
   id: string
@@ -1290,15 +1291,18 @@ export default function AdminPage() {
                                   : <span className="italic text-gray-400">Not set</span>}
                               </td>
                               <td className="py-3 pr-4 hidden lg:table-cell text-rb-gray dark:text-gray-300 text-xs">
-                                {user.referral_source === 'facebook' ? '👍 Facebook'
-                                  : user.referral_source === 'instagram' ? '📸 Instagram'
-                                  : user.referral_source === 'threads' ? '🧵 Threads'
-                                  : user.referral_source === 'tiktok' ? '🎵 TikTok'
-                                  : user.referral_source === 'website_blog' ? '🌐 Website/Blog'
-                                  : user.referral_source === 'search_engine' ? '🔍 Search Engine'
-                                  : user.referral_source === 'friend_family' ? '🤝 Friend/Family'
-                                  : user.referral_source === 'other' ? '💬 Other'
-                                  : <span className="italic text-gray-300">—</span>}
+                                {(() => {
+                                  const parsed = parseReferralSource(user.referral_source)
+                                  if (!parsed) return <span className="italic text-gray-300">—</span>
+                                  return (
+                                    <span>
+                                      {parsed.emoji} {parsed.label}
+                                      {parsed.detail && (
+                                        <span className="text-gray-400 dark:text-gray-500"> — {parsed.detail}</span>
+                                      )}
+                                    </span>
+                                  )
+                                })()}
                               </td>
                               <td className="py-3 hidden md:table-cell text-rb-gray dark:text-gray-300 text-xs">
                                 {new Date(user.created_at).toLocaleString('en-US', {
