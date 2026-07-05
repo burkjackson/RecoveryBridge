@@ -122,7 +122,6 @@ export default function Modal({
               if (type !== 'custom') onClose()
             }}
             className={getConfirmButtonClass()}
-            autoFocus
           >
             {confirmText}
           </button>

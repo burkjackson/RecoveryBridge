@@ -10,6 +10,7 @@ import { SkeletonChatMessage } from '@/components/Skeleton'
 import ErrorState from '@/components/ErrorState'
 import { PrivacyBadge } from '@/components/Footer'
 import { TIME, VALIDATION, CONVERSATION_STARTERS, REACTIONS, containsCrisisLanguage } from '@/lib/constants'
+import { linkifyText } from '@/lib/linkify'
 import type { ChatMessage as Message, Session, MessageReaction as Reaction } from '@/lib/types/database'
 
 export default function ChatPage({ params }: { params: Promise<{ id: string }> }) {
@@ -918,8 +919,8 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                           if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current)
                         }}
                       >
-                        <Body16 className="!text-white">
-                          {message.content}
+                        <Body16 className="!text-white whitespace-pre-wrap break-words">
+                          {linkifyText(message.content, 'underline decoration-white/70 hover:decoration-white')}
                         </Body16>
                         <div className="flex items-center justify-end gap-1 mt-1">
                           <p className="text-xs !text-white/80">

@@ -39,6 +39,8 @@ export default function AvailableListeners({ onCountChange, currentUserId, curre
   const [hasSharedSession, setHasSharedSession] = useState<Set<string>>(new Set())
   const [togglingFavorite, setTogglingFavorite] = useState<string | null>(null)
   const [connectingId, setConnectingId] = useState<string | null>(null)
+  const [blockModal, setBlockModal] = useState({ show: false, reason: '' })
+  const [errorModal, setErrorModal] = useState({ show: false, message: '' })
   const supabase = createClient()
 
   useEffect(() => {
@@ -191,7 +193,22 @@ export default function AvailableListeners({ onCountChange, currentUserId, curre
 
     try {
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
+      if (!user) {
+        setErrorModal({ show: true, message: 'You need to be signed in to connect.' })
+        return
+      }
+
+      // Check if user is blocked
+      const { data: blockCheck } = await supabase
+        .from('user_blocks')
+        .select('id, reason')
+        .eq('user_id', user.id)
+        .maybeSingle()
+
+      if (blockCheck) {
+        setBlockModal({ show: true, reason: blockCheck.reason })
+        return
+      }
 
       // Check for existing active session first
       const { data: existingSession } = await supabase
@@ -216,6 +233,7 @@ export default function AvailableListeners({ onCountChange, currentUserId, curre
 
       if (error || !session) {
         console.error('Error creating session:', error)
+        setErrorModal({ show: true, message: error?.message || 'An unexpected error occurred' })
         return
       }
 
@@ -229,6 +247,7 @@ export default function AvailableListeners({ onCountChange, currentUserId, curre
       router.push(`/chat/${session.id}`)
     } catch (err) {
       console.error('Error connecting with listener:', err)
+      setErrorModal({ show: true, message: err instanceof Error ? err.message : 'An unexpected error occurred' })
     } finally {
       setConnectingId(null)
     }
@@ -532,6 +551,52 @@ export default function AvailableListeners({ onCountChange, currentUserId, curre
           </div>
         </Modal>
       )}
+
+      {/* Account Blocked Modal */}
+      <Modal
+        isOpen={blockModal.show}
+        onClose={() => setBlockModal({ show: false, reason: '' })}
+        title="Account Restricted"
+        confirmText="OK"
+        confirmStyle="primary"
+      >
+        <p className="text-lg mb-4">
+          Your account has been restricted and you cannot create new chat sessions at this time.
+        </p>
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-4">
+          <p className="text-sm dark:text-gray-300">
+            <strong>Reason:</strong>
+            <br />
+            {blockModal.reason}
+          </p>
+        </div>
+        <p className="text-sm text-rb-gray dark:text-gray-300">
+          Please contact support for more information.
+        </p>
+      </Modal>
+
+      {/* Connection Error Modal */}
+      <Modal
+        isOpen={errorModal.show}
+        onClose={() => setErrorModal({ show: false, message: '' })}
+        title="Connection Failed"
+        confirmText="Try Again"
+        confirmStyle="danger"
+      >
+        <p className="text-lg mb-4">
+          We couldn&apos;t connect you with this listener right now.
+        </p>
+        <div className="bg-orange-50 dark:bg-amber-900/20 border border-orange-200 dark:border-amber-800 rounded-lg p-4">
+          <p className="text-sm">
+            This happens sometimes! Please try again in a moment, or try connecting with a different listener.
+          </p>
+          {errorModal.message && (
+            <p className="text-xs text-rb-gray mt-2">
+              Technical details: {errorModal.message}
+            </p>
+          )}
+        </div>
+      </Modal>
     </div>
   )
 }
