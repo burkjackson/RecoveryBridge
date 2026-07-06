@@ -238,6 +238,20 @@ export default function ListenersPage() {
 
       if (error) throw error
 
+      // Notify the listener with a distinct "direct connect" push (fire-and-forget —
+      // shouldn't block navigation into the chat)
+      supabase.auth.getSession().then(({ data: { session: authSession } }) => {
+        if (!authSession) return
+        fetch('/api/notifications/send', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authSession.access_token}`
+          },
+          body: JSON.stringify({ seekerId: user.id, targetListenerId: listenerId })
+        }).catch(() => {})
+      })
+
       // Navigate to chat
       router.push(`/chat/${session.id}`)
     } catch (error: any) {

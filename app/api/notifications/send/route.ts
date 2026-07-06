@@ -96,11 +96,13 @@ export async function POST(request: NextRequest) {
     let seekerId: string
     let isRenotification = false
     let clientFavoriteIds: string[] = []
+    let targetListenerId: string | undefined
     try {
       const body = await request.json()
       seekerId = body.seekerId
       isRenotification = body.isRenotification === true
       clientFavoriteIds = Array.isArray(body.favoriteListenerIds) ? body.favoriteListenerIds : []
+      targetListenerId = typeof body.targetListenerId === 'string' ? body.targetListenerId : undefined
     } catch {
       return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
     }
@@ -122,6 +124,90 @@ export async function POST(request: NextRequest) {
       .single()
 
     const seekerName = seekerProfile?.display_name || 'Someone'
+
+    // Direct-connect notification: the seeker picked this listener specifically
+    // (e.g. from the Listeners directory) rather than broadcasting to everyone.
+    // A session must already exist between the two, so a seeker can't ping an
+    // arbitrary user without actually having connected with them.
+    if (targetListenerId) {
+      const { data: directSession } = await supabase
+        .from('sessions')
+        .select('id')
+        .eq('seeker_id', seekerId)
+        .eq('listener_id', targetListenerId)
+        .eq('status', 'active')
+        .maybeSingle()
+
+      if (!directSession) {
+        return NextResponse.json({ error: 'No active session with this listener' }, { status: 403 })
+      }
+
+      const { data: listener } = await supabase
+        .from('profiles')
+        .select('id, display_name, email, email_notifications_enabled, quiet_hours_enabled, quiet_hours_start, quiet_hours_end, quiet_hours_timezone')
+        .eq('id', targetListenerId)
+        .maybeSingle()
+
+      if (!listener || isInQuietHours(listener)) {
+        return NextResponse.json({
+          success: true,
+          message: 'Listener unavailable or in quiet hours',
+          notified: 0
+        })
+      }
+
+      const { data: subs } = await supabase
+        .from('push_subscriptions')
+        .select('*')
+        .eq('user_id', targetListenerId)
+
+      const payload = JSON.stringify({
+        title: '🎯 Direct Connection Request',
+        body: `${seekerName} chose to connect with you directly.`,
+        icon: '/icon-192.png',
+        tag: `direct-connect-${seekerId}`,
+        data: { seekerId }
+      })
+
+      let pushCount = 0
+      let pushSucceeded = false
+      await Promise.all((subs || []).map(async (sub) => {
+        try {
+          await webpush.sendNotification(sub.subscription, payload, {
+            urgency: 'high',
+            TTL: 60,
+          })
+          pushCount++
+          pushSucceeded = true
+        } catch (error: unknown) {
+          const statusCode = (error as { statusCode?: number })?.statusCode
+          if (statusCode && statusCode >= 400 && statusCode < 500) {
+            await supabase.from('push_subscriptions').delete().eq('id', sub.id)
+          }
+        }
+      }))
+
+      let emailCount = 0
+      if (!pushSucceeded && process.env.RESEND_API_KEY && listener.email_notifications_enabled && listener.email) {
+        const result = await sendSupportRequestEmail({
+          to: listener.email,
+          listenerName: listener.display_name,
+          seekerName,
+          isFavorite: false,
+          isRenotification: false,
+          isDirect: true,
+        })
+        if (result.success) emailCount = 1
+      }
+
+      return NextResponse.json({
+        success: true,
+        message: `Direct connect notification sent to listener ${targetListenerId.slice(0, 8)}`,
+        notified: pushCount + emailCount,
+        pushCount,
+        emailCount,
+      })
+    }
 
     // Check if the seeker already has an active session — if so, skip notifications.
     // This prevents re-notifications firing after a listener has already connected,

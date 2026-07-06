@@ -11,24 +11,30 @@ interface SendSupportRequestEmailParams {
   seekerName: string
   isFavorite: boolean
   isRenotification: boolean
+  isDirect?: boolean
 }
 
-function buildSubject(isFavorite: boolean, isRenotification: boolean, seekerName: string): string {
+function buildSubject(isFavorite: boolean, isRenotification: boolean, seekerName: string, isDirect?: boolean): string {
+  if (isDirect) return `🎯 ${seekerName} wants to connect with you`
   if (isFavorite) return '⭐ Someone you know needs support'
   if (isRenotification) return `⏳ ${seekerName} is still waiting for support`
   return '🤝 Someone needs support right now'
 }
 
-function buildEmailHtml(listenerName: string, seekerName: string, isFavorite: boolean, isRenotification: boolean): string {
-  const headline = isFavorite
-    ? `Someone you know needs support`
-    : isRenotification
-      ? `${seekerName} is still waiting`
-      : `Someone needs support right now`
+function buildEmailHtml(listenerName: string, seekerName: string, isFavorite: boolean, isRenotification: boolean, isDirect?: boolean): string {
+  const headline = isDirect
+    ? `${seekerName} wants to connect with you`
+    : isFavorite
+      ? `Someone you know needs support`
+      : isRenotification
+        ? `${seekerName} is still waiting`
+        : `Someone needs support right now`
 
-  const body = isRenotification
-    ? `${seekerName} has been waiting 2+ minutes for a listener. Can you help?`
-    : `${seekerName} is looking for a listener right now. Opening the app only takes a moment.`
+  const body = isDirect
+    ? `${seekerName} chose to connect with you directly. Open the app to join the chat.`
+    : isRenotification
+      ? `${seekerName} has been waiting 2+ minutes for a listener. Can you help?`
+      : `${seekerName} is looking for a listener right now. Opening the app only takes a moment.`
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -411,6 +417,7 @@ export async function sendSupportRequestEmail({
   seekerName,
   isFavorite,
   isRenotification,
+  isDirect,
 }: SendSupportRequestEmailParams): Promise<{ success: boolean }> {
   if (!process.env.RESEND_API_KEY) {
     return { success: false }
@@ -418,8 +425,8 @@ export async function sendSupportRequestEmail({
 
   try {
     const resend = new Resend(process.env.RESEND_API_KEY)
-    const subject = buildSubject(isFavorite, isRenotification, seekerName)
-    const html = buildEmailHtml(listenerName, seekerName, isFavorite, isRenotification)
+    const subject = buildSubject(isFavorite, isRenotification, seekerName, isDirect)
+    const html = buildEmailHtml(listenerName, seekerName, isFavorite, isRenotification, isDirect)
 
     const { error } = await resend.emails.send({
       from: FROM_ADDRESS,
