@@ -13,21 +13,27 @@ export async function POST(request: NextRequest) {
     // Authentication: Allow either authenticated users OR secret key (for cron jobs)
     const authHeader = request.headers.get('authorization')
     const secretKey = request.headers.get('x-cleanup-secret')
+    const bearerToken = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null
+    // Vercel crons send `Authorization: Bearer ${CRON_SECRET}`; GitHub Actions and
+    // manual triggers send x-cleanup-secret. Accept either secret via either channel.
+    const cronSecrets = [process.env.CLEANUP_SECRET_KEY, process.env.CRON_SECRET].filter(Boolean)
 
     // Check for secret key first (for cron jobs or manual triggers)
     if (secretKey) {
-      const validSecret = process.env.CLEANUP_SECRET_KEY
-      if (!validSecret) {
+      if (cronSecrets.length === 0) {
         return NextResponse.json({ error: 'Server misconfiguration' }, { status: 500 })
       }
-      if (secretKey !== validSecret) {
+      if (!cronSecrets.includes(secretKey)) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
       }
     }
+    // Bearer token carrying a cron secret (Vercel cron invocations)
+    else if (bearerToken && cronSecrets.includes(bearerToken)) {
+      // Authorized as cron
+    }
     // Otherwise require authentication (for dashboard-triggered cleanups)
-    else if (authHeader) {
-      const token = authHeader.replace('Bearer ', '')
-      const { data: { user }, error: authError } = await supabase.auth.getUser(token)
+    else if (bearerToken) {
+      const { data: { user }, error: authError } = await supabase.auth.getUser(bearerToken)
 
       if (authError || !user) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

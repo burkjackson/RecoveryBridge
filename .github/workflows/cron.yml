@@ -1,0 +1,32 @@
+# Triggers time-based API routes on a 15-minute cadence.
+#
+# Vercel Hobby crons only run once per day, which is too coarse for
+# scheduled-availability (it matches windows starting within the last
+# ~20 minutes). This workflow provides the real cadence; the daily
+# Vercel crons in vercel.json remain as a backup.
+#
+# Requires a repository secret named CLEANUP_SECRET_KEY whose value
+# matches the CLEANUP_SECRET_KEY environment variable in Vercel.
+name: Cron pings
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping scheduled-availability
+        run: |
+          curl --silent --show-error --fail-with-body --max-time 60 \
+            -X POST https://recoverybridge.app/api/scheduled-availability \
+            -H "x-cron-secret: ${{ secrets.CLEANUP_SECRET_KEY }}"
+
+      - name: Ping cleanup-sessions
+        if: ${{ always() }}
+        run: |
+          curl --silent --show-error --fail-with-body --max-time 60 \
+            -X POST https://recoverybridge.app/api/cleanup-sessions \
+            -H "x-cleanup-secret: ${{ secrets.CLEANUP_SECRET_KEY }}"

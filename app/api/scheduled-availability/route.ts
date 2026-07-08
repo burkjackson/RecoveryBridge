@@ -8,6 +8,12 @@ interface AvailabilityWindow {
   end: string   // "HH:MM" 24h
 }
 
+// How far back a window start still counts as "starting now". Must be a little
+// longer than the trigger cadence (15 min via GitHub Actions) so scheduler
+// jitter can't skip a window; overlap at worst re-sends a push with the same
+// tag, which the OS collapses into one notification.
+const WINDOW_START_TOLERANCE_MIN = 20
+
 function isWindowStartingNow(windows: AvailabilityWindow[], timezone: string): boolean {
   const now = new Date()
   // Get current day + time in user's timezone
@@ -28,20 +34,25 @@ function isWindowStartingNow(windows: AvailabilityWindow[], timezone: string): b
     if (w.day !== dayOfWeek) return false
     const [sh, sm] = w.start.split(':').map(Number)
     const windowStartMinutes = sh * 60 + sm
-    // Notify if current time is within [windowStart, windowStart + 15 min)
-    return currentMinutes >= windowStartMinutes && currentMinutes < windowStartMinutes + 15
+    // Notify if current time is within [windowStart, windowStart + tolerance)
+    return currentMinutes >= windowStartMinutes && currentMinutes < windowStartMinutes + WINDOW_START_TOLERANCE_MIN
   })
 }
 
 export async function POST(request: NextRequest) {
-  // Auth: cron secret header OR bearer token
+  // Auth: cron secret header OR bearer token. Vercel crons send
+  // `Authorization: Bearer ${CRON_SECRET}`; GitHub Actions sends x-cron-secret.
   const secret = request.headers.get('x-cron-secret')
   const authHeader = request.headers.get('authorization')
-  const expectedSecret = process.env.CLEANUP_SECRET_KEY // reuse existing secret
+  const bearerToken = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null
+  const cronSecrets = [process.env.CLEANUP_SECRET_KEY, process.env.CRON_SECRET].filter(
+    (s): s is string => Boolean(s)
+  )
 
   const isAuthorized =
-    (secret && secret === expectedSecret) ||
-    (authHeader && authHeader === `Bearer ${expectedSecret}`)
+    cronSecrets.length > 0 &&
+    ((secret !== null && cronSecrets.includes(secret)) ||
+      (bearerToken !== null && cronSecrets.includes(bearerToken)))
 
   if (!isAuthorized) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -127,4 +138,9 @@ export async function POST(request: NextRequest) {
   }
 
   return NextResponse.json({ notified })
+}
+
+// Vercel cron jobs invoke their path with GET
+export async function GET(request: NextRequest) {
+  return POST(request)
 }
