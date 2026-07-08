@@ -1,6 +1,6 @@
 # RecoveryBridge — Project Status Document
 
-> **Last Updated:** February 2025
+> **Last Updated:** July 2026
 > **Purpose:** Get any Claude session up to speed on the entire app — architecture, features, current state, and known issues.
 
 ---
@@ -9,7 +9,8 @@
 
 RecoveryBridge is a **peer-to-peer support platform for people in addiction recovery**. Users can be **seekers** (people needing support) or **listeners** (people offering support). They connect in real-time 1:1 chat sessions. Think of it as an anonymous, on-demand peer support hotline.
 
-**Live URL:** Deployed on Vercel (auto-deploys from `main` branch)
+**Live URL:** https://recoverybridge.app (Vercel, auto-deploys from `main`)
+**Note:** The GitHub repo (`burkjackson/RecoveryBridge`) is **public**.
 
 ---
 
@@ -19,12 +20,14 @@ RecoveryBridge is a **peer-to-peer support platform for people in addiction reco
 |-------|-----------|
 | Framework | Next.js 15 (App Router, React 18, TypeScript) |
 | Database | Supabase (PostgreSQL + Auth + Realtime + Storage) |
-| Styling | Tailwind CSS 3.4 with custom theme |
+| Styling | Tailwind CSS 3.4, custom theme, class-based dark mode |
 | Push Notifications | web-push (VAPID) + Service Worker |
+| Email | Resend (welcome, admin signup alerts, support-request fallback) |
 | SMS (disabled) | Twilio (pending verification) |
 | Error Tracking | Sentry (@sentry/nextjs) |
 | Image Cropping | react-easy-crop |
 | Hosting | Vercel |
+| Cron | GitHub Actions (`.github/workflows/cron.yml`, every 15 min) + daily Vercel crons as backup |
 
 ---
 
@@ -33,273 +36,140 @@ RecoveryBridge is a **peer-to-peer support platform for people in addiction reco
 ```
 app/
 ├── api/
-│   ├── heartbeat/route.ts          # POST: Update user's last_heartbeat_at
-│   ├── cleanup-sessions/route.ts   # POST: Auto-close stale sessions (cron-compatible)
-│   └── notifications/send/route.ts # POST: Send push notifications to available listeners
-├── admin/page.tsx                  # Admin moderation dashboard (reports, blocks, users)
-├── chat/[id]/page.tsx              # Real-time 1:1 chat (largest file ~800 lines)
-├── dashboard/page.tsx              # Main hub: role selection, sessions, notifications
-├── profile/page.tsx                # Edit profile, tags, avatar, SMS settings
-├── listeners/page.tsx              # Browse & filter available listeners, connect
-├── onboarding/page.tsx             # 4-step post-signup setup (role, bio, tags, guidelines)
-├── login/page.tsx                  # Email/password authentication
-├── signup/page.tsx                 # Registration with display name
-├── forgot-password/page.tsx        # Password reset request
-├── reset-password/page.tsx         # Set new password from email link
-├── contact/page.tsx                # Contact form
-├── donate/page.tsx                 # Donation info
-├── safety/page.tsx                 # Safety guidelines (static)
-├── terms/page.tsx                  # Terms of service (static)
-├── privacy/page.tsx                # Privacy policy (static)
-├── layout.tsx                      # Root layout: PWA metadata, CrisisResources, ServiceWorker
-├── page.tsx                        # Landing page
-├── globals.css                     # Global styles
-└── global-error.tsx                # Error boundary
+│   ├── heartbeat/route.ts            # POST: Update user's last_heartbeat_at
+│   ├── cleanup-sessions/route.ts     # POST/GET: Auto-close stale sessions, reset stale seekers (cron)
+│   ├── scheduled-availability/route.ts # POST/GET: Push "your support time is starting" (cron)
+│   ├── notifications/send/route.ts   # POST: Push (+email fallback) to available listeners
+│   ├── account/export/route.ts       # GET: Self-service data export (CCPA/GDPR)
+│   ├── email/welcome/route.ts        # POST: Send welcome email (Resend)
+│   ├── webhooks/new-user/route.ts    # POST: Supabase webhook — admin new-user email (mostly superseded by notify-signup)
+│   └── admin/
+│       ├── actions/route.ts          # POST: All admin mutations (verify token → is_admin, rate-limited)
+│       ├── delete-user/route.ts      # POST: Admin user deletion
+│       ├── notify-signup/route.ts    # POST: Admin signup-alert email (called from onboarding completion)
+│       └── send-welcome-bulk/route.ts # POST: Bulk welcome emails
+├── admin/page.tsx                    # Admin moderation dashboard (~1,500 lines)
+├── chat/[id]/page.tsx                # Real-time 1:1 chat (~1,500 lines)
+├── connect/page.tsx                  # Notification-tap landing: verifies seeker, creates session, → /chat
+├── dashboard/page.tsx                # Main hub: role selection, listeners, seekers, notifications
+├── history/page.tsx                  # Past sessions + feedback/thank-you notes
+├── training/page.tsx                 # Listener training modules (acknowledge sections → completion timestamp)
+├── profile/page.tsx                  # Edit profile, tags, avatar, notification/availability settings
+├── listeners/page.tsx                # Browse & filter available listeners, connect
+├── onboarding/page.tsx               # Post-signup setup (role, bio, tags, referral source, guidelines)
+├── login/ signup/ forgot-password/ reset-password/  # Auth pages
+├── contact/ donate/ safety/ terms/ privacy/ offline/ # Static-ish pages
+├── layout.tsx                        # Root layout: PWA metadata, CrisisResources, theme, service worker
+├── page.tsx                          # Landing page (FAQ accordion, product preview popup)
+└── sitemap.ts                        # Generated sitemap
 
 components/
-├── AvailableListeners.tsx          # Real-time list of online listeners (dashboard)
-├── PeopleSeeking.tsx               # Real-time list of seekers needing help (for listeners)
-├── NotificationSettings.tsx        # Push toggle, Always Available, Quiet Hours
+├── AvailableListeners.tsx            # Real-time list of online listeners (dashboard, connect flow)
+├── PeopleSeeking.tsx                 # Real-time list of seekers needing help (for listeners)
+├── NotificationSettings.tsx          # Push toggle, Always Available, Quiet Hours, availability schedule
 ├── NotificationInstructionsModal.tsx # iOS PWA installation guide
-├── AvatarUpload.tsx                # Image upload with crop (Supabase Storage)
-├── CrisisResources.tsx             # Floating 988/crisis button (always visible)
-├── TagSelector.tsx                 # Multi-select specialty tags (max 5)
-├── Modal.tsx                       # Reusable modal (alert/confirm/custom)
-├── ErrorState.tsx                  # Reusable error display (inline/page/banner)
-├── Skeleton.tsx                    # Loading skeletons for all page types
-├── Footer.tsx                      # Site footer with links
-├── ServiceWorkerRegistration.tsx   # Registers sw.js on mount
-├── SkipLink.tsx                    # Accessibility: skip to main content
-└── ui/Typography.tsx               # Heading1, Body16, Body18
+├── BottomNav.tsx                     # Mobile bottom navigation
+├── ThemeProvider.tsx / ThemeToggle.tsx # Class-based dark mode
+├── ToastProvider.tsx                 # Toast notifications
+├── FaqAccordion.tsx / ProductPreview.tsx / SocialIcons.tsx # Landing page
+├── AvatarUpload.tsx                  # Image upload with crop (Supabase Storage)
+├── CrisisResources.tsx               # Floating 988/crisis button (always visible)
+├── TagSelector.tsx / Modal.tsx / ErrorState.tsx / Skeleton.tsx / Footer.tsx
+├── ServiceWorkerRegistration.tsx / SkipLink.tsx
+└── ui/Typography.tsx                 # Semantic type scale (Heading1..., Body16, Body18)
 
 lib/
-├── constants.ts                    # All timing, validation, tags, reactions, timezones
-├── pushNotifications.ts            # Web Push API utilities (subscribe/unsubscribe)
-├── sms.ts                          # Twilio wrapper (sendSMS, isValidE164)
-├── env.ts                          # Environment variable validation
-├── supabase/
-│   ├── client.ts                   # Browser-side Supabase client
-│   └── server.ts                   # Server-side Supabase client (SSR cookies)
-└── types/
-    └── database.ts                 # TypeScript interfaces for all tables
+├── constants.ts                      # Timing, validation, tags, reactions, timezones, parseReferralSource
+├── email.ts                          # Resend senders: new-user alert, support-request fallback, report-resolved, story emails
+├── email/welcomeEmailHtml.ts         # Welcome email template
+├── pushNotifications.ts              # Web Push subscribe/unsubscribe
+├── linkify.tsx                       # Safe URL autolinking in chat
+├── slugify.ts / sms.ts / env.ts
+├── supabase/client.ts, server.ts
+└── types/database.ts
 
-supabase/migrations/
-├── 001_session_feedback.sql        # session_feedback table + RLS
-├── 002_read_receipts.sql           # read_at column on messages
-├── 003_message_reactions.sql       # message_reactions table (3 types)
-├── 004_add_reaction_types.sql      # Expand to 8 reaction types
-├── 004_security_fixes.sql          # Restrict message updates, enforce read_at
-├── 005_quiet_hours.sql             # Quiet hours columns on profiles
-└── 006_sms_notifications.sql       # phone_number + sms_enabled on profiles
+supabase/
+├── migrations/                       # 001–023, numbered (see below)
+└── legacy/                           # Pre-migration setup SQL (historical reference only)
 
-public/
-├── sw.js                           # Service worker (push, cache, notification clicks)
-├── manifest.json                   # PWA manifest (standalone, /dashboard start)
-├── icon-192.png, icon-512.png      # PWA icons
-└── apple-touch-icon.png            # iOS icon
-
-middleware.ts                       # Route protection (auth + admin check)
+docs/                                 # Setup guides, audits, design assets (historical)
+scripts/                              # Ad-hoc admin scripts (get-user-emails.js, DEPLOY.sh)
+public/sw.js                          # Service worker (push, cache — bump CACHE_NAME on breaking changes; currently v9)
+middleware.ts                         # Route protection (auth + admin check)
+.github/workflows/cron.yml            # 15-min pings to cron API routes
 ```
 
 ---
 
-## Database Schema
+## Database Schema (high level)
 
-### profiles
-The central user table. Key fields:
+Migrations live in `supabase/migrations/` (001–023) and are the source of truth. Summary:
 
-| Field | Type | Notes |
-|-------|------|-------|
-| id | uuid | Matches Supabase auth.users.id |
-| display_name | text | Unique, shown publicly |
-| email | text | From auth, shown on profile only |
-| bio | text | Optional, max 500 chars |
-| tagline | text | Short quote, max 60 chars |
-| role_state | enum | `'available'` / `'requesting'` / `'offline'` / null |
-| user_role | enum | `'person_in_recovery'` / `'professional'` / `'ally'` / null |
-| tags | text[] | Specialty tags (max 5) |
-| avatar_url | text | Supabase Storage URL |
-| is_admin | boolean | Admin dashboard access |
-| always_available | boolean | Receive notifications even when not "available" |
-| last_heartbeat_at | timestamptz | Updated every 30s when active |
-| quiet_hours_enabled | boolean | Do Not Disturb toggle |
-| quiet_hours_start | text | HH:MM format (default '23:00') |
-| quiet_hours_end | text | HH:MM format (default '07:00') |
-| quiet_hours_timezone | text | IANA timezone (default 'America/New_York') |
-| phone_number | text | E.164 format, validated by DB constraint |
-| sms_notifications_enabled | boolean | SMS fallback toggle |
+### profiles (central user table)
+Core: `id` (= auth.users.id), `display_name` (unique), `email`, `bio`, `tagline`, `avatar_url`, `tags` (max 5), `is_admin`.
+State: `role_state` (`available`/`requesting`/`offline`/null), `user_role` (`person_in_recovery`/`professional`/`ally`), `last_heartbeat_at`.
+Notifications: `always_available`, `quiet_hours_*` (enabled/start/end/timezone), `email_notifications_enabled` (008), `phone_number` + `sms_notifications_enabled` (006, feature disabled), `availability_schedule` JSONB windows (020).
+Compliance/audit: `referral_source` (010, free text since 018), `listener_training_completed_at` (019), `consent_version` + `consent_accepted_at` (021), `age_confirmed` (022), `health_data_consent` + `_at` (023, WA My Health My Data).
 
-### sessions
-| Field | Type | Notes |
-|-------|------|-------|
-| id | uuid | Primary key |
-| listener_id | uuid | FK to profiles |
-| seeker_id | uuid | FK to profiles |
-| status | enum | `'active'` / `'ended'` |
-| ended_at | timestamptz | When session was closed |
+### Other tables
+- **sessions** — listener_id, seeker_id, status (`active`/`ended`), ended_at
+- **messages** — session_id, sender_id, content (max 2000), read_at (002, read receipts)
+- **message_reactions** — 8 emoji types (003/004)
+- **session_feedback** — helpful boolean + `thank_you_note` (009, max 300 chars, shown in /history)
+- **user_favorites** (007) — favorite contacts from past sessions; favorites get notified first
+- **reports / user_blocks / admin_logs** — moderation + audit trail
+- **push_subscriptions** — Web Push endpoints per user/device
+- **blog/story tables** (011–015) — **legacy**: stories moved to Ghost at stories.recoverybridge.app; no in-app UI reads them
 
-### messages
-| Field | Type | Notes |
-|-------|------|-------|
-| id | uuid | Primary key |
-| session_id | uuid | FK to sessions |
-| sender_id | uuid | FK to profiles |
-| content | text | Message body (max 2000 chars) |
-| read_at | timestamptz | Read receipt (null = unread) |
-
-### message_reactions
-| Field | Type | Notes |
-|-------|------|-------|
-| id | uuid | Primary key |
-| message_id | uuid | FK to messages |
-| user_id | uuid | FK to profiles |
-| reaction | enum | `heart` / `hug` / `pray` / `strong` / `sparkles` / `thumbsup` / `clap` / `blue_heart` |
-
-### session_feedback
-| Field | Type | Notes |
-|-------|------|-------|
-| id | uuid | Primary key |
-| session_id | uuid | FK to sessions |
-| from_user_id | uuid | Who gave feedback |
-| to_user_id | uuid | Who received feedback |
-| helpful | boolean | Was the session helpful? |
-
-### reports
-| Field | Type | Notes |
-|-------|------|-------|
-| id | uuid | Primary key |
-| reporter_id | uuid | Who filed the report |
-| reported_user_id | uuid | Who was reported |
-| session_id | uuid | Which chat session |
-| reason | text | Category of issue |
-| description | text | Details |
-| status | enum | `'pending'` / `'reviewing'` / `'resolved'` / `'dismissed'` |
-| resolved_by | uuid | Admin who resolved |
-| resolution_notes | text | Admin notes |
-
-### user_blocks
-| Field | Type | Notes |
-|-------|------|-------|
-| id | uuid | Primary key |
-| user_id | uuid | Blocked user |
-| blocked_by | uuid | Admin who blocked |
-| reason | text | Why |
-| block_type | enum | `'temporary'` / `'permanent'` |
-| expires_at | timestamptz | For temporary blocks |
-| is_active | boolean | Currently enforced? |
-
-### admin_logs
-Audit trail for all admin actions (block, unblock, resolve report, delete user, etc.)
-
-### push_subscriptions
-Stores Web Push subscription endpoints per user (one user can have multiple devices).
+All tables have RLS. Admin mutations go through `/api/admin/*` routes (Bearer token → `getUser` → `is_admin` check), not client-side Supabase.
 
 ---
 
 ## Core User Flows
 
-### 1. Seeker Requesting Support
-1. Seeker clicks "I Need Support" on dashboard → `role_state = 'requesting'`
-2. Push notification fires to all available listeners (respects quiet hours)
-3. Seeker stays on dashboard with "Finding Listener..." animation
-4. Heartbeat runs every 30s; after **2 minutes** without connection, re-notification fires (up to 3x)
-5. When a listener clicks "Connect" from PeopleSeeking or Listeners page, a session is created
-6. Seeker auto-navigates to `/chat/[sessionId]` via realtime subscription
+### 1. Seeker requesting support
+1. "I Need Support" → `role_state = 'requesting'`, push fires to available listeners
+2. Seeker stays on dashboard with "Finding Listener..."; heartbeat every 30s
+3. Re-notification after 2 min without connection (max 3)
+4. Listener connects (PeopleSeeking, dashboard list, /listeners, or notification tap → `/connect?seekerId=`)
+5. Seeker auto-navigates to `/chat/[sessionId]` via realtime subscription
 
-### 2. Listener Connecting
-1. Listener clicks "I'm Here To Listen" → `role_state = 'available'`
-2. They appear in AvailableListeners and can see PeopleSeeking cards
-3. Click "Connect" on a seeker → new session created → both navigate to chat
-4. Can also browse `/listeners` page for more detail before connecting
+### 2. Listener flows
+- "I'm Here To Listen" → `role_state = 'available'`, visible in lists
+- Seekers can also directly connect from the dashboard listener list or /listeners (two-step confirm); the listener gets a distinct "🎯 Direct Connection Request" push/email
+- Listener training (/training) nudged from dashboard; completion recorded on profile
+- Optional weekly availability schedule → "your support time is starting" push at window start
 
-### 3. Chat Session
-- Real-time messaging via Supabase postgres_changes
-- Typing indicators via Supabase broadcast
-- Read receipts (single ✓ = sent, double ✓✓ = read) via broadcast
-- Message reactions (double-click to react, 8 emoji types)
-- Conversation starters shown when empty (different for seekers vs listeners)
-- Inactivity warning at 15 min, auto-close at 20 min
-- Either party can end session → feedback modal ("Was this helpful?")
-- Report flow available (3-step: reason → details → submit)
+### 3. Chat session
+- Realtime messages (postgres_changes), typing indicators + read receipts (broadcast), reactions (double-click, 8 types), URL autolinking, conversation starters, crisis-language banner
+- Inactivity: warn at 15 min, auto-close 5 min later; either party can end → feedback modal (helpful? + optional thank-you note)
+- Report flow (3-step) available in chat
 
-### 4. Notification System
-- **Push notifications:** Web Push via VAPID keys + service worker
-- **Always Available mode:** Listeners receive notifications even when not in "available" state (requires PWA + push enabled)
-- **Quiet Hours:** Server-side filtering — notifications skip listeners whose local time falls within their quiet window
-- **Re-notifications:** If seeker waits 2+ minutes with no listener, notifications re-fire (max 3 re-sends)
-- **SMS fallback (disabled):** Would send SMS to listeners not reached by push. Commented out pending Twilio verification.
-- **Rate limiting:** Max 3 notification requests per user per 60 seconds
+### 4. Notification system (in priority order)
+1. **Push** (VAPID web-push): favorites of the seeker get a personalized push first, general listeners 4s later; invalid subscriptions (4xx) auto-removed
+2. **Email fallback** (Resend): listeners who opted in (`email_notifications_enabled`) and didn't get a successful push
+3. **SMS fallback**: fully coded but disabled pending Twilio verification
+- Server-side quiet-hours filtering (listener's local time); rate limit 3 req/60s per user (in-memory — see Known Issues)
+- Targets: `role_state = 'available'` OR `always_available = true`
 
-### 5. Admin Moderation
-- `/admin` route (requires `is_admin = true` in profiles)
-- 4 tabs: Reports, Blocks, Sessions, Users
-- Can: review/resolve/dismiss reports, block/unblock users, end sessions, delete users
-- All actions logged to admin_logs audit trail
-- Real-time updates via Supabase subscriptions
+### 5. Admin moderation (/admin)
+Tabs for reports, blocks, sessions, users, sign-ups (with referral source). All mutations via `/api/admin/actions` (server-verified `is_admin`, rate-limited, audit-logged including transcript views).
 
 ---
 
-## API Routes
+## Cron Jobs (fixed July 2026)
 
-### POST /api/heartbeat
-- **Auth:** Bearer token
-- **Body:** `{ userId }`
-- **Purpose:** Updates `last_heartbeat_at` for users in 'available' or 'requesting' state
-- **Frequency:** Called every 30 seconds from dashboard
+**Primary trigger: GitHub Actions** (`.github/workflows/cron.yml`) — every 15 minutes, pings:
+- `POST /api/scheduled-availability` with `x-cron-secret` — notifies listeners whose availability window started within the last ~20 min
+- `POST /api/cleanup-sessions` with `x-cleanup-secret` — closes empty (>10 min) and inactive (>30 min) sessions, resets stale requesting seekers
 
-### POST /api/cleanup-sessions
-- **Auth:** Bearer token OR `x-cleanup-secret` header (for cron jobs)
-- **Purpose:** Auto-closes abandoned sessions:
-  - No messages + session > 10 min old
-  - Last message > 30 min ago
-- **Returns:** Count of closed sessions
-
-### POST /api/notifications/send
-- **Auth:** Bearer token (must match seekerId)
-- **Body:** `{ seekerId, isRenotification? }`
-- **Purpose:** Sends push notifications to available listeners
-- **Features:**
-  - Rate limiting (3 req/60s per user)
-  - Server-side quiet hours filtering
-  - Fetches seeker name from DB (never trusts client)
-  - Queries listeners where `role_state = 'available'` OR `always_available = true`
-  - Removes invalid push subscriptions (4xx responses)
-  - SMS fallback (currently disabled)
+Requires GitHub repo secret `CLEANUP_SECRET_KEY` (same value as Vercel env var). Daily Vercel crons in `vercel.json` remain as backup; both routes also accept `Authorization: Bearer <CLEANUP_SECRET_KEY|CRON_SECRET>` and answer GET (Vercel crons send GET). The dashboard also triggers cleanup on page load.
 
 ---
 
-## Key Constants (lib/constants.ts)
+## Key Constants
 
-### Timing
-| Constant | Value | Purpose |
-|----------|-------|---------|
-| HEARTBEAT_INTERVAL_MS | 30s | How often clients ping |
-| HEARTBEAT_THRESHOLD_MS | 1 hour | Max age for "online" status |
-| INACTIVITY_WARNING_MS | 15 min | Chat inactivity warning |
-| INACTIVITY_AUTO_CLOSE_MS | 5 min | Auto-close after warning |
-| CLEANUP_NO_MESSAGES_MS | 10 min | Close empty sessions |
-| CLEANUP_INACTIVE_MS | 30 min | Close inactive sessions |
-| TYPING_TIMEOUT_MS | 2s | Clear typing indicator |
-| RENOTIFY_DELAY_MS | 2 min | Re-notification interval |
-
-### Validation
-| Constant | Value |
-|----------|-------|
-| Password min | 8 chars |
-| Display name | 2-50 chars |
-| Bio max | 500 chars |
-| Tagline max | 60 chars |
-| Message max | 2000 chars |
-| Max specialty tags | 5 |
-
-### Specialty Tags (18)
-Early Recovery, Long-Term Recovery, Relapse Prevention, Grief & Loss, Family Issues, Trauma, Anxiety & Depression, Substance Use, Alcohol, Codependency, Self-Care, Spirituality, Career & Purpose, Relationships, Parenting in Recovery, Veterans, LGBTQ+, Young Adults
-
-### Reactions (8)
-❤️ heart, 🤗 hug, 🙏 pray, 💪 strong, ✨ sparkles, 👍 thumbsup, 👏 clap, 💙 blue_heart
-
-### Timezones (7 US)
-Eastern, Central, Mountain, Pacific, Alaska, Hawaii, Arizona
+See `lib/constants.ts` (source of truth). Highlights: heartbeat 30s ping / 1h online threshold (5 min for PeopleSeeking freshness), inactivity warn 15 min + close 5 min later, re-notify every 2 min max 3×, seeker requesting state goes stale after 30 min, message max 2000 chars, 18 specialty tags (max 5), 8 reaction emoji, 7 US timezones, `parseReferralSource()` helper.
 
 ---
 
@@ -307,182 +177,66 @@ Eastern, Central, Mountain, Pacific, Alaska, Hawaii, Arizona
 
 ### Required
 ```
-NEXT_PUBLIC_SUPABASE_URL          # Supabase project URL
-NEXT_PUBLIC_SUPABASE_ANON_KEY     # Supabase anonymous key
-SUPABASE_SERVICE_ROLE_KEY         # Supabase service role key (server-only)
-VAPID_PUBLIC_KEY                  # Web Push VAPID public key
-VAPID_PRIVATE_KEY                 # Web Push VAPID private key
-NEXT_PUBLIC_VAPID_PUBLIC_KEY      # Same as VAPID_PUBLIC_KEY (client-accessible)
-VAPID_SUBJECT                     # VAPID subject (mailto: or https:// URL)
-CLEANUP_SECRET_KEY                # Secret for cron-triggered session cleanup
+NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY / SUPABASE_SERVICE_ROLE_KEY
+VAPID_PUBLIC_KEY / VAPID_PRIVATE_KEY / NEXT_PUBLIC_VAPID_PUBLIC_KEY / VAPID_SUBJECT
+CLEANUP_SECRET_KEY                 # Cron auth (also a GitHub Actions secret)
+RESEND_API_KEY                     # Email (welcome, fallback notifications, admin alerts)
 ```
 
 ### Optional
 ```
-NEXT_PUBLIC_SENTRY_DSN            # Sentry error tracking
-SENTRY_ORG                        # Sentry organization
-SENTRY_PROJECT                    # Sentry project name
-SENTRY_AUTH_TOKEN                 # Sentry auth token (for source maps)
-TWILIO_ACCOUNT_SID                # Twilio SMS (disabled, pending verification)
-TWILIO_AUTH_TOKEN                  # Twilio SMS
-TWILIO_PHONE_NUMBER               # Twilio SMS sending number
+CRON_SECRET                        # Alternate cron secret (Vercel sends as Bearer if set)
+ADMIN_NOTIFICATION_EMAIL / SUPABASE_WEBHOOK_SECRET   # new-user webhook route
+NEXT_PUBLIC_SENTRY_DSN / SENTRY_ORG / SENTRY_PROJECT / SENTRY_AUTH_TOKEN
+TWILIO_ACCOUNT_SID / TWILIO_AUTH_TOKEN / TWILIO_PHONE_NUMBER   # SMS (disabled)
 ```
 
 ---
 
 ## Middleware & Auth
 
-**File:** `middleware.ts`
-
-Protected routes require authentication:
-- `/dashboard/*`, `/chat/*`, `/profile/*`, `/listeners/*`, `/onboarding/*`
-- Unauthenticated users → redirect to `/login`
-
-Admin routes require `is_admin = true`:
-- `/admin/*` → non-admins redirect to `/dashboard`
-
-Uses `@supabase/ssr` with cookie-based session management.
-
----
-
-## PWA Setup
-
-- **manifest.json:** name "RecoveryBridge", start_url "/dashboard", standalone display
-- **Service Worker (sw.js):** Handles push events, notification clicks, cache management (v4)
-- **iOS Support:** Requires "Add to Home Screen" → open as web app → then enable notifications
-- **NotificationInstructionsModal** guides iOS users through this process
-
----
-
-## Row Level Security (RLS)
-
-All tables have RLS enabled. Key policies:
-- Users can only read/write their own profile data
-- Users can only access sessions they're a participant in
-- Messages are scoped to session membership
-- Admins (is_admin=true) have broader read/write access
-- Push subscriptions are per-user
-- Reports can be created by any user, viewed by reporters and admins
-- message_reactions: real-time enabled, scoped to session membership
+`middleware.ts` protects `/dashboard`, `/chat`, `/profile`, `/listeners`, `/training`, `/history` (→ `/login?redirect=`), `/onboarding` (→ `/signup`), and `/admin` (requires `is_admin`, else → `/dashboard`). Uses `@supabase/ssr` cookie sessions.
 
 ---
 
 ## Design System
 
-### Colors (WCAG AA Compliant)
-- **rb-dark:** #2D3436 (primary text)
-- **rb-gray:** #4A5568 (secondary text)
-- **rb-blue:** #5A7A8C (primary actions, links)
-- **rb-blue-hover:** #4A6A7C (hover state)
-- **rb-blue-light:** #E8F0F4 (backgrounds)
-- **rb-purple:** #B8A9C9 (accents)
-- **rb-white:** #FFFFFF
-
-### Typography
-- Heading1: 30px bold
-- Body18: 18px semi-bold
-- Body16: 16px regular
-
-### Accessibility
-- All interactive elements: min 44px touch targets
-- Skip link for keyboard navigation
-- Crisis resources always accessible (floating button)
-- WCAG AA color contrast throughout
+- Brand colors: rb-dark #2D3436, rb-gray #4A5568, rb-blue #5A7A8C (+hover/light), rb-purple #B8A9C9 (WCAG AA)
+- Semantic type scale via `components/ui/Typography.tsx` and heading CSS classes
+- Class-based dark mode (ThemeProvider/ThemeToggle); dim greys bumped to gray-300 for legibility
+- Button hierarchy: primary = solid rb-blue, secondary = light outline, destructive = red
+- `prefers-reduced-motion` respected globally; 44px touch targets; skip link; crisis button always visible
+- PWA: installable, standalone, start_url /dashboard; iOS needs Add to Home Screen before enabling push
 
 ---
 
 ## Current Feature Status
 
+Everything in the flows above is ✅ live, including: auth, onboarding (with referral source + consent capture), real-time chat (reactions, read receipts, typing, linkify, crisis banner), push + email notifications, favorites-first notification priority, quiet hours, always-available, re-notifications, listener directory, listener training, availability schedules, session history + thank-you notes, feedback, reporting, admin dashboard (incl. sign-ups tab), account deletion + data export, PWA, dark mode, Sentry, session cleanup.
+
 | Feature | Status | Notes |
 |---------|--------|-------|
-| Auth (email/password) | ✅ Live | Supabase Auth |
-| Onboarding (4-step) | ✅ Live | Role, bio, tags, guidelines |
-| Dashboard (role selection) | ✅ Live | Available/Requesting/Offline |
-| Real-time chat | ✅ Live | Messages, typing, read receipts |
-| Message reactions | ✅ Live | 8 emoji types |
-| Conversation starters | ✅ Live | Different for seekers vs listeners |
-| Session feedback | ✅ Live | "Was this helpful?" |
-| Push notifications | ✅ Live | VAPID + service worker |
-| Always Available mode | ✅ Live | PWA + push required |
-| Re-notifications | ✅ Live | Every 2 min, max 3x |
-| Quiet Hours (DND) | ✅ Live | Server-side timezone filtering |
-| Listener directory | ✅ Live | Search, tag filter, sort |
-| Avatar upload | ✅ Live | Crop + Supabase Storage |
-| Specialty tags | ✅ Live | 18 tags, max 5 per user |
-| User reporting | ✅ Live | 3-step report flow |
-| Admin dashboard | ✅ Live | Reports, blocks, sessions, users |
-| Inactivity auto-close | ✅ Live | 15 min warn, 20 min close |
-| Session cleanup (cron) | ✅ Live | Closes stale sessions |
-| PWA (installable) | ✅ Live | iOS + Android |
-| Crisis resources | ✅ Live | 988, Crisis Text Line, SAMHSA |
-| Sentry error tracking | ✅ Live | Conditional (needs env vars) |
-| SMS fallback | 🔇 Disabled | Code complete, Twilio verification pending |
-| Account deletion | ✅ Live | 2-step confirmation |
+| SMS fallback | 🔇 Disabled | Code complete; Twilio verification pending (see below) |
+| In-app blog/stories | 🚚 Moved | Now on Ghost (stories.recoverybridge.app); DB tables 011–015 are legacy |
+| GitHub Actions cron | ⚠️ Needs secret | `CLEANUP_SECRET_KEY` repo secret must exist or runs 401 |
 
 ---
 
 ## Known Issues & Technical Debt
 
-1. **Admin auth** — Enforced server-side: `middleware.ts` gates the `/admin` route by querying `is_admin`, and all admin mutations go through API routes (`/api/admin/actions`, `/api/admin/delete-user`) that verify the Bearer token → `getUser` → `is_admin` (403 otherwise) plus rate limiting. Transcript views are loaded and audit-logged server-side via the `load_transcript` action. The client-side `is_admin` check only hides UI; it is not the security boundary.
-
-2. **SMS feature disabled** — All SMS code is written and tested but commented out in `route.ts` and `profile/page.tsx`. Waiting for Twilio account verification. To re-enable:
-   - Uncomment import and SMS block in `app/api/notifications/send/route.ts`
-   - Uncomment SMS UI in `app/profile/page.tsx`
-   - Add Twilio env vars to Vercel
-   - Redeploy
-
-3. **Unused SMS state in profile page** — The `phoneNumber`, `smsEnabled`, `savingSms`, `smsSuccess`, `smsError` state variables and `handleSaveSms` function remain in the profile page even though the UI is commented out. This is intentional for easy re-enable.
-
-4. **PeopleSeeking heartbeat threshold** — Uses a 5-minute threshold (different from the 1-hour threshold in AvailableListeners) to keep the seeking list fresh.
-
-5. **Service Worker cache version** — Currently at v4. Increment when making breaking changes to cached assets.
+1. **No tests** — zero test files. Highest-value targets: quiet-hours math, availability-window parsing, notification batching, cleanup thresholds.
+2. **ESLint not configured** — `next lint` has never run (no config file); `next lint` is also deprecated. Migrate to ESLint CLI flat config.
+3. **In-memory rate limiter** — the notification route's rate limit resets per serverless instance/cold start. Move to DB or KV if abuse matters.
+4. **SMS feature disabled** — all code written but commented out in `app/api/notifications/send/route.ts` and profile page. Re-enable: uncomment both, add Twilio env vars, redeploy.
+5. **Large page components** — admin, chat, profile, dashboard are each 1,200–1,500 lines; extract components before major changes.
+6. **Legacy blog tables** — migrations 011–015 create story tables no longer read by the app (stories moved to Ghost). `lib/email.ts` still has story emails.
+7. **Public repo** — internal docs in `docs/` (breach response, audits) are world-readable; decide if any should be removed.
+8. **Service worker cache** — `CACHE_NAME` in `public/sw.js` (currently v9); bump on breaking asset changes.
 
 ---
 
-## Git State
+## Git & Deploy Workflow
 
-- **Main branch:** `main` (auto-deploys to Vercel)
-- **Production branch:** `production` (exists but main is the deploy target)
-- **Active worktree:** `claude/distracted-agnesi`
-- **Total commits:** ~160
-- **Workflow:** Feature branches merge to main via worktree
-
-### Recent Commits (newest first)
-```
-e4a5520 Reduce re-notification delay from 5 minutes to 2 minutes
-3682355 Disable SMS feature until Twilio verification is complete
-f63b012 Add SMS fallback notifications via Twilio
-8fdd671 Add quiet hours (Do Not Disturb) for listener notifications
-b7eeefb Add "Someone's Still Waiting" re-notification for unanswered support requests
-dcb90b6 Make skip feedback button more prominent
-5336055 Fix seekers not appearing: add heartbeat for requesting state + polling
-eabc5f8 Collapse Push Notifications into dropdown accordion
-f792f9b Send conversation starter immediately on tap
-c54bbf6 Add separate conversation starters for seekers and listeners
-877397f Filter stale seeking requests by heartbeat threshold
-3f1511d Keep seeker on dashboard and auto-navigate to chat
-cda354a Add People Seeking Support section to listener dashboard
-608737f Add expanded reaction types and update status doc
-8245ccf Add Better Chat Experience (V2 Feature #2)
-478d5e1 Add Listener Matching & Discovery (V2 Feature #1)
-```
-
----
-
-## How to Re-Enable SMS When Twilio Is Verified
-
-1. In `app/api/notifications/send/route.ts`:
-   - Uncomment `import { sendSMS } from '@/lib/sms'` (line 4-5)
-   - Replace `const smsCount = 0` with the commented-out SMS block below it
-   - Remove the `/* ... */` comment wrapper
-
-2. In `app/profile/page.tsx`:
-   - Change `{/* SMS Notifications — hidden until Twilio verification is complete` back to `{/* SMS Notifications */}`
-   - Remove the closing `*/}` that wraps the entire section
-
-3. In Vercel → Settings → Environment Variables, add:
-   - `TWILIO_ACCOUNT_SID`
-   - `TWILIO_AUTH_TOKEN`
-   - `TWILIO_PHONE_NUMBER`
-
-4. Redeploy.
+- **`main` auto-deploys to production** on Vercel (project `recovery-bridge`, team `burkjacksons-projects`)
+- Solo project: commit to `main` directly or merge worktree branches to main — **never open PRs**
+- Domains: recoverybridge.app (+www), stories.recoverybridge.app (Ghost)
