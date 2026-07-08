@@ -16,7 +16,8 @@ function getTwilioClient() {
   }
 
   try {
-    // Dynamic import to avoid build errors if twilio isn't installed yet
+    // Lazy require keeps twilio out of the bundle unless SMS is configured
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const twilio = require('twilio')
     twilioClient = twilio(accountSid, authToken)
     return twilioClient

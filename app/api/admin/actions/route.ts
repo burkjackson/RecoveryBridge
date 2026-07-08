@@ -214,7 +214,7 @@ export async function POST(request: NextRequest) {
       if (messagesError) throw messagesError
 
       const senderIds = [...new Set((messages || []).map((m) => m.sender_id))]
-      let profiles: Record<string, string> = {}
+      const profiles: Record<string, string> = {}
       if (senderIds.length > 0) {
         const { data: profileData } = await supabase
           .from('profiles')

@@ -24,6 +24,9 @@ export default function ThemeProvider({ children }: { children: React.ReactNode 
   useEffect(() => {
     const stored = localStorage.getItem('rb-theme') as Theme | null
     const resolved = stored ?? 'light'
+    // localStorage is unreadable during SSR, so the theme must be applied in a
+    // mount effect; the one-time cascading render is the hydration cost.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setTheme(resolved)
     document.documentElement.classList.toggle('dark', resolved === 'dark')
   }, [])

@@ -93,7 +93,7 @@ export default function AvailableListeners({ onCountChange, currentUserId, curre
 
       // Load favorites and shared session history
       let favIds = new Set<string>()
-      let sharedIds = new Set<string>()
+      const sharedIds = new Set<string>()
 
       if (userId && onlineListeners.length > 0) {
         // Fetch current favorites

@@ -23,14 +23,6 @@ function ConnectInner() {
   const seekerId = searchParams.get('seekerId')
   const [status, setStatus] = useState('Connecting you...')
 
-  useEffect(() => {
-    if (!seekerId) {
-      router.replace('/dashboard')
-      return
-    }
-    handleConnect()
-  }, [seekerId])
-
   async function handleConnect() {
     const supabase = createClient()
 
@@ -126,6 +118,17 @@ function ConnectInner() {
 
     router.replace(`/chat/${session.id}`)
   }
+
+  useEffect(() => {
+    if (!seekerId) {
+      router.replace('/dashboard')
+      return
+    }
+    // Fire-and-forget async kickoff; its setStatus calls all happen after
+    // await points, so no synchronous setState occurs in the effect body.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    handleConnect()
+  }, [seekerId])
 
   return (
     <main className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#F8F9FA' }}>
