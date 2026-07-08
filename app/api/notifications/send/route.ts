@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import webpush from 'web-push'
 import { createClient } from '@supabase/supabase-js'
 import { sendSupportRequestEmail } from '@/lib/email'
+import { isInQuietHours } from '@/lib/timeWindows'
 // TODO: Re-enable when Twilio verification is complete
 // import { sendSMS } from '@/lib/sms'
 
@@ -9,38 +10,6 @@ import { sendSupportRequestEmail } from '@/lib/email'
 const RATE_LIMIT_WINDOW_MS = 60 * 1000
 const RATE_LIMIT_MAX = 3
 const rateLimitMap = new Map<string, number[]>()
-
-// Check if a listener is currently in their quiet hours (Do Not Disturb)
-function isInQuietHours(listener: {
-  quiet_hours_enabled: boolean | null
-  quiet_hours_start: string | null
-  quiet_hours_end: string | null
-  quiet_hours_timezone: string | null
-}): boolean {
-  if (!listener.quiet_hours_enabled) return false
-
-  const tz = listener.quiet_hours_timezone || 'America/New_York'
-  const start = listener.quiet_hours_start || '23:00'
-  const end = listener.quiet_hours_end || '07:00'
-
-  // Get current time in the listener's timezone
-  const now = new Date()
-  const timeStr = now.toLocaleTimeString('en-US', {
-    timeZone: tz,
-    hour12: false,
-    hour: '2-digit',
-    minute: '2-digit'
-  })
-
-  // Handle cross-midnight ranges (e.g., 23:00 → 07:00)
-  if (start <= end) {
-    // Same-day range (e.g., 09:00 → 17:00)
-    return timeStr >= start && timeStr < end
-  } else {
-    // Cross-midnight range (e.g., 23:00 → 07:00)
-    return timeStr >= start || timeStr < end
-  }
-}
 
 function isRateLimited(userId: string): boolean {
   const now = Date.now()

@@ -1,43 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import webpush from 'web-push'
 import { createClient } from '@supabase/supabase-js'
-
-interface AvailabilityWindow {
-  day: number   // 0=Sun, 1=Mon, ..., 6=Sat
-  start: string // "HH:MM" 24h
-  end: string   // "HH:MM" 24h
-}
+import { isWindowStartingNow, type AvailabilityWindow } from '@/lib/timeWindows'
 
 // How far back a window start still counts as "starting now". Must be a little
 // longer than the trigger cadence (15 min via GitHub Actions) so scheduler
 // jitter can't skip a window; overlap at worst re-sends a push with the same
 // tag, which the OS collapses into one notification.
 const WINDOW_START_TOLERANCE_MIN = 20
-
-function isWindowStartingNow(windows: AvailabilityWindow[], timezone: string): boolean {
-  const now = new Date()
-  // Get current day + time in user's timezone
-  const localStr = now.toLocaleString('en-US', {
-    timeZone: timezone,
-    weekday: 'short', hour: '2-digit', minute: '2-digit', hour12: false
-  })
-  // Parse: e.g. "Mon, 19:05"
-  const dayMap: Record<string, number> = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 }
-  const parts = localStr.split(', ')
-  if (parts.length < 2) return false
-  const dayOfWeek = dayMap[parts[0]]
-  const timeParts = parts[1].split(':')
-  if (timeParts.length < 2) return false
-  const currentMinutes = parseInt(timeParts[0], 10) * 60 + parseInt(timeParts[1], 10)
-
-  return windows.some(w => {
-    if (w.day !== dayOfWeek) return false
-    const [sh, sm] = w.start.split(':').map(Number)
-    const windowStartMinutes = sh * 60 + sm
-    // Notify if current time is within [windowStart, windowStart + tolerance)
-    return currentMinutes >= windowStartMinutes && currentMinutes < windowStartMinutes + WINDOW_START_TOLERANCE_MIN
-  })
-}
 
 export async function POST(request: NextRequest) {
   // Auth: cron secret header OR bearer token. Vercel crons send
@@ -91,7 +61,7 @@ export async function POST(request: NextRequest) {
     const schedule = profile.availability_schedule as AvailabilityWindow[]
     if (!schedule || schedule.length === 0) continue
     const tz = profile.quiet_hours_timezone || 'America/New_York'
-    if (isWindowStartingNow(schedule, tz)) {
+    if (isWindowStartingNow(schedule, tz, WINDOW_START_TOLERANCE_MIN)) {
       toNotify.push(profile.id)
     }
   }
