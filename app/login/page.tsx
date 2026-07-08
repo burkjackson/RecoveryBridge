@@ -68,7 +68,7 @@ function LoginForm() {
             <img
               src="/logo-with-text.png"
               alt="RecoveryBridge Logo"
-              className="mx-auto mb-4"
+              className="mx-auto mb-4 dark:brightness-0 dark:invert"
               style={{ width: '400px' }}
             />
             <Body16 className="text-gray-500 dark:text-gray-300 mb-6">Welcome back to your community</Body16>

@@ -22,8 +22,11 @@ export default function ThemeProvider({ children }: { children: React.ReactNode 
   const [theme, setTheme] = useState<Theme>('light')
 
   useEffect(() => {
+    // No stored choice → follow the OS preference (matches the no-flash
+    // inline script in app/layout.tsx, which runs before first paint).
     const stored = localStorage.getItem('rb-theme') as Theme | null
-    const resolved = stored ?? 'light'
+    const system: Theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+    const resolved = stored ?? system
     // localStorage is unreadable during SSR, so the theme must be applied in a
     // mount effect; the one-time cascading render is the hydration cost.
     // eslint-disable-next-line react-hooks/set-state-in-effect

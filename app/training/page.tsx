@@ -152,7 +152,7 @@ export default function TrainingPage() {
       <div className="w-full max-w-2xl bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 sm:p-8 md:p-10">
 
         <div className="text-center mb-6">
-          <Image src="/logo-with-text.png" alt="RecoveryBridge Logo" width={400} height={190} className="mx-auto mb-4 max-w-[400px] w-full h-auto" />
+          <Image src="/logo-with-text.png" alt="RecoveryBridge Logo" width={400} height={190} className="mx-auto mb-4 max-w-[400px] w-full h-auto dark:brightness-0 dark:invert" />
           <Body16 className="text-gray-500 dark:text-gray-300">Listener Training</Body16>
         </div>
 

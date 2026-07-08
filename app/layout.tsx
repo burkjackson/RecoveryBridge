@@ -53,10 +53,12 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
+    // The no-flash theme script mutates <html class> before hydration, so the
+    // class attribute is expected to differ from the server render.
+    <html lang="en" suppressHydrationWarning>
       <head>
         {/* Prevent flash of incorrect theme */}
-        <script dangerouslySetInnerHTML={{ __html: `(function(){if(localStorage.getItem('rb-theme')==='dark'){document.documentElement.classList.add('dark');}})();` }} />
+        <script dangerouslySetInnerHTML={{ __html: `(function(){try{var t=localStorage.getItem('rb-theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark');}}catch(e){}})();` }} />
         {/* iOS PWA splash screens */}
         <link rel="apple-touch-startup-image" media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3)" href="/api/splash?w=1290&h=2796" />
         <link rel="apple-touch-startup-image" media="(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3)" href="/api/splash?w=1179&h=2556" />

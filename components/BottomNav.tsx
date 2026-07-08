@@ -70,7 +70,7 @@ export default function BottomNav() {
             <button
               key={item.href}
               onClick={() => item.href.startsWith('http') ? window.open(item.href, '_blank', 'noopener,noreferrer') : router.push(item.href)}
-              aria-label={item.label}
+              aria-label={item.href.startsWith('http') ? `${item.label} (opens in new tab)` : item.label}
               aria-current={active ? 'page' : undefined}
               className={`flex flex-col items-center justify-center gap-1 flex-1 py-2 min-h-[56px] text-xs font-medium transition-colors ${
                 active
@@ -79,7 +79,10 @@ export default function BottomNav() {
               }`}
             >
               {item.icon(active)}
-              <span>{item.label}</span>
+              <span>
+                {item.label}
+                {item.href.startsWith('http') && <span aria-hidden="true" className="ml-0.5">↗</span>}
+              </span>
             </button>
           )
         })}

@@ -328,7 +328,7 @@ export default function OnboardingPage() {
           <img
             src="/logo-with-text.png"
             alt="RecoveryBridge Logo"
-            className="mx-auto mb-4 max-w-[400px] w-full"
+            className="mx-auto mb-4 max-w-[400px] w-full dark:brightness-0 dark:invert"
           />
           <Body16 className="text-gray-500 dark:text-gray-300">{STEP_META[currentKey]}</Body16>
         </div>

@@ -398,7 +398,7 @@ export default function ListenersPage() {
           {listeners.length === 0 ? (
             <div className="bg-gradient-to-br from-white to-rb-blue/5 dark:from-gray-800 dark:to-gray-800 rounded-2xl p-8 sm:p-12 text-center shadow-lg border border-rb-blue/20 dark:border-gray-700">
               <span className="text-5xl mb-4 block" role="img" aria-label="Waiting">⏳</span>
-              <Body18 className="mb-4 text-[#2D3436] font-bold">No listeners available right now</Body18>
+              <Body18 className="mb-4 text-[#2D3436] dark:text-gray-100 font-bold">No listeners available right now</Body18>
               <Body16 className="text-rb-gray">
                 Check back soon, or try setting yourself as available to support others!
               </Body16>
@@ -406,7 +406,7 @@ export default function ListenersPage() {
           ) : filteredListeners.length === 0 ? (
             <div className="bg-gradient-to-br from-white to-rb-blue/5 dark:from-gray-800 dark:to-gray-800 rounded-2xl p-8 sm:p-12 text-center shadow-lg border border-rb-blue/20 dark:border-gray-700">
               <span className="text-5xl mb-4 block" role="img" aria-label="Search">🔍</span>
-              <Body18 className="mb-4 text-[#2D3436] font-bold">No listeners match your filters</Body18>
+              <Body18 className="mb-4 text-[#2D3436] dark:text-gray-100 font-bold">No listeners match your filters</Body18>
               <Body16 className="text-rb-gray mb-4">
                 Try adjusting your search or removing some filters.
               </Body16>
@@ -448,7 +448,7 @@ export default function ListenersPage() {
                       {/* Info */}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
-                          <Body18 className="font-bold text-[#2D3436]">{listener.display_name}</Body18>
+                          <Body18 className="font-bold text-[#2D3436] dark:text-gray-100">{listener.display_name}</Body18>
                           <span className="w-2 h-2 bg-[#3B82F6] rounded-full animate-pulse" aria-label="Available"></span>
                           {tagMatchCount > 0 && (
                             <span className="text-xs font-medium text-green-700 dark:text-green-300 bg-green-50 dark:bg-green-900/20 px-2 py-0.5 rounded-full">

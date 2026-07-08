@@ -3,16 +3,21 @@ import ThemeToggle from './ThemeToggle'
 
 interface FooterProps {
   className?: string
+  /** Where the Donate button points. The /donate page passes its external
+   *  campaign URL so the button doesn't circularly link back to /donate. */
+  donateHref?: string
 }
 
-export default function Footer({ className = '' }: FooterProps) {
+export default function Footer({ className = '', donateHref = '/donate' }: FooterProps) {
+  const donateIsExternal = donateHref.startsWith('http')
   return (
     <footer className={`mt-8 pt-6 pb-24 px-4 border-t border-gray-200 dark:border-gray-700 ${className}`}>
       <div className="max-w-4xl mx-auto">
         {/* Support Us Button */}
         <div className="text-center mb-6">
           <a
-            href="/donate"
+            href={donateHref}
+            {...(donateIsExternal ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
             className="inline-flex items-center gap-2 px-8 py-4 bg-rb-blue text-white font-bold text-lg rounded-full hover:bg-rb-blue-hover transition shadow-md"
           >
             <span>💙 Donate</span>

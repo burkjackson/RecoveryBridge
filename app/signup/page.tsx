@@ -95,7 +95,7 @@ export default function SignupPage() {
               <img
                 src="/logo-with-text.png"
                 alt="RecoveryBridge Logo"
-                className="mx-auto mb-4"
+                className="mx-auto mb-4 dark:brightness-0 dark:invert"
                 style={{ width: '400px' }}
               />
               <Body16 className="text-gray-500 dark:text-gray-300 mb-6">Create your account</Body16>
@@ -104,7 +104,7 @@ export default function SignupPage() {
             <form onSubmit={handleSignup} className="space-y-4" aria-label="Sign up form">
               <div>
                 <label htmlFor="displayname-input" className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Display Name
+                  Display Name <span className="text-red-500" aria-hidden="true">*</span>
                 </label>
                 <input
                   id="displayname-input"
@@ -114,9 +114,13 @@ export default function SignupPage() {
                   required
                   aria-required="true"
                   aria-invalid={error ? "true" : "false"}
+                  aria-describedby="displayname-hint"
                   className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-rb-blue focus:border-transparent transition-all dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400"
                   placeholder="Your name"
                 />
+                <p id="displayname-hint" className="mt-1.5 text-sm text-gray-500 dark:text-gray-300">
+                  This is what others will see — it doesn&apos;t need to be your real name.
+                </p>
               </div>
 
               <div>
@@ -233,6 +237,11 @@ export default function SignupPage() {
                   'Sign Up'
                 )}
               </button>
+              {!loading && (!ageConfirmed || !healthDataConsent) && (
+                <p className="text-sm text-gray-500 dark:text-gray-300 text-center" role="status">
+                  Check both boxes above to continue.
+                </p>
+              )}
             </form>
 
             <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
+import Link from 'next/link'
 import { Heading1, Heading2, Body16, Body18 } from '@/components/ui/Typography'
 import AvatarUpload from '@/components/AvatarUpload'
 import Modal from '@/components/Modal'
@@ -1135,6 +1136,18 @@ export default function ProfilePage() {
           </div>
         </div>
         */}
+
+        {/* Session History */}
+        <Link
+          href="/history"
+          className="mt-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm flex items-center justify-between p-5 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+        >
+          <div className="flex items-center gap-2">
+            <span className="text-xl">🕊️</span>
+            <Body16 className="font-semibold text-gray-900 dark:text-gray-100">Session History</Body16>
+          </div>
+          <span className="text-gray-400 dark:text-gray-300" aria-hidden="true">→</span>
+        </Link>
 
         {/* Thank-You Notes */}
         <div className="mt-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden">

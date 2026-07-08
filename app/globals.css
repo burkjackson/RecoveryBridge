@@ -70,6 +70,20 @@ body {
   @apply text-caption text-rb-gray;
 }
 
+/* Dark-mode defaults for the type scale — must come after the base class
+   definitions so they win the same-specificity cascade in dark mode.
+   :where() keeps specificity at just .dark (0,1,0), so any per-instance
+   dark:text-* utility still wins — this only catches usages that forgot a
+   dark: override, which previously rendered near-black text on dark
+   backgrounds. */
+.dark :where(.display, .heading-1, .heading-2, .heading-3, .heading-4, .body-18) {
+  color: #F3F4F6; /* gray-100 */
+}
+
+.dark :where(.body-16, .body-14, .caption) {
+  color: #D1D5DB; /* gray-300 */
+}
+
 /* Accessibility - Skip to Main Content Link */
 .skip-link {
   position: absolute;
@@ -227,8 +241,12 @@ select:focus-visible {
   width: 5px;
   height: 5px;
   border-radius: 50%;
-  background-color: rgba(255, 255, 255, 0.7);
+  background-color: rgba(107, 114, 128, 0.8); /* gray-500 — sits on the light received bubble */
   animation: typingBounce 1.4s infinite ease-in-out;
+}
+
+.dark .typing-dots .dot {
+  background-color: rgba(255, 255, 255, 0.7);
 }
 
 .typing-dots .dot:nth-child(1) { animation-delay: 0s; }

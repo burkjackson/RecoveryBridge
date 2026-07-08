@@ -108,7 +108,7 @@ export default function DonatePage() {
         </div>
       </div>
 
-      <Footer />
+      <Footer donateHref={DONATE_URL} />
     </main>
   )
 }

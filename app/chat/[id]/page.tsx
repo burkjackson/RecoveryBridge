@@ -893,7 +893,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                         className={`px-4 py-3 rounded-2xl shadow-md ${
                           isOwn
                             ? 'bg-rb-blue text-white'
-                            : 'bg-gray-800 dark:bg-gray-700 text-white'
+                            : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white'
                         }`}
                         role="article"
                         aria-label={`Message from ${isOwn ? 'you' : otherUserName}`}
@@ -995,9 +995,9 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
             {/* --- V2: Typing indicator --- */}
             {isOtherTyping && (
               <div className="flex justify-start animate-slide-in-left">
-                <div className="bg-gray-800 dark:bg-gray-700 text-white px-4 py-3 rounded-2xl shadow-md">
+                <div className="bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white px-4 py-3 rounded-2xl shadow-md">
                   <div className="flex items-center gap-2">
-                    <Body16 className="!text-white/80 text-sm">{otherUserName} is typing</Body16>
+                    <Body16 className="!text-gray-500 dark:!text-white/80 text-sm">{otherUserName} is typing</Body16>
                     <span className="typing-dots">
                       <span className="dot" />
                       <span className="dot" />
