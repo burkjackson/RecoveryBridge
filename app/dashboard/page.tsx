@@ -13,6 +13,7 @@ import AvailableListeners from '@/components/AvailableListeners'
 import PeopleSeeking from '@/components/PeopleSeeking'
 import type { Profile, SessionWithUserName, ProfileUpdateData, FavoriteWithProfile } from '@/lib/types/database'
 import { TIME, NOTIFICATION } from '@/lib/constants'
+import { normalizeFavorites } from '@/lib/favorites'
 import ThemeToggle from '@/components/ThemeToggle'
 
 function DashboardContent() {
@@ -448,18 +449,10 @@ function DashboardContent() {
         .order('created_at', { ascending: false })
 
       if (error) throw error
-      const normalized = (data || [])
-        .map((row: any) => ({
-          ...row,
-          favorite_profile: Array.isArray(row.favorite_profile)
-            ? row.favorite_profile[0]
-            : row.favorite_profile,
-        }))
-        // Drop favorites whose profile no longer exists (e.g. the favorited user
-        // deleted their account). A null favorite_profile would otherwise crash
-        // the whole dashboard render when we read fp.always_available / display_name.
-        .filter((row: any) => row.favorite_profile)
-      setFavorites(normalized as unknown as FavoriteWithProfile[])
+      // normalizeFavorites drops rows whose profile the viewer can't read under
+      // RLS (e.g. the favorited listener is offline) — a null favorite_profile
+      // would otherwise crash the dashboard render.
+      setFavorites(normalizeFavorites(data))
     } catch (error) {
       console.error('Error loading favorites:', error)
     }
