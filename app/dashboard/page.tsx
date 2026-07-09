@@ -13,6 +13,7 @@ import AvailableListeners from '@/components/AvailableListeners'
 import PeopleSeeking from '@/components/PeopleSeeking'
 import type { Profile, SessionWithUserName, ProfileUpdateData, FavoriteWithProfile } from '@/lib/types/database'
 import { TIME, NOTIFICATION } from '@/lib/constants'
+import { normalizeFavorites } from '@/lib/favorites'
 import ThemeToggle from '@/components/ThemeToggle'
 
 function DashboardContent() {
@@ -448,13 +449,10 @@ function DashboardContent() {
         .order('created_at', { ascending: false })
 
       if (error) throw error
-      const normalized = (data || []).map((row: any) => ({
-        ...row,
-        favorite_profile: Array.isArray(row.favorite_profile)
-          ? row.favorite_profile[0]
-          : row.favorite_profile,
-      }))
-      setFavorites(normalized as unknown as FavoriteWithProfile[])
+      // normalizeFavorites drops rows whose profile the viewer can't read under
+      // RLS (e.g. the favorited listener is offline) — a null favorite_profile
+      // would otherwise crash the dashboard render.
+      setFavorites(normalizeFavorites(data))
     } catch (error) {
       console.error('Error loading favorites:', error)
     }
@@ -1003,6 +1001,8 @@ function DashboardContent() {
             <div className="space-y-2">
               {favorites.map(fav => {
                 const fp = fav.favorite_profile
+                // Defensive: never let a dangling favorite (deleted profile) crash render
+                if (!fp) return null
                 const heartbeatThreshold = new Date(Date.now() - TIME.HEARTBEAT_THRESHOLD_MS).toISOString()
                 const isOnline = fp.always_available || (
                   fp.last_heartbeat_at !== null &&
