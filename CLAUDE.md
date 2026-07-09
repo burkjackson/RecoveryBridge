@@ -232,6 +232,7 @@ Everything in the flows above is ✅ live, including: auth, onboarding (with ref
 6. **Legacy blog tables** — migrations 011–015 create story tables no longer read by the app (stories moved to Ghost). `lib/email.ts` still has story emails.
 7. **Public repo** — internal docs in `docs/` (breach response, audits) are world-readable; decide if any should be removed.
 8. **Service worker cache** — `CACHE_NAME` in `public/sw.js` (currently v9); bump on breaking asset changes.
+9. **RLS-null embeds crash render (⚠️ gotcha when writing profile joins)** — Supabase relation embeds like `favorite_profile:profiles!fkey(...)` are *non-inner* joins, so row-level security returns the embedded object as **`null`** (it does not drop the parent row) whenever the viewer can't read that profile. The `profiles` SELECT policy only exposes a profile that is your own, currently `role_state = 'available'`, an **active** session participant, or when you're admin — so any embed of an *offline* or *past-session* user comes back null. Dereferencing it (`fp.display_name`) throws during render and trips the error boundary ("Dashboard couldn't load"). **Always guard embedded profiles**: dashboard + profile favorites route through `lib/favorites.ts` `normalizeFavorites()`; profile thank-you notes, history, dashboard sessions, and admin all use `?.display_name || 'fallback'`. Use `!inner` only if you actually want RLS to filter the whole row instead.
 
 ---
 
