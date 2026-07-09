@@ -448,12 +448,17 @@ function DashboardContent() {
         .order('created_at', { ascending: false })
 
       if (error) throw error
-      const normalized = (data || []).map((row: any) => ({
-        ...row,
-        favorite_profile: Array.isArray(row.favorite_profile)
-          ? row.favorite_profile[0]
-          : row.favorite_profile,
-      }))
+      const normalized = (data || [])
+        .map((row: any) => ({
+          ...row,
+          favorite_profile: Array.isArray(row.favorite_profile)
+            ? row.favorite_profile[0]
+            : row.favorite_profile,
+        }))
+        // Drop favorites whose profile no longer exists (e.g. the favorited user
+        // deleted their account). A null favorite_profile would otherwise crash
+        // the whole dashboard render when we read fp.always_available / display_name.
+        .filter((row: any) => row.favorite_profile)
       setFavorites(normalized as unknown as FavoriteWithProfile[])
     } catch (error) {
       console.error('Error loading favorites:', error)
@@ -1003,6 +1008,8 @@ function DashboardContent() {
             <div className="space-y-2">
               {favorites.map(fav => {
                 const fp = fav.favorite_profile
+                // Defensive: never let a dangling favorite (deleted profile) crash render
+                if (!fp) return null
                 const heartbeatThreshold = new Date(Date.now() - TIME.HEARTBEAT_THRESHOLD_MS).toISOString()
                 const isOnline = fp.always_available || (
                   fp.last_heartbeat_at !== null &&
