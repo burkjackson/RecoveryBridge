@@ -13,6 +13,7 @@ import Footer from '@/components/Footer'
 import NotificationSettings from '@/components/NotificationSettings'
 import TagSelector from '@/components/TagSelector'
 import type { Profile, FavoriteWithProfile, ThankYouNoteWithSender } from '@/lib/types/database'
+import { normalizeFavorites } from '@/lib/favorites'
 
 // E.164 phone number validation (same as lib/sms.ts but client-safe)
 function isValidE164(phone: string): boolean {
@@ -278,7 +279,9 @@ export default function ProfilePage() {
         .order('created_at', { ascending: false })
 
       if (error) throw error
-      setFavorites((data as unknown as FavoriteWithProfile[]) || [])
+      // Drop favorites whose profile is RLS-hidden (offline listener) — a null
+      // favorite_profile would crash the render.
+      setFavorites(normalizeFavorites(data))
     } catch (err) {
       console.error('Error loading favorites:', err)
     } finally {
@@ -312,7 +315,15 @@ export default function ProfilePage() {
         .limit(20)
 
       if (error) throw error
-      setThankYouNotes((data as unknown as ThankYouNoteWithSender[]) || [])
+      // Flatten the embed (Supabase may return object or 1-element array) and
+      // coerce an RLS-hidden sender to null; the note text is still worth showing.
+      const notes = ((data as any[]) || []).map((row) => ({
+        ...row,
+        sender_profile: Array.isArray(row.sender_profile)
+          ? row.sender_profile[0] ?? null
+          : row.sender_profile ?? null,
+      }))
+      setThankYouNotes(notes as ThankYouNoteWithSender[])
     } catch (err) {
       console.error('Error loading thank-you notes:', err)
     } finally {
@@ -1195,15 +1206,19 @@ export default function ProfilePage() {
                   {thankYouNotes.map(note => {
                     const daysAgo = Math.floor((Date.now() - new Date(note.created_at).getTime()) / (1000 * 60 * 60 * 24))
                     const relativeDate = daysAgo === 0 ? 'Today' : daysAgo === 1 ? 'Yesterday' : `${daysAgo} days ago`
-                    const initials = note.sender_profile.display_name.charAt(0).toUpperCase()
+                    // sender_profile can be null when RLS hides the sender (offline).
+                    // Keep the note; just fall back to a generic label/avatar.
+                    const senderName = note.sender_profile?.display_name || 'Someone'
+                    const senderAvatar = note.sender_profile?.avatar_url
+                    const initials = senderName.charAt(0).toUpperCase()
 
                     return (
                       <div key={note.id} className="flex items-start gap-3">
                         {/* Avatar */}
-                        {note.sender_profile.avatar_url ? (
+                        {senderAvatar ? (
                           <Image
-                            src={note.sender_profile.avatar_url}
-                            alt={note.sender_profile.display_name}
+                            src={senderAvatar}
+                            alt={senderName}
                             width={32}
                             height={32}
                             className="w-8 h-8 rounded-full object-cover flex-shrink-0 mt-0.5"
@@ -1217,7 +1232,7 @@ export default function ProfilePage() {
                         {/* Note content */}
                         <div className="flex-1 min-w-0">
                           <div className="flex items-baseline gap-2 flex-wrap">
-                            <Body16 className="text-sm font-semibold text-gray-900 dark:text-gray-100">{note.sender_profile.display_name}</Body16>
+                            <Body16 className="text-sm font-semibold text-gray-900 dark:text-gray-100">{senderName}</Body16>
                             <span className="text-xs text-gray-400 dark:text-gray-300">{relativeDate}</span>
                           </div>
                           <p className="text-sm text-gray-700 dark:text-gray-300 mt-0.5 italic">&ldquo;{note.thank_you_note}&rdquo;</p>

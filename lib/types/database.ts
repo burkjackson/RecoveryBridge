@@ -116,10 +116,13 @@ export interface SessionFeedback {
 }
 
 export interface ThankYouNoteWithSender extends SessionFeedback {
+  // Nullable: the embed is a non-inner join, so under RLS the sender's profile
+  // comes back null when the recipient can't read it (e.g. the sender is offline
+  // and no longer shares an active session).
   sender_profile: {
     display_name: string
     avatar_url: string | null
-  }
+  } | null
 }
 
 export interface UserFavorite {
