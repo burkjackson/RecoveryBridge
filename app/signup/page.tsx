@@ -39,7 +39,7 @@ export default function SignupPage() {
     }
 
     if (!healthDataConsent) {
-      setError('Please consent to the collection of your health-related information so we can provide peer support.')
+      setError('Please check the box so we can store what you choose to share and connect you with peer support.')
       setLoading(false)
       return
     }
@@ -209,8 +209,8 @@ export default function SignupPage() {
                   aria-required="true"
                 />
                 <label htmlFor="health-consent" className="text-sm text-gray-700 dark:text-gray-300 cursor-pointer">
-                  I consent to RecoveryBridge collecting and processing my <strong>health-related information</strong> (such as mental health, substance use, and recovery details I choose to share) for the purpose of providing peer support. See the{' '}
-                  <a href="/privacy" className="text-rb-blue hover:underline">Consumer Health Data Privacy Notice</a>. You can withdraw consent anytime by deleting your account.
+                  I&apos;m okay with RecoveryBridge storing the recovery and mental-health details I <strong>choose to share</strong>, so we can connect you with peer support — that&apos;s the only thing we use them for. See our{' '}
+                  <a href="/privacy" className="text-rb-blue hover:underline">Consumer Health Data Privacy Notice</a>. You can withdraw anytime by deleting your account.
                 </label>
               </div>
 
