@@ -168,50 +168,53 @@ export default function PrivacyPage() {
           {/* Consumer Health Data Privacy Notice */}
           <section className="border-2 border-blue-200 dark:border-blue-700 rounded-xl p-6">
             <Body18 className="font-semibold mb-1 dark:text-gray-100">Consumer Health Data Privacy Notice</Body18>
+            <Body16 className="text-rb-gray dark:text-gray-300 mb-3">
+              Because RecoveryBridge is about recovery, some of what you share here counts as &ldquo;health data&rdquo; under state privacy laws. Here&apos;s what that means for you, in plain terms.
+            </Body16>
             <Body16 className="text-xs text-rb-gray dark:text-gray-300 mb-4">
               This notice applies to residents of states with consumer health data privacy laws, including Washington (My Health My Data Act).
             </Body16>
 
             <Body16 className="text-rb-gray dark:text-gray-300 mb-3">
-              <strong className="text-[#2D3436] dark:text-gray-100">Health Data We Process:</strong> RecoveryBridge processes consumer health data as defined under applicable state law, including information you provide about mental health, substance use, addiction recovery status, and related personal experiences. This data is collected only to provide the peer support service.
+              <strong className="text-[#2D3436] dark:text-gray-100">What counts as health data:</strong> The things you share about your mental health, substance use, recovery, and related experiences count as &ldquo;consumer health data&rdquo; under these laws. We only collect it to provide peer support.
             </Body16>
 
             <Body16 className="text-rb-gray dark:text-gray-300 mb-3">
-              <strong className="text-[#2D3436] dark:text-gray-100">How We Use Health Data:</strong> Your health-related information is used solely to connect you with peer support and to operate RecoveryBridge. We do not use this data for advertising, marketing profiling, or sale to third parties.
+              <strong className="text-[#2D3436] dark:text-gray-100">How we use it:</strong> Only to connect you with peer support and to run RecoveryBridge. Never for advertising, marketing profiles, or sale to anyone — full stop.
             </Body16>
 
             <Body16 className="text-rb-gray dark:text-gray-300 mb-3">
-              <strong className="text-[#2D3436] dark:text-gray-100">Third-Party Processors:</strong> We share limited technical data with the following service providers who are contractually required to protect your information:
+              <strong className="text-[#2D3436] dark:text-gray-100">Who helps us run it:</strong> A few trusted service providers handle the technical side. They&apos;re contractually required to protect your information and can&apos;t use it for their own purposes:
             </Body16>
             <ul className="space-y-2 ml-6 mb-3">
               <li className="text-rb-gray dark:text-gray-300">
-                <Body16>• <strong className="dark:text-gray-300">Supabase</strong> — database and authentication provider that stores all user data and messages</Body16>
+                <Body16>• <strong className="dark:text-gray-300">Supabase</strong> — securely stores your account, messages, and profile</Body16>
               </li>
               <li className="text-rb-gray dark:text-gray-300">
-                <Body16>• <strong className="dark:text-gray-300">Vercel</strong> — application hosting; may retain server access logs (IP address, timestamp, requested path)</Body16>
+                <Body16>• <strong className="dark:text-gray-300">Vercel</strong> — runs the app; may keep basic server logs (IP address, timestamp, page requested)</Body16>
               </li>
               <li className="text-rb-gray dark:text-gray-300">
-                <Body16>• <strong className="dark:text-gray-300">Sentry</strong> — error monitoring; captures application error reports and anonymized session replays (text masked, media blocked) only when enabled via environment configuration</Body16>
+                <Body16>• <strong className="dark:text-gray-300">Sentry</strong> — error monitoring; only captures crash reports and privacy-masked session replays (your text is hidden, images blocked), and only when we&apos;ve turned it on</Body16>
               </li>
             </ul>
             <Body16 className="text-rb-gray dark:text-gray-300 mb-3">
-              None of these providers are authorized to use your health data for their own purposes beyond providing services to RecoveryBridge LLC.
+              None of them are allowed to use your health data for their own purposes — only to help run RecoveryBridge.
             </Body16>
 
             <Body16 className="text-rb-gray dark:text-gray-300 mb-3">
-              <strong className="text-[#2D3436] dark:text-gray-100">Your Rights (applicable states):</strong> Depending on your state of residence, you may have the right to:
+              <strong className="text-[#2D3436] dark:text-gray-100">Your rights:</strong> Depending on where you live, you can ask us to:
             </Body16>
             <ul className="space-y-2 ml-6 mb-3">
-              <li className="text-rb-gray dark:text-gray-300"><Body16>• Confirm whether we process your consumer health data</Body16></li>
-              <li className="text-rb-gray dark:text-gray-300"><Body16>• Access and obtain a copy of your health data</Body16></li>
-              <li className="text-rb-gray dark:text-gray-300"><Body16>• Delete your health data (via account deletion in profile settings)</Body16></li>
-              <li className="text-rb-gray dark:text-gray-300"><Body16>• Withdraw consent for processing</Body16></li>
+              <li className="text-rb-gray dark:text-gray-300"><Body16>• Confirm whether we hold your health data</Body16></li>
+              <li className="text-rb-gray dark:text-gray-300"><Body16>• Get a copy of it</Body16></li>
+              <li className="text-rb-gray dark:text-gray-300"><Body16>• Delete it — or just delete your account in settings, which does the same thing</Body16></li>
+              <li className="text-rb-gray dark:text-gray-300"><Body16>• Withdraw your consent anytime</Body16></li>
             </ul>
 
             <Body16 className="text-rb-gray dark:text-gray-300">
-              To exercise these rights, contact us at{' '}
-              <a href="mailto:admin@recoverybridge.app" className="text-rb-blue hover:underline">admin@recoverybridge.app</a>.
-              We will respond within 45 days as required by applicable law.
+              <strong className="text-[#2D3436] dark:text-gray-100">How to ask:</strong> Just email{' '}
+              <a href="mailto:admin@recoverybridge.app" className="text-rb-blue hover:underline">admin@recoverybridge.app</a>
+              {' '}and we&apos;ll get back to you within 45 days (the legal deadline).
             </Body16>
           </section>
 
