@@ -209,8 +209,8 @@ export default function SignupPage() {
                   aria-required="true"
                 />
                 <label htmlFor="health-consent" className="text-sm text-gray-700 dark:text-gray-300 cursor-pointer">
-                  I&apos;m okay with RecoveryBridge storing the recovery and mental-health details I <strong>choose to share</strong>, so we can connect you with peer support — that&apos;s the only thing we use them for. See our{' '}
-                  <a href="/privacy" className="text-rb-blue hover:underline">Consumer Health Data Privacy Notice</a>. You can withdraw anytime by deleting your account.
+                  I&apos;m okay with RecoveryBridge storing the recovery and mental-health details I <strong>choose to share</strong>, so we can connect you with peer support — that&apos;s the only thing we ever use them for, and we <strong>never sell your information</strong>. State privacy law requires us to ask for this; you can withdraw anytime by deleting your account. See our{' '}
+                  <a href="/privacy" className="text-rb-blue hover:underline">Consumer Health Data Privacy Notice</a>.
                 </label>
               </div>
 
