@@ -89,17 +89,17 @@ export default function PrivacyPage() {
               </Body16>
             </div>
             <Body16 className="text-rb-gray dark:text-gray-300 mb-2">
-              We only share your information in these limited circumstances:
+              We share as little as possible — only in these situations:
             </Body16>
             <ul className="space-y-2 ml-6">
               <li className="text-rb-gray dark:text-gray-300">
-                <Body16>• <strong className="dark:text-gray-300">Other users:</strong> Your display name and profile information is visible to people you chat with</Body16>
+                <Body16>• <strong className="dark:text-gray-300">The people you chat with:</strong> they can see your display name and profile</Body16>
               </li>
               <li className="text-rb-gray dark:text-gray-300">
-                <Body16>• <strong className="dark:text-gray-300">Service providers:</strong> We use trusted third parties (like hosting providers) who help us run RecoveryBridge. They're required to protect your data</Body16>
+                <Body16>• <strong className="dark:text-gray-300">Companies that help us run the app:</strong> trusted providers like our hosting and database. They&apos;re required to protect your data and can&apos;t use it for anything else</Body16>
               </li>
               <li className="text-rb-gray dark:text-gray-300">
-                <Body16>• <strong className="dark:text-gray-300">Legal requirements:</strong> If required by law or to prevent serious harm</Body16>
+                <Body16>• <strong className="dark:text-gray-300">The law:</strong> if we&apos;re legally required to, or to prevent serious harm to someone</Body16>
               </li>
             </ul>
           </section>
@@ -107,19 +107,19 @@ export default function PrivacyPage() {
           {/* Your Rights */}
           <section>
             <Body18 className="font-semibold mb-3 dark:text-gray-100">Your Privacy Rights</Body18>
-            <Body16 className="text-rb-gray dark:text-gray-300 mb-2">You have the right to:</Body16>
+            <Body16 className="text-rb-gray dark:text-gray-300 mb-2">It&apos;s your data. You can:</Body16>
             <ul className="space-y-2 ml-6">
               <li className="text-rb-gray dark:text-gray-300">
-                <Body16>• Access your personal information</Body16>
+                <Body16>• See the personal information we hold about you</Body16>
               </li>
               <li className="text-rb-gray dark:text-gray-300">
-                <Body16>• Update or correct your information in your profile settings</Body16>
+                <Body16>• Update or correct it anytime in your profile settings</Body16>
               </li>
               <li className="text-rb-gray dark:text-gray-300">
-                <Body16>• Delete your account and data at any time</Body16>
+                <Body16>• Delete your account and data whenever you want</Body16>
               </li>
               <li className="text-rb-gray dark:text-gray-300">
-                <Body16>• Export your data</Body16>
+                <Body16>• Export a copy of your data</Body16>
               </li>
             </ul>
           </section>
@@ -150,17 +150,17 @@ export default function PrivacyPage() {
           <section>
             <Body18 className="font-semibold mb-3 dark:text-gray-100">How Long We Keep Your Data</Body18>
             <Body16 className="text-rb-gray dark:text-gray-300 mb-2">
-              We keep your information only as long as necessary:
+              We hold onto your information only as long as we need to:
             </Body16>
             <ul className="space-y-2 ml-6">
               <li className="text-rb-gray dark:text-gray-300">
-                <Body16>• Active accounts: We keep your data while your account is active</Body16>
+                <Body16>• <strong className="dark:text-gray-300">While your account is active:</strong> we keep your data so the service works</Body16>
               </li>
               <li className="text-rb-gray dark:text-gray-300">
-                <Body16>• Deleted accounts: We delete your personal information within 30 days of account deletion</Body16>
+                <Body16>• <strong className="dark:text-gray-300">After you delete your account:</strong> we remove your personal information within 30 days</Body16>
               </li>
               <li className="text-rb-gray dark:text-gray-300">
-                <Body16>• Backups: Some data may remain in encrypted backups for up to 90 days</Body16>
+                <Body16>• <strong className="dark:text-gray-300">Backups:</strong> some data may linger in encrypted backups for up to 90 days, then it&apos;s gone</Body16>
               </li>
             </ul>
           </section>
