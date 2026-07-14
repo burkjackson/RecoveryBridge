@@ -8,6 +8,7 @@ import {
   requestNotificationPermission,
   subscribeToPushNotifications,
   unsubscribeFromPushNotifications,
+  getCurrentPushEndpoint,
   isIOSNeedsPWAInstall,
 } from '@/lib/pushNotifications'
 import { Body16 } from '@/components/ui/Typography'
@@ -138,20 +139,34 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
           throw new Error('User not authenticated')
         }
 
-        // First, delete any existing subscriptions for this user (handles stale/expired endpoints)
+        // Remove any stale row for THIS device (same endpoint). Other devices'
+        // subscriptions must survive — deleting all rows here is what caused
+        // enabling push on a laptop to silently kill the phone's notifications.
+        // (Truly stale endpoints from this device self-heal: the send route
+        // deletes any subscription the push service rejects with a 4xx.)
         await supabase
           .from('push_subscriptions')
           .delete()
           .eq('user_id', user.id)
+          .eq('subscription->>endpoint', subscription.endpoint)
 
         // Insert fresh subscription
-        const { error: dbError } = await supabase.from('push_subscriptions').insert({
+        const subscriptionRow = {
           user_id: user.id,
           subscription: {
             endpoint: subscription.endpoint,
             keys: subscription.keys,
           },
-        })
+        }
+        let { error: dbError } = await supabase.from('push_subscriptions').insert(subscriptionRow)
+
+        // Legacy schema enforced UNIQUE(user_id) — one device per account. If
+        // migration 024 hasn't run yet, fall back to the old replace behavior
+        // so enabling never hard-fails.
+        if (dbError && dbError.code === '23505') {
+          await supabase.from('push_subscriptions').delete().eq('user_id', user.id)
+          ;({ error: dbError } = await supabase.from('push_subscriptions').insert(subscriptionRow))
+        }
 
         if (dbError) {
           console.error('Error saving subscription:', dbError)
@@ -179,6 +194,10 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
     setSuccessMessage(null)
 
     try {
+      // Capture this device's endpoint BEFORE unsubscribing invalidates it,
+      // so we only delete this device's row — not every device on the account.
+      const endpoint = await getCurrentPushEndpoint()
+
       const unsubscribed = await unsubscribeFromPushNotifications()
 
       if (!unsubscribed) {
@@ -191,10 +210,16 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
         throw new Error('User not authenticated')
       }
 
-      const { error: dbError } = await supabase
+      let deleteQuery = supabase
         .from('push_subscriptions')
         .delete()
         .eq('user_id', user.id)
+      // Scope to this device when we know its endpoint; fall back to
+      // account-wide removal only if the endpoint couldn't be read.
+      if (endpoint) {
+        deleteQuery = deleteQuery.eq('subscription->>endpoint', endpoint)
+      }
+      const { error: dbError } = await deleteQuery
 
       if (dbError) {
         console.error('Error deleting subscription:', dbError)

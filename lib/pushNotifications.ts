@@ -77,6 +77,20 @@ export async function subscribeToPushNotifications(): Promise<PushSubscriptionDa
 }
 
 /**
+ * Get the endpoint of this device's current push subscription, if any.
+ * Used to scope DB deletes to the current device instead of the whole account.
+ */
+export async function getCurrentPushEndpoint(): Promise<string | null> {
+  try {
+    const registration = await navigator.serviceWorker.ready
+    const subscription = await registration.pushManager.getSubscription()
+    return subscription?.endpoint ?? null
+  } catch {
+    return null
+  }
+}
+
+/**
  * Unsubscribe from push notifications
  */
 export async function unsubscribeFromPushNotifications(): Promise<boolean> {

@@ -89,7 +89,7 @@ lib/
 └── types/database.ts
 
 supabase/
-├── migrations/                       # 001–023, numbered (see below)
+├── migrations/                       # 001–024, numbered (see below)
 └── legacy/                           # Pre-migration setup SQL (historical reference only)
 
 docs/                                 # Setup guides, audits, design assets (historical)
@@ -103,7 +103,7 @@ middleware.ts                         # Route protection (auth + admin check)
 
 ## Database Schema (high level)
 
-Migrations live in `supabase/migrations/` (001–023) and are the source of truth. Summary:
+Migrations live in `supabase/migrations/` (001–024) and are the source of truth. Summary:
 
 ### profiles (central user table)
 Core: `id` (= auth.users.id), `display_name` (unique), `email`, `bio`, `tagline`, `avatar_url`, `tags` (max 5), `is_admin`.
