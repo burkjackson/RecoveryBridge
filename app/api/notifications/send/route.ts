@@ -243,6 +243,14 @@ export async function POST(request: NextRequest) {
 
     const activeSubs = subscriptions || []
     console.log(`[notify] Found ${activeSubs.length} push subscription(s) for ${activeListeners.length} active listener(s)`)
+    // TEMP DIAGNOSTIC: show which user each subscription belongs to and which
+    // push service it targets (web.push.apple.com = an iOS device; fcm/mozilla
+    // = a desktop/Android browser). Remove once push delivery is confirmed.
+    console.log('[notify] subs: ' + activeSubs.map(s => {
+      let host = 'unknown'
+      try { host = new URL((s.subscription as { endpoint?: string })?.endpoint || '').host } catch {}
+      return `${s.user_id?.slice(0, 8)}@${host}`
+    }).join(', '))
 
     // Server-side verify favorite listener IDs (never trust client list)
     let verifiedFavoriteIds = new Set<string>()
@@ -295,6 +303,7 @@ export async function POST(request: NextRequest) {
           })
           count++
           successUserIds.add(sub.user_id)
+          console.log(`[notify] push accepted for user ${sub.user_id?.slice(0, 8)} (fav=${isFavorite})`)
         } catch (error: unknown) {
           const statusCode = (error as { statusCode?: number })?.statusCode
           const body = (error as { body?: string })?.body
