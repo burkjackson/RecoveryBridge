@@ -103,6 +103,33 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
           const registration = await navigator.serviceWorker.ready
           const subscription = await registration.pushManager.getSubscription()
           setIsSubscribed(!!subscription)
+          // Self-heal: a device can hold a local subscription (and show
+          // "Enabled") while its server row is gone — e.g. the legacy
+          // one-device-per-account behavior deleted it when another device
+          // enabled. Re-save this device's registration if it's missing so
+          // pushes actually reach it again.
+          if (subscription) {
+            const { data: { user } } = await supabase.auth.getUser()
+            if (user) {
+              const { data: existing } = await supabase
+                .from('push_subscriptions')
+                .select('id')
+                .eq('user_id', user.id)
+                .eq('subscription->>endpoint', subscription.endpoint)
+                .maybeSingle()
+              if (!existing) {
+                // Insert only — never delete other devices' rows here. If the
+                // legacy UNIQUE(user_id) constraint is still present this
+                // fails quietly (23505) rather than stealing the slot on
+                // every page load.
+                const sub = subscription.toJSON()
+                await supabase.from('push_subscriptions').insert({
+                  user_id: user.id,
+                  subscription: { endpoint: subscription.endpoint, keys: sub.keys },
+                })
+              }
+            }
+          }
         } catch (error) {
           console.error('Error checking subscription:', error)
         }
