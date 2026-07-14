@@ -241,3 +241,9 @@ Everything in the flows above is ✅ live, including: auth, onboarding (with ref
 - **`main` auto-deploys to production** on Vercel (project `recovery-bridge`, team `burkjacksons-projects`)
 - Solo project: commit to `main` directly or merge worktree branches to main — **never open PRs**
 - Domains: recoverybridge.app (+www), stories.recoverybridge.app (Ghost)
+
+---
+
+## Working Notes (preferences from Burk)
+
+- **Email drafts for manual sending (Gmail):** write plain linear text only — short paragraphs, one instruction per line, full URLs written out. No Markdown structure (bold markers, numbered lists with inline links, arrows, tables); it collapses into unreadable columns when pasted into Gmail.
