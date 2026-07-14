@@ -92,6 +92,9 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   // Track message count so scrollToBottom only fires on new messages (not read_at updates)
   const prevMessageCountRef = useRef(0)
 
+  // Latest message timestamp, for the polling fallback's incremental fetch
+  const lastMessageTimeRef = useRef<string | null>(null)
+
   useEffect(() => {
     params.then(({ id }) => setSessionId(id))
   }, [params])
@@ -113,6 +116,46 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
       return cleanup
     }
   }, [session?.id, currentUserId])
+
+  // Polling fallback: realtime postgres_changes can silently drop INSERT
+  // events (websocket hiccups, RLS payload filtering), and chat previously
+  // had no fallback — a dropped event meant the message never appeared until
+  // a manual refresh. Poll for missed messages every 3s while the session is
+  // active, same pattern as the dashboard's session polls. Realtime remains
+  // the fast path; when it works, the poll finds nothing new and no state
+  // update (or re-render) occurs.
+  useEffect(() => {
+    if (!currentUserId || session?.status !== 'active') return
+
+    async function pollNewMessages() {
+      try {
+        let query = supabase
+          .from('messages')
+          .select('*')
+          .eq('session_id', sessionId)
+          .order('created_at', { ascending: true })
+        // gte (not gt) so an identical timestamp can't be skipped; the merge
+        // dedupes the refetched boundary message.
+        if (lastMessageTimeRef.current) {
+          query = query.gte('created_at', lastMessageTimeRef.current)
+        }
+        const { data } = await query
+        if (data && data.length > 0) mergeMessages(data)
+      } catch {
+        // Silent — realtime remains the primary delivery path
+      }
+    }
+
+    const pollInterval = setInterval(pollNewMessages, 3000)
+    return () => clearInterval(pollInterval)
+  }, [session?.id, session?.status, currentUserId])
+
+  // Keep the incremental-poll cursor on the newest message we have
+  useEffect(() => {
+    if (messages.length > 0) {
+      lastMessageTimeRef.current = messages[messages.length - 1].created_at
+    }
+  }, [messages])
 
   useEffect(() => {
     if (messages.length > prevMessageCountRef.current) {
@@ -278,6 +321,21 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
     } catch (error) {
       console.error('Error loading messages:', error)
     }
+  }
+
+  // Merge fetched/inserted rows into the message list: dedupe by id (realtime
+  // may deliver the same message), keep chronological order, and return the
+  // SAME array reference when nothing is new so no re-render (or downstream
+  // activity-timer effect) fires on quiet polls.
+  function mergeMessages(incoming: Message[]) {
+    setMessages((current) => {
+      const known = new Set(current.map((m) => m.id))
+      const fresh = incoming.filter((m) => !known.has(m.id))
+      if (fresh.length === 0) return current
+      return [...current, ...fresh].sort(
+        (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+      )
+    })
   }
 
   // --- V2: Load reactions for this session's messages ---
@@ -519,7 +577,10 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
 
     setSending(true)
     try {
-      const { error } = await supabase
+      // .select() returns the inserted row so we can render it immediately
+      // instead of waiting on the realtime round-trip (mergeMessages dedupes
+      // the copy realtime delivers)
+      const { data: inserted, error } = await supabase
         .from('messages')
         .insert([
           {
@@ -528,8 +589,11 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
             content: trimmed
           }
         ])
+        .select()
+        .single()
 
       if (error) throw error
+      if (inserted) mergeMessages([inserted as Message])
       setNewMessage('')
       setSendError(false) // Clear any previous errors
       setLastActivityTime(Date.now()) // Reset inactivity timer
@@ -546,10 +610,13 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
     if (!currentUserId || sending) return
     setSending(true)
     try {
-      const { error } = await supabase
+      const { data: inserted, error } = await supabase
         .from('messages')
         .insert([{ session_id: sessionId, sender_id: currentUserId, content: text }])
+        .select()
+        .single()
       if (error) throw error
+      if (inserted) mergeMessages([inserted as Message])
       setLastActivityTime(Date.now())
     } catch (error: any) {
       console.error('Error sending starter:', error)
