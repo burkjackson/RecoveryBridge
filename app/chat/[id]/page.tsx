@@ -919,11 +919,16 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                           if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current)
                         }}
                       >
-                        <Body16 className="!text-white whitespace-pre-wrap break-words">
-                          {linkifyText(message.content, 'underline decoration-white/70 hover:decoration-white')}
+                        <Body16 className={`whitespace-pre-wrap break-words ${isOwn ? '!text-white' : '!text-gray-900 dark:!text-white'}`}>
+                          {linkifyText(
+                            message.content,
+                            isOwn
+                              ? 'underline decoration-white/70 hover:decoration-white'
+                              : 'underline decoration-gray-400 hover:decoration-gray-600 dark:decoration-white/70 dark:hover:decoration-white'
+                          )}
                         </Body16>
                         <div className="flex items-center justify-end gap-1 mt-1">
-                          <p className="text-xs !text-white/80">
+                          <p className={`text-xs ${isOwn ? '!text-white/80' : '!text-gray-500 dark:!text-white/80'}`}>
                             {new Date(message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           </p>
                           {/* --- V2: Read receipt checkmarks (own messages only) --- */}
