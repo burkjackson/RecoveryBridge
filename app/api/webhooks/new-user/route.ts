@@ -12,12 +12,16 @@ function getRoleLabel(userRole: string | null | undefined): string {
 
 export async function POST(request: NextRequest) {
   try {
-    // Verify webhook secret if configured
-    if (WEBHOOK_SECRET) {
-      const authHeader = request.headers.get('x-webhook-secret')
-      if (authHeader !== WEBHOOK_SECRET) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-      }
+    // Fail closed: without a configured secret this endpoint would accept
+    // unauthenticated requests — letting anyone spam the admin inbox with
+    // fake sign-up emails through our Resend account.
+    if (!WEBHOOK_SECRET) {
+      console.warn('[new-user] SUPABASE_WEBHOOK_SECRET not set — rejecting request')
+      return NextResponse.json({ error: 'Webhook not configured' }, { status: 503 })
+    }
+    const authHeader = request.headers.get('x-webhook-secret')
+    if (authHeader !== WEBHOOK_SECRET) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const body = await request.json()

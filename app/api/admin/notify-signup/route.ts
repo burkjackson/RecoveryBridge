@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { Resend } from 'resend'
 import { parseReferralSource } from '@/lib/constants'
+import { escapeHtml } from '@/lib/email/escapeHtml'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
@@ -59,11 +60,11 @@ export async function POST(request: NextRequest) {
           <table style="width:100%;border-collapse:collapse;">
             <tr>
               <td style="padding:8px 0;color:#718096;font-size:14px;">Name</td>
-              <td style="padding:8px 0;color:#2D3436;font-size:14px;font-weight:600;">${profile.display_name || '—'}</td>
+              <td style="padding:8px 0;color:#2D3436;font-size:14px;font-weight:600;">${escapeHtml(profile.display_name) || '—'}</td>
             </tr>
             <tr>
               <td style="padding:8px 0;color:#718096;font-size:14px;">Email</td>
-              <td style="padding:8px 0;color:#2D3436;font-size:14px;">${user.email || '—'}</td>
+              <td style="padding:8px 0;color:#2D3436;font-size:14px;">${escapeHtml(user.email) || '—'}</td>
             </tr>
             <tr>
               <td style="padding:8px 0;color:#718096;font-size:14px;">Role</td>
@@ -71,7 +72,7 @@ export async function POST(request: NextRequest) {
             </tr>
             <tr>
               <td style="padding:8px 0;color:#718096;font-size:14px;">How they found us</td>
-              <td style="padding:8px 0;color:#2D3436;font-size:14px;">${referralLabel}</td>
+              <td style="padding:8px 0;color:#2D3436;font-size:14px;">${escapeHtml(referralLabel)}</td>
             </tr>
             <tr>
               <td style="padding:8px 0;color:#718096;font-size:14px;">Signed up</td>

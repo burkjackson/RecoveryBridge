@@ -1,4 +1,5 @@
 import { Resend } from 'resend'
+import { escapeHtml } from '@/lib/email/escapeHtml'
 
 const FROM_ADDRESS = 'RecoveryBridge <notifications@contact.recoverybridge.app>'
 const REPLY_TO = 'admin@recoverybridge.app'
@@ -22,19 +23,22 @@ function buildSubject(isFavorite: boolean, isRenotification: boolean, seekerName
 }
 
 function buildEmailHtml(listenerName: string, seekerName: string, isFavorite: boolean, isRenotification: boolean, isDirect?: boolean): string {
+  const safeListener = escapeHtml(listenerName)
+  const safeSeeker = escapeHtml(seekerName)
+
   const headline = isDirect
-    ? `${seekerName} wants to connect with you`
+    ? `${safeSeeker} wants to connect with you`
     : isFavorite
       ? `Someone you know needs support`
       : isRenotification
-        ? `${seekerName} is still waiting`
+        ? `${safeSeeker} is still waiting`
         : `Someone needs support right now`
 
   const body = isDirect
-    ? `${seekerName} chose to connect with you directly. Open the app to join the chat.`
+    ? `${safeSeeker} chose to connect with you directly. Open the app to join the chat.`
     : isRenotification
-      ? `${seekerName} has been waiting 2+ minutes for a listener. Can you help?`
-      : `${seekerName} is looking for a listener right now. Opening the app only takes a moment.`
+      ? `${safeSeeker} has been waiting 2+ minutes for a listener. Can you help?`
+      : `${safeSeeker} is looking for a listener right now. Opening the app only takes a moment.`
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -59,7 +63,7 @@ function buildEmailHtml(listenerName: string, seekerName: string, isFavorite: bo
           <!-- Body -->
           <tr>
             <td style="background-color:#ffffff;padding:32px;border-radius:0 0 12px 12px;">
-              <p style="margin:0 0 8px 0;font-size:15px;color:#4A5568;">Hi ${listenerName},</p>
+              <p style="margin:0 0 8px 0;font-size:15px;color:#4A5568;">Hi ${safeListener},</p>
               <h1 style="margin:0 0 16px 0;font-size:22px;font-weight:700;color:#2D3436;line-height:1.3;">${headline}</h1>
               <p style="margin:0 0 28px 0;font-size:16px;color:#4A5568;line-height:1.6;">${body}</p>
 
@@ -154,8 +158,8 @@ export async function sendNewUserNotification({
               <h1 style="margin:0 0 20px 0;font-size:20px;font-weight:700;color:#2D3436;">🎉 New Sign-Up</h1>
 
               <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#F8F9FA;border-radius:8px;padding:20px;margin-bottom:24px;">
-                <tr><td style="padding:6px 0;font-size:14px;color:#4A5568;"><strong style="color:#2D3436;">Name:</strong> ${displayName}</td></tr>
-                <tr><td style="padding:6px 0;font-size:14px;color:#4A5568;"><strong style="color:#2D3436;">Email:</strong> ${userEmail}</td></tr>
+                <tr><td style="padding:6px 0;font-size:14px;color:#4A5568;"><strong style="color:#2D3436;">Name:</strong> ${escapeHtml(displayName)}</td></tr>
+                <tr><td style="padding:6px 0;font-size:14px;color:#4A5568;"><strong style="color:#2D3436;">Email:</strong> ${escapeHtml(userEmail)}</td></tr>
                 <tr><td style="padding:6px 0;font-size:14px;color:#4A5568;"><strong style="color:#2D3436;">Role:</strong> ${roleLabel}</td></tr>
                 <tr><td style="padding:6px 0;font-size:14px;color:#4A5568;"><strong style="color:#2D3436;">Signed up:</strong> ${signedUpDate} ET</td></tr>
               </table>
@@ -245,10 +249,10 @@ export async function sendStoryPublishedEmail({
           <!-- Body -->
           <tr>
             <td style="background-color:#ffffff;padding:32px;border-radius:0 0 12px 12px;">
-              <p style="margin:0 0 8px 0;font-size:15px;color:#4A5568;">Hi ${authorName},</p>
+              <p style="margin:0 0 8px 0;font-size:15px;color:#4A5568;">Hi ${escapeHtml(authorName)},</p>
               <h1 style="margin:0 0 16px 0;font-size:22px;font-weight:700;color:#2D3436;line-height:1.3;">🎉 Your story is live!</h1>
               <p style="margin:0 0 8px 0;font-size:16px;color:#4A5568;line-height:1.6;">
-                Your story <strong style="color:#2D3436;">"${storyTitle}"</strong> has been published and is now live on RecoveryBridge Stories.
+                Your story <strong style="color:#2D3436;">"${escapeHtml(storyTitle)}"</strong> has been published and is now live on RecoveryBridge Stories.
               </p>
               <p style="margin:0 0 28px 0;font-size:16px;color:#4A5568;line-height:1.6;">
                 Thank you for sharing your experience — your words have the power to help others in recovery.
@@ -324,7 +328,7 @@ export async function sendStoryRejectedEmail({
   const noteHtml = rejectionNote
     ? `<div style="background-color:#FFF8ED;border-left:4px solid #F59E0B;border-radius:4px;padding:16px;margin:0 0 24px 0;">
          <p style="margin:0 0 4px 0;font-size:13px;font-weight:600;color:#92400E;text-transform:uppercase;letter-spacing:0.5px;">Reviewer Note</p>
-         <p style="margin:0;font-size:15px;color:#78350F;line-height:1.6;">${rejectionNote}</p>
+         <p style="margin:0;font-size:15px;color:#78350F;line-height:1.6;">${escapeHtml(rejectionNote)}</p>
        </div>`
     : `<p style="margin:0 0 24px 0;font-size:16px;color:#4A5568;line-height:1.6;">
          Please review your story and resubmit when you're ready.
@@ -353,10 +357,10 @@ export async function sendStoryRejectedEmail({
           <!-- Body -->
           <tr>
             <td style="background-color:#ffffff;padding:32px;border-radius:0 0 12px 12px;">
-              <p style="margin:0 0 8px 0;font-size:15px;color:#4A5568;">Hi ${authorName},</p>
+              <p style="margin:0 0 8px 0;font-size:15px;color:#4A5568;">Hi ${escapeHtml(authorName)},</p>
               <h1 style="margin:0 0 16px 0;font-size:22px;font-weight:700;color:#2D3436;line-height:1.3;">Your story needs a small revision</h1>
               <p style="margin:0 0 16px 0;font-size:16px;color:#4A5568;line-height:1.6;">
-                Thank you for submitting <strong style="color:#2D3436;">"${storyTitle}"</strong>. Our team reviewed it and returned it to your drafts for a revision before we can publish it.
+                Thank you for submitting <strong style="color:#2D3436;">"${escapeHtml(storyTitle)}"</strong>. Our team reviewed it and returned it to your drafts for a revision before we can publish it.
               </p>
               ${noteHtml}
 
@@ -481,7 +485,7 @@ export async function sendReportResolvedToReporter({
           <span style="color:#ffffff;font-size:22px;font-weight:700;">RecoveryBridge</span>
         </td></tr>
         <tr><td style="background-color:#ffffff;padding:32px;border-radius:0 0 12px 12px;">
-          <p style="margin:0 0 8px 0;font-size:15px;color:#4A5568;">Hi ${reporterName},</p>
+          <p style="margin:0 0 8px 0;font-size:15px;color:#4A5568;">Hi ${escapeHtml(reporterName)},</p>
           <h1 style="margin:0 0 16px 0;font-size:22px;font-weight:700;color:#2D3436;line-height:1.3;">${headline}</h1>
           <p style="margin:0 0 28px 0;font-size:16px;color:#4A5568;line-height:1.6;">${body}</p>
           <hr style="border:none;border-top:1px solid #E8F0F4;margin:0 0 20px 0;" />
@@ -526,7 +530,7 @@ export async function sendReportResolvedToReported({
           <span style="color:#ffffff;font-size:22px;font-weight:700;">RecoveryBridge</span>
         </td></tr>
         <tr><td style="background-color:#ffffff;padding:32px;border-radius:0 0 12px 12px;">
-          <p style="margin:0 0 8px 0;font-size:15px;color:#4A5568;">Hi ${userName},</p>
+          <p style="margin:0 0 8px 0;font-size:15px;color:#4A5568;">Hi ${escapeHtml(userName)},</p>
           <h1 style="margin:0 0 16px 0;font-size:22px;font-weight:700;color:#2D3436;line-height:1.3;">Account Notice</h1>
           <p style="margin:0 0 28px 0;font-size:16px;color:#4A5568;line-height:1.6;">
             A report was submitted about your account activity on RecoveryBridge and has been reviewed by our moderation team. If your account remains active, you may continue using the platform. Please review our <a href="${APP_URL}/terms" style="color:#5A7A8C;">Community Guidelines</a> to ensure future interactions meet our standards.

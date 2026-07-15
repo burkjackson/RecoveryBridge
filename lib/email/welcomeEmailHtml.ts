@@ -1,5 +1,7 @@
+import { escapeHtml } from '@/lib/email/escapeHtml'
+
 export function welcomeEmailHtml(displayName: string, userRole: string): string {
-  const firstName = displayName.split(' ')[0] || displayName
+  const firstName = escapeHtml(displayName.split(' ')[0] || displayName)
   const isListener = userRole === 'professional'
 
   return `<!DOCTYPE html>

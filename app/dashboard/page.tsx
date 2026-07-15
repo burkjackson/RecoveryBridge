@@ -474,6 +474,18 @@ function DashboardContent() {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session?.user) return
 
+      // Blocked users can't start sessions (same guard as every other connect path)
+      const { data: blockCheck } = await supabase
+        .from('user_blocks')
+        .select('id')
+        .eq('user_id', profile.id)
+        .eq('is_active', true)
+        .maybeSingle()
+      if (blockCheck) {
+        setError({ show: true, message: 'Your account is currently restricted from starting sessions.' })
+        return
+      }
+
       const { data: newSession, error } = await supabase
         .from('sessions')
         .insert([{ listener_id: favoriteUserId, seeker_id: profile.id, status: 'active' }])
