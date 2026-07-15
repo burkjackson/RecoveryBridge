@@ -232,6 +232,21 @@ export default function AvailableListeners({ onCountChange, currentUserId, curre
         .single()
 
       if (error || !session) {
+        // The DB enforces one active session per seeker — if we already have
+        // one (e.g. a listener answered our request moments ago), join it
+        // instead of surfacing an error
+        const { data: existing } = await supabase
+          .from('sessions')
+          .select('id')
+          .eq('seeker_id', user.id)
+          .eq('status', 'active')
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle()
+        if (existing) {
+          router.push(`/chat/${existing.id}`)
+          return
+        }
         console.error('Error creating session:', error)
         setErrorModal({ show: true, message: error?.message || 'An unexpected error occurred' })
         return

@@ -161,6 +161,15 @@ export default function PeopleSeeking({ currentUserId, currentRoleState }: Peopl
         .select()
         .single()
 
+      // 23505 = unique violation on the one-active-session-per-seeker index:
+      // another listener connected with this person a moment earlier
+      if (error && error.code === '23505') {
+        setErrorModal({ show: true, message: 'Someone else just connected with this person. The list will refresh.' })
+        setConnecting(null)
+        isConnecting.current = false
+        await loadPeopleSeeking()
+        return
+      }
       if (error) throw error
 
       // Mark both users as offline while in chat — seeker leaves seeking list,

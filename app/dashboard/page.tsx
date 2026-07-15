@@ -164,11 +164,16 @@ function DashboardContent() {
     async function checkForSession() {
       if (profileRef.current?.role_state !== 'requesting') return
       try {
+        // order+limit(1): maybeSingle() ERRORS if multiple rows match, and that
+        // error was silently swallowed — a seeker with duplicate active sessions
+        // never auto-navigated. Take the newest session instead.
         const { data: activeSession } = await supabase
           .from('sessions')
           .select('id')
           .eq('seeker_id', profileRef.current.id)
           .eq('status', 'active')
+          .order('created_at', { ascending: false })
+          .limit(1)
           .maybeSingle()
 
         if (activeSession) {
@@ -196,11 +201,15 @@ function DashboardContent() {
     async function checkForListenerSession() {
       if (profileRef.current?.role_state !== 'available') return
       try {
+        // order+limit(1): two seekers can direct-connect to the same listener,
+        // and maybeSingle() errors (silently) on multiple rows — take the newest
         const { data: activeSession } = await supabase
           .from('sessions')
           .select('id')
           .eq('listener_id', profileRef.current.id)
           .eq('status', 'active')
+          .order('created_at', { ascending: false })
+          .limit(1)
           .maybeSingle()
 
         if (activeSession) {
@@ -471,10 +480,31 @@ function DashboardContent() {
         .select()
         .single()
 
-      if (error) throw error
+      if (error) {
+        // The DB enforces one active session per seeker — if the insert lost
+        // that race (or one already exists), join the existing session instead
+        const { data: existing } = await supabase
+          .from('sessions')
+          .select('id')
+          .eq('seeker_id', profile.id)
+          .eq('status', 'active')
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle()
+        if (existing) {
+          router.push(`/chat/${existing.id}`)
+          return
+        }
+        throw error
+      }
       router.push(`/chat/${newSession.id}`)
     } catch (error) {
       console.error('Error connecting with favorite:', error)
+      setError({
+        show: true,
+        message: 'We couldn\'t connect you right now. Please try again in a moment.',
+        action: () => connectWithFavorite(favoriteUserId)
+      })
     } finally {
       setConnectingFavorite(null)
     }
