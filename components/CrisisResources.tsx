@@ -10,6 +10,15 @@ export default function CrisisResources() {
   const triggerRef = useRef<HTMLButtonElement>(null)
   const dialogRef = useRef<HTMLDivElement>(null)
 
+  // The chat page anchors its own SOS trigger inside the message input bar
+  // (position:fixed drifts mid-page in the iOS PWA as the keyboard pans the
+  // visual viewport) and opens this modal by dispatching this event.
+  useEffect(() => {
+    const open = () => setIsOpen(true)
+    window.addEventListener('rb:open-crisis', open)
+    return () => window.removeEventListener('rb:open-crisis', open)
+  }, [])
+
   // Focus management: trap focus in the dialog, close on Escape, restore focus on close.
   useEffect(() => {
     if (!isOpen) return
@@ -48,16 +57,20 @@ export default function CrisisResources() {
 
   return (
     <>
-      {/* Floating Crisis Button - Always Visible */}
-      <button
-        ref={triggerRef}
-        onClick={() => setIsOpen(true)}
-        className={`fixed right-6 z-50 bg-red-600 hover:bg-red-700 text-white px-4 py-3 rounded-full shadow-lg transition-all hover:scale-105 flex items-center gap-2 font-semibold ${isChat ? 'bottom-24' : 'bottom-6'}`}
-        aria-label="Access crisis resources and emergency contacts"
-      >
-        <span className="text-xl" aria-hidden="true">🆘</span>
-        <span className="hidden sm:inline">Crisis Help</span>
-      </button>
+      {/* Floating Crisis Button — hidden on /chat, where a flow-anchored
+          trigger lives in the message input bar instead (iOS PWAs drift
+          position:fixed elements mid-page during keyboard/scroll panning) */}
+      {!isChat && (
+        <button
+          ref={triggerRef}
+          onClick={() => setIsOpen(true)}
+          className="fixed right-6 bottom-6 z-50 bg-red-600 hover:bg-red-700 text-white px-4 py-3 rounded-full shadow-lg transition-all hover:scale-105 flex items-center gap-2 font-semibold"
+          aria-label="Access crisis resources and emergency contacts"
+        >
+          <span className="text-xl" aria-hidden="true">🆘</span>
+          <span className="hidden sm:inline">Crisis Help</span>
+        </button>
+      )}
 
       {/* Crisis Resources Modal */}
       {isOpen && (

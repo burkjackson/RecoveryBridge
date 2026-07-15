@@ -1129,7 +1129,19 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
 
         {/* Message Input */}
         {session?.status === 'active' && (
-          <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4">
+          <div className="relative bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4">
+            {/* SOS anchored to the input bar, in page flow — position:fixed
+                drifts mid-page in the iOS PWA when the keyboard pans the
+                visual viewport. Opens the global CrisisResources modal. */}
+            <button
+              type="button"
+              onClick={() => window.dispatchEvent(new Event('rb:open-crisis'))}
+              aria-label="Access crisis resources and emergency contacts"
+              className="absolute right-4 bottom-full mb-3 z-40 bg-red-600 hover:bg-red-700 text-white px-4 py-3 rounded-full shadow-lg font-semibold flex items-center gap-2"
+            >
+              <span className="text-xl" aria-hidden="true">🆘</span>
+              <span className="hidden sm:inline">Crisis Help</span>
+            </button>
             <form onSubmit={sendMessage} className="max-w-4xl mx-auto" aria-label="Send message">
               <div className="flex gap-2">
                 <label htmlFor="message-input" className="sr-only">Type your message</label>
