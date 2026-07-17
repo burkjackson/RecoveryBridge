@@ -11,6 +11,10 @@
 -- which the dashboard surfaces on the user's next visit for anyone who doesn't
 -- have push enabled. The admin "Couldn't Connect" view reads the 'reconnect'
 -- rows here.
+--
+-- Note: policy names are single unquoted identifiers on purpose — quoted names
+-- get mangled by "smart quote" substitution when pasted into the Supabase SQL
+-- editor. The app never references policy names, so the naming is cosmetic.
 
 CREATE TABLE IF NOT EXISTS user_notices (
   id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -19,8 +23,8 @@ CREATE TABLE IF NOT EXISTS user_notices (
   title      TEXT NOT NULL,
   body       TEXT NOT NULL,
   created_by UUID REFERENCES profiles(id) ON DELETE SET NULL,  -- admin who sent; NULL = system
-  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-  read_at    TIMESTAMP WITH TIME ZONE
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  read_at    TIMESTAMPTZ
 );
 
 -- Recipient inbox lookup (unread banner) and admin "couldn't connect" feed.
@@ -32,38 +36,25 @@ CREATE INDEX IF NOT EXISTS idx_user_notices_kind_created
 ALTER TABLE user_notices ENABLE ROW LEVEL SECURITY;
 
 -- Recipients can read their own notices.
-CREATE POLICY "Users can read their own notices"
+CREATE POLICY users_read_own_notices
   ON user_notices FOR SELECT
   USING (auth.uid() = user_id);
 
 -- Recipients can mark their own notices read (dismiss the banner). They can
 -- only touch their own rows; harmless if they edit their own copy's text.
-CREATE POLICY "Users can update their own notices"
+CREATE POLICY users_update_own_notices
   ON user_notices FOR UPDATE
   USING (auth.uid() = user_id)
   WITH CHECK (auth.uid() = user_id);
 
 -- Admins can read every notice (powers the "Couldn't Connect" dashboard view).
-CREATE POLICY "Admins can read all notices"
+CREATE POLICY admins_read_all_notices
   ON user_notices FOR SELECT
-  USING (
-    EXISTS (
-      SELECT 1 FROM profiles
-      WHERE profiles.id = auth.uid()
-      AND profiles.is_admin = true
-    )
-  );
+  USING (EXISTS (SELECT 1 FROM profiles WHERE profiles.id = auth.uid() AND profiles.is_admin = true));
 
 -- Inserts happen only from server routes using the service role key (the cron
 -- follow-up and the admin outreach action), which bypasses RLS — so there is
 -- deliberately no INSERT policy for regular clients.
 
 -- Live-update the admin view and the recipient's banner.
-DO $$
-BEGIN
-  IF EXISTS (SELECT 1 FROM pg_publication WHERE pubname = 'supabase_realtime') THEN
-    ALTER PUBLICATION supabase_realtime ADD TABLE user_notices;
-  END IF;
-EXCEPTION WHEN duplicate_object THEN
-  NULL;
-END $$;
+ALTER PUBLICATION supabase_realtime ADD TABLE user_notices;
