@@ -166,10 +166,14 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
 
   // Mark received messages as read when they appear
   useEffect(() => {
-    if (messages.length > 0 && currentUserId && session?.status === 'active') {
+    // Only participants generate read receipts; an admin observing the live
+    // chat must not mark the participants' messages as read.
+    const viewerIsParticipant =
+      currentUserId === session?.listener_id || currentUserId === session?.seeker_id
+    if (messages.length > 0 && currentUserId && session?.status === 'active' && viewerIsParticipant) {
       markMessagesAsRead()
     }
-  }, [messages, currentUserId, session?.status])
+  }, [messages, currentUserId, session?.status, session?.listener_id, session?.seeker_id])
 
   // Close reaction picker when tapping outside
   useEffect(() => {
@@ -212,6 +216,9 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   // Inactivity warning and auto-close
   useEffect(() => {
     if (!session || session.status !== 'active') return
+    // Only participants drive inactivity; an admin observing the live chat
+    // must never auto-close the session just by leaving the tab open.
+    if (currentUserId !== session.listener_id && currentUserId !== session.seeker_id) return
 
     const checkInactivity = setInterval(() => {
       const timeSinceLastActivity = Date.now() - lastActivityTime
@@ -228,7 +235,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
     }, TIME.INACTIVITY_CHECK_INTERVAL_MS)
 
     return () => clearInterval(checkInactivity)
-  }, [session, lastActivityTime, inactivityModal, inactivityWarningTime, autoCloseTime, endSessionDueToInactivity])
+  }, [session, currentUserId, lastActivityTime, inactivityModal, inactivityWarningTime, autoCloseTime, endSessionDueToInactivity])
 
   // Update activity on new messages
   useEffect(() => {
@@ -817,6 +824,13 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
     )
   }
 
+  // Admins can open a live chat from the moderation dashboard to observe it.
+  // They aren't the listener or seeker, so give them a way to leave that
+  // doesn't end the session or require quitting the app.
+  const isParticipant =
+    !!currentUserId &&
+    (currentUserId === session?.listener_id || currentUserId === session?.seeker_id)
+
   return (
     <>
       <main id="main-content" className="min-h-screen flex flex-col bg-[#F8F9FA] dark:bg-gray-900">
@@ -851,7 +865,15 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                 <PrivacyBadge />
               </div>
             </div>
-            {session?.status === 'active' ? (
+            {!isParticipant ? (
+              <button
+                onClick={() => router.push('/admin')}
+                aria-label="Leave chat and return to admin dashboard"
+                className="min-h-[44px] px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-all font-semibold"
+              >
+                ← Back to Admin
+              </button>
+            ) : session?.status === 'active' ? (
               <div className="flex gap-2">
                 <button
                   onClick={openReportModal}
@@ -1127,8 +1149,17 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
           </div>
         )}
 
+        {/* Read-only bar for a non-participant admin observing a live chat */}
+        {session?.status === 'active' && !isParticipant && (
+          <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4">
+            <p className="max-w-4xl mx-auto text-center text-sm text-gray-500 dark:text-gray-400">
+              🔒 Admin view — you&apos;re observing this session read-only. Use “← Back to Admin” to leave without ending the chat.
+            </p>
+          </div>
+        )}
+
         {/* Message Input */}
-        {session?.status === 'active' && (
+        {session?.status === 'active' && isParticipant && (
           <div className="relative bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4">
             {/* SOS anchored to the input bar, in page flow — position:fixed
                 drifts mid-page in the iOS PWA when the keyboard pans the
