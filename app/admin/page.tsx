@@ -1290,7 +1290,7 @@ export default function AdminPage() {
                   </div>
 
                   <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
+                    <table className="w-full min-w-[560px] text-sm">
                       <thead>
                         <tr className="border-b border-gray-200 dark:border-gray-700 text-left">
                           <th className="pb-3 pr-3 w-8" />
