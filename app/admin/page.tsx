@@ -1203,7 +1203,13 @@ export default function AdminPage() {
                           </div>
                         </div>
                       </div>
-                      <div className="flex gap-2 mt-3 ml-7" onClick={e => e.stopPropagation()}>
+                      <div className="flex gap-2 mt-3 ml-7 flex-wrap" onClick={e => e.stopPropagation()}>
+                        <button
+                          onClick={() => setOutreachModal({ show: true, userId: user.id, userName: user.display_name, message: '', sending: false })}
+                          className="min-h-[36px] px-3 py-1.5 bg-rb-blue text-white rounded text-xs hover:bg-rb-blue-hover"
+                        >
+                          💬 Reach out
+                        </button>
                         <button
                           onClick={() => setBlockModal({
                             show: true,
