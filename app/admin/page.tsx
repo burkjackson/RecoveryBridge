@@ -79,6 +79,7 @@ export default function AdminPage() {
   const [users, setUsers] = useState<User[]>([])
   const [signups, setSignups] = useState<User[]>([])
   const [missedConnections, setMissedConnections] = useState<Notice[]>([])
+  const [signupRange, setSignupRange] = useState<30 | 60 | 'all'>(30)
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [contactedIds, setContactedIds] = useState<Set<string>>(new Set())
@@ -127,6 +128,12 @@ export default function AdminPage() {
       subscribeToUpdates()
     }
   }, [isAdmin, activeTab])
+
+  // Reload sign-ups when the date range changes (avoids re-subscribing).
+  useEffect(() => {
+    if (isAdmin && activeTab === 'signups') loadSignups()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [signupRange])
 
   function persistContacted(ids: Set<string>) {
     try {
@@ -334,14 +341,19 @@ export default function AdminPage() {
 
   async function loadSignups() {
     try {
-      const thirtyDaysAgo = new Date()
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
-      const { data, error } = await supabase
+      let query = supabase
         .from('profiles')
         .select('id, display_name, email, user_role, role_state, created_at, is_admin, referral_source, listener_training_completed_at')
-        .gte('created_at', thirtyDaysAgo.toISOString())
         .order('created_at', { ascending: false })
-        .limit(100)
+        .limit(signupRange === 'all' ? 1000 : 100)
+
+      if (signupRange !== 'all') {
+        const since = new Date()
+        since.setDate(since.getDate() - signupRange)
+        query = query.gte('created_at', since.toISOString())
+      }
+
+      const { data, error } = await query
 
       if (error) throw error
       setSignups(data || [])
@@ -1239,12 +1251,29 @@ export default function AdminPage() {
           {/* Sign-Ups Tab */}
           {activeTab === 'signups' && (
             <div>
-              <div className="flex items-center justify-between mb-3">
-                <Body18>Recent Sign-Ups — Last 30 Days ({signups.length})</Body18>
+              <div className="flex items-center justify-between gap-3 mb-3 flex-wrap">
+                <Body18>
+                  {signupRange === 'all' ? 'All Sign-Ups' : `Sign-Ups — Last ${signupRange} Days`} ({signups.length})
+                </Body18>
+                <div className="flex gap-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+                  {([30, 60, 'all'] as const).map((range) => (
+                    <button
+                      key={range}
+                      onClick={() => setSignupRange(range)}
+                      className={`px-3 py-1.5 text-sm rounded-md transition ${
+                        signupRange === range
+                          ? 'bg-white dark:bg-gray-800 text-rb-blue font-semibold shadow-sm'
+                          : 'text-rb-gray dark:text-gray-300 hover:text-rb-dark dark:hover:text-gray-100'
+                      }`}
+                    >
+                      {range === 'all' ? 'All' : `${range} days`}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               {signups.length === 0 ? (
-                <Body16 className="text-rb-gray">No sign-ups in the last 30 days.</Body16>
+                <Body16 className="text-rb-gray">No sign-ups found for this range.</Body16>
               ) : (
                 <>
                   {/* Action toolbar — shown when rows are selected */}
