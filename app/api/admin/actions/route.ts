@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { sendReportResolvedToReporter, sendReportResolvedToReported } from '@/lib/email'
+import { sendPushToUser } from '@/lib/serverPush'
+import { OUTREACH_COPY } from '@/lib/constants'
 
 // 30 requests per admin per minute — generous for human use, blocks automation
 const RATE_LIMIT_WINDOW_MS = 60 * 1000
@@ -236,6 +238,43 @@ export async function POST(request: NextRequest) {
       ).catch(() => {})
 
       return NextResponse.json({ success: true, messages: messages || [], profiles })
+    }
+
+    if (action === 'send_outreach') {
+      const { userId, message } = body
+      const trimmed = typeof message === 'string' ? message.trim() : ''
+      if (!userId || !trimmed) {
+        return NextResponse.json({ error: 'userId and message required' }, { status: 400 })
+      }
+
+      const noticeBody = trimmed.slice(0, OUTREACH_COPY.OUTREACH_MAX_LENGTH)
+
+      // In-app record (surfaced on the user's next visit) — the durable copy.
+      const { error: noticeError } = await supabase.from('user_notices').insert({
+        user_id: userId,
+        kind: 'outreach',
+        title: OUTREACH_COPY.OUTREACH_TITLE,
+        body: noticeBody,
+        created_by: admin.id,
+      })
+      if (noticeError) throw noticeError
+
+      // Push in parallel — reaches the device even with a wrong email. Best-effort.
+      const pushCount = await sendPushToUser(supabase, userId, {
+        title: OUTREACH_COPY.OUTREACH_TITLE,
+        body: noticeBody,
+        url: '/dashboard',
+        tag: `outreach-${userId}`,
+      })
+
+      await supabase.from('admin_logs').insert([{
+        admin_id: admin.id,
+        action_type: 'outreach_sent',
+        target_user_id: userId,
+        details: { pushCount },
+      }])
+
+      return NextResponse.json({ success: true, pushCount })
     }
 
     return NextResponse.json({ error: 'Unknown action' }, { status: 400 })

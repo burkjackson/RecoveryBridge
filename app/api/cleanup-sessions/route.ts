@@ -1,6 +1,36 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-import { TIME_MINUTES, TIME } from '@/lib/constants'
+import { createClient, SupabaseClient } from '@supabase/supabase-js'
+import { TIME_MINUTES, TIME, OUTREACH_COPY } from '@/lib/constants'
+import { sendPushToUser } from '@/lib/serverPush'
+
+// When cleanup resets seekers who were still 'requesting' after going stale,
+// they asked for support and never connected. Reach back out to each: record an
+// in-app 'reconnect' notice (surfaced on their next visit + read by the admin
+// "Couldn't Connect" view) and send a warm push. Best-effort and per-user
+// isolated so one failure can't abort the cleanup run.
+async function followUpMissedConnections(
+  supabase: SupabaseClient,
+  seekers: { id: string }[]
+) {
+  for (const seeker of seekers) {
+    try {
+      await supabase.from('user_notices').insert({
+        user_id: seeker.id,
+        kind: 'reconnect',
+        title: OUTREACH_COPY.RECONNECT_TITLE,
+        body: OUTREACH_COPY.RECONNECT_BODY,
+      })
+      await sendPushToUser(supabase, seeker.id, {
+        title: OUTREACH_COPY.RECONNECT_TITLE,
+        body: OUTREACH_COPY.RECONNECT_BODY,
+        url: '/dashboard',
+        tag: `reconnect-${seeker.id}`,
+      })
+    } catch (err) {
+      console.error(`[cleanup] Follow-up failed for seeker ${seeker.id?.slice(0, 8)}:`, err)
+    }
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -70,6 +100,9 @@ export async function POST(request: NextRequest) {
         .eq('role_state', 'requesting')
         .lt('last_heartbeat_at', staleThreshold)
         .select('id')
+      if (staleRequesters && staleRequesters.length > 0) {
+        await followUpMissedConnections(supabase, staleRequesters)
+      }
       return NextResponse.json({
         success: true,
         message: 'No sessions to clean up',
@@ -157,6 +190,8 @@ export async function POST(request: NextRequest) {
       console.error('Error resetting stale requesting states:', staleError)
     } else if (staleRequesters && staleRequesters.length > 0) {
       if (isDev) console.log(`Reset ${staleRequesters.length} stale requesting state(s) to offline`)
+      // These seekers requested support and never connected — reach back out.
+      await followUpMissedConnections(supabase, staleRequesters)
     }
 
     return NextResponse.json({

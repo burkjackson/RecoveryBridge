@@ -11,6 +11,7 @@ import Footer from '@/components/Footer'
 import NotificationSettings from '@/components/NotificationSettings'
 import AvailableListeners from '@/components/AvailableListeners'
 import PeopleSeeking from '@/components/PeopleSeeking'
+import NoticeBanner from '@/components/NoticeBanner'
 import type { Profile, SessionWithUserName, ProfileUpdateData, FavoriteWithProfile } from '@/lib/types/database'
 import { TIME, NOTIFICATION } from '@/lib/constants'
 import { normalizeFavorites } from '@/lib/favorites'
@@ -765,6 +766,9 @@ function DashboardContent() {
             </button>
           </div>
         </div>
+
+        {/* Messages reaching back out to this user (auto follow-up or admin note) */}
+        <NoticeBanner />
 
         {/* Post-chat check-in banner (seekers returning from a session) */}
         {activeBanner === 'postChat' && (
