@@ -40,3 +40,6 @@ next-env.d.ts
 # stray temp files
 *.tmp
 *.zip
+
+# Claude Code local worktrees (never commit)
+.claude/worktrees/
