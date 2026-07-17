@@ -1290,7 +1290,7 @@ export default function AdminPage() {
                   </div>
 
                   <div className="overflow-x-auto">
-                    <table className="w-full min-w-[560px] text-sm">
+                    <table className="w-full text-sm">
                       <thead>
                         <tr className="border-b border-gray-200 dark:border-gray-700 text-left">
                           <th className="pb-3 pr-3 w-8" />
@@ -1343,9 +1343,9 @@ export default function AdminPage() {
                                   )}
                                 </div>
                               </td>
-                              <td className="py-3 pr-4">
+                              <td className="py-3 pr-4 min-w-[150px]">
                                 <div className="flex items-center gap-2">
-                                  <span className="text-rb-gray dark:text-gray-300 font-mono text-xs break-all">
+                                  <span className="text-rb-gray dark:text-gray-300 font-mono text-xs break-words">
                                     {user.email || '—'}
                                   </span>
                                   {user.email && (
