@@ -7,7 +7,7 @@ import { Heading1, Body16, Body18 } from '@/components/ui/Typography'
 import Modal from '@/components/Modal'
 import { SkeletonAdminRow } from '@/components/Skeleton'
 import { CompactFooter } from '@/components/Footer'
-import { parseReferralSource } from '@/lib/constants'
+import { parseReferralSource, OUTREACH_COPY } from '@/lib/constants'
 
 interface Report {
   id: string
@@ -56,16 +56,29 @@ interface User {
   listener_training_completed_at: string | null
 }
 
+interface Notice {
+  id: string
+  user_id: string
+  kind: string
+  title: string
+  body: string
+  created_at: string
+  read_at: string | null
+  // Embedded recipient profile; guard for null per RLS (see CLAUDE.md gotcha #9)
+  recipient?: { display_name: string; role_state: string | null } | null
+}
+
 export default function AdminPage() {
   const [loading, setLoading] = useState(true)
   const [isAdmin, setIsAdmin] = useState(false)
-  const [activeTab, setActiveTab] = useState<'reports' | 'blocks' | 'sessions' | 'users' | 'signups'>('reports')
+  const [activeTab, setActiveTab] = useState<'reports' | 'blocks' | 'sessions' | 'users' | 'signups' | 'missed'>('reports')
 
   const [reports, setReports] = useState<Report[]>([])
   const [blocks, setBlocks] = useState<UserBlock[]>([])
   const [sessions, setSessions] = useState<Session[]>([])
   const [users, setUsers] = useState<User[]>([])
   const [signups, setSignups] = useState<User[]>([])
+  const [missedConnections, setMissedConnections] = useState<Notice[]>([])
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [contactedIds, setContactedIds] = useState<Set<string>>(new Set())
@@ -87,6 +100,7 @@ export default function AdminPage() {
   const [endSessionModal, setEndSessionModal] = useState({ show: false, sessionId: '', participants: '' })
   const [deleteUserModal, setDeleteUserModal] = useState({ show: false, step: 1, userId: '', displayName: '', confirmName: '' })
   const [resolutionModal, setResolutionModal] = useState({ show: false, reportId: '', notes: '' })
+  const [outreachModal, setOutreachModal] = useState({ show: false, userId: '', userName: '', message: '', sending: false })
 
   // Transcript viewer
   const [transcriptConfirm, setTranscriptConfirm] = useState<{ show: boolean; sessionId: string; reportedUserId?: string; reportId?: string }>({ show: false, sessionId: '' })
@@ -244,6 +258,7 @@ export default function AdminPage() {
     if (activeTab === 'sessions') await loadSessions()
     if (activeTab === 'users') await loadUsers()
     if (activeTab === 'signups') await loadSignups()
+    if (activeTab === 'missed') await loadMissedConnections()
   }
 
   async function loadReports() {
@@ -335,6 +350,45 @@ export default function AdminPage() {
     }
   }
 
+  async function loadMissedConnections() {
+    try {
+      const { data, error } = await supabase
+        .from('user_notices')
+        .select(`
+          *,
+          recipient:profiles!user_notices_user_id_fkey(display_name, role_state)
+        `)
+        .eq('kind', 'reconnect')
+        .order('created_at', { ascending: false })
+        .limit(100)
+
+      if (error) throw error
+      setMissedConnections((data as Notice[]) || [])
+    } catch (error) {
+      console.error('Error loading missed connections:', error)
+    }
+  }
+
+  async function sendOutreach() {
+    const { userId, message, sending } = outreachModal
+    if (sending || !userId || !message.trim()) return
+    setOutreachModal(prev => ({ ...prev, sending: true }))
+    try {
+      const { pushCount } = await adminFetch({ action: 'send_outreach', userId, message: message.trim() })
+      setOutreachModal({ show: false, userId: '', userName: '', message: '', sending: false })
+      setSuccessModal({
+        show: true,
+        message: pushCount > 0
+          ? `Message sent. It reached ${pushCount} device${pushCount === 1 ? '' : 's'} via push and will also show in-app on their next visit.`
+          : 'Message saved. They don’t have push enabled, so they’ll see it in-app the next time they open RecoveryBridge.',
+      })
+    } catch (error) {
+      console.error('Error sending outreach:', error)
+      setOutreachModal(prev => ({ ...prev, sending: false }))
+      setErrorModal({ show: true, message: 'Could not send the message. Please try again.' })
+    }
+  }
+
   function subscribeToUpdates() {
     const channel = supabase
       .channel('admin-updates')
@@ -357,6 +411,11 @@ export default function AdminPage() {
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'profiles' },
         () => { if (activeTab === 'signups') loadSignups() }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'user_notices' },
+        () => { if (activeTab === 'missed') loadMissedConnections() }
       )
       .subscribe()
 
@@ -610,6 +669,16 @@ export default function AdminPage() {
             }`}
           >
             🆕 Sign-Ups
+          </button>
+          <button
+            onClick={() => setActiveTab('missed')}
+            className={`px-4 py-2 rounded-lg whitespace-nowrap ${
+              activeTab === 'missed'
+                ? 'bg-rb-blue text-white'
+                : 'bg-white dark:bg-gray-800 text-[#2D3436] dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-700/50'
+            }`}
+          >
+            💔 Couldn&apos;t Connect
           </button>
         </div>
 
@@ -1320,6 +1389,62 @@ export default function AdminPage() {
               )}
             </div>
           )}
+
+          {/* Couldn't Connect Tab */}
+          {activeTab === 'missed' && (
+            <div>
+              <div className="mb-3">
+                <Body18>Couldn&apos;t Connect ({missedConnections.length})</Body18>
+                <Body16 className="text-sm text-rb-gray dark:text-gray-300 mt-1">
+                  People who requested support but were never connected to a listener. Each was automatically sent a gentle &ldquo;we&rsquo;re still here&rdquo; push + in-app message. You can also reach out personally.
+                </Body16>
+              </div>
+
+              {missedConnections.length === 0 ? (
+                <Body16 className="text-rb-gray">No missed connections recorded yet. 🎉</Body16>
+              ) : (
+                <div className="space-y-3">
+                  {missedConnections.map((notice) => {
+                    const name = notice.recipient?.display_name || 'Unknown'
+                    const roleState = notice.recipient?.role_state
+                    const backOnline = roleState === 'available' || roleState === 'requesting'
+                    return (
+                      <div key={notice.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                        <div className="flex items-start justify-between gap-3 flex-wrap">
+                          <div>
+                            <Body16 className="font-semibold text-rb-dark dark:text-gray-100">{name}</Body16>
+                            <Body16 className="text-sm text-rb-gray dark:text-gray-300">
+                              Couldn&rsquo;t connect on {new Date(notice.created_at).toLocaleString()}
+                            </Body16>
+                            <div className="flex flex-wrap gap-2 mt-2">
+                              <span className={`px-2 py-0.5 rounded-full text-xs ${
+                                notice.read_at
+                                  ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300'
+                                  : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
+                              }`}>
+                                {notice.read_at ? '✓ Saw our message' : 'Not seen yet'}
+                              </span>
+                              {backOnline && (
+                                <span className="px-2 py-0.5 rounded-full text-xs bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300">
+                                  🟢 Back online now
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => setOutreachModal({ show: true, userId: notice.user_id, userName: name, message: '', sending: false })}
+                            className="min-h-[44px] px-4 py-2 text-sm bg-rb-blue text-white rounded-lg hover:bg-rb-blue-hover transition whitespace-nowrap"
+                          >
+                            💬 Reach out
+                          </button>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
@@ -1343,6 +1468,38 @@ export default function AdminPage() {
         confirmStyle="success"
       >
         <p>{successModal.message}</p>
+      </Modal>
+
+      {/* Reach Out (outreach) Modal */}
+      <Modal
+        isOpen={outreachModal.show}
+        onClose={() => { if (!outreachModal.sending) setOutreachModal({ show: false, userId: '', userName: '', message: '', sending: false }) }}
+        title={`Reach out to ${outreachModal.userName}`}
+        type="custom"
+        onConfirm={sendOutreach}
+        confirmText={outreachModal.sending ? 'Sending…' : 'Send message'}
+        confirmStyle="primary"
+      >
+        <div className="space-y-3">
+          <p className="text-sm text-rb-gray dark:text-gray-300">
+            This sends a personal note as a push notification and an in-app message. It reaches their account directly — it doesn&rsquo;t rely on their email address.
+          </p>
+          <textarea
+            value={outreachModal.message}
+            onChange={(e) => setOutreachModal(prev => ({ ...prev, message: e.target.value }))}
+            maxLength={OUTREACH_COPY.OUTREACH_MAX_LENGTH}
+            rows={4}
+            autoFocus
+            placeholder="We noticed you were looking for support earlier and we couldn't connect you — we're so sorry. We're here for you, and we'd love to help you connect. 💙"
+            className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-rb-blue bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400"
+          />
+          <div className="flex justify-between items-center">
+            <span className="text-xs text-rb-gray dark:text-gray-400">
+              {outreachModal.message.length}/{OUTREACH_COPY.OUTREACH_MAX_LENGTH}
+            </span>
+            <span className="text-xs text-amber-600 dark:text-amber-400">🔒 Admin action · logged</span>
+          </div>
+        </div>
       </Modal>
 
       {/* Block User Modal */}

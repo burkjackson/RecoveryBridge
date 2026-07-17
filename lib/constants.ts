@@ -127,6 +127,24 @@ export const NOTIFICATION = {
   STORAGE_KEY_NOTIFY_COUNT: 'rb_notify_count',
 } as const
 
+// Copy for platform-initiated outreach to a seeker. Kept here so the wording —
+// which reaches people in a vulnerable moment — is easy to review and tweak in
+// one place. The auto follow-up fires when someone requests support and never
+// connects (their 'requesting' state goes stale and cleanup resets it), and is
+// delivered as both a push and an in-app notice.
+export const OUTREACH_COPY = {
+  /** Auto "we couldn't connect you" follow-up */
+  RECONNECT_TITLE: 'We’re still here for you 💙',
+  RECONNECT_BODY:
+    'We’re so sorry we couldn’t connect you with a listener just now. Please try again whenever you’re ready — someone may be available. And if you need to talk with someone right away, you can call or text 988 anytime.',
+
+  /** Title shown on a manual note from an admin (body is admin-authored) */
+  OUTREACH_TITLE: 'A message from RecoveryBridge 💙',
+
+  /** Max length of an admin-authored outreach note */
+  OUTREACH_MAX_LENGTH: 500,
+} as const
+
 // Convert time constants to minutes for easier reference
 export const TIME_MINUTES = {
   HEARTBEAT_INTERVAL: TIME.HEARTBEAT_INTERVAL_MS / (60 * 1000),
