@@ -47,6 +47,29 @@ export const viewport: Viewport = {
   maximumScale: 5,
 }
 
+// Sitewide Organization schema — strengthens brand/knowledge-panel signals on
+// every page (the WebApplication + FAQ schema only live on the landing page).
+// `sameAs` ties the domain to the verified social profiles.
+const organizationJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  name: 'RecoveryBridge',
+  legalName: 'RecoveryBridge LLC',
+  url: 'https://recoverybridge.app',
+  logo: 'https://recoverybridge.app/icon-512.png',
+  description: 'Free, anonymous peer-to-peer support platform for people in addiction recovery.',
+  sameAs: [
+    'https://www.facebook.com/ARecoveryBridge/',
+    'https://www.instagram.com/recoverybridge.app',
+    'https://www.threads.com/@recoverybridge.app',
+  ],
+  contactPoint: {
+    '@type': 'ContactPoint',
+    contactType: 'customer support',
+    url: 'https://recoverybridge.app/contact',
+  },
+}
+
 export default function RootLayout({
   children,
 }: {
@@ -59,6 +82,8 @@ export default function RootLayout({
       <head>
         {/* Prevent flash of incorrect theme */}
         <script dangerouslySetInnerHTML={{ __html: `(function(){try{var t=localStorage.getItem('rb-theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark');}}catch(e){}})();` }} />
+        {/* Sitewide Organization structured data */}
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }} />
         {/* iOS PWA splash screens */}
         <link rel="apple-touch-startup-image" media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3)" href="/api/splash?w=1290&h=2796" />
         <link rel="apple-touch-startup-image" media="(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3)" href="/api/splash?w=1179&h=2556" />
