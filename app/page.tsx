@@ -4,6 +4,7 @@ import Link from 'next/link'
 import Footer from '@/components/Footer'
 import ProductPreview from '@/components/ProductPreview'
 import FaqAccordion from '@/components/FaqAccordion'
+import { faqs } from '@/lib/faqs'
 
 export const metadata: Metadata = {
   title: 'RecoveryBridge — Free Peer Support for Addiction Recovery',
@@ -69,12 +70,32 @@ const jsonLd = {
   ],
 }
 
+// FAQPage structured data — makes the landing-page Q&As eligible for rich
+// results (expandable answers under the search listing, "People also ask").
+// Built from the same lib/faqs source the visible accordion renders.
+const faqJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: faqs.map((faq) => ({
+    '@type': 'Question',
+    name: faq.q,
+    acceptedAnswer: {
+      '@type': 'Answer',
+      text: faq.a,
+    },
+  })),
+}
+
 export default function Home() {
   return (
     <main id="main-content" className="min-h-screen flex flex-col bg-gradient-to-br from-rb-blue-light via-rb-purple-light to-rb-blue-light dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 animate-gradient">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
       />
 
       {/* Top bar */}
