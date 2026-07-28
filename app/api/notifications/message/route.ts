@@ -1,0 +1,147 @@
+import { NextRequest, NextResponse } from 'next/server'
+import webpush from 'web-push'
+import { createClient } from '@supabase/supabase-js'
+
+// Notify the OTHER participant of an active chat session that a new message
+// arrived. The service worker decides whether to actually surface it — it
+// suppresses the notification when the recipient is already looking at that
+// chat, so in practice this only reaches people who have an *unread* reply
+// (page closed, app backgrounded, or on another screen).
+//
+// Deliberately lightweight: no quiet-hours filtering. This fires only inside a
+// live 1:1 conversation the recipient already agreed to, so a reply should
+// reach them even during their support-request Do Not Disturb window.
+
+// Simple in-memory rate limiter: max 10 message-notifications per user per 60s.
+// A rapid back-and-forth shouldn't fire a push per keystroke-fast message; the
+// collapsing tag already de-stacks them, and this caps abuse.
+const RATE_LIMIT_WINDOW_MS = 60 * 1000
+const RATE_LIMIT_MAX = 10
+const rateLimitMap = new Map<string, number[]>()
+
+function isRateLimited(userId: string): boolean {
+  const now = Date.now()
+  const timestamps = rateLimitMap.get(userId) || []
+  const recent = timestamps.filter((t) => now - t < RATE_LIMIT_WINDOW_MS)
+  if (recent.length >= RATE_LIMIT_MAX) return true
+  recent.push(now)
+  rateLimitMap.set(userId, recent)
+  return false
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    if (!process.env.VAPID_SUBJECT || !process.env.VAPID_PUBLIC_KEY || !process.env.VAPID_PRIVATE_KEY) {
+      return NextResponse.json({ error: 'Push notification configuration missing' }, { status: 500 })
+    }
+
+    webpush.setVapidDetails(
+      process.env.VAPID_SUBJECT,
+      process.env.VAPID_PUBLIC_KEY,
+      process.env.VAPID_PRIVATE_KEY
+    )
+
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    )
+
+    // Authenticate the request (Bearer token = the message sender)
+    const authHeader = request.headers.get('authorization')
+    const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null
+    if (!token) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token)
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
+    }
+
+    if (isRateLimited(user.id)) {
+      return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
+    }
+
+    // Parse body
+    let sessionId: string
+    try {
+      const body = await request.json()
+      sessionId = body.sessionId
+    } catch {
+      return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
+    }
+    if (typeof sessionId !== 'string') {
+      return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
+    }
+
+    // Verify the session is active and the sender is a participant. This is the
+    // authorization gate: a user can only ping the counterpart of a session
+    // they're actually in.
+    const { data: session } = await supabase
+      .from('sessions')
+      .select('id, listener_id, seeker_id, status')
+      .eq('id', sessionId)
+      .maybeSingle()
+
+    if (!session || session.status !== 'active') {
+      return NextResponse.json({ error: 'No active session' }, { status: 403 })
+    }
+    if (session.listener_id !== user.id && session.seeker_id !== user.id) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
+    const recipientId = session.listener_id === user.id ? session.seeker_id : session.listener_id
+
+    // Sender's name for the notification title (never trust a client-supplied value)
+    const { data: senderProfile } = await supabase
+      .from('profiles')
+      .select('display_name')
+      .eq('id', user.id)
+      .single()
+    const senderName = senderProfile?.display_name || 'Someone'
+
+    const { data: subs } = await supabase
+      .from('push_subscriptions')
+      .select('*')
+      .eq('user_id', recipientId)
+
+    if (!subs || subs.length === 0) {
+      return NextResponse.json({ success: true, notified: 0, message: 'No subscriptions' })
+    }
+
+    // Privacy: never put message content on a lock screen. Sender name only.
+    const payload = JSON.stringify({
+      title: '💬 New message',
+      body: `${senderName} sent you a message.`,
+      icon: '/icon-192.png',
+      // Collapsing tag: rapid replies replace each other instead of stacking.
+      tag: `chat-message-${sessionId}`,
+      data: {
+        type: 'chat-message',
+        sessionId,
+        url: `/chat/${sessionId}`,
+      },
+    })
+
+    let pushCount = 0
+    await Promise.all(subs.map(async (sub) => {
+      try {
+        await webpush.sendNotification(sub.subscription, payload, {
+          urgency: 'high',
+          TTL: 600, // A chat reply stays relevant for a while, but not forever
+        })
+        pushCount++
+      } catch (error: unknown) {
+        const statusCode = (error as { statusCode?: number })?.statusCode
+        if (statusCode && statusCode >= 400 && statusCode < 500) {
+          await supabase.from('push_subscriptions').delete().eq('id', sub.id)
+        }
+      }
+    }))
+
+    return NextResponse.json({ success: true, notified: pushCount })
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : String(error)
+    console.error('Error sending message notification:', msg)
+    return NextResponse.json({ success: false, error: 'Failed to send notification' }, { status: 500 })
+  }
+}

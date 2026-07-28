@@ -576,6 +576,28 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
     return remainMins > 0 ? `${hrs}h ${remainMins}m` : `${hrs}h`
   }
 
+  // Ping the other participant's device about a new message. Fire-and-forget:
+  // the service worker suppresses the push if they're actively viewing this
+  // chat, so this only surfaces to a recipient with an *unread* reply (app
+  // closed or backgrounded). Never blocks or fails the send.
+  async function notifyRecipient() {
+    try {
+      const { data: { session: authSession } } = await supabase.auth.getSession()
+      const token = authSession?.access_token
+      if (!token || !sessionId) return
+      await fetch('/api/notifications/message', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ sessionId }),
+      })
+    } catch {
+      // Best-effort — realtime is still the primary delivery path in-app
+    }
+  }
+
   async function sendMessage(e: React.FormEvent) {
     e.preventDefault()
     const trimmed = newMessage.trim()
@@ -605,6 +627,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
       setSendError(false) // Clear any previous errors
       setLastActivityTime(Date.now()) // Reset inactivity timer
       setInactivityModal(false) // Dismiss warning if showing
+      notifyRecipient() // Ping the other party if they're away from this chat
     } catch (error: any) {
       console.error('Error sending message:', error)
       setSendError(true)
@@ -625,6 +648,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
       if (error) throw error
       if (inserted) mergeMessages([inserted as Message])
       setLastActivityTime(Date.now())
+      notifyRecipient() // Ping the other party if they're away from this chat
     } catch (error: any) {
       console.error('Error sending starter:', error)
       setSendError(true)
