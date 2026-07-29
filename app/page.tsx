@@ -230,6 +230,15 @@ export default function Home() {
           {/* FAQ Accordion */}
           <FaqAccordion />
 
+          {/* Contextual internal link — helps the support landing page get
+              crawled and pass authority from the homepage */}
+          <p className="max-w-2xl mx-auto mb-12 text-center text-base text-rb-gray dark:text-gray-300">
+            Looking for someone to talk to right now?{' '}
+            <Link href="/support/talk-to-someone-in-recovery" className="text-rb-blue dark:text-blue-300 font-semibold underline hover:text-rb-blue-hover">
+              Talk to someone in recovery — free and anonymous
+            </Link>
+          </p>
+
           {/* Stories Section */}
           <div className="max-w-3xl mx-auto mb-12">
             <div className="bg-gradient-to-br from-[#E8EEF2] to-white dark:from-gray-800 dark:to-gray-800 rounded-2xl p-8 border border-[#C8D8E4] dark:border-gray-700 shadow-lg text-center">
