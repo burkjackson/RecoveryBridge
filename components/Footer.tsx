@@ -85,6 +85,13 @@ export default function Footer({ className = '', donateHref = '/donate' }: Foote
         <div className="text-center mb-4">
           <div className="inline-flex flex-wrap justify-center items-center gap-x-3 gap-y-2 text-sm text-rb-gray dark:text-gray-300">
             <a
+              href="/support"
+              className="min-h-[44px] inline-flex items-center hover:text-rb-blue transition"
+            >
+              Get Support
+            </a>
+            <span className="text-gray-300 dark:text-gray-300 hidden sm:inline">•</span>
+            <a
               href="/privacy"
               className="min-h-[44px] inline-flex items-center hover:text-rb-blue transition"
             >

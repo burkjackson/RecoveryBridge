@@ -19,6 +19,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 1,
     },
     {
+      url: `${BASE}/support`,
+      lastModified: '2026-07-29',
+      changeFrequency: 'monthly',
+      priority: 0.9,
+    },
+    {
       url: `${BASE}/support/talk-to-someone-in-recovery`,
       lastModified: '2026-07-29',
       changeFrequency: 'monthly',
