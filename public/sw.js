@@ -1,7 +1,7 @@
 // RecoveryBridge Service Worker for Push Notifications
 // This enables background notifications even when the browser tab is closed
 
-const CACHE_NAME = 'recoverybridge-v10'
+const CACHE_NAME = 'recoverybridge-v11'
 const OFFLINE_URL = '/offline'
 
 // Install event - pre-cache offline fallback page
@@ -27,6 +27,17 @@ self.addEventListener('activate', (event) => {
     }).then(() => self.clients.claim())
   )
 })
+
+// Is this window actually on the user's screen right now?
+//
+// visibilityState is the dependable signal on Chromium/Firefox, but iOS Safari
+// does not reliably populate it on WindowClient inside a push handler, so fall
+// back to `focused`. Only positive evidence counts: when we genuinely cannot
+// tell, we show the notification rather than risk swallowing a real one. The
+// server-side checks in /api/notifications/* are what cover the iOS gap.
+function isOnScreen(client) {
+  return client.visibilityState === 'visible' || client.focused === true
+}
 
 // Push event - handle incoming push notifications
 self.addEventListener('push', (event) => {
@@ -89,8 +100,7 @@ self.addEventListener('push', (event) => {
         if (type === 'chat-message' && sessionId) {
           const viewingThisChat = clientList.some((client) => {
             try {
-              return new URL(client.url).pathname === `/chat/${sessionId}` &&
-                client.visibilityState === 'visible'
+              return new URL(client.url).pathname === `/chat/${sessionId}` && isOnScreen(client)
             } catch {
               return false
             }
@@ -98,12 +108,17 @@ self.addEventListener('push', (event) => {
           if (viewingThisChat) return
         }
 
-        // If the user is already in an active chat session, suppress support-request
-        // notifications — they can't connect to another seeker while in a session,
-        // and this prevents stale re-notifications from firing after they've matched.
         if (seekerId) {
+          // If the user is already in an active chat session, suppress support-request
+          // notifications — they can't connect to another seeker while in a session,
+          // and this prevents stale re-notifications from firing after they've matched.
           const inChat = clientList.some((client) => client.url.includes('/chat/'))
           if (inChat) return
+
+          // Likewise if they're actively looking at the app: a waiting seeker
+          // already appears in the realtime lists on the dashboard and
+          // /listeners, so a push would just buzz a screen they're staring at.
+          if (clientList.some(isOnScreen)) return
         }
         return self.registration.showNotification(title, options)
       })

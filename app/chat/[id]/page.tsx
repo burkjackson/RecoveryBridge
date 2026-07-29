@@ -164,16 +164,34 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
     prevMessageCountRef.current = messages.length
   }, [messages])
 
-  // Mark received messages as read when they appear
+  // Track whether this tab is actually on screen. A backgrounded tab keeps
+  // running on desktop (websocket alive, timers throttled), so without this a
+  // message would be marked "read" while nobody was looking — which both lies
+  // to the sender's read receipt and suppresses the unread-message push that
+  // /api/notifications/message decides from read_at.
+  const [isPageVisible, setIsPageVisible] = useState(
+    typeof document === 'undefined' ? true : document.visibilityState === 'visible'
+  )
+  useEffect(() => {
+    function onVisibilityChange() {
+      setIsPageVisible(document.visibilityState === 'visible')
+    }
+    document.addEventListener('visibilitychange', onVisibilityChange)
+    return () => document.removeEventListener('visibilitychange', onVisibilityChange)
+  }, [])
+
+  // Mark received messages as read once they've actually been seen — i.e. the
+  // message is on screen. Re-runs when the tab becomes visible again, so
+  // returning to a backgrounded chat marks the backlog read.
   useEffect(() => {
     // Only participants generate read receipts; an admin observing the live
     // chat must not mark the participants' messages as read.
     const viewerIsParticipant =
       currentUserId === session?.listener_id || currentUserId === session?.seeker_id
-    if (messages.length > 0 && currentUserId && session?.status === 'active' && viewerIsParticipant) {
+    if (messages.length > 0 && currentUserId && session?.status === 'active' && viewerIsParticipant && isPageVisible) {
       markMessagesAsRead()
     }
-  }, [messages, currentUserId, session?.status, session?.listener_id, session?.seeker_id])
+  }, [messages, currentUserId, session?.status, session?.listener_id, session?.seeker_id, isPageVisible])
 
   // Close reaction picker when tapping outside
   useEffect(() => {
@@ -577,10 +595,13 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   }
 
   // Ping the other participant's device about a new message. Fire-and-forget:
-  // the service worker suppresses the push if they're actively viewing this
-  // chat, so this only surfaces to a recipient with an *unread* reply (app
-  // closed or backgrounded). Never blocks or fails the send.
-  async function notifyRecipient() {
+  // never blocks or fails the send.
+  //
+  // Passing the message id lets the server confirm the recipient isn't already
+  // looking at this chat before it pushes — it waits a beat and checks whether
+  // the message got marked read. That check is the reliable one; the service
+  // worker's visibility check is a fast path that iOS doesn't always honour.
+  async function notifyRecipient(messageId?: string) {
     try {
       const { data: { session: authSession } } = await supabase.auth.getSession()
       const token = authSession?.access_token
@@ -591,7 +612,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ sessionId }),
+        body: JSON.stringify({ sessionId, messageId }),
       })
     } catch {
       // Best-effort — realtime is still the primary delivery path in-app
@@ -627,7 +648,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
       setSendError(false) // Clear any previous errors
       setLastActivityTime(Date.now()) // Reset inactivity timer
       setInactivityModal(false) // Dismiss warning if showing
-      notifyRecipient() // Ping the other party if they're away from this chat
+      notifyRecipient((inserted as Message | null)?.id) // Ping only if they're away from this chat
     } catch (error: any) {
       console.error('Error sending message:', error)
       setSendError(true)
@@ -648,7 +669,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
       if (error) throw error
       if (inserted) mergeMessages([inserted as Message])
       setLastActivityTime(Date.now())
-      notifyRecipient() // Ping the other party if they're away from this chat
+      notifyRecipient((inserted as Message | null)?.id) // Ping only if they're away from this chat
     } catch (error: any) {
       console.error('Error sending starter:', error)
       setSendError(true)
