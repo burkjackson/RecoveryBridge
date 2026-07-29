@@ -37,6 +37,18 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.8,
     },
     {
+      url: `${BASE}/support/what-is-peer-support`,
+      lastModified: '2026-07-29',
+      changeFrequency: 'monthly',
+      priority: 0.8,
+    },
+    {
+      url: `${BASE}/support/supporting-a-loved-one-in-recovery`,
+      lastModified: '2026-07-29',
+      changeFrequency: 'monthly',
+      priority: 0.7,
+    },
+    {
       url: `${BASE}/safety`,
       lastModified: '2026-07-01',
       changeFrequency: 'monthly',

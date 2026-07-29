@@ -207,6 +207,10 @@ export default function TalkToSomeonePage() {
           {' · '}
           <Link href="/support/recovery-support-without-aa" className="underline hover:text-rb-blue">Recovery support without AA</Link>
           {' · '}
+          <Link href="/support/what-is-peer-support" className="underline hover:text-rb-blue">What is peer support</Link>
+          {' · '}
+          <Link href="/support/supporting-a-loved-one-in-recovery" className="underline hover:text-rb-blue">Supporting a loved one</Link>
+          {' · '}
           <Link href="/safety" className="underline hover:text-rb-blue">How we keep support safe</Link>
         </p>
       </article>
