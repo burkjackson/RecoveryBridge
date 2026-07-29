@@ -203,9 +203,11 @@ export default function TalkToSomeonePage() {
         {/* Related internal links */}
         <p className="text-sm text-rb-gray dark:text-gray-400">
           Related:{' '}
-          <Link href="/safety" className="underline hover:text-rb-blue">How we keep support safe</Link>
+          <Link href="/support/what-to-do-when-you-want-to-use" className="underline hover:text-rb-blue">When you want to use again</Link>
           {' · '}
-          <Link href="/" className="underline hover:text-rb-blue">About RecoveryBridge</Link>
+          <Link href="/support/recovery-support-without-aa" className="underline hover:text-rb-blue">Recovery support without AA</Link>
+          {' · '}
+          <Link href="/safety" className="underline hover:text-rb-blue">How we keep support safe</Link>
         </p>
       </article>
 
