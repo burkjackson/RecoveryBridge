@@ -31,6 +31,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.8,
     },
     {
+      url: `${BASE}/support/recovery-chat`,
+      lastModified: '2026-07-30',
+      changeFrequency: 'monthly',
+      priority: 0.8,
+    },
+    {
       url: `${BASE}/support/what-to-do-when-you-want-to-use`,
       lastModified: '2026-07-29',
       changeFrequency: 'monthly',

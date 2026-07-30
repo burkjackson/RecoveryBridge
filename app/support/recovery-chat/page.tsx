@@ -2,59 +2,60 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import Footer from '@/components/Footer'
 
-// SEO landing page (server component so the content ships in the initial HTML).
-// Targets the high-intent "free / someone to talk to about addiction" query
-// cluster, where the SERPs are dominated by rehab-admission funnels — the wedge
-// is that RecoveryBridge is genuinely free, anonymous, peer-run, and not a sales
-// line to treatment. YMYL-safe: crisis resources sit near the top and the page
-// is explicit that this is peer support, not medical or emergency care.
+// SEO landing page targeting the "recovery chat / recovery chats" query cluster —
+// a real, unclaimed demand surfaced in Search Console (people searching the exact
+// thing the product is, with no page targeting it). The SERPs here are a mix of
+// treatment-center live chats and generic forums; the wedge is that RecoveryBridge
+// is a genuinely free, anonymous, one-on-one chat with a real peer — not a bot, a
+// public forum, or an admissions line. YMYL-safe: crisis resources near the top,
+// explicit that this is peer support, not medical or emergency care.
 
-const CANONICAL = 'https://recoverybridge.app/support/talk-to-someone-in-recovery'
+const CANONICAL = 'https://recoverybridge.app/support/recovery-chat'
 
 export const metadata: Metadata = {
-  title: 'Talk to Someone in Recovery — Free, Anonymous Peer Support',
+  title: 'Free Recovery Chat — Talk to a Real Peer, Anonymously',
   description:
-    'Need someone to talk to about addiction? Connect free and anonymously with a real person in recovery who has been there — no cost, no appointment, no sales pitch. Available 24/7.',
+    'A free, anonymous recovery chat with a real person who has been there — one-on-one, any time, no cost and no sign-up hurdles. Not a bot, not a forum, not a sales line.',
   keywords: [
-    'someone to talk to about addiction',
-    'free addiction recovery chat',
-    'talk to someone in recovery',
-    'anonymous addiction support',
-    'free peer support addiction',
-    'online recovery support',
+    'recovery chat',
+    'recovery chats',
+    'free recovery chat',
+    'addiction recovery chat',
+    'anonymous recovery chat',
+    'online recovery chat',
   ],
   alternates: { canonical: CANONICAL },
   openGraph: {
-    title: 'Talk to Someone in Recovery — Free, Anonymous Peer Support',
+    title: 'Free Recovery Chat — Talk to a Real Peer, Anonymously',
     description:
-      'Connect free and anonymously with a real person in recovery who gets it — no cost, no appointment, no sales pitch. Available 24/7.',
+      'A free, anonymous recovery chat with a real person who has been there — one-on-one, any time, no cost and no sales pitch.',
     url: CANONICAL,
     type: 'article',
   },
 }
 
 // Page-specific FAQ — drives the FAQPage rich result and answers the exact
-// objections people carry into these searches ("is it really free?", "is this
-// a rehab ad?").
+// objections behind a "recovery chat" search ("is it a bot?", "is it free?",
+// "is it public?").
 const pageFaqs = [
   {
-    q: 'Is it really free to talk to someone?',
-    a: 'Yes — completely. RecoveryBridge is free, ad-free, and donation-supported. There is no cost, no subscription, and no upsell to paid treatment. Many "free addiction chat" services are actually run by rehab centers to book admissions; this is not that.',
+    q: 'Is the recovery chat really free?',
+    a: 'Yes — completely. RecoveryBridge is free, ad-free, and donation-supported. There is no cost, no subscription, and no upsell to paid treatment. Many "free recovery chat" tools are run by rehab centers to book admissions; this is not that.',
   },
   {
-    q: 'Who will I be talking to?',
-    a: 'A trained peer — a real person with lived experience in recovery, not a therapist, salesperson, or bot. Every listener completes a safety and guidelines orientation before connecting with anyone.',
+    q: 'Am I chatting with a bot or a real person?',
+    a: 'A real person. You are matched with a trained peer — someone with lived experience in recovery, not an AI chatbot, a salesperson, or a script. Every listener completes a safety and guidelines orientation before connecting with anyone.',
   },
   {
-    q: 'Is it anonymous?',
-    a: 'Yes. You choose a display name — no real name, phone number, or identifying information required. Your conversation is private and visible only to you and the person you are speaking with. We never sell your data.',
+    q: 'Is the chat private or public?',
+    a: 'Private. This is a one-on-one chat, not a public forum or group room. Your conversation is visible only to you and the person you are speaking with. You choose a display name — no real name or phone number required — and we never sell your data.',
   },
   {
-    q: 'Do I need to be sober or in a program to use it?',
+    q: 'Do I have to be sober or in a program to chat?',
     a: 'No. You do not need to be sober, "doing it right," or part of any 12-step or treatment program. Whether you are questioning your use, newly sober, years in, or in a hard moment right now — you are welcome exactly as you are.',
   },
   {
-    q: 'Is this the same as crisis or emergency help?',
+    q: 'Is this the same as a crisis chat?',
     a: 'No. RecoveryBridge is peer support, not emergency services, therapy, or crisis intervention. If you are in immediate danger or thinking about harming yourself, call or text 988 (Suicide & Crisis Lifeline), text HOME to 741741, or call 911.',
   },
 ]
@@ -74,11 +75,11 @@ const breadcrumbJsonLd = {
   '@type': 'BreadcrumbList',
   itemListElement: [
     { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://recoverybridge.app' },
-    { '@type': 'ListItem', position: 2, name: 'Talk to Someone in Recovery', item: CANONICAL },
+    { '@type': 'ListItem', position: 2, name: 'Recovery Chat', item: CANONICAL },
   ],
 }
 
-export default function TalkToSomeonePage() {
+export default function RecoveryChatPage() {
   return (
     <main id="main-content" className="min-h-screen flex flex-col bg-[#F8F9FA] dark:bg-gray-900">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
@@ -89,18 +90,21 @@ export default function TalkToSomeonePage() {
         <nav aria-label="Breadcrumb" className="mb-6 text-sm text-rb-gray dark:text-gray-400">
           <Link href="/" className="hover:text-rb-blue underline">Home</Link>
           <span className="mx-2" aria-hidden="true">/</span>
-          <span className="text-rb-dark dark:text-gray-200">Talk to Someone in Recovery</span>
+          <Link href="/support" className="hover:text-rb-blue underline">Get Support</Link>
+          <span className="mx-2" aria-hidden="true">/</span>
+          <span className="text-rb-dark dark:text-gray-200">Recovery Chat</span>
         </nav>
 
         <h1 className="text-heading-2 sm:text-heading-1 text-rb-dark dark:text-gray-100 mb-4">
-          Talk to Someone in Recovery — Free and Anonymous
+          Free Recovery Chat — With Someone Who Has Been There
         </h1>
 
         <p className="text-lg text-rb-gray dark:text-gray-300 leading-relaxed mb-6">
-          Sometimes you just need to talk to someone who <em>gets it</em> — not a hotline
-          script, not a salesperson, not a therapist billing by the hour. RecoveryBridge
-          connects you, free and anonymously, with a real person who has walked a similar
-          road in addiction recovery. No cost. No appointment. No pressure. Available now.
+          When you need a recovery chat right now, you should not have to fill out a form,
+          wait for business hours, or wonder whether you are talking to a bot. RecoveryBridge
+          connects you — free and anonymously — with a real person in recovery for a private,
+          one-on-one chat. No cost. No appointment. No sales pitch. Just someone who
+          <em> gets it</em>.
         </p>
 
         {/* CTA */}
@@ -109,7 +113,7 @@ export default function TalkToSomeonePage() {
             href="/signup"
             className="inline-block px-8 py-4 rounded-full bg-rb-blue hover:bg-rb-blue-hover text-white font-bold text-lg shadow-lg hover:shadow-xl transition-all"
           >
-            Connect with a listener — it&apos;s free
+            Start a recovery chat — it&apos;s free
           </Link>
         </div>
 
@@ -128,24 +132,24 @@ export default function TalkToSomeonePage() {
         </aside>
 
         <h2 className="text-heading-3 text-rb-dark dark:text-gray-100 mb-3">
-          Why RecoveryBridge is different
+          A recovery chat that is actually for you
         </h2>
         <p className="text-base text-rb-gray dark:text-gray-300 leading-relaxed mb-4">
-          Search for &ldquo;free addiction chat&rdquo; and most of what you find is run by
-          treatment centers — the &ldquo;chat&rdquo; is really a doorway to booking a paid
-          admission. That is not what this is. RecoveryBridge exists for one reason: so that
-          no one has to sit alone with what they are carrying.
+          Search for a &ldquo;recovery chat&rdquo; and most of what you find is either a public
+          forum where your post sits unanswered, or a treatment-center widget where the
+          &ldquo;chat&rdquo; is really a doorway to booking a paid admission. RecoveryBridge is
+          neither. It exists so that no one has to sit alone with what they are carrying.
         </p>
         <ul className="mb-8 space-y-2 text-base text-rb-gray dark:text-gray-300">
           <li className="flex gap-2"><span aria-hidden="true">•</span><span><strong className="text-rb-dark dark:text-gray-100">Genuinely free</strong> — no cost, no ads, no upsell to rehab.</span></li>
-          <li className="flex gap-2"><span aria-hidden="true">•</span><span><strong className="text-rb-dark dark:text-gray-100">Anonymous</strong> — pick a display name; share nothing you do not want to.</span></li>
-          <li className="flex gap-2"><span aria-hidden="true">•</span><span><strong className="text-rb-dark dark:text-gray-100">Real peers</strong> — people with lived experience, not paid staff or bots.</span></li>
+          <li className="flex gap-2"><span aria-hidden="true">•</span><span><strong className="text-rb-dark dark:text-gray-100">A real peer, not a bot</strong> — people with lived experience, not AI or paid staff.</span></li>
+          <li className="flex gap-2"><span aria-hidden="true">•</span><span><strong className="text-rb-dark dark:text-gray-100">Private and anonymous</strong> — one-on-one, not a public room; pick a display name.</span></li>
           <li className="flex gap-2"><span aria-hidden="true">•</span><span><strong className="text-rb-dark dark:text-gray-100">Any path welcome</strong> — 12-step, medication-assisted, moderation, or your own way.</span></li>
-          <li className="flex gap-2"><span aria-hidden="true">•</span><span><strong className="text-rb-dark dark:text-gray-100">On your schedule</strong> — no appointments or waiting rooms; connect when you need to.</span></li>
+          <li className="flex gap-2"><span aria-hidden="true">•</span><span><strong className="text-rb-dark dark:text-gray-100">On your schedule</strong> — no waiting rooms; connect when you need to.</span></li>
         </ul>
 
         <h2 className="text-heading-3 text-rb-dark dark:text-gray-100 mb-3">
-          How it works
+          How the chat works
         </h2>
         <ol className="mb-8 space-y-3 text-base text-rb-gray dark:text-gray-300">
           <li className="flex gap-3">
@@ -158,19 +162,19 @@ export default function TalkToSomeonePage() {
           </li>
           <li className="flex gap-3">
             <span className="flex-shrink-0 w-7 h-7 rounded-full bg-rb-blue text-white text-sm font-bold flex items-center justify-center">3</span>
-            <span><strong className="text-rb-dark dark:text-gray-100">Talk freely.</strong> Say what is really going on — no judgment, no agenda. Your listener is here because they have been there too.</span>
+            <span><strong className="text-rb-dark dark:text-gray-100">Chat freely.</strong> Say what is really going on — no judgment, no agenda. Your listener is here because they have been there too.</span>
           </li>
         </ol>
 
         <h2 className="text-heading-3 text-rb-dark dark:text-gray-100 mb-3">
-          What you can talk about
+          What you can chat about
         </h2>
         <p className="text-base text-rb-gray dark:text-gray-300 leading-relaxed mb-8">
           Anything on your mind in recovery. Early sobriety and the loneliness that can come
           with it. A craving that will not let go. Relapse — the fear of it, or the shame
           after one. Family tension, grief, anxiety, or just needing to be heard by someone
           who will not flinch. You do not have to have the right words, and you do not have
-          to be &ldquo;doing recovery right&rdquo; to reach out.
+          to be &ldquo;doing recovery right&rdquo; to start a chat.
         </p>
 
         {/* FAQ */}
@@ -203,17 +207,13 @@ export default function TalkToSomeonePage() {
         {/* Related internal links */}
         <p className="text-sm text-rb-gray dark:text-gray-400">
           Related:{' '}
-          <Link href="/support/recovery-chat" className="underline hover:text-rb-blue">Free recovery chat</Link>
+          <Link href="/support/talk-to-someone-in-recovery" className="underline hover:text-rb-blue">Talk to someone in recovery</Link>
           {' · '}
           <Link href="/support/what-to-do-when-you-want-to-use" className="underline hover:text-rb-blue">When you want to use again</Link>
           {' · '}
-          <Link href="/support/recovery-support-without-aa" className="underline hover:text-rb-blue">Recovery support without AA</Link>
-          {' · '}
           <Link href="/support/what-is-peer-support" className="underline hover:text-rb-blue">What is peer support</Link>
           {' · '}
-          <Link href="/support/supporting-a-loved-one-in-recovery" className="underline hover:text-rb-blue">Supporting a loved one</Link>
-          {' · '}
-          <Link href="/safety" className="underline hover:text-rb-blue">How we keep support safe</Link>
+          <Link href="/support" className="underline hover:text-rb-blue">All support topics</Link>
         </p>
       </article>
 

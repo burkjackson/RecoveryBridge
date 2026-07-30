@@ -21,6 +21,8 @@ export const metadata: Metadata = {
     'peer support specialist',
     'lived experience recovery support',
     'peer support vs therapy',
+    'digital peer groups',
+    'online peer support',
   ],
   alternates: { canonical: CANONICAL },
   openGraph: {
@@ -147,11 +149,12 @@ export default function WhatIsPeerSupportPage() {
           Peer support on RecoveryBridge
         </h2>
         <p className="text-base text-rb-gray dark:text-gray-300 leading-relaxed mb-8">
-          RecoveryBridge makes peer support immediate and anonymous. Ask for support and a
-          volunteer listener with lived experience connects with you in a private one-on-one
-          chat — free, any time, no appointment. Every listener completes a safety and
-          guidelines orientation first, so you are always talking to someone who chose to show
-          up and knows how to hold space for a hard moment.
+          RecoveryBridge makes peer support immediate and anonymous. Unlike scheduled meetings or
+          digital peer groups that meet at a fixed time, support here is one-on-one and available
+          the moment you need it. Ask for support and a volunteer listener with lived experience
+          connects with you in a private chat — free, any time, no appointment. Every listener
+          completes a safety and guidelines orientation first, so you are always talking to someone
+          who chose to show up and knows how to hold space for a hard moment.
         </p>
 
         {/* FAQ */}
@@ -182,6 +185,8 @@ export default function WhatIsPeerSupportPage() {
         <p className="text-sm text-rb-gray dark:text-gray-400">
           Related:{' '}
           <Link href="/support/talk-to-someone-in-recovery" className="underline hover:text-rb-blue">Talk to someone in recovery</Link>
+          {' · '}
+          <Link href="/support/recovery-chat" className="underline hover:text-rb-blue">Free recovery chat</Link>
           {' · '}
           <Link href="/support/recovery-support-without-aa" className="underline hover:text-rb-blue">Recovery support without AA</Link>
           {' · '}

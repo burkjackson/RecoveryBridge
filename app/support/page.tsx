@@ -37,6 +37,11 @@ const spokes = [
     blurb: 'Connect free and anonymously with a real person who has walked a similar road — no cost, no appointment, no sales pitch.',
   },
   {
+    href: '/support/recovery-chat',
+    title: 'Free recovery chat',
+    blurb: 'A private, one-on-one recovery chat with a real peer — free and anonymous, any time, no bots and no sales line.',
+  },
+  {
     href: '/support/what-to-do-when-you-want-to-use',
     title: 'When you want to use again',
     blurb: 'A craving is not failure — and it will pass. Simple, proven ways to get through the urge right now, with someone beside you.',
