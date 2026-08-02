@@ -23,6 +23,29 @@ RecoveryBridge now includes a complete password recovery flow that allows users 
    - User redirected with success message
    - User can log in with new password
 
+## ⚠️ "Link expired a minute later" — root cause & required fix
+
+If users report that the reset link is **"invalid or expired" almost immediately**, the token is
+almost always being consumed *before the user clicks it* (or the PKCE code verifier is missing).
+Two common causes:
+
+1. **Email security scanners / link prefetchers.** Gmail, Outlook Safe Links, and corporate email
+   gateways fetch links in emails to scan them. The default Supabase reset link points at GoTrue's
+   `/auth/v1/verify` endpoint, which **consumes the one-time token on any GET request** — so the
+   scanner burns it and the real click shows "expired."
+2. **PKCE code verifier lost across devices/apps.** `@supabase/ssr` uses the PKCE flow, whose code
+   verifier lives in a cookie on the browser that *requested* the reset. Opening the email in a
+   different browser or the mail app's in-app webview means no verifier → the exchange fails.
+
+**The fix has two halves:**
+
+- **Code (done):** `app/reset-password/page.tsx` now supports the scanner-safe `token_hash` flow
+  (via `verifyOtp`), still works with the legacy `?code`/`#access_token` links, and surfaces the
+  real Supabase error instead of a blanket "expired" message.
+- **Dashboard (must be done in Supabase — see below):** switch the "Reset Password" email template
+  to use `{{ .TokenHash }}` so the link points at our page and nothing is consumed until the user's
+  browser runs `verifyOtp`. This is what actually defeats the email scanners.
+
 ## Supabase Configuration
 
 ### Email Templates
@@ -30,7 +53,21 @@ The password reset email is configured in your Supabase project:
 
 1. Go to **Authentication > Email Templates** in your Supabase dashboard
 2. Select **"Reset Password"** template
-3. Ensure the template includes a link to: `{{ .SiteURL }}/reset-password`
+3. **Recommended (scanner-safe) — use the `token_hash` link** so the token is only consumed when
+   the user's real browser loads the page, not when a scanner prefetches it:
+
+   ```html
+   <a href="{{ .SiteURL }}/reset-password?token_hash={{ .TokenHash }}&type=recovery">
+     Reset your password
+   </a>
+   ```
+
+   (The old `{{ .ConfirmationURL }}` / `{{ .SiteURL }}/reset-password` link points at GoTrue's
+   auto-consuming `/verify` endpoint and is what causes the "expired immediately" reports.)
+
+### OTP / Link Expiry
+Auth → **Sign In / Providers → Email → Email OTP Expiration** controls how long the link is valid
+(default 3600s = 1 hour). Confirm it has not been lowered.
 
 ### Redirect URLs
 Configure allowed redirect URLs in Supabase:
@@ -81,6 +118,10 @@ Set your Site URL:
 ### "Invalid or Expired Link" Error
 - Link has expired (>1 hour old)
 - Link has already been used
+- **Token consumed by an email scanner before the click** — switch the email template to the
+  `{{ .TokenHash }}` link shown above (see "Link expired a minute later" at the top of this doc)
+- **Reset opened on a different device/browser than requested** — with the legacy PKCE `?code`
+  link the code verifier is missing; the `token_hash` link avoids this entirely
 - User needs to request a new reset link
 
 ### Reset Email Not Received

@@ -13,23 +13,92 @@ export default function ResetPasswordPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [validSession, setValidSession] = useState<boolean | null>(null)
+  const [linkError, setLinkError] = useState('')
   const router = useRouter()
   const supabase = createClient()
 
   useEffect(() => {
-    // Check if we have a valid recovery session
-    const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
+    // Establish the recovery session from the email link. This supports three link shapes so
+    // the page keeps working regardless of how the Supabase email template is configured:
+    //
+    //   1. token_hash flow (?token_hash=...&type=recovery) — the SCANNER-SAFE approach. The
+    //      link points straight at this page and nothing is consumed until verifyOtp() runs in
+    //      a real browser, so email prefetchers/security scanners can't burn the one-time token.
+    //   2. Legacy PKCE flow (?code=...) — auto-exchanged by the @supabase/ssr browser client.
+    //   3. Implicit flow (#access_token=...&type=recovery) — also auto-detected by the client.
+    //
+    // We also surface any explicit error Supabase bounces back (e.g. otp_expired) instead of
+    // showing a generic "expired" message for what may actually be a valid, fresh link.
+    let active = true
+    let settled = false
 
-      // User should have a session from the password reset email link
-      if (session) {
+    const markValid = () => {
+      if (active && !settled) {
+        settled = true
         setValidSession(true)
-      } else {
+      }
+    }
+    const markInvalid = (message?: string) => {
+      if (active && !settled) {
+        settled = true
+        if (message) setLinkError(message)
         setValidSession(false)
       }
     }
 
-    checkSession()
+    // Supabase emits PASSWORD_RECOVERY (or SIGNED_IN) once it establishes a session from the
+    // URL — this covers the auto-detected PKCE (?code) and implicit (#access_token) links.
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY' || (event === 'SIGNED_IN' && session)) {
+        markValid()
+      }
+    })
+
+    const establishSession = async () => {
+      const params = new URLSearchParams(window.location.search)
+      const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''))
+
+      // 1. Explicit error from Supabase (expired or already-used link) — show the real reason.
+      const errorCode = params.get('error_code') || hashParams.get('error_code')
+      const errorDesc = params.get('error_description') || hashParams.get('error_description')
+      if (errorCode) {
+        markInvalid(errorDesc ? decodeURIComponent(errorDesc.replace(/\+/g, ' ')) : undefined)
+        return
+      }
+
+      // 2. Scanner-safe token_hash flow — verify explicitly (nothing consumed until now).
+      const tokenHash = params.get('token_hash')
+      const type = params.get('type')
+      if (tokenHash && (type === 'recovery' || type === null)) {
+        const { error } = await supabase.auth.verifyOtp({ type: 'recovery', token_hash: tokenHash })
+        if (error) markInvalid(error.message)
+        else markValid()
+        return
+      }
+
+      // 3. Legacy ?code / #access_token links are auto-exchanged by the client; a session
+      //    should already exist or arrive shortly via onAuthStateChange above.
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session) {
+        markValid()
+        return
+      }
+
+      // 4. Grace period for the auto-exchange / recovery event to land before giving up.
+      setTimeout(async () => {
+        if (!active || settled) return
+        const { data: { session: lateSession } } = await supabase.auth.getSession()
+        if (lateSession) markValid()
+        else markInvalid()
+      }, 2000)
+    }
+
+    establishSession()
+
+    return () => {
+      active = false
+      subscription.unsubscribe()
+    }
   }, [supabase.auth])
 
   const handlePasswordReset = async (e: React.FormEvent) => {
@@ -96,8 +165,15 @@ export default function ResetPasswordPage() {
               </div>
               <Heading1 className="text-2xl mb-3">Invalid or Expired Link</Heading1>
               <Body16 className="text-gray-600 dark:text-gray-300 mb-6">
-                This password reset link is invalid or has expired. Password reset links are only valid for 1 hour.
+                This password reset link is invalid or has expired. Reset links are single-use and
+                valid for a limited time, so please request a fresh one below. For best results,
+                open the reset email in the same browser you requested it from.
               </Body16>
+              {linkError && (
+                <Body16 className="text-gray-500 dark:text-gray-400 text-sm mb-6">
+                  Details: {linkError}
+                </Body16>
+              )}
               <a
                 href="/forgot-password"
                 className="inline-block px-6 py-3 bg-rb-blue text-white rounded-lg font-medium hover:bg-rb-blue-hover transition-all"
