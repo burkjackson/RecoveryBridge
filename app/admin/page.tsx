@@ -1610,7 +1610,7 @@ export default function AdminPage() {
             value={outreachModal.message}
             onChange={(e) => setOutreachModal(prev => ({ ...prev, message: e.target.value }))}
             maxLength={OUTREACH_COPY.OUTREACH_MAX_LENGTH}
-            rows={4}
+            rows={6}
             autoFocus
             placeholder="We noticed you were looking for support earlier and we couldn't connect you — we're so sorry. We're here for you, and we'd love to help you connect. 💙"
             className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-rb-blue bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400"
