@@ -7,15 +7,15 @@ import FaqAccordion from '@/components/FaqAccordion'
 import { faqs } from '@/lib/faqs'
 
 export const metadata: Metadata = {
-  title: 'RecoveryBridge — Free Peer Support for Addiction Recovery',
-  description: 'Connect anonymously with volunteer listeners who truly understand recovery. Free, private, peer-to-peer chat support available 24/7. No appointments. No waiting rooms.',
+  title: 'Free Anonymous Recovery Chat & Peer Support | RecoveryBridge',
+  description: "Talk free and anonymously with someone in recovery who gets it — private one-on-one recovery chat and peer support, any time. No cost, no sales pitch.",
   keywords: ['addiction recovery support', 'peer support app', 'online recovery support', 'substance abuse support', 'free recovery chat', 'anonymous recovery support', 'peer-to-peer support', 'recovery community'],
   alternates: {
     canonical: 'https://recoverybridge.app',
   },
   openGraph: {
-    title: 'RecoveryBridge — Free Peer Support for Addiction Recovery',
-    description: 'Connect anonymously with volunteer listeners who truly understand recovery. Free, private, peer-to-peer support available 24/7.',
+    title: 'Free Anonymous Recovery Chat & Peer Support | RecoveryBridge',
+    description: "Talk free and anonymously with someone in recovery who gets it — private one-on-one recovery chat and peer support, any time. No cost, no sales pitch.",
     url: 'https://recoverybridge.app',
     siteName: 'RecoveryBridge',
     images: [
@@ -23,7 +23,7 @@ export const metadata: Metadata = {
         url: 'https://recoverybridge.app/logo-with-text.png',
         width: 1280,
         height: 609,
-        alt: 'RecoveryBridge — Free Peer Support for Addiction Recovery',
+        alt: 'RecoveryBridge — free, anonymous recovery chat and peer support',
       },
     ],
     type: 'website',
@@ -31,8 +31,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'RecoveryBridge — Free Peer Support for Addiction Recovery',
-    description: 'Connect anonymously with volunteer listeners who truly understand recovery. Free, private, peer-to-peer support available 24/7.',
+    title: 'Free Anonymous Recovery Chat & Peer Support | RecoveryBridge',
+    description: "Talk free and anonymously with someone in recovery who gets it — private one-on-one recovery chat and peer support, any time. No cost, no sales pitch.",
     images: ['https://recoverybridge.app/logo-with-text.png'],
   },
 }
