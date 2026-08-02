@@ -277,6 +277,30 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: true, pushCount })
     }
 
+    if (action === 'delete_notices') {
+      const { noticeIds } = body
+      if (!Array.isArray(noticeIds) || noticeIds.length === 0) {
+        return NextResponse.json({ error: 'noticeIds required' }, { status: 400 })
+      }
+
+      // Scoped to reconnect notices so this can only clear the "Couldn't Connect" list.
+      const { error: deleteError } = await supabase
+        .from('user_notices')
+        .delete()
+        .in('id', noticeIds)
+        .eq('kind', 'reconnect')
+
+      if (deleteError) throw deleteError
+
+      await supabase.from('admin_logs').insert([{
+        admin_id: admin.id,
+        action_type: 'missed_connections_cleared',
+        details: { count: noticeIds.length },
+      }])
+
+      return NextResponse.json({ success: true })
+    }
+
     return NextResponse.json({ error: 'Unknown action' }, { status: 400 })
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Internal server error'
