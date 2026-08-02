@@ -123,7 +123,7 @@ export default function Home() {
               className="mx-auto mb-5 max-w-[90%] h-auto dark:brightness-0 dark:invert"
             />
             <h1 className="text-heading-2 sm:text-heading-1 text-rb-dark dark:text-gray-100 mb-2">
-              Free Peer Support for Addiction Recovery
+              Free, Anonymous Recovery Chat &amp; Peer Support
             </h1>
             <p className="text-xl sm:text-2xl text-rb-gray dark:text-gray-300 italic mb-4">
               &ldquo;Connection is the antidote to addiction&rdquo;
