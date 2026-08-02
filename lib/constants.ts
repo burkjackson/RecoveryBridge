@@ -138,6 +138,10 @@ export const OUTREACH_COPY = {
   RECONNECT_BODY:
     'We’re so sorry we couldn’t connect you with a listener just now. Please try again whenever you’re ready — someone may be available. And if you need to talk with someone right away, you can call or text 988 anytime.',
 
+  /** Prefilled suggested note when reaching out from the "Couldn't Connect" list */
+  RECONNECT_OUTREACH_DRAFT:
+    'We noticed you were looking for support earlier and we couldn’t connect you — we’re so sorry. We’re here for you, and we’d love to help you connect. 💙',
+
   /** Title shown on a manual note from an admin (body is admin-authored) */
   OUTREACH_TITLE: 'A message from RecoveryBridge 💙',
 

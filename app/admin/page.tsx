@@ -1552,7 +1552,7 @@ export default function AdminPage() {
                                 </div>
                               </div>
                               <button
-                                onClick={(e) => { e.stopPropagation(); setOutreachModal({ show: true, userId: notice.user_id, userName: name, message: '', sending: false }) }}
+                                onClick={(e) => { e.stopPropagation(); setOutreachModal({ show: true, userId: notice.user_id, userName: name, message: OUTREACH_COPY.RECONNECT_OUTREACH_DRAFT, sending: false }) }}
                                 className="min-h-[44px] px-4 py-2 text-sm bg-rb-blue text-white rounded-lg hover:bg-rb-blue-hover transition whitespace-nowrap"
                               >
                                 💬 Reach out
