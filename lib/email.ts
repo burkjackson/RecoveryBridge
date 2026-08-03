@@ -452,6 +452,83 @@ export async function sendSupportRequestEmail({
   }
 }
 
+// ─── Contact / Support Form ──────────────────────────────────────────────────
+
+interface SendContactMessageEmailParams {
+  name: string
+  email: string
+  subject: string
+  message: string
+}
+
+// Delivers a contact-form submission to the admin inbox. replyTo is set to the
+// sender's address so the team can reply directly from their mail client.
+export async function sendContactMessageEmail({
+  name,
+  email,
+  subject,
+  message,
+}: SendContactMessageEmailParams): Promise<{ success: boolean }> {
+  if (!process.env.RESEND_API_KEY) return { success: false }
+
+  const safeName = escapeHtml(name)
+  const safeEmail = escapeHtml(email)
+  const safeSubject = escapeHtml(subject)
+  // Preserve the sender's line breaks in the HTML version.
+  const safeMessage = escapeHtml(message).replace(/\n/g, '<br />')
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /><title>New contact message</title></head>
+<body style="margin:0;padding:0;background-color:#f5f7f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f5f7f9;padding:40px 16px;">
+    <tr><td align="center">
+      <table width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;">
+        <tr><td style="background-color:#5A7A8C;border-radius:12px 12px 0 0;padding:28px 32px;text-align:center;">
+          <span style="color:#ffffff;font-size:22px;font-weight:700;">RecoveryBridge</span>
+        </td></tr>
+        <tr><td style="background-color:#ffffff;padding:32px;border-radius:0 0 12px 12px;">
+          <h1 style="margin:0 0 20px 0;font-size:20px;font-weight:700;color:#2D3436;">📬 New contact message</h1>
+          <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#F8F9FA;border-radius:8px;padding:20px;margin-bottom:24px;">
+            <tr><td style="padding:6px 0;font-size:14px;color:#4A5568;"><strong style="color:#2D3436;">From:</strong> ${safeName}</td></tr>
+            <tr><td style="padding:6px 0;font-size:14px;color:#4A5568;"><strong style="color:#2D3436;">Email:</strong> <a href="mailto:${safeEmail}" style="color:#5A7A8C;">${safeEmail}</a></td></tr>
+            <tr><td style="padding:6px 0;font-size:14px;color:#4A5568;"><strong style="color:#2D3436;">Topic:</strong> ${safeSubject}</td></tr>
+          </table>
+          <p style="margin:0 0 8px 0;font-size:13px;font-weight:600;color:#2D3436;text-transform:uppercase;letter-spacing:0.5px;">Message</p>
+          <p style="margin:0;font-size:16px;color:#4A5568;line-height:1.6;">${safeMessage}</p>
+          <hr style="border:none;border-top:1px solid #E8F0F4;margin:24px 0 20px 0;" />
+          <p style="margin:0;font-size:12px;color:#718096;line-height:1.6;text-align:center;">
+            Reply directly to this email to respond to ${safeName}.
+          </p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`
+
+  try {
+    const resend = new Resend(process.env.RESEND_API_KEY)
+    const { error } = await resend.emails.send({
+      from: FROM_ADDRESS,
+      replyTo: email,
+      to: REPLY_TO,
+      subject: `[Contact: ${subject}] from ${name}`,
+      html,
+    })
+
+    if (error) {
+      console.error('Resend error (contact message):', error)
+      return { success: false }
+    }
+
+    return { success: true }
+  } catch (err) {
+    console.error('Failed to send contact message:', err)
+    return { success: false }
+  }
+}
+
 // ─── Report Resolution Notifications ─────────────────────────────────────────
 
 export async function sendReportResolvedToReporter({

@@ -15,24 +15,32 @@ export default function ContactPage() {
   })
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setSubmitting(true)
+    setError(null)
 
-    // Create mailto link with form data
-    const mailtoLink = `mailto:admin@recoverybridge.app?subject=${encodeURIComponent(formData.subject)}&body=${encodeURIComponent(
-      `Name: ${formData.name}\nEmail: ${formData.email}\n\nMessage:\n${formData.message}`
-    )}`
+    try {
+      const res = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      })
 
-    // Open mail client
-    window.location.href = mailtoLink
+      if (!res.ok) {
+        const data = await res.json().catch(() => null)
+        setError(data?.error || 'We could not send your message. Please email admin@recoverybridge.app directly.')
+        return
+      }
 
-    // Show success message
-    setTimeout(() => {
-      setSubmitting(false)
       setSubmitted(true)
-    }, 500)
+    } catch {
+      setError('We could not reach the server. Please check your connection, or email admin@recoverybridge.app directly.')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -52,7 +60,7 @@ export default function ContactPage() {
             </div>
             <Heading1 className="mb-3 dark:text-gray-100">Thanks for reaching out!</Heading1>
             <Body16 className="text-rb-gray dark:text-gray-300 mb-6">
-              Your email client should open with a pre-filled message. Send it and we'll get back to you as soon as possible.
+              We've received your message and will get back to you as soon as possible — typically within 24–48 hours.
             </Body16>
             <div className="flex gap-3 justify-center">
               <button
@@ -187,13 +195,20 @@ export default function ContactPage() {
               </Body16>
             </div>
 
+            {/* Error message */}
+            {error && (
+              <div role="alert" className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
+                <Body16 className="text-sm text-red-700 dark:text-red-300">{error}</Body16>
+              </div>
+            )}
+
             {/* Submit Button */}
             <button
               type="submit"
               disabled={submitting}
               className="w-full min-h-[44px] px-6 py-3 bg-rb-blue text-white rounded-full hover:bg-rb-blue-hover transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {submitting ? 'Opening Email Client...' : 'Send Message'}
+              {submitting ? 'Sending...' : 'Send Message'}
             </button>
           </form>
         </div>

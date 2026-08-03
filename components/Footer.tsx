@@ -116,7 +116,7 @@ export default function Footer({ className = '', donateHref = '/donate' }: Foote
               href="/contact"
               className="min-h-[44px] inline-flex items-center hover:text-rb-blue transition"
             >
-              Contact Us
+              Contact &amp; Help
             </a>
             <span className="text-gray-300 dark:text-gray-300 hidden sm:inline">•</span>
             <a

@@ -1263,6 +1263,19 @@ export default function ProfilePage() {
           )}
         </div>
 
+        {/* Help & Support */}
+        <div className="mt-8 flex flex-col items-center gap-2">
+          <a
+            href="/contact"
+            className="min-h-[44px] px-6 py-2.5 text-rb-blue text-sm font-medium hover:text-white hover:bg-rb-blue border border-rb-blue rounded-full transition-all inline-flex items-center gap-2"
+          >
+            💬 Help &amp; Support
+          </a>
+          <p className="text-xs text-rb-gray dark:text-gray-300 text-center max-w-xs">
+            Technical issues, account questions, or anything else — reach our team and we&apos;ll get back to you.
+          </p>
+        </div>
+
         {/* Download My Data */}
         <div className="mt-4 flex flex-col items-center gap-2">
           <button
