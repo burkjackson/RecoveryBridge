@@ -125,7 +125,7 @@ export default function RecoveryChatPage() {
           <strong className="font-semibold">If this is an emergency:</strong> RecoveryBridge
           is peer support, not a crisis or emergency service. If you are in immediate danger
           or thinking about harming yourself, call or text{' '}
-          <a href="tel:988" className="underline font-semibold">988</a> (Suicide &amp; Crisis
+          <a href="sms:988" className="underline font-semibold">988</a> (Suicide &amp; Crisis
           Lifeline), text <strong>HOME</strong> to{' '}
           <a href="sms:741741" className="underline font-semibold">741741</a>, or call{' '}
           <a href="tel:911" className="underline font-semibold">911</a>.

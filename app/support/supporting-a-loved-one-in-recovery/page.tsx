@@ -111,7 +111,7 @@ export default function SupportingLovedOnePage() {
         >
           If your loved one is in immediate danger or at risk of overdose, call{' '}
           <a href="tel:911" className="underline font-semibold">911</a>. For 24/7 support, call
-          or text <a href="tel:988" className="underline font-semibold">988</a>. RecoveryBridge
+          or text <a href="sms:988" className="underline font-semibold">988</a>. RecoveryBridge
           is peer support, not emergency or medical care.
         </aside>
 

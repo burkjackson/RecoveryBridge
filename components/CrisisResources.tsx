@@ -121,9 +121,9 @@ export default function CrisisResources() {
                 </h3>
                 <div className="space-y-1 text-rb-dark dark:text-gray-100">
                   <p className="flex items-center gap-2">
-                    <span className="font-semibold">Call or Text:</span>
+                    <span className="font-semibold">Text:</span>
                     <a
-                      href="tel:988"
+                      href="sms:988"
                       className="text-rb-blue hover:text-rb-blue-hover underline font-bold text-lg"
                     >
                       988

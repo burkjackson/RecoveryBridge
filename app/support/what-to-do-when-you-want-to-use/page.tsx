@@ -131,7 +131,7 @@ export default function WhatToDoPage() {
           <strong className="font-semibold">If you are in danger right now:</strong> call{' '}
           <a href="tel:911" className="underline font-semibold">911</a>. To reach a trained
           counselor 24/7, call or text{' '}
-          <a href="tel:988" className="underline font-semibold">988</a> (Suicide &amp; Crisis
+          <a href="sms:988" className="underline font-semibold">988</a> (Suicide &amp; Crisis
           Lifeline) or text <strong>HOME</strong> to{' '}
           <a href="sms:741741" className="underline font-semibold">741741</a>. If you may be at
           risk of overdose, please do not use alone. RecoveryBridge is peer support, not
