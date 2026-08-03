@@ -47,7 +47,7 @@ export default function SafetyPage() {
             <div className="space-y-3 ml-12">
               <div>
                 <Body16 className="font-semibold dark:text-gray-100">988 Suicide & Crisis Lifeline</Body16>
-                <Body16 className="text-sm text-rb-gray dark:text-gray-300">Text 988 • Available 24/7</Body16>
+                <Body16 className="text-sm text-rb-gray dark:text-gray-300">Text or call 988 • Available 24/7</Body16>
               </div>
               <div>
                 <Body16 className="font-semibold dark:text-gray-100">Crisis Text Line</Body16>

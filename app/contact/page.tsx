@@ -206,7 +206,7 @@ export default function ContactPage() {
           </Body16>
           <div className="space-y-2">
             <Body16 className="text-sm dark:text-gray-100">
-              <strong>988 Suicide & Crisis Lifeline:</strong> Text 988
+              <strong>988 Suicide & Crisis Lifeline:</strong> Text or call 988
             </Body16>
             <Body16 className="text-sm dark:text-gray-100">
               <strong>Crisis Text Line:</strong> Text HOME to 741741

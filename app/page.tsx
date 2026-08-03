@@ -342,7 +342,7 @@ export default function Home() {
             </p>
             <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-orange-200">
               <p className="text-sm text-slate-600 dark:text-gray-300 leading-relaxed">
-                If you&apos;re in crisis: <strong className="text-slate-600 dark:text-gray-300">Text 988</strong> (Suicide &amp; Crisis Lifeline) or <strong className="text-slate-600 dark:text-gray-300">Text HOME to 741741</strong> (Crisis Text Line)
+                If you&apos;re in crisis: <strong className="text-slate-600 dark:text-gray-300">Text or call 988</strong> (Suicide &amp; Crisis Lifeline) or <strong className="text-slate-600 dark:text-gray-300">Text HOME to 741741</strong> (Crisis Text Line)
               </p>
             </div>
           </div>

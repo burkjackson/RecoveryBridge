@@ -802,6 +802,7 @@ function DashboardContent() {
                     </button>
                     <div className="flex flex-wrap gap-2">
                       <a href="sms:988" className="min-h-[44px] inline-flex items-center px-4 py-2 bg-white dark:bg-gray-800 border border-rb-blue text-rb-blue rounded-full text-sm font-semibold hover:bg-rb-blue-light dark:hover:bg-gray-700 transition-colors">Text 988</a>
+                      <a href="tel:988" className="min-h-[44px] inline-flex items-center px-4 py-2 bg-white dark:bg-gray-800 border border-rb-blue text-rb-blue rounded-full text-sm font-semibold hover:bg-rb-blue-light dark:hover:bg-gray-700 transition-colors">Call 988</a>
                       <a href="sms:741741&body=HELLO" className="min-h-[44px] inline-flex items-center px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-rb-gray dark:text-gray-300 rounded-full text-sm font-semibold hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">Text HOME to 741741</a>
                     </div>
                   </div>

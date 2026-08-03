@@ -136,7 +136,7 @@ export const OUTREACH_COPY = {
   /** Auto "we couldn't connect you" follow-up */
   RECONNECT_TITLE: 'We’re still here for you 💙',
   RECONNECT_BODY:
-    'We’re so sorry we couldn’t connect you with a listener just now. Please try again whenever you’re ready — someone may be available. And if you need to talk with someone right away, you can text 988 anytime.',
+    'We’re so sorry we couldn’t connect you with a listener just now. Please try again whenever you’re ready — someone may be available. And if you need to talk with someone right away, you can text or call 988 anytime.',
 
   /** Prefilled suggested note when reaching out from the "Couldn't Connect" list */
   RECONNECT_OUTREACH_DRAFT:

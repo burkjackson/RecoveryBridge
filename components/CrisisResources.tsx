@@ -120,13 +120,18 @@ export default function CrisisResources() {
                   988 Suicide & Crisis Lifeline
                 </h3>
                 <div className="space-y-1 text-rb-dark dark:text-gray-100">
-                  <p className="flex items-center gap-2">
-                    <span className="font-semibold">Text:</span>
+                  <p className="flex flex-wrap items-center gap-x-4 gap-y-1">
                     <a
                       href="sms:988"
                       className="text-rb-blue hover:text-rb-blue-hover underline font-bold text-lg"
                     >
-                      988
+                      Text 988
+                    </a>
+                    <a
+                      href="tel:988"
+                      className="text-rb-blue hover:text-rb-blue-hover underline font-bold text-lg"
+                    >
+                      Call 988
                     </a>
                   </p>
                   <p className="text-sm text-rb-gray dark:text-gray-300">24/7 • Free & Confidential</p>
