@@ -56,7 +56,7 @@ const pageFaqs = [
   },
   {
     q: 'Is this the same as a crisis chat?',
-    a: 'No. RecoveryBridge is peer support, not emergency services, therapy, or crisis intervention. If you are in immediate danger or thinking about harming yourself, call or text 988 (Suicide & Crisis Lifeline), text HOME to 741741, or call 911.',
+    a: 'No. RecoveryBridge is peer support, not emergency services, therapy, or crisis intervention. If you are in immediate danger or thinking about harming yourself, text 988 (Suicide & Crisis Lifeline), text HOME to 741741, or call 911.',
   },
 ]
 
@@ -124,7 +124,7 @@ export default function RecoveryChatPage() {
         >
           <strong className="font-semibold">If this is an emergency:</strong> RecoveryBridge
           is peer support, not a crisis or emergency service. If you are in immediate danger
-          or thinking about harming yourself, call or text{' '}
+          or thinking about harming yourself, text{' '}
           <a href="sms:988" className="underline font-semibold">988</a> (Suicide &amp; Crisis
           Lifeline), text <strong>HOME</strong> to{' '}
           <a href="sms:741741" className="underline font-semibold">741741</a>, or call{' '}

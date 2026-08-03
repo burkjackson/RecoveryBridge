@@ -118,8 +118,7 @@ export default function WithoutAaPage() {
           role="note"
           className="mb-10 rounded-xl border-l-4 border-red-400 bg-red-50 dark:bg-red-900/20 px-5 py-4 text-sm text-red-900 dark:text-red-200"
         >
-          RecoveryBridge is peer support, not treatment or emergency care. In a crisis, call or
-          text <a href="sms:988" className="underline font-semibold">988</a>, text{' '}
+          RecoveryBridge is peer support, not treatment or emergency care. In a crisis, text <a href="sms:988" className="underline font-semibold">988</a>, text{' '}
           <strong>HOME</strong> to <a href="sms:741741" className="underline font-semibold">741741</a>,
           or call <a href="tel:911" className="underline font-semibold">911</a>.
         </aside>

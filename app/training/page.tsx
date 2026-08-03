@@ -105,7 +105,7 @@ const TRAINING_SECTIONS = [
     intro: "Occasionally someone may reach out in a moment of serious crisis. You don't need to have all the answers — but you do need to know what to do.",
     points: [
       'If someone mentions self-harm, suicidal thoughts, or being in immediate danger, take it seriously.',
-      'Gently share crisis resources: call or text 988, text HOME to 741741 (Crisis Text Line), or call 911.',
+      'Gently share crisis resources: text 988, text HOME to 741741 (Crisis Text Line), or call 911.',
       "You are not responsible for someone's safety — trained professionals are. Your role is to connect them to help.",
       "It's okay — and sometimes necessary — to end a session and encourage someone to call for immediate support.",
     ],

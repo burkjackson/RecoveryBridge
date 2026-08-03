@@ -11,7 +11,7 @@ export interface Faq {
 export const faqs: Faq[] = [
   {
     q: "What if I'm in crisis?",
-    a: "RecoveryBridge is peer support — not emergency services or crisis intervention. If you're in immediate danger, please reach out: call or text 988 (Suicide & Crisis Lifeline), text HOME to 741741 (Crisis Text Line), or call 911. These resources are always one tap away inside the app.",
+    a: "RecoveryBridge is peer support — not emergency services or crisis intervention. If you're in immediate danger, please reach out: text 988 (Suicide & Crisis Lifeline), text HOME to 741741 (Crisis Text Line), or call 911. These resources are always one tap away inside the app.",
   },
   {
     q: 'Is it anonymous?',
