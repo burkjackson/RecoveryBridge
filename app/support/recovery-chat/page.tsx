@@ -127,7 +127,7 @@ export default function RecoveryChatPage() {
           or thinking about harming yourself,{' '}
           <a href="sms:988" className="underline font-semibold">text</a> or <a href="tel:988" className="underline font-semibold">call</a> 988 (Suicide &amp; Crisis
           Lifeline), text <strong>HOME</strong> to{' '}
-          <a href="sms:741741" className="underline font-semibold">741741</a>, or call{' '}
+          <a href="sms:741741?&body=HOME" className="underline font-semibold">741741</a>, or call{' '}
           <a href="tel:911" className="underline font-semibold">911</a>.
         </aside>
 

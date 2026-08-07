@@ -982,7 +982,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
             {/* Scope & safety notice — shown once at the top of the thread; scrolls away with the conversation */}
             <p className="text-xs text-center text-gray-400 dark:text-gray-300 max-w-md mx-auto leading-relaxed px-2 pb-1">
               <strong className="font-semibold text-gray-500 dark:text-gray-300">Peer support only</strong> — not a substitute for professional therapy, medical care, or emergency services. If you or someone else is in danger,{' '}
-              <a href="sms:988" className="underline">text</a> or <a href="tel:988" className="underline">call</a> 988 or text <strong>HOME</strong> to <strong>741741</strong>.
+              <a href="sms:988" className="underline">text</a> or <a href="tel:988" className="underline">call</a> 988 or <a href="sms:741741?&body=HOME" className="underline">text HOME to 741741</a>.
             </p>
 
             {messages.length === 0 ? (
@@ -1179,7 +1179,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                   Reach a trained counselor 24/7:{' '}
                   <a href="sms:988" className="underline font-bold">text</a> or <a href="tel:988" className="underline font-bold">call</a> 988,{' '}
                   text <strong>HOME</strong> to{' '}
-                  <a href="sms:741741" className="underline font-bold">741741</a>, or{' '}
+                  <a href="sms:741741?&body=HOME" className="underline font-bold">741741</a>, or{' '}
                   <a href="tel:911" className="underline font-bold">call 911</a> in immediate danger.
                 </p>
               </div>

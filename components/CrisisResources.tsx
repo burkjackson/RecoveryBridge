@@ -149,7 +149,7 @@ export default function CrisisResources() {
                     <span className="font-bold">HOME</span>
                     <span>to</span>
                     <a
-                      href="sms:741741"
+                      href="sms:741741?&body=HOME"
                       className="text-rb-blue hover:text-rb-blue-hover underline font-bold text-lg"
                     >
                       741741

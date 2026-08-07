@@ -38,7 +38,7 @@ export default function OfflinePage() {
               {' '}— Suicide &amp; Crisis Lifeline
             </li>
             <li>
-              Text <strong>HOME</strong> to <strong>741741</strong> — Crisis Text Line
+              <a href="sms:741741?&body=HOME" className="underline font-medium">Text HOME to 741741</a> — Crisis Text Line
             </li>
           </ul>
         </div>
