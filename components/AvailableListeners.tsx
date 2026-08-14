@@ -324,6 +324,12 @@ export default function AvailableListeners({ onCountChange, currentUserId, curre
     )
   }
 
+  // The "Online" tally should reflect everyone visible in this card, including
+  // the viewer's own "You" card — the query excludes their own row (.neq below),
+  // so add them back when they're currently available.
+  const isSelfAvailable = currentUserProfile?.role_state === 'available'
+  const onlineCount = listeners.length + (isSelfAvailable ? 1 : 0)
+
   // When the current user is available themselves, fall through to the main view
   // so we can show their own "You're visible" card even if no one else is online.
   if (listeners.length === 0 && currentUserProfile?.role_state !== 'available') {
@@ -347,7 +353,7 @@ export default function AvailableListeners({ onCountChange, currentUserId, curre
         <div className="flex items-center gap-2 px-3 py-1.5 bg-green-50 dark:bg-green-900/20 rounded-full border border-green-200 dark:border-green-800">
           <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
           <Body16 className="text-sm text-green-700 font-semibold">
-            {listeners.length} Online
+            {onlineCount} Online
           </Body16>
         </div>
       </div>
