@@ -42,6 +42,18 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   const [favoriteAdded, setFavoriteAdded] = useState(false)
   const [favoriteSaving, setFavoriteSaving] = useState(false)
   const [alreadyFavorited, setAlreadyFavorited] = useState(false)
+  const autoReturnScheduled = useRef(false)
+
+  // When the person is already a favorite there's nothing to save, so the
+  // favorite step just says "Returning to dashboard..." — actually do it.
+  useEffect(() => {
+    if (!favoriteStep || !alreadyFavorited || favoriteAdded) return
+    if (autoReturnScheduled.current) return
+    autoReturnScheduled.current = true
+    const timer = setTimeout(() => returnToDashboard(), 1500)
+    return () => clearTimeout(timer)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [favoriteStep, alreadyFavorited, favoriteAdded, currentUserId, session])
 
   // Report flow modal state
   const [reportModal, setReportModal] = useState(false)
@@ -1571,6 +1583,12 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                     <div className="py-3">
                       <Body16 className="text-amber-700 dark:text-amber-300 font-semibold">⭐ Already in your favorites!</Body16>
                       <Body16 className="text-gray-400 dark:text-gray-300 text-sm mt-1">Returning to dashboard...</Body16>
+                      <button
+                        onClick={returnToDashboard}
+                        className="min-h-[44px] mt-3 w-full px-4 py-2.5 bg-gray-100 dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 rounded-xl font-semibold hover:bg-gray-200 dark:hover:bg-gray-600 transition-all text-sm"
+                      >
+                        Go to dashboard
+                      </button>
                     </div>
                   ) : (
                     <div className="space-y-3">
