@@ -4,17 +4,18 @@ import { Resend } from 'resend'
 import { parseReferralSource } from '@/lib/constants'
 import { escapeHtml } from '@/lib/email/escapeHtml'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
-
 const ADMIN_EMAIL = 'admin@recoverybridge.app'
-
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
 
 export async function POST(request: NextRequest) {
   try {
+    // Constructed per request: at module scope, a missing key fails the whole
+    // production build during "Collecting page data" rather than just this route.
+    const resend = new Resend(process.env.RESEND_API_KEY)
+    const supabaseAdmin = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    )
+
     const authHeader = request.headers.get('authorization')
     const token = authHeader?.replace('Bearer ', '')
 

@@ -3,18 +3,19 @@ import { createClient } from '@supabase/supabase-js'
 import { Resend } from 'resend'
 import { welcomeEmailHtml } from '@/lib/email/welcomeEmailHtml'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
-
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
-
 export async function POST(request: NextRequest) {
   const secret = request.headers.get('x-cleanup-secret')
   if (!secret || secret !== process.env.CLEANUP_SECRET_KEY) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
+
+  // Constructed per request: at module scope, a missing key fails the whole
+  // production build during "Collecting page data" rather than just this route.
+  const resend = new Resend(process.env.RESEND_API_KEY)
+  const supabaseAdmin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
 
   const body = await request.json().catch(() => ({}))
   const testEmail = body?.testEmail as string | undefined
