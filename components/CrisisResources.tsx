@@ -25,6 +25,9 @@ export default function CrisisResources() {
 
     const previouslyFocused = document.activeElement as HTMLElement | null
     const dialog = dialogRef.current
+    // Capture the trigger now: by the time cleanup runs, triggerRef.current
+    // may point at a different node (or none).
+    const trigger = triggerRef.current
     dialog?.querySelector<HTMLElement>('button, a[href]')?.focus()
 
     function handleKeyDown(e: KeyboardEvent) {
@@ -51,7 +54,7 @@ export default function CrisisResources() {
     document.addEventListener('keydown', handleKeyDown)
     return () => {
       document.removeEventListener('keydown', handleKeyDown)
-      ;(previouslyFocused ?? triggerRef.current)?.focus()
+      ;(previouslyFocused ?? trigger)?.focus()
     }
   }, [isOpen])
 
@@ -120,13 +123,18 @@ export default function CrisisResources() {
                   988 Suicide & Crisis Lifeline
                 </h3>
                 <div className="space-y-1 text-rb-dark dark:text-gray-100">
-                  <p className="flex items-center gap-2">
-                    <span className="font-semibold">Call or Text:</span>
+                  <p className="flex flex-wrap items-center gap-x-4 gap-y-1">
+                    <a
+                      href="sms:988"
+                      className="text-rb-blue hover:text-rb-blue-hover underline font-bold text-lg"
+                    >
+                      Text 988
+                    </a>
                     <a
                       href="tel:988"
                       className="text-rb-blue hover:text-rb-blue-hover underline font-bold text-lg"
                     >
-                      988
+                      Call 988
                     </a>
                   </p>
                   <p className="text-sm text-rb-gray dark:text-gray-300">24/7 • Free & Confidential</p>
@@ -144,7 +152,7 @@ export default function CrisisResources() {
                     <span className="font-bold">HOME</span>
                     <span>to</span>
                     <a
-                      href="sms:741741"
+                      href="sms:741741?&body=HOME"
                       className="text-rb-blue hover:text-rb-blue-hover underline font-bold text-lg"
                     >
                       741741

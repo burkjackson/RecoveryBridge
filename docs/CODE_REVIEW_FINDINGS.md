@@ -1,4 +1,8 @@
 # Code Review Findings - RecoveryBridge
+
+> **Historical snapshot — February 10, 2026. Not current state.**  
+> A point-in-time audit. The issues below were found then and have since been addressed (server-verified admin auth, authenticated cron routes, rate limiting, `lib/env.ts` validation, constants extracted). Kept as a record of what was fixed.
+
 **Date:** February 10, 2026
 **Reviewer:** Claude
 **Scope:** Full codebase security, performance, and code quality audit

@@ -8,6 +8,9 @@ export default defineConfig([
       'node_modules/**',
       '.next/**',
       '.claude/**',
+      // Stray git worktrees checked out under the repo (also in .gitignore) —
+      // linting a second copy of the app doubles every warning.
+      '.clone/**',
       'out/**',
       'build/**',
       'public/sw.js',

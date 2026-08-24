@@ -3,7 +3,13 @@
  * Gracefully returns false if Twilio is not configured
  */
 
-let twilioClient: any = null
+// Twilio's own client type isn't imported: the package is only required at
+// runtime when the feature is enabled, so the module isn't loaded at build.
+type TwilioClient = {
+  messages: { create(opts: { body: string; from: string; to: string }): Promise<unknown> }
+}
+
+let twilioClient: TwilioClient | null = null
 
 function getTwilioClient() {
   if (twilioClient) return twilioClient

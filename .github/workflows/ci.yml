@@ -1,0 +1,52 @@
+# Catches compile, lint, and test breakage before it reaches Vercel.
+#
+# Vercel only builds `main`, and a failed build there means a failed deploy.
+# This runs the same checks on every branch first.
+#
+# No secrets are needed. The API routes construct their Resend and Supabase
+# service-role clients per request, so nothing that needs a real key runs at
+# build time. The two NEXT_PUBLIC_* values below are placeholders: Next.js
+# inlines them into the client bundle during the build, so they must be
+# present and URL-shaped, but they are never connected to. The bundle this
+# job produces is only ever checked for compiling — it is never deployed.
+name: CI
+
+on:
+  push:
+  workflow_dispatch:
+
+# A newer push to the same branch makes the in-flight run obsolete.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npx tsc --noEmit
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Test
+        run: npm test
+
+      # Runs last: it is the slowest step, and a break here is usually already
+      # visible in the typecheck output above.
+      - name: Build
+        run: npm run build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder-anon-key

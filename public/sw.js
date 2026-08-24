@@ -1,7 +1,7 @@
 // RecoveryBridge Service Worker for Push Notifications
 // This enables background notifications even when the browser tab is closed
 
-const CACHE_NAME = 'recoverybridge-v9'
+const CACHE_NAME = 'recoverybridge-v11'
 const OFFLINE_URL = '/offline'
 
 // Install event - pre-cache offline fallback page
@@ -28,6 +28,17 @@ self.addEventListener('activate', (event) => {
   )
 })
 
+// Is this window actually on the user's screen right now?
+//
+// visibilityState is the dependable signal on Chromium/Firefox, but iOS Safari
+// does not reliably populate it on WindowClient inside a push handler, so fall
+// back to `focused`. Only positive evidence counts: when we genuinely cannot
+// tell, we show the notification rather than risk swallowing a real one. The
+// server-side checks in /api/notifications/* are what cover the iOS gap.
+function isOnScreen(client) {
+  return client.visibilityState === 'visible' || client.focused === true
+}
+
 // Push event - handle incoming push notifications
 self.addEventListener('push', (event) => {
   console.log('Push notification received:', event)
@@ -51,19 +62,24 @@ self.addEventListener('push', (event) => {
       title = data.title || title
 
       // Build iOS-safe options — explicitly exclude badge and requireInteraction
+      const type = data.data?.type || data.type
       const seekerId = data.data?.seekerId || data.seekerId
+      const sessionId = data.data?.sessionId || data.sessionId
+
+      // Resolve the tap target: a chat-message notification opens that chat;
+      // a support-request opens /connect; otherwise fall back to the dashboard.
+      let url = data.data?.url || data.url || '/dashboard'
+      if (type === 'chat-message' && sessionId) {
+        url = `/chat/${sessionId}`
+      } else if (seekerId) {
+        url = `/connect?seekerId=${seekerId}`
+      }
+
       options = {
         body: data.body || options.body,
         icon: data.icon || options.icon,
         tag: data.tag || options.tag,
-        data: {
-          // If we have a seekerId, open /connect so the listener lands directly
-          // in a chat session. Otherwise fall back to the dashboard.
-          url: seekerId
-            ? `/connect?seekerId=${seekerId}`
-            : (data.data?.url || data.url || '/dashboard'),
-          seekerId
-        }
+        data: { url, type, seekerId, sessionId }
       }
     } catch (e) {
       console.error('Error parsing push data:', e)
@@ -73,13 +89,36 @@ self.addEventListener('push', (event) => {
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true })
       .then((clientList) => {
-        // If the user is already in an active chat session, suppress support-request
-        // notifications — they can't connect to another seeker while in a session,
-        // and this prevents stale re-notifications from firing after they've matched.
-        const seekerId = options.data?.seekerId
+        const { type, seekerId, sessionId } = options.data || {}
+
+        // Chat-message notification: only surface it if the recipient isn't
+        // actively looking at THIS chat. A visible tab on /chat/<sessionId>
+        // already renders the message in realtime and marks it read, so a
+        // push would be redundant noise. A closed/backgrounded tab (phone
+        // locked, other app in front) still gets notified — that's the
+        // "unread reply" case this feature exists for.
+        if (type === 'chat-message' && sessionId) {
+          const viewingThisChat = clientList.some((client) => {
+            try {
+              return new URL(client.url).pathname === `/chat/${sessionId}` && isOnScreen(client)
+            } catch {
+              return false
+            }
+          })
+          if (viewingThisChat) return
+        }
+
         if (seekerId) {
+          // If the user is already in an active chat session, suppress support-request
+          // notifications — they can't connect to another seeker while in a session,
+          // and this prevents stale re-notifications from firing after they've matched.
           const inChat = clientList.some((client) => client.url.includes('/chat/'))
           if (inChat) return
+
+          // Likewise if they're actively looking at the app: a waiting seeker
+          // already appears in the realtime lists on the dashboard and
+          // /listeners, so a push would just buzz a screen they're staring at.
+          if (clientList.some(isOnScreen)) return
         }
         return self.registration.showNotification(title, options)
       })

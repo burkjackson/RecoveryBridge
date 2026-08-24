@@ -2,8 +2,9 @@
 
 import { useState, useEffect, Suspense } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { errorMessage } from '@/lib/errors'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Heading1, Body16 } from '@/components/ui/Typography'
+import { Body16 } from '@/components/ui/Typography'
 
 export default function LoginPage() {
   return (
@@ -30,6 +31,7 @@ function LoginForm() {
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (user) router.push(redirectTo)
     })
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once on mount; the loaders it calls are stable for the life of the component
   }, [])
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -46,12 +48,13 @@ function LoginForm() {
       if (error) throw error
 
       router.push(redirectTo)
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Handle email confirmation error specifically
-      if (error.message?.toLowerCase().includes('email not confirmed')) {
+      const message = errorMessage(error, 'Could not sign you in. Please try again.')
+      if (message.toLowerCase().includes('email not confirmed')) {
         setError('Your account is pending confirmation. Please contact support or try signing up again with a new email.')
       } else {
-        setError(error.message)
+        setError(message)
       }
     } finally {
       setLoading(false)
@@ -65,6 +68,9 @@ function LoginForm() {
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-8 sm:p-10">
           {/* Header */}
           <div className="text-center mb-8">
+{/* eslint-disable-next-line @next/next/no-img-element -- intrinsically sized
+                logo from /public; next/image wants fixed dimensions, which fights the
+                responsive sizing used here */}
             <img
               src="/logo-with-text.png"
               alt="RecoveryBridge Logo"

@@ -3,6 +3,8 @@
 import { Suspense, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { syncSessionRoleStates } from '@/lib/sessionState'
+import { getActiveBlock } from '@/lib/blocks'
 
 /**
  * /connect?seekerId=XXX
@@ -29,7 +31,10 @@ function ConnectInner() {
     // Must be authenticated
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
-      router.replace('/login')
+      // Carry the destination through login so the seeker id survives — this
+      // page is reached by tapping a push notification, and losing the id
+      // means the listener lands on a dashboard with no idea who needed them.
+      router.replace(`/login?redirect=${encodeURIComponent(`/connect?seekerId=${seekerId}`)}`)
       return
     }
 
@@ -40,8 +45,8 @@ function ConnectInner() {
     }
 
     // Check block status and existing session in parallel
-    const [{ data: blockCheck }, { data: existingSession }] = await Promise.all([
-      supabase.from('user_blocks').select('id').eq('user_id', user.id).eq('is_active', true).maybeSingle(),
+    const [blockCheck, { data: existingSession }] = await Promise.all([
+      getActiveBlock(supabase, user.id),
       supabase.from('sessions').select('id').eq('listener_id', user.id).eq('seeker_id', seekerId).eq('status', 'active').maybeSingle(),
     ])
 
@@ -69,6 +74,8 @@ function ConnectInner() {
         .select('id')
         .eq('seeker_id', seekerId)
         .eq('status', 'active')
+        .order('created_at', { ascending: false })
+        .limit(1)
         .maybeSingle()
 
       if (activeSession) {
@@ -91,11 +98,15 @@ function ConnectInner() {
 
     if (error || !session) {
       // Session may have just been created by another listener — check again
+      // order+limit(1): maybeSingle() errors on multiple rows, which would
+      // hide the very race this branch exists to detect.
       const { data: raceSession } = await supabase
         .from('sessions')
         .select('id')
         .eq('seeker_id', seekerId)
         .eq('status', 'active')
+        .order('created_at', { ascending: false })
+        .limit(1)
         .maybeSingle()
 
       if (raceSession) {
@@ -110,11 +121,9 @@ function ConnectInner() {
       return
     }
 
-    // Mark both users offline while in chat (same as PeopleSeeking/AvailableListeners)
-    await supabase
-      .from('profiles')
-      .update({ role_state: 'offline' })
-      .in('id', [seekerId, user.id])
+    // Mark both users offline while in chat. Server-side: RLS only lets a
+    // client update its own row, so the seeker's half never landed from here.
+    await syncSessionRoleStates(supabase, session.id, 'start')
 
     router.replace(`/chat/${session.id}`)
   }
@@ -126,15 +135,15 @@ function ConnectInner() {
     }
     // Fire-and-forget async kickoff; its setStatus calls all happen after
     // await points, so no synchronous setState occurs in the effect body.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     handleConnect()
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally keyed on seekerId — adding the callbacks would tear down and rebuild this on every render
   }, [seekerId])
 
   return (
-    <main className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#F8F9FA' }}>
+    <main className="min-h-screen flex items-center justify-center bg-[#F8F9FA] dark:bg-gray-900">
       <div className="text-center p-8">
         <div className="w-12 h-12 border-4 border-rb-blue border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-        <p className="text-rb-gray font-medium">{status}</p>
+        <p className="text-rb-gray dark:text-gray-300 font-medium">{status}</p>
       </div>
     </main>
   )
@@ -143,10 +152,10 @@ function ConnectInner() {
 export default function ConnectPage() {
   return (
     <Suspense fallback={
-      <main className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#F8F9FA' }}>
+      <main className="min-h-screen flex items-center justify-center bg-[#F8F9FA] dark:bg-gray-900">
         <div className="text-center p-8">
           <div className="w-12 h-12 border-4 border-rb-blue border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-rb-gray font-medium">Connecting you...</p>
+          <p className="text-rb-gray dark:text-gray-300 font-medium">Connecting you...</p>
         </div>
       </main>
     }>

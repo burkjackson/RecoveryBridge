@@ -4,6 +4,8 @@ import { useState, useEffect, useRef, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { TIME, SPECIALTY_TAGS } from '@/lib/constants'
+import { getActiveBlock } from '@/lib/blocks'
+import { errorMessage } from '@/lib/errors'
 import Image from 'next/image'
 import { Heading1, Body16, Body18 } from '@/components/ui/Typography'
 import Modal from '@/components/Modal'
@@ -45,6 +47,7 @@ export default function ListenersPage() {
 
   useEffect(() => {
     loadAvailableListeners()
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once on mount; the loaders it calls are stable for the life of the component
   }, [])
 
   // Real-time: refresh listener list when profiles change (role_state, heartbeat, etc.)
@@ -73,6 +76,7 @@ export default function ListenersPage() {
     return () => {
       supabase.removeChannel(channel)
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally keyed on supabase — adding the callbacks would tear down and rebuild this on every render
   }, [supabase])
 
   async function loadAvailableListeners() {
@@ -210,15 +214,11 @@ export default function ListenersPage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
 
-      // Check if user is blocked
-      const { data: blockCheck } = await supabase
-        .from('user_blocks')
-        .select('id, reason')
-        .eq('user_id', user.id)
-        .maybeSingle()
+      // Check if user is blocked (lifted and expired blocks don't count)
+      const blockCheck = await getActiveBlock(supabase, user.id)
 
       if (blockCheck) {
-        setBlockModal({ show: true, reason: blockCheck.reason })
+        setBlockModal({ show: true, reason: blockCheck.reason ?? '' })
         setConnecting(null)
         return
       }
@@ -254,9 +254,9 @@ export default function ListenersPage() {
 
       // Navigate to chat
       router.push(`/chat/${session.id}`)
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error creating session:', error)
-      setErrorModal({ show: true, message: error.message || 'An unexpected error occurred' })
+      setErrorModal({ show: true, message: errorMessage(error, 'An unexpected error occurred') })
     } finally {
       setConnecting(null)
       isConnecting.current = false

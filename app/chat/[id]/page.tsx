@@ -4,14 +4,25 @@ import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
-import { Heading1, Body16, Body18 } from '@/components/ui/Typography'
+import { Body16, Body18 } from '@/components/ui/Typography'
 import Modal from '@/components/Modal'
 import { SkeletonChatMessage } from '@/components/Skeleton'
 import ErrorState from '@/components/ErrorState'
 import { PrivacyBadge } from '@/components/Footer'
 import { TIME, VALIDATION, CONVERSATION_STARTERS, REACTIONS, containsCrisisLanguage } from '@/lib/constants'
 import { linkifyText } from '@/lib/linkify'
+import { syncSessionRoleStates } from '@/lib/sessionState'
+import { getActiveBlock } from '@/lib/blocks'
 import type { ChatMessage as Message, Session, MessageReaction as Reaction } from '@/lib/types/database'
+
+// The subset of a profile the chat header and profile modal render.
+interface OtherUserProfile {
+  display_name: string
+  bio: string | null
+  user_role: string | null
+  avatar_url: string | null
+  tagline: string | null
+}
 
 export default function ChatPage({ params }: { params: Promise<{ id: string }> }) {
   const [messages, setMessages] = useState<Message[]>([])
@@ -19,7 +30,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   const [session, setSession] = useState<Session | null>(null)
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [otherUserName, setOtherUserName] = useState('')
-  const [otherUserProfile, setOtherUserProfile] = useState<any>(null)
+  const [otherUserProfile, setOtherUserProfile] = useState<OtherUserProfile | null>(null)
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
   const [sessionId, setSessionId] = useState<string | null>(null)
@@ -42,6 +53,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   const [favoriteAdded, setFavoriteAdded] = useState(false)
   const [favoriteSaving, setFavoriteSaving] = useState(false)
   const [alreadyFavorited, setAlreadyFavorited] = useState(false)
+  const [favoriteError, setFavoriteError] = useState(false)
 
   // Report flow modal state
   const [reportModal, setReportModal] = useState(false)
@@ -103,6 +115,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
     if (sessionId) {
       loadSession()
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally keyed on sessionId — adding the callbacks would tear down and rebuild this on every render
   }, [sessionId])
 
   // Depend on session?.id (stable) rather than the whole session object, which is
@@ -115,6 +128,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
       const cleanup = subscribeToMessages()
       return cleanup
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally keyed on session?.id, currentUserId — adding the callbacks would tear down and rebuild this on every render
   }, [session?.id, currentUserId])
 
   // Polling fallback: realtime postgres_changes can silently drop INSERT
@@ -148,6 +162,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
 
     const pollInterval = setInterval(pollNewMessages, 3000)
     return () => clearInterval(pollInterval)
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally keyed on session?.id, session?.status, currentUserId — adding the callbacks would tear down and rebuild this on every render
   }, [session?.id, session?.status, currentUserId])
 
   // Keep the incremental-poll cursor on the newest message we have
@@ -164,16 +179,35 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
     prevMessageCountRef.current = messages.length
   }, [messages])
 
-  // Mark received messages as read when they appear
+  // Track whether this tab is actually on screen. A backgrounded tab keeps
+  // running on desktop (websocket alive, timers throttled), so without this a
+  // message would be marked "read" while nobody was looking — which both lies
+  // to the sender's read receipt and suppresses the unread-message push that
+  // /api/notifications/message decides from read_at.
+  const [isPageVisible, setIsPageVisible] = useState(
+    typeof document === 'undefined' ? true : document.visibilityState === 'visible'
+  )
+  useEffect(() => {
+    function onVisibilityChange() {
+      setIsPageVisible(document.visibilityState === 'visible')
+    }
+    document.addEventListener('visibilitychange', onVisibilityChange)
+    return () => document.removeEventListener('visibilitychange', onVisibilityChange)
+  }, [])
+
+  // Mark received messages as read once they've actually been seen — i.e. the
+  // message is on screen. Re-runs when the tab becomes visible again, so
+  // returning to a backgrounded chat marks the backlog read.
   useEffect(() => {
     // Only participants generate read receipts; an admin observing the live
     // chat must not mark the participants' messages as read.
     const viewerIsParticipant =
       currentUserId === session?.listener_id || currentUserId === session?.seeker_id
-    if (messages.length > 0 && currentUserId && session?.status === 'active' && viewerIsParticipant) {
+    if (messages.length > 0 && currentUserId && session?.status === 'active' && viewerIsParticipant && isPageVisible) {
       markMessagesAsRead()
     }
-  }, [messages, currentUserId, session?.status, session?.listener_id, session?.seeker_id])
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally keyed on messages, currentUserId, session?.status, session?.listener_id, session?.seeker_id, isPageVisible — adding the callbacks would tear down and rebuild this on every render
+  }, [messages, currentUserId, session?.status, session?.listener_id, session?.seeker_id, isPageVisible])
 
   // Close reaction picker when tapping outside
   useEffect(() => {
@@ -193,12 +227,11 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
 
       if (error) throw error
 
-      // Seeker goes offline; listener returns to available so they can take more sessions
-      if (session) {
-        await Promise.all([
-          supabase.from('profiles').update({ role_state: 'offline' }).eq('id', session.seeker_id),
-          supabase.from('profiles').update({ role_state: 'available' }).eq('id', session.listener_id),
-        ])
+      // Seeker goes offline; listener returns to available so they can take
+      // more sessions. Server-side: RLS only lets a client write its own row,
+      // so doing this from here left the other person in the wrong state.
+      if (sessionId) {
+        await syncSessionRoleStates(supabase, sessionId, 'end')
       }
 
       setInactivityModal(false)
@@ -206,7 +239,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
     } catch (error) {
       console.error('Error ending session:', error)
     }
-  }, [sessionId, session, router, supabase])
+  }, [sessionId, supabase])
 
   const dismissInactivityWarning = useCallback(() => {
     setInactivityModal(false)
@@ -254,15 +287,13 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
       }
       setCurrentUserId(user.id)
 
-      // Check if user is blocked
-      const { data: blockCheck } = await supabase
-        .from('user_blocks')
-        .select('id, reason')
-        .eq('user_id', user.id)
-        .maybeSingle()
+      // Check if user is blocked. getActiveBlock ignores lifted and expired
+      // blocks — this query used to match on user_id alone, so an unblocked
+      // person stayed locked out of chat forever.
+      const blockCheck = await getActiveBlock(supabase, user.id)
 
       if (blockCheck) {
-        setBlockModal({ show: true, reason: blockCheck.reason })
+        setBlockModal({ show: true, reason: blockCheck.reason ?? '' })
         return
       }
 
@@ -576,6 +607,31 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
     return remainMins > 0 ? `${hrs}h ${remainMins}m` : `${hrs}h`
   }
 
+  // Ping the other participant's device about a new message. Fire-and-forget:
+  // never blocks or fails the send.
+  //
+  // Passing the message id lets the server confirm the recipient isn't already
+  // looking at this chat before it pushes — it waits a beat and checks whether
+  // the message got marked read. That check is the reliable one; the service
+  // worker's visibility check is a fast path that iOS doesn't always honour.
+  async function notifyRecipient(messageId?: string) {
+    try {
+      const { data: { session: authSession } } = await supabase.auth.getSession()
+      const token = authSession?.access_token
+      if (!token || !sessionId) return
+      await fetch('/api/notifications/message', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ sessionId, messageId }),
+      })
+    } catch {
+      // Best-effort — realtime is still the primary delivery path in-app
+    }
+  }
+
   async function sendMessage(e: React.FormEvent) {
     e.preventDefault()
     const trimmed = newMessage.trim()
@@ -605,7 +661,8 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
       setSendError(false) // Clear any previous errors
       setLastActivityTime(Date.now()) // Reset inactivity timer
       setInactivityModal(false) // Dismiss warning if showing
-    } catch (error: any) {
+      notifyRecipient((inserted as Message | null)?.id) // Ping only if they're away from this chat
+    } catch (error: unknown) {
       console.error('Error sending message:', error)
       setSendError(true)
     } finally {
@@ -625,7 +682,8 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
       if (error) throw error
       if (inserted) mergeMessages([inserted as Message])
       setLastActivityTime(Date.now())
-    } catch (error: any) {
+      notifyRecipient((inserted as Message | null)?.id) // Ping only if they're away from this chat
+    } catch (error: unknown) {
       console.error('Error sending starter:', error)
       setSendError(true)
     } finally {
@@ -644,12 +702,11 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
 
       if (error) throw error
 
-      // Seeker goes offline; listener returns to available so they can take more sessions
-      if (session) {
-        await Promise.all([
-          supabase.from('profiles').update({ role_state: 'offline' }).eq('id', session.seeker_id),
-          supabase.from('profiles').update({ role_state: 'available' }).eq('id', session.listener_id),
-        ])
+      // Seeker goes offline; listener returns to available so they can take
+      // more sessions. Server-side: RLS only lets a client write its own row,
+      // so doing this from here left the other person in the wrong state.
+      if (sessionId) {
+        await syncSessionRoleStates(supabase, sessionId, 'end')
       }
 
       setFeedbackModal(true)
@@ -690,26 +747,42 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   async function addFavorite() {
     if (!session || !currentUserId || favoriteSaving) return
     setFavoriteSaving(true)
+    setFavoriteError(false)
     const otherUserId = currentUserId === session.listener_id ? session.seeker_id : session.listener_id
     setFavoriteAdded(true) // optimistic
-    try {
-      await supabase.from('user_favorites').insert({
-        user_id: currentUserId,
-        favorite_user_id: otherUserId,
-      })
-    } catch {
-      setFavoriteAdded(false) // roll back on error
-    } finally {
-      setFavoriteSaving(false)
-      setTimeout(() => returnToDashboard(), 800)
+
+    // supabase-js resolves with an { error } payload rather than throwing, so the
+    // insert has to be unwrapped to know whether the optimistic state holds.
+    const { error } = await supabase.from('user_favorites').insert({
+      user_id: currentUserId,
+      favorite_user_id: otherUserId,
+    })
+
+    // 23505 = unique violation, i.e. they were already a favorite (a race with the
+    // check in loadSession) — the outcome we wanted, so treat it as success.
+    if (error && error.code !== '23505') {
+      console.error('Error adding favorite:', error)
+      setFavoriteAdded(false) // roll back so the buttons come back
+      setFavoriteError(true)
     }
+    setFavoriteSaving(false)
   }
 
   // Seekers get a warm check-in banner when they return to the dashboard after a chat
-  function returnToDashboard() {
+  const returnToDashboard = useCallback(() => {
     const isSeeker = currentUserId === session?.seeker_id
     router.push(isSeeker ? '/dashboard?postChat=true' : '/dashboard')
-  }
+  }, [currentUserId, session, router])
+
+  // The favorite step's confirmation state leaves no button to press — it just
+  // promises "Returning to dashboard..." — so the navigation runs on a timer here.
+  // This covers both people who just saved a favorite and people who were already
+  // favorited, who previously had no path off this screen at all.
+  useEffect(() => {
+    if (!favoriteStep || (!alreadyFavorited && !favoriteAdded)) return
+    const redirect = setTimeout(returnToDashboard, TIME.POST_CHAT_REDIRECT_MS)
+    return () => clearTimeout(redirect)
+  }, [favoriteStep, alreadyFavorited, favoriteAdded, returnToDashboard])
 
   function skipFeedback() {
     setFeedbackModal(false)
@@ -937,7 +1010,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
             {/* Scope & safety notice — shown once at the top of the thread; scrolls away with the conversation */}
             <p className="text-xs text-center text-gray-400 dark:text-gray-300 max-w-md mx-auto leading-relaxed px-2 pb-1">
               <strong className="font-semibold text-gray-500 dark:text-gray-300">Peer support only</strong> — not a substitute for professional therapy, medical care, or emergency services. If you or someone else is in danger,{' '}
-              <a href="tel:988" className="underline">call or text 988</a> or text <strong>HOME</strong> to <strong>741741</strong>.
+              <a href="sms:988" className="underline">text</a> or <a href="tel:988" className="underline">call</a> 988 or <a href="sms:741741?&body=HOME" className="underline">text HOME to 741741</a>.
             </p>
 
             {messages.length === 0 ? (
@@ -992,7 +1065,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                             reactionPickerMessageId === message.id ? null : message.id
                           )
                         }}
-                        onTouchStart={(e) => {
+                        onTouchStart={() => {
                           longPressFiredRef.current = false
                           longPressTimerRef.current = setTimeout(() => {
                             longPressFiredRef.current = true
@@ -1132,9 +1205,9 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                 <p className="font-semibold mb-1">It sounds like things may be really hard right now. You don't have to face this alone.</p>
                 <p>
                   Reach a trained counselor 24/7:{' '}
-                  <a href="tel:988" className="underline font-bold">call or text 988</a>,{' '}
+                  <a href="sms:988" className="underline font-bold">text</a> or <a href="tel:988" className="underline font-bold">call</a> 988,{' '}
                   text <strong>HOME</strong> to{' '}
-                  <a href="sms:741741" className="underline font-bold">741741</a>, or{' '}
+                  <a href="sms:741741?&body=HOME" className="underline font-bold">741741</a>, or{' '}
                   <a href="tel:911" className="underline font-bold">call 911</a> in immediate danger.
                 </p>
               </div>
@@ -1529,6 +1602,11 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                     </div>
                   ) : (
                     <div className="space-y-3">
+                      {favoriteError && (
+                        <Body16 className="text-red-600 dark:text-red-400 text-sm">
+                          Couldn't save that favorite. Please try again.
+                        </Body16>
+                      )}
                       <button
                         onClick={addFavorite}
                         disabled={favoriteSaving}

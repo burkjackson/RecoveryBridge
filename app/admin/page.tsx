@@ -84,6 +84,7 @@ export default function AdminPage() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [contactedIds, setContactedIds] = useState<Set<string>>(new Set())
   const [selectedUserIds, setSelectedUserIds] = useState<Set<string>>(new Set())
+  const [selectedMissedIds, setSelectedMissedIds] = useState<Set<string>>(new Set())
 
   // Search/filter state
   const [reportSearch, setReportSearch] = useState('')
@@ -102,6 +103,7 @@ export default function AdminPage() {
   const [deleteUserModal, setDeleteUserModal] = useState({ show: false, step: 1, userId: '', displayName: '', confirmName: '' })
   const [resolutionModal, setResolutionModal] = useState({ show: false, reportId: '', notes: '' })
   const [outreachModal, setOutreachModal] = useState({ show: false, userId: '', userName: '', message: '', sending: false })
+  const [clearMissedModal, setClearMissedModal] = useState(false)
 
   // Transcript viewer
   const [transcriptConfirm, setTranscriptConfirm] = useState<{ show: boolean; sessionId: string; reportedUserId?: string; reportId?: string }>({ show: false, sessionId: '' })
@@ -120,6 +122,7 @@ export default function AdminPage() {
       const stored = localStorage.getItem('rb_contacted_signups')
       if (stored) setContactedIds(new Set(JSON.parse(stored)))
     } catch { /* ignore */ }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once on mount; the loaders it calls are stable for the life of the component
   }, [])
 
   useEffect(() => {
@@ -127,6 +130,7 @@ export default function AdminPage() {
       loadData()
       subscribeToUpdates()
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally keyed on isAdmin, activeTab — adding the callbacks would tear down and rebuild this on every render
   }, [isAdmin, activeTab])
 
   // Reload sign-ups when the date range changes (avoids re-subscribing).
@@ -144,7 +148,8 @@ export default function AdminPage() {
   function toggleSelect(id: string) {
     setSelectedIds(prev => {
       const next = new Set(prev)
-      next.has(id) ? next.delete(id) : next.add(id)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
       return next
     })
   }
@@ -187,7 +192,8 @@ export default function AdminPage() {
   function toggleUserSelect(id: string) {
     setSelectedUserIds(prev => {
       const next = new Set(prev)
-      next.has(id) ? next.delete(id) : next.add(id)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
       return next
     })
   }
@@ -196,6 +202,37 @@ export default function AdminPage() {
     const allIds = users.map(u => u.id)
     const allSelected = allIds.every(id => selectedUserIds.has(id))
     setSelectedUserIds(allSelected ? new Set() : new Set(allIds))
+  }
+
+  function toggleMissedSelect(id: string) {
+    setSelectedMissedIds(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  function toggleMissedSelectAll() {
+    const allIds = missedConnections.map(n => n.id)
+    const allSelected = allIds.length > 0 && allIds.every(id => selectedMissedIds.has(id))
+    setSelectedMissedIds(allSelected ? new Set() : new Set(allIds))
+  }
+
+  async function deleteMissedConnections() {
+    if (selectedMissedIds.size === 0) return
+    try {
+      await adminFetch({ action: 'delete_notices', noticeIds: [...selectedMissedIds] })
+      const count = selectedMissedIds.size
+      setSelectedMissedIds(new Set())
+      setClearMissedModal(false)
+      await loadMissedConnections()
+      setSuccessModal({ show: true, message: `Cleared ${count} entr${count !== 1 ? 'ies' : 'y'} from the list.` })
+    } catch (error) {
+      console.error('Error clearing missed connections:', error)
+      setClearMissedModal(false)
+      setErrorModal({ show: true, message: 'We couldn\'t clear these entries right now. Please try again in a moment.' })
+    }
   }
 
   function copySelectedUserEmails() {
@@ -1438,45 +1475,100 @@ export default function AdminPage() {
               {missedConnections.length === 0 ? (
                 <Body16 className="text-rb-gray">No missed connections recorded yet. 🎉</Body16>
               ) : (
-                <div className="space-y-3">
-                  {missedConnections.map((notice) => {
-                    const name = notice.recipient?.display_name || 'Unknown'
-                    const roleState = notice.recipient?.role_state
-                    const backOnline = roleState === 'available' || roleState === 'requesting'
-                    return (
-                      <div key={notice.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-                        <div className="flex items-start justify-between gap-3 flex-wrap">
-                          <div>
-                            <Body16 className="font-semibold text-rb-dark dark:text-gray-100">{name}</Body16>
-                            <Body16 className="text-sm text-rb-gray dark:text-gray-300">
-                              Couldn&rsquo;t connect on {new Date(notice.created_at).toLocaleString()}
-                            </Body16>
-                            <div className="flex flex-wrap gap-2 mt-2">
-                              <span className={`px-2 py-0.5 rounded-full text-xs ${
-                                notice.read_at
-                                  ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300'
-                                  : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
-                              }`}>
-                                {notice.read_at ? '✓ Saw our message' : 'Not seen yet'}
-                              </span>
-                              {backOnline && (
-                                <span className="px-2 py-0.5 rounded-full text-xs bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300">
-                                  🟢 Back online now
-                                </span>
-                              )}
+                <>
+                  {/* Selection toolbar */}
+                  <div className={`flex flex-wrap items-center gap-2 mb-3 p-3 rounded-lg transition-all ${
+                    selectedMissedIds.size > 0 ? 'bg-rb-blue-light dark:bg-gray-700 border border-rb-blue/20 dark:border-gray-600' : 'bg-gray-50 dark:bg-gray-700/50 border border-transparent'
+                  }`}>
+                    <label className="flex items-center gap-2 cursor-pointer select-none min-h-[36px] pr-3 border-r border-gray-200 dark:border-gray-600">
+                      <input
+                        type="checkbox"
+                        className="w-4 h-4 rounded accent-rb-blue"
+                        checked={missedConnections.length > 0 && missedConnections.every(n => selectedMissedIds.has(n.id))}
+                        onChange={toggleMissedSelectAll}
+                      />
+                      <span className="text-sm text-rb-gray dark:text-gray-300 whitespace-nowrap">
+                        {selectedMissedIds.size > 0 ? `${selectedMissedIds.size} selected` : 'Select all'}
+                      </span>
+                    </label>
+                    {selectedMissedIds.size > 0 ? (
+                      <>
+                        <button
+                          onClick={() => setClearMissedModal(true)}
+                          className="min-h-[36px] px-3 py-1.5 text-sm bg-red-500 text-white rounded-lg hover:bg-red-600 transition"
+                        >
+                          🗑️ Clear {selectedMissedIds.size} entr{selectedMissedIds.size !== 1 ? 'ies' : 'y'}
+                        </button>
+                        <button
+                          onClick={() => setSelectedMissedIds(new Set())}
+                          className="min-h-[36px] px-3 py-1.5 text-sm text-rb-gray hover:text-rb-dark transition"
+                        >
+                          Clear selection
+                        </button>
+                      </>
+                    ) : (
+                      <span className="text-xs text-rb-gray dark:text-gray-300">Select entries to clear them from this list</span>
+                    )}
+                  </div>
+
+                  <div className="space-y-3">
+                    {missedConnections.map((notice) => {
+                      const name = notice.recipient?.display_name || 'Unknown'
+                      const roleState = notice.recipient?.role_state
+                      const backOnline = roleState === 'available' || roleState === 'requesting'
+                      const selected = selectedMissedIds.has(notice.id)
+                      return (
+                        <div
+                          key={notice.id}
+                          onClick={() => toggleMissedSelect(notice.id)}
+                          className={`border rounded-lg p-4 cursor-pointer transition-colors ${
+                            selected
+                              ? 'bg-rb-blue-light dark:bg-gray-700 border-rb-blue/30 dark:border-gray-500'
+                              : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50'
+                          }`}
+                        >
+                          <div className="flex items-start gap-3">
+                            <input
+                              type="checkbox"
+                              className="w-4 h-4 rounded accent-rb-blue mt-1 flex-shrink-0"
+                              checked={selected}
+                              onChange={() => toggleMissedSelect(notice.id)}
+                              onClick={e => e.stopPropagation()}
+                            />
+                            <div className="flex-1 min-w-0 flex items-start justify-between gap-3 flex-wrap">
+                              <div>
+                                <Body16 className="font-semibold text-rb-dark dark:text-gray-100">{name}</Body16>
+                                <Body16 className="text-sm text-rb-gray dark:text-gray-300">
+                                  Couldn&rsquo;t connect on {new Date(notice.created_at).toLocaleString()}
+                                </Body16>
+                                <div className="flex flex-wrap gap-2 mt-2">
+                                  <span className={`px-2 py-0.5 rounded-full text-xs ${
+                                    notice.read_at
+                                      ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300'
+                                      : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
+                                  }`}>
+                                    {notice.read_at ? '✓ Saw our message' : 'Not seen yet'}
+                                  </span>
+                                  {backOnline && (
+                                    <span className="px-2 py-0.5 rounded-full text-xs bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300">
+                                      🟢 Back online now
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                              <button
+                                onClick={(e) => { e.stopPropagation(); setOutreachModal({ show: true, userId: notice.user_id, userName: name, message: OUTREACH_COPY.RECONNECT_OUTREACH_DRAFT, sending: false }) }}
+                                className="min-h-[44px] px-4 py-2 text-sm bg-rb-blue text-white rounded-lg hover:bg-rb-blue-hover transition whitespace-nowrap"
+                              >
+                                💬 Reach out
+                              </button>
                             </div>
                           </div>
-                          <button
-                            onClick={() => setOutreachModal({ show: true, userId: notice.user_id, userName: name, message: '', sending: false })}
-                            className="min-h-[44px] px-4 py-2 text-sm bg-rb-blue text-white rounded-lg hover:bg-rb-blue-hover transition whitespace-nowrap"
-                          >
-                            💬 Reach out
-                          </button>
                         </div>
-                      </div>
-                    )
-                  })}
-                </div>
+                      )
+                    })}
+                  </div>
+                </>
               )}
             </div>
           )}
@@ -1523,7 +1615,7 @@ export default function AdminPage() {
             value={outreachModal.message}
             onChange={(e) => setOutreachModal(prev => ({ ...prev, message: e.target.value }))}
             maxLength={OUTREACH_COPY.OUTREACH_MAX_LENGTH}
-            rows={4}
+            rows={6}
             autoFocus
             placeholder="We noticed you were looking for support earlier and we couldn't connect you — we're so sorry. We're here for you, and we'd love to help you connect. 💙"
             className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-rb-blue bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400"
@@ -1535,6 +1627,24 @@ export default function AdminPage() {
             <span className="text-xs text-amber-600 dark:text-amber-400">🔒 Admin action · logged</span>
           </div>
         </div>
+      </Modal>
+
+      {/* Clear Missed Connections Modal */}
+      <Modal
+        isOpen={clearMissedModal}
+        onClose={() => setClearMissedModal(false)}
+        title="Clear entries"
+        type="confirm"
+        onConfirm={deleteMissedConnections}
+        confirmText="Clear"
+        confirmStyle="danger"
+      >
+        <p>
+          Remove <strong>{selectedMissedIds.size}</strong> entr{selectedMissedIds.size !== 1 ? 'ies' : 'y'} from the &ldquo;Couldn&rsquo;t Connect&rdquo; list?
+        </p>
+        <p className="mt-2 text-sm text-rb-gray">
+          This only clears the admin record. It doesn&rsquo;t affect the person&rsquo;s account or any message already sent to them.
+        </p>
       </Modal>
 
       {/* Block User Modal */}

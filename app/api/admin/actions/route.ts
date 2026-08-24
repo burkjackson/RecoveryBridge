@@ -3,21 +3,9 @@ import { createClient } from '@supabase/supabase-js'
 import { sendReportResolvedToReporter, sendReportResolvedToReported } from '@/lib/email'
 import { sendPushToUser } from '@/lib/serverPush'
 import { OUTREACH_COPY } from '@/lib/constants'
+import { isRateLimited } from '@/lib/rateLimit'
 
-// 30 requests per admin per minute — generous for human use, blocks automation
-const RATE_LIMIT_WINDOW_MS = 60 * 1000
-const RATE_LIMIT_MAX = 30
-const rateLimitMap = new Map<string, number[]>()
-
-function isRateLimited(adminId: string): boolean {
-  const now = Date.now()
-  const timestamps = rateLimitMap.get(adminId) || []
-  const recent = timestamps.filter((t) => now - t < RATE_LIMIT_WINDOW_MS)
-  if (recent.length >= RATE_LIMIT_MAX) return true
-  recent.push(now)
-  rateLimitMap.set(adminId, recent)
-  return false
-}
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 async function getVerifiedAdmin(request: NextRequest) {
   const supabase = createClient(
@@ -49,7 +37,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error }, { status: error === 'Forbidden' ? 403 : 401 })
   }
 
-  if (isRateLimited(admin.id)) {
+  // 30/min is generous for a human clicking through the dashboard and
+  // still blocks scripted abuse.
+  if (isRateLimited('admin-actions', admin.id, 30, 60 * 1000)) {
     return NextResponse.json({ error: 'Too many requests. Please slow down.' }, { status: 429 })
   }
 
@@ -121,6 +111,12 @@ export async function POST(request: NextRequest) {
       const { userId, reason, blockType } = body
       if (!userId || !reason || !blockType) {
         return NextResponse.json({ error: 'userId, reason, and blockType required' }, { status: 400 })
+      }
+
+      // The id below is interpolated into a PostgREST `.or()` filter, where
+      // commas and dots are structural — validate before it gets there.
+      if (!UUID_RE.test(userId)) {
+        return NextResponse.json({ error: 'Invalid userId' }, { status: 400 })
       }
 
       const expiresAt = blockType === 'temporary'
@@ -277,10 +273,35 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: true, pushCount })
     }
 
+    if (action === 'delete_notices') {
+      const { noticeIds } = body
+      if (!Array.isArray(noticeIds) || noticeIds.length === 0) {
+        return NextResponse.json({ error: 'noticeIds required' }, { status: 400 })
+      }
+
+      // Scoped to reconnect notices so this can only clear the "Couldn't Connect" list.
+      const { error: deleteError } = await supabase
+        .from('user_notices')
+        .delete()
+        .in('id', noticeIds)
+        .eq('kind', 'reconnect')
+
+      if (deleteError) throw deleteError
+
+      await supabase.from('admin_logs').insert([{
+        admin_id: admin.id,
+        action_type: 'missed_connections_cleared',
+        details: { count: noticeIds.length },
+      }])
+
+      return NextResponse.json({ success: true })
+    }
+
     return NextResponse.json({ error: 'Unknown action' }, { status: 400 })
   } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : 'Internal server error'
+    // Log the detail, return a generic message — raw Postgres errors leak
+    // schema names to the client.
     console.error('Admin action error:', err)
-    return NextResponse.json({ error: msg }, { status: 500 })
+    return NextResponse.json({ error: 'Something went wrong.' }, { status: 500 })
   }
 }

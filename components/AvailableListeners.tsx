@@ -8,6 +8,8 @@ import { Body16, Body18 } from '@/components/ui/Typography'
 import ErrorState from '@/components/ErrorState'
 import Modal from '@/components/Modal'
 import { TIME, UI } from '@/lib/constants'
+import { syncSessionRoleStates } from '@/lib/sessionState'
+import { getActiveBlock } from '@/lib/blocks'
 import type { Profile } from '@/lib/types/database'
 
 interface Listener {
@@ -65,6 +67,7 @@ export default function AvailableListeners({ onCountChange, currentUserId, curre
     return () => {
       supabase.removeChannel(channel)
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally keyed on currentUserId — adding the callbacks would tear down and rebuild this on every render
   }, [currentUserId])
 
   async function loadAvailableListeners() {
@@ -198,15 +201,11 @@ export default function AvailableListeners({ onCountChange, currentUserId, curre
         return
       }
 
-      // Check if user is blocked
-      const { data: blockCheck } = await supabase
-        .from('user_blocks')
-        .select('id, reason')
-        .eq('user_id', user.id)
-        .maybeSingle()
+      // Check if user is blocked (lifted and expired blocks don't count)
+      const blockCheck = await getActiveBlock(supabase, user.id)
 
       if (blockCheck) {
-        setBlockModal({ show: true, reason: blockCheck.reason })
+        setBlockModal({ show: true, reason: blockCheck.reason ?? '' })
         return
       }
 
@@ -267,11 +266,9 @@ export default function AvailableListeners({ onCountChange, currentUserId, curre
       })
 
       // Mark both users as offline while in chat — seeker leaves seeking list,
-      // listener becomes unavailable to other seekers until the session ends
-      await supabase
-        .from('profiles')
-        .update({ role_state: 'offline' })
-        .in('id', [user.id, listenerId])
+      // listener becomes unavailable to other seekers until the session ends.
+      // Server-side: RLS blocks a client from writing the other person's row.
+      await syncSessionRoleStates(supabase, session.id, 'start')
 
       router.push(`/chat/${session.id}`)
     } catch (err) {
@@ -324,6 +321,12 @@ export default function AvailableListeners({ onCountChange, currentUserId, curre
     )
   }
 
+  // The "Online" tally should reflect everyone visible in this card, including
+  // the viewer's own "You" card — the query excludes their own row (.neq below),
+  // so add them back when they're currently available.
+  const isSelfAvailable = currentUserProfile?.role_state === 'available'
+  const onlineCount = listeners.length + (isSelfAvailable ? 1 : 0)
+
   // When the current user is available themselves, fall through to the main view
   // so we can show their own "You're visible" card even if no one else is online.
   if (listeners.length === 0 && currentUserProfile?.role_state !== 'available') {
@@ -347,7 +350,7 @@ export default function AvailableListeners({ onCountChange, currentUserId, curre
         <div className="flex items-center gap-2 px-3 py-1.5 bg-green-50 dark:bg-green-900/20 rounded-full border border-green-200 dark:border-green-800">
           <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
           <Body16 className="text-sm text-green-700 font-semibold">
-            {listeners.length} Online
+            {onlineCount} Online
           </Body16>
         </div>
       </div>

@@ -1,8 +1,7 @@
 import { escapeHtml } from '@/lib/email/escapeHtml'
 
-export function welcomeEmailHtml(displayName: string, userRole: string): string {
+export function welcomeEmailHtml(displayName: string): string {
   const firstName = escapeHtml(displayName.split(' ')[0] || displayName)
-  const isListener = userRole === 'professional'
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -334,7 +333,7 @@ export function welcomeEmailHtml(displayName: string, userRole: string): string 
                     <p style="margin:0 0 8px;font-size:15px;font-weight:700;color:#92400E;">Important: RecoveryBridge is peer support, not crisis intervention</p>
                     <p style="margin:0;font-size:14px;line-height:1.7;color:#78350F;">
                       If you're in crisis or immediate danger, please contact:
-                      <br><strong>988</strong> — Suicide &amp; Crisis Lifeline (call or text)
+                      <br><strong>988</strong> — Suicide &amp; Crisis Lifeline (text or call)
                       <br><strong>Text HOME to 741741</strong> — Crisis Text Line
                       <br><strong>911</strong> — Emergency services
                     </p>

@@ -79,6 +79,29 @@ export async function POST(request: NextRequest) {
     const isDev = process.env.NODE_ENV !== 'production'
     if (isDev) console.log('Starting session cleanup...')
 
+    // Retire temporary blocks that have run their course. The admin action
+    // stores expires_at but leaves is_active = true, and every read filters on
+    // is_active alone — without this sweep a 7-day block never ends.
+    const { data: expiredBlocks } = await supabase
+      .from('user_blocks')
+      .update({ is_active: false })
+      .eq('is_active', true)
+      .not('expires_at', 'is', null)
+      .lte('expires_at', new Date().toISOString())
+      .select('id')
+
+    if (expiredBlocks && expiredBlocks.length > 0 && isDev) {
+      console.log(`Expired ${expiredBlocks.length} temporary block(s)`)
+    }
+
+    // Prune the notification log. It exists to answer a question that needs
+    // weeks of data, not a permanent record of who was told that whom needed
+    // support.
+    await supabase
+      .from('notification_log')
+      .delete()
+      .lt('created_at', new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString())
+
     // Get all active sessions
     const { data: activeSessions, error: sessionsError } = await supabase
       .from('sessions')
@@ -98,7 +121,9 @@ export async function POST(request: NextRequest) {
         .from('profiles')
         .update({ role_state: 'offline' })
         .eq('role_state', 'requesting')
-        .lt('last_heartbeat_at', staleThreshold)
+        // `is.null` matters: a comparison against NULL is never true, so a
+        // profile stuck in 'requesting' with no heartbeat would never reset.
+        .or(`last_heartbeat_at.lt.${staleThreshold},last_heartbeat_at.is.null`)
         .select('id')
       if (staleRequesters && staleRequesters.length > 0) {
         await followUpMissedConnections(supabase, staleRequesters)
@@ -107,7 +132,8 @@ export async function POST(request: NextRequest) {
         success: true,
         message: 'No sessions to clean up',
         cleaned: 0,
-        staleSeekerReset: staleRequesters?.length ?? 0
+        staleSeekerReset: staleRequesters?.length ?? 0,
+        blocksExpired: expiredBlocks?.length ?? 0
       })
     }
 
@@ -183,7 +209,8 @@ export async function POST(request: NextRequest) {
       .from('profiles')
       .update({ role_state: 'offline' })
       .eq('role_state', 'requesting')
-      .lt('last_heartbeat_at', staleRequestingThreshold)
+      // See the note above: NULL heartbeats need an explicit branch.
+      .or(`last_heartbeat_at.lt.${staleRequestingThreshold},last_heartbeat_at.is.null`)
       .select('id')
 
     if (staleError) {
@@ -201,12 +228,13 @@ export async function POST(request: NextRequest) {
         : 'No stale sessions to close',
       cleaned: sessionsToClose.length,
       sessionIds: sessionsToClose.length > 0 ? sessionsToClose : undefined,
-      staleSeekerReset: staleRequesters?.length ?? 0
+      staleSeekerReset: staleRequesters?.length ?? 0,
+      blocksExpired: expiredBlocks?.length ?? 0
     })
 
   } catch (error: unknown) {
     console.error('Session cleanup error:', error)
-    return NextResponse.json({ error: error instanceof Error ? error.message : 'Cleanup failed' }, { status: 500 })
+    return NextResponse.json({ error: 'Cleanup failed' }, { status: 500 })
   }
 }
 

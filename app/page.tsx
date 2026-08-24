@@ -4,17 +4,18 @@ import Link from 'next/link'
 import Footer from '@/components/Footer'
 import ProductPreview from '@/components/ProductPreview'
 import FaqAccordion from '@/components/FaqAccordion'
+import { faqs } from '@/lib/faqs'
 
 export const metadata: Metadata = {
-  title: 'RecoveryBridge — Free Peer Support for Addiction Recovery',
-  description: 'Connect anonymously with volunteer listeners who truly understand recovery. Free, private, peer-to-peer chat support available 24/7. No appointments. No waiting rooms.',
+  title: 'Free Anonymous Recovery Chat & Peer Support | RecoveryBridge',
+  description: "Talk free and anonymously with someone in recovery who gets it — private one-on-one recovery chat and peer support, any time. No cost, no sales pitch.",
   keywords: ['addiction recovery support', 'peer support app', 'online recovery support', 'substance abuse support', 'free recovery chat', 'anonymous recovery support', 'peer-to-peer support', 'recovery community'],
   alternates: {
     canonical: 'https://recoverybridge.app',
   },
   openGraph: {
-    title: 'RecoveryBridge — Free Peer Support for Addiction Recovery',
-    description: 'Connect anonymously with volunteer listeners who truly understand recovery. Free, private, peer-to-peer support available 24/7.',
+    title: 'Free Anonymous Recovery Chat & Peer Support | RecoveryBridge',
+    description: "Talk free and anonymously with someone in recovery who gets it — private one-on-one recovery chat and peer support, any time. No cost, no sales pitch.",
     url: 'https://recoverybridge.app',
     siteName: 'RecoveryBridge',
     images: [
@@ -22,7 +23,7 @@ export const metadata: Metadata = {
         url: 'https://recoverybridge.app/logo-with-text.png',
         width: 1280,
         height: 609,
-        alt: 'RecoveryBridge — Free Peer Support for Addiction Recovery',
+        alt: 'RecoveryBridge — free, anonymous recovery chat and peer support',
       },
     ],
     type: 'website',
@@ -30,8 +31,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'RecoveryBridge — Free Peer Support for Addiction Recovery',
-    description: 'Connect anonymously with volunteer listeners who truly understand recovery. Free, private, peer-to-peer support available 24/7.',
+    title: 'Free Anonymous Recovery Chat & Peer Support | RecoveryBridge',
+    description: "Talk free and anonymously with someone in recovery who gets it — private one-on-one recovery chat and peer support, any time. No cost, no sales pitch.",
     images: ['https://recoverybridge.app/logo-with-text.png'],
   },
 }
@@ -69,12 +70,32 @@ const jsonLd = {
   ],
 }
 
+// FAQPage structured data — makes the landing-page Q&As eligible for rich
+// results (expandable answers under the search listing, "People also ask").
+// Built from the same lib/faqs source the visible accordion renders.
+const faqJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: faqs.map((faq) => ({
+    '@type': 'Question',
+    name: faq.q,
+    acceptedAnswer: {
+      '@type': 'Answer',
+      text: faq.a,
+    },
+  })),
+}
+
 export default function Home() {
   return (
     <main id="main-content" className="min-h-screen flex flex-col bg-gradient-to-br from-rb-blue-light via-rb-purple-light to-rb-blue-light dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 animate-gradient">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
       />
 
       {/* Top bar */}
@@ -102,7 +123,7 @@ export default function Home() {
               className="mx-auto mb-5 max-w-[90%] h-auto dark:brightness-0 dark:invert"
             />
             <h1 className="text-heading-2 sm:text-heading-1 text-rb-dark dark:text-gray-100 mb-2">
-              Free Peer Support for Addiction Recovery
+              Free, Anonymous Recovery Chat &amp; Peer Support
             </h1>
             <p className="text-xl sm:text-2xl text-rb-gray dark:text-gray-300 italic mb-4">
               &ldquo;Connection is the antidote to addiction&rdquo;
@@ -209,6 +230,15 @@ export default function Home() {
           {/* FAQ Accordion */}
           <FaqAccordion />
 
+          {/* Contextual internal link — helps the support landing page get
+              crawled and pass authority from the homepage */}
+          <p className="max-w-2xl mx-auto mb-12 text-center text-base text-rb-gray dark:text-gray-300">
+            Looking for someone to talk to right now?{' '}
+            <Link href="/support/talk-to-someone-in-recovery" className="text-rb-blue dark:text-blue-300 font-semibold underline hover:text-rb-blue-hover">
+              Talk to someone in recovery — free and anonymous
+            </Link>
+          </p>
+
           {/* Stories Section */}
           <div className="max-w-3xl mx-auto mb-12">
             <div className="bg-gradient-to-br from-[#E8EEF2] to-white dark:from-gray-800 dark:to-gray-800 rounded-2xl p-8 border border-[#C8D8E4] dark:border-gray-700 shadow-lg text-center">
@@ -312,7 +342,7 @@ export default function Home() {
             </p>
             <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-orange-200">
               <p className="text-sm text-slate-600 dark:text-gray-300 leading-relaxed">
-                If you&apos;re in crisis: <strong className="text-slate-600 dark:text-gray-300">Call 988</strong> (Suicide &amp; Crisis Lifeline) or <strong className="text-slate-600 dark:text-gray-300">Text HOME to 741741</strong> (Crisis Text Line)
+                If you&apos;re in crisis: <strong className="text-slate-600 dark:text-gray-300">Text or call 988</strong> (Suicide &amp; Crisis Lifeline) or <strong className="text-slate-600 dark:text-gray-300">Text HOME to 741741</strong> (Crisis Text Line)
               </p>
             </div>
           </div>

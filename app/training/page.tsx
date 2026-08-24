@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
+import { errorMessage } from '@/lib/errors'
 import { useRouter } from 'next/navigation'
 import { Heading1, Body16, Body18 } from '@/components/ui/Typography'
 
@@ -105,7 +106,7 @@ const TRAINING_SECTIONS = [
     intro: "Occasionally someone may reach out in a moment of serious crisis. You don't need to have all the answers — but you do need to know what to do.",
     points: [
       'If someone mentions self-harm, suicidal thoughts, or being in immediate danger, take it seriously.',
-      'Gently share crisis resources: call or text 988, text HOME to 741741 (Crisis Text Line), or call 911.',
+      'Gently share crisis resources: text or call 988, text HOME to 741741 (Crisis Text Line), or call 911.',
       "You are not responsible for someone's safety — trained professionals are. Your role is to connect them to help.",
       "It's okay — and sometimes necessary — to end a session and encourage someone to call for immediate support.",
     ],
@@ -128,6 +129,7 @@ export default function TrainingPage() {
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (user) setUserId(user.id)
     })
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once on mount; the loaders it calls are stable for the life of the component
   }, [])
 
   async function handleComplete() {
@@ -141,8 +143,8 @@ export default function TrainingPage() {
         .eq('id', userId)
       if (error) throw error
       router.push('/dashboard?trainingComplete=true')
-    } catch (e: any) {
-      setError(e.message)
+    } catch (e: unknown) {
+      setError(errorMessage(e, 'Could not save your progress. Please try again.'))
       setSaving(false)
     }
   }

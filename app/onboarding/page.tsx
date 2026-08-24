@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { errorMessage } from '@/lib/errors'
 import { useRouter } from 'next/navigation'
 import { Heading1, Body16, Body18 } from '@/components/ui/Typography'
 import TagSelector from '@/components/TagSelector'
@@ -125,7 +126,7 @@ const TRAINING_SECTIONS = [
     intro: "Occasionally someone may reach out in a moment of serious crisis. You don't need to have all the answers — but you do need to know what to do.",
     points: [
       'If someone mentions self-harm, suicidal thoughts, or being in immediate danger, take it seriously.',
-      'Gently share crisis resources: call or text 988, text HOME to 741741 (Crisis Text Line), or call 911.',
+      'Gently share crisis resources: text or call 988, text HOME to 741741 (Crisis Text Line), or call 911.',
       'You are not responsible for someone\'s safety — trained professionals are. Your role is to connect them to help.',
       "It's okay — and sometimes necessary — to end a session and encourage someone to call for immediate support.",
     ],
@@ -160,6 +161,7 @@ export default function OnboardingPage() {
 
   useEffect(() => {
     checkUser()
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once on mount; the loaders it calls are stable for the life of the component
   }, [])
 
   const steps = getSteps(intent)
@@ -312,8 +314,8 @@ export default function OnboardingPage() {
       }
 
       router.push('/dashboard')
-    } catch (error: any) {
-      setError(error.message)
+    } catch (error: unknown) {
+      setError(errorMessage(error, 'Could not save your profile. Please try again.'))
     } finally {
       setSaving(false)
     }
@@ -325,6 +327,9 @@ export default function OnboardingPage() {
 
         {/* Branding */}
         <div className="text-center mb-6">
+{/* eslint-disable-next-line @next/next/no-img-element -- intrinsically sized
+              logo from /public; next/image wants fixed dimensions, which fights the
+              responsive sizing used here */}
           <img
             src="/logo-with-text.png"
             alt="RecoveryBridge Logo"

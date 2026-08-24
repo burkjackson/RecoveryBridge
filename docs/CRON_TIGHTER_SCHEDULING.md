@@ -1,6 +1,14 @@
 # Cron: Tighter, More Reliable Scheduling (draft / for later)
 
 > **Status:** Draft — not yet implemented. Written 2026-07-24.
+>
+> **Re-measured 2026-08-24:** the throttling described below has eased but not gone.
+> Over a 10.8-hour sample of 30 consecutive runs, gaps were min 14m / median 21m /
+> max 35m — far better than the 1–2.5 hours seen in July, yet **18 of 29 gaps still
+> exceeded 20 minutes**, which is the lookback window `scheduled-availability` uses.
+> So availability pushes are still dropped on a majority of intervals. The premise
+> below is stale; the problem it describes is not.
+>
 > **Why:** GitHub Actions is currently the real cron driver (`.github/workflows/cron.yml`,
 > nominal `*/15`). In practice GitHub throttles and drops scheduled runs — observed
 > cadence is **1–2.5 hours between runs, not 15 minutes**, with occasional GitHub-side

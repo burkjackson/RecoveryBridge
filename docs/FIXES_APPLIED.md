@@ -1,5 +1,9 @@
 # Fixes Applied - February 10, 2026
 
+> **Historical snapshot — February 10, 2026. Not current state.**  
+> A record of fixes made on that date.
+
+
 This document summarizes all the fixes applied based on the code review findings.
 
 ## ✅ Fixed Issues

@@ -33,11 +33,12 @@ export default function OfflinePage() {
           <p className="text-sm font-semibold text-amber-800 mb-1">Need immediate support?</p>
           <ul className="text-sm text-amber-700 space-y-1">
             <li>
-              <a href="tel:988" className="underline font-medium">Call or text 988</a>
+              <a href="sms:988" className="underline font-medium">Text 988</a>{' '}or{' '}
+              <a href="tel:988" className="underline font-medium">call</a>
               {' '}— Suicide &amp; Crisis Lifeline
             </li>
             <li>
-              Text <strong>HOME</strong> to <strong>741741</strong> — Crisis Text Line
+              <a href="sms:741741?&body=HOME" className="underline font-medium">Text HOME to 741741</a> — Crisis Text Line
             </li>
           </ul>
         </div>

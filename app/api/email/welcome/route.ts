@@ -2,16 +2,18 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { Resend } from 'resend'
 import { welcomeEmailHtml } from '@/lib/email/welcomeEmailHtml'
-
-const resend = new Resend(process.env.RESEND_API_KEY)
-
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+import { isRateLimited } from '@/lib/rateLimit'
 
 export async function POST(request: NextRequest) {
   try {
+    // Constructed per request: at module scope, a missing key fails the whole
+    // production build during "Collecting page data" rather than just this route.
+    const resend = new Resend(process.env.RESEND_API_KEY)
+    const supabaseAdmin = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    )
+
     const authHeader = request.headers.get('authorization')
     const token = authHeader?.replace('Bearer ', '')
 
@@ -25,7 +27,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { displayName, userRole } = await request.json()
+    // One welcome email per account, give or take a retry — without this an
+    // authenticated caller can loop the endpoint and burn the Resend quota.
+    if (isRateLimited('welcome-email', user.id, 2, 60 * 60 * 1000)) {
+      return NextResponse.json({ error: 'Welcome email already sent' }, { status: 429 })
+    }
+
+    const { displayName } = await request.json()
 
     if (!user.email) {
       return NextResponse.json({ error: 'No email address found' }, { status: 400 })
@@ -36,7 +44,7 @@ export async function POST(request: NextRequest) {
       replyTo: 'admin@recoverybridge.app',
       to: user.email,
       subject: 'Welcome to RecoveryBridge 💙',
-      html: welcomeEmailHtml(displayName || 'there', userRole || ''),
+      html: welcomeEmailHtml(displayName || 'there'),
     })
 
     if (sendError) {

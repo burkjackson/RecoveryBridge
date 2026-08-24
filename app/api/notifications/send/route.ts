@@ -3,23 +3,17 @@ import webpush from 'web-push'
 import { createClient } from '@supabase/supabase-js'
 import { sendSupportRequestEmail } from '@/lib/email'
 import { isInQuietHours } from '@/lib/timeWindows'
+import { TIME } from '@/lib/constants'
+import { isRateLimited } from '@/lib/rateLimit'
 // TODO: Re-enable when Twilio verification is complete
 // import { sendSMS } from '@/lib/sms'
 
-// Simple in-memory rate limiter: max 3 requests per user per 60 seconds
-const RATE_LIMIT_WINDOW_MS = 60 * 1000
-const RATE_LIMIT_MAX = 3
-const rateLimitMap = new Map<string, number[]>()
-
-function isRateLimited(userId: string): boolean {
-  const now = Date.now()
-  const timestamps = rateLimitMap.get(userId) || []
-  const recent = timestamps.filter((t) => now - t < RATE_LIMIT_WINDOW_MS)
-  if (recent.length >= RATE_LIMIT_MAX) return true
-  recent.push(now)
-  rateLimitMap.set(userId, recent)
-  return false
-}
+// This route paces itself: up to 4s between the favourite and general push
+// batches, and again between the email batches, on top of the web-push and
+// Resend round trips. State the budget rather than inheriting the platform
+// default — a timeout here means the email fallback never runs and a seeker's
+// request reaches nobody.
+export const maxDuration = 30
 
 export async function POST(request: NextRequest) {
   try {
@@ -57,20 +51,24 @@ export async function POST(request: NextRequest) {
     }
 
     // Rate limit check
-    if (isRateLimited(user.id)) {
+    // 3 support broadcasts per minute is plenty for a real person.
+    if (isRateLimited('notifications-send', user.id, 3, 60 * 1000)) {
       return NextResponse.json({ error: 'Too many requests. Please wait before trying again.' }, { status: 429 })
     }
 
-    // Parse and validate request body
+    // Parse and validate request body.
+    // Note: favourites are NOT read from the body. The client used to send
+    // them, but its list is built from an RLS-filtered query that drops any
+    // favourite who isn't currently 'available' — so an always-available
+    // listener who was offline silently lost their favourite-first priority.
+    // They're resolved from the database below instead.
     let seekerId: string
     let isRenotification = false
-    let clientFavoriteIds: string[] = []
     let targetListenerId: string | undefined
     try {
       const body = await request.json()
       seekerId = body.seekerId
       isRenotification = body.isRenotification === true
-      clientFavoriteIds = Array.isArray(body.favoriteListenerIds) ? body.favoriteListenerIds : []
       targetListenerId = typeof body.targetListenerId === 'string' ? body.targetListenerId : undefined
     } catch {
       return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
@@ -203,7 +201,7 @@ export async function POST(request: NextRequest) {
     // 2. Users with "always_available" enabled (should receive notifications anytime)
     const { data: listeners, error: listenersError } = await supabase
       .from('profiles')
-      .select('id, display_name, email, email_notifications_enabled, role_state, always_available, quiet_hours_enabled, quiet_hours_start, quiet_hours_end, quiet_hours_timezone, phone_number, sms_notifications_enabled')
+      .select('id, display_name, email, email_notifications_enabled, role_state, always_available, last_heartbeat_at, quiet_hours_enabled, quiet_hours_start, quiet_hours_end, quiet_hours_timezone, phone_number, sms_notifications_enabled')
       .or('role_state.eq.available,always_available.eq.true')
       .neq('id', seekerId)
 
@@ -244,16 +242,16 @@ export async function POST(request: NextRequest) {
     const activeSubs = subscriptions || []
     console.log(`[notify] Found ${activeSubs.length} push subscription(s) for ${activeListeners.length} active listener(s)`)
 
-    // Server-side verify favorite listener IDs (never trust client list)
-    let verifiedFavoriteIds = new Set<string>()
-    if (clientFavoriteIds.length > 0) {
-      const { data: favRows } = await supabase
-        .from('user_favorites')
-        .select('favorite_user_id')
-        .eq('user_id', seekerId)
-        .in('favorite_user_id', clientFavoriteIds)
-      verifiedFavoriteIds = new Set((favRows || []).map((r: { favorite_user_id: string }) => r.favorite_user_id))
-    }
+    // Who does this seeker consider a favourite? Read with the service key so
+    // the answer doesn't depend on what the seeker can currently see of them.
+    const { data: favRows } = await supabase
+      .from('user_favorites')
+      .select('favorite_user_id')
+      .eq('user_id', seekerId)
+      .in('favorite_user_id', listenerIds)
+    const verifiedFavoriteIds = new Set(
+      (favRows || []).map((r: { favorite_user_id: string }) => r.favorite_user_id)
+    )
 
     // Split subscriptions into favorites and general batches
     const favoriteSubscriptions = activeSubs.filter(sub => verifiedFavoriteIds.has(sub.user_id))
@@ -355,6 +353,7 @@ export async function POST(request: NextRequest) {
 
     // Email fallback: listeners who opted in but didn't receive a push notification
     let emailCount = 0
+    const emailedUserIds = new Set<string>()
     if (process.env.RESEND_API_KEY) {
       const emailEligible = activeListeners.filter((l: { id: string; email: string; email_notifications_enabled: boolean }) =>
         l.email_notifications_enabled &&
@@ -367,13 +366,16 @@ export async function POST(request: NextRequest) {
 
       async function sendEmailBatch(batch: typeof emailEligible, isFavorite: boolean) {
         const results = await Promise.all(
-          batch.map((l: { email: string; display_name: string }) =>
+          batch.map((l: { id: string; email: string; display_name: string }) =>
             sendSupportRequestEmail({
               to: l.email,
               listenerName: l.display_name,
               seekerName,
               isFavorite,
               isRenotification,
+            }).then((r) => {
+              if (r.success) emailedUserIds.add(l.id)
+              return r
             })
           )
         )
@@ -389,6 +391,36 @@ export async function POST(request: NextRequest) {
         }
         emailCount += await sendEmailBatch(generalEmailListeners, false)
       }
+    }
+
+    // Record who was reached, so the "does notifying an absent listener work?"
+    // question can be settled with data (supabase/queries/push_conversion.sql).
+    // Best-effort: a logging failure must never fail a support request.
+    try {
+      const staleBefore = Date.now() - TIME.HEARTBEAT_THRESHOLD_MS
+      const wasStale = (l: { role_state: string | null; last_heartbeat_at: string | null }) =>
+        l.role_state === 'available' &&
+        (!l.last_heartbeat_at || new Date(l.last_heartbeat_at).getTime() < staleBefore)
+
+      const rows = activeListeners
+        .filter((l) => pushSuccessUserIds.has(l.id) || emailedUserIds.has(l.id))
+        .flatMap((l) => {
+          const channels: string[] = []
+          if (pushSuccessUserIds.has(l.id)) channels.push('push')
+          if (emailedUserIds.has(l.id)) channels.push('email')
+          return channels.map((channel) => ({
+            listener_id: l.id,
+            seeker_id: seekerId,
+            channel,
+            listener_state: l.role_state,
+            listener_stale: wasStale(l),
+            is_renotification: isRenotification,
+          }))
+        })
+
+      if (rows.length > 0) await supabase.from('notification_log').insert(rows)
+    } catch (logError) {
+      console.error('[notify] Could not record notification log:', logError)
     }
 
     return NextResponse.json({

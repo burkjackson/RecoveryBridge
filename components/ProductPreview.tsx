@@ -17,6 +17,8 @@ export default function ProductPreview() {
 
     const previouslyFocused = document.activeElement as HTMLElement | null
     const dialog = dialogRef.current
+    // Capture the trigger now — see the note in CrisisResources.
+    const trigger = triggerRef.current
     document.body.style.overflow = 'hidden'
     dialog?.querySelector<HTMLElement>('button, a[href]')?.focus()
 
@@ -45,7 +47,7 @@ export default function ProductPreview() {
     return () => {
       document.removeEventListener('keydown', handleKeyDown)
       document.body.style.overflow = ''
-      ;(previouslyFocused ?? triggerRef.current)?.focus()
+      ;(previouslyFocused ?? trigger)?.focus()
     }
   }, [open])
 

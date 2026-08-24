@@ -49,6 +49,7 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
     checkNotificationStatus()
     checkPWAMode()
     checkIfMobile()
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once on mount; the loaders it calls are stable for the life of the component
   }, [])
 
   // Sync alwaysAvailable state when profile changes
@@ -56,6 +57,7 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
     if (profile) {
       setAlwaysAvailable(profile.always_available || false)
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally keyed on profile?.always_available — adding the callbacks would tear down and rebuild this on every render
   }, [profile?.always_available])
 
   // Sync quiet hours state when profile changes + auto-detect timezone
@@ -70,6 +72,7 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
       const matched = TIMEZONES.find(t => t.value === tz)
       setQuietHoursTimezone(matched ? matched.value : TIMEZONES[0].value)
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally keyed on profile?.quiet_hours_enabled, profile?.quiet_hours_start, profile?.quiet_hours_end, profile?.quiet_hours_timezone — adding the callbacks would tear down and rebuild this on every render
   }, [profile?.quiet_hours_enabled, profile?.quiet_hours_start, profile?.quiet_hours_end, profile?.quiet_hours_timezone])
 
   const checkPWAMode = () => {
