@@ -1,6 +1,6 @@
 # RecoveryBridge — Project Status Document
 
-> **Last Updated:** July 2026
+> **Last Updated:** August 2026
 > **Purpose:** Get any Claude session up to speed on the entire app — architecture, features, current state, and known issues.
 
 ---
@@ -40,6 +40,8 @@ app/
 │   ├── cleanup-sessions/route.ts     # POST/GET: Auto-close stale sessions, reset stale seekers (cron)
 │   ├── scheduled-availability/route.ts # POST/GET: Push "your support time is starting" (cron)
 │   ├── notifications/send/route.ts   # POST: Push (+email fallback) to available listeners
+│   ├── notifications/message/route.ts # POST: Push a new chat message to the other participant (if they aren't looking)
+│   ├── contact/route.ts              # POST: Public contact form → email (no auth; per-IP rate limit)
 │   ├── account/export/route.ts       # GET: Self-service data export (CCPA/GDPR)
 │   ├── email/welcome/route.ts        # POST: Send welcome email (Resend)
 │   ├── webhooks/new-user/route.ts    # POST: Supabase webhook — admin new-user email (mostly superseded by notify-signup)
@@ -48,8 +50,8 @@ app/
 │       ├── delete-user/route.ts      # POST: Admin user deletion
 │       ├── notify-signup/route.ts    # POST: Admin signup-alert email (called from onboarding completion)
 │       └── send-welcome-bulk/route.ts # POST: Bulk welcome emails
-├── admin/page.tsx                    # Admin moderation dashboard (~1,500 lines)
-├── chat/[id]/page.tsx                # Real-time 1:1 chat (~1,500 lines)
+├── admin/page.tsx                    # Admin moderation dashboard (~1,800 lines)
+├── chat/[id]/page.tsx                # Real-time 1:1 chat (~1,700 lines)
 ├── connect/page.tsx                  # Notification-tap landing: verifies seeker, creates session, → /chat
 ├── dashboard/page.tsx                # Main hub: role selection, listeners, seekers, notifications
 ├── history/page.tsx                  # Past sessions + feedback/thank-you notes
@@ -59,6 +61,7 @@ app/
 ├── onboarding/page.tsx               # Post-signup setup (role, bio, tags, referral source, guidelines)
 ├── login/ signup/ forgot-password/ reset-password/  # Auth pages
 ├── contact/ donate/ safety/ terms/ privacy/ offline/ # Static-ish pages
+├── support/                          # 7 public SEO landing pages (peer support, recovery chat, etc.)
 ├── layout.tsx                        # Root layout: PWA metadata, CrisisResources, theme, service worker
 ├── page.tsx                          # Landing page (FAQ accordion, product preview popup)
 └── sitemap.ts                        # Generated sitemap
@@ -74,27 +77,34 @@ components/
 ├── FaqAccordion.tsx / ProductPreview.tsx / SocialIcons.tsx # Landing page
 ├── AvatarUpload.tsx                  # Image upload with crop (Supabase Storage)
 ├── CrisisResources.tsx               # Floating 988/crisis button (always visible)
+├── NoticeBanner.tsx                  # Surfaces unread in-app notices (user_notices) on the dashboard
 ├── TagSelector.tsx / Modal.tsx / ErrorState.tsx / Skeleton.tsx / Footer.tsx
 ├── ServiceWorkerRegistration.tsx / SkipLink.tsx
 └── ui/Typography.tsx                 # Semantic type scale (Heading1..., Body16, Body18)
 
 lib/
 ├── constants.ts                      # Timing, validation, tags, reactions, timezones, parseReferralSource
-├── email.ts                          # Resend senders: new-user alert, support-request fallback, report-resolved, story emails
+├── email.ts                          # Resend senders: new-user alert, support-request fallback, report-resolved, contact form, story emails
 ├── email/welcomeEmailHtml.ts         # Welcome email template
+├── email/escapeHtml.ts               # HTML escaping for user-supplied values in emails
+├── favorites.ts                      # normalizeFavorites() — RLS-safe favorite handling (see Known Issues #9)
+├── timeWindows.ts                    # Quiet-hours + availability-window math (unit tested)
+├── serverPush.ts                     # Shared server-side web-push sender
+├── faqs.ts                           # Landing page FAQ content
 ├── pushNotifications.ts              # Web Push subscribe/unsubscribe
 ├── linkify.tsx                       # Safe URL autolinking in chat
 ├── slugify.ts / sms.ts / env.ts
 ├── supabase/client.ts, server.ts
-└── types/database.ts
+├── types/database.ts
+└── *.test.ts                         # Vitest: constants, favorites, timeWindows
 
 supabase/
-├── migrations/                       # 001–024, numbered (see below)
+├── migrations/                       # 001–026, numbered (note: two files share 004)
 └── legacy/                           # Pre-migration setup SQL (historical reference only)
 
 docs/                                 # Setup guides, audits, design assets (historical)
 scripts/                              # Ad-hoc admin scripts (get-user-emails.js, DEPLOY.sh)
-public/sw.js                          # Service worker (push, cache — bump CACHE_NAME on breaking changes; currently v9)
+public/sw.js                          # Service worker (push, cache — bump CACHE_NAME on breaking changes; currently v11)
 middleware.ts                         # Route protection (auth + admin check)
 .github/workflows/cron.yml            # 15-min pings to cron API routes
 .github/workflows/ci.yml              # Typecheck, lint, test, build on every push (no secrets needed)
@@ -104,7 +114,7 @@ middleware.ts                         # Route protection (auth + admin check)
 
 ## Database Schema (high level)
 
-Migrations live in `supabase/migrations/` (001–024) and are the source of truth. Summary:
+Migrations live in `supabase/migrations/` (001–026) and are the source of truth. Summary:
 
 ### profiles (central user table)
 Core: `id` (= auth.users.id), `display_name` (unique), `email`, `bio`, `tagline`, `avatar_url`, `tags` (max 5), `is_admin`.
@@ -113,13 +123,14 @@ Notifications: `always_available`, `quiet_hours_*` (enabled/start/end/timezone),
 Compliance/audit: `referral_source` (010, free text since 018), `listener_training_completed_at` (019), `consent_version` + `consent_accepted_at` (021), `age_confirmed` (022), `health_data_consent` + `_at` (023, WA My Health My Data).
 
 ### Other tables
-- **sessions** — listener_id, seeker_id, status (`active`/`ended`), ended_at
+- **sessions** — listener_id, seeker_id, status (`active`/`ended`), ended_at. A unique partial index (025) enforces **one active session per seeker**, so a duplicate insert fails with `23505` and callers fall back to "someone else just connected"
 - **messages** — session_id, sender_id, content (max 2000), read_at (002, read receipts)
 - **message_reactions** — 8 emoji types (003/004)
 - **session_feedback** — helpful boolean + `thank_you_note` (009, max 300 chars, shown in /history)
 - **user_favorites** (007) — favorite contacts from past sessions; favorites get notified first
 - **reports / user_blocks / admin_logs** — moderation + audit trail
 - **push_subscriptions** — Web Push endpoints per user/device
+- **user_notices** (026) — in-app messages to a *user* (not an email): `kind` is `reconnect` (auto follow-up when a seeker never got connected) or `outreach` (personal note from an admin). Surfaced by `NoticeBanner` on the dashboard; the admin "Couldn't Connect" tab reads the `reconnect` rows
 - **blog/story tables** (011–015) — **legacy**: stories moved to Ghost at stories.recoverybridge.app; no in-app UI reads them
 
 All tables have RLS. Admin mutations go through `/api/admin/*` routes (Bearer token → `getUser` → `is_admin` check), not client-side Supabase.
@@ -153,8 +164,10 @@ All tables have RLS. Admin mutations go through `/api/admin/*` routes (Bearer to
 - Server-side quiet-hours filtering (listener's local time); rate limit 3 req/60s per user (in-memory — see Known Issues)
 - Targets: `role_state = 'available'` OR `always_available = true`
 
+**Separate from the above:** `/api/notifications/message` pushes a *new chat message* to the other participant of an active session, suppressed if they're already looking at the chat (server checks whether the message got marked read; the service worker also suppresses on window visibility). Deliberately skips quiet hours — it's a live conversation the recipient already opted into.
+
 ### 5. Admin moderation (/admin)
-Tabs for reports, blocks, sessions, users, sign-ups (with referral source). All mutations via `/api/admin/actions` (server-verified `is_admin`, rate-limited, audit-logged including transcript views).
+Tabs for reports, blocks, sessions, users, sign-ups (with referral source), and "Couldn't Connect" (`missed` — seekers whose request went unanswered, from `user_notices`; an admin can send them a personal note). All mutations via `/api/admin/actions` (server-verified `is_admin`, rate-limited, audit-logged including transcript views).
 
 ---
 
@@ -162,7 +175,7 @@ Tabs for reports, blocks, sessions, users, sign-ups (with referral source). All 
 
 **Primary trigger: GitHub Actions** (`.github/workflows/cron.yml`) — every 15 minutes, pings:
 - `POST /api/scheduled-availability` with `x-cron-secret` — notifies listeners whose availability window started within the last ~20 min
-- `POST /api/cleanup-sessions` with `x-cleanup-secret` — closes empty (>10 min) and inactive (>30 min) sessions, resets stale requesting seekers
+- `POST /api/cleanup-sessions` with `x-cleanup-secret` — closes empty (>10 min) and inactive (>30 min) sessions, resets stale requesting seekers, and records a `reconnect` notice + warm push for any seeker whose request went unanswered
 
 Requires GitHub repo secret `CLEANUP_SECRET_KEY` (same value as Vercel env var). Daily Vercel crons in `vercel.json` remain as backup; both routes also accept `Authorization: Bearer <CLEANUP_SECRET_KEY|CRON_SECRET>` and answer GET (Vercel crons send GET). The dashboard also triggers cleanup on page load.
 
@@ -170,7 +183,7 @@ Requires GitHub repo secret `CLEANUP_SECRET_KEY` (same value as Vercel env var).
 
 ## Key Constants
 
-See `lib/constants.ts` (source of truth). Highlights: heartbeat 30s ping / 1h online threshold (5 min for PeopleSeeking freshness), inactivity warn 15 min + close 5 min later, re-notify every 2 min max 3×, seeker requesting state goes stale after 30 min, message max 2000 chars, 18 specialty tags (max 5), 8 reaction emoji, 7 US timezones, `parseReferralSource()` helper.
+See `lib/constants.ts` (source of truth). Highlights: heartbeat 30s ping / 1h online threshold (5 min for PeopleSeeking freshness), inactivity warn 15 min + close 5 min later, re-notify every 2 min max 3×, seeker requesting state goes stale after 30 min, message max 2000 chars, 18 specialty tags (max 5), 8 reaction emoji, 44 timezones (worldwide — US, Canada, Latin America, Europe, Middle East/Africa, Asia-Pacific), `parseReferralSource()` helper.
 
 ---
 
@@ -187,6 +200,7 @@ RESEND_API_KEY                     # Email (welcome, fallback notifications, adm
 ### Optional
 ```
 CRON_SECRET                        # Alternate cron secret (Vercel sends as Bearer if set)
+NEXT_PUBLIC_SITE_URL               # Auth redirect base (signup confirm, password reset); falls back to window.location.origin
 ADMIN_NOTIFICATION_EMAIL / SUPABASE_WEBHOOK_SECRET   # new-user webhook route
 NEXT_PUBLIC_SENTRY_DSN / SENTRY_ORG / SENTRY_PROJECT / SENTRY_AUTH_TOKEN
 TWILIO_ACCOUNT_SID / TWILIO_AUTH_TOKEN / TWILIO_PHONE_NUMBER   # SMS (disabled)
@@ -202,7 +216,7 @@ TWILIO_ACCOUNT_SID / TWILIO_AUTH_TOKEN / TWILIO_PHONE_NUMBER   # SMS (disabled)
 
 ## Design System
 
-- Brand colors: rb-dark #2D3436, rb-gray #4A5568, rb-blue #5A7A8C (+hover/light), rb-purple #B8A9C9 (WCAG AA)
+- Brand colors (`tailwind.config.js`): rb-dark #2D3436, rb-gray #4A5568, rb-blue #4A6A7C (light #E8EEF2, hover #3A5A6C, dark #2E4754), rb-purple #B8A9C9 (light #E8E4F0) — all WCAG AA
 - Semantic type scale via `components/ui/Typography.tsx` and heading CSS classes
 - Class-based dark mode (ThemeProvider/ThemeToggle); dim greys bumped to gray-300 for legibility
 - Button hierarchy: primary = solid rb-blue, secondary = light outline, destructive = red
@@ -213,13 +227,13 @@ TWILIO_ACCOUNT_SID / TWILIO_AUTH_TOKEN / TWILIO_PHONE_NUMBER   # SMS (disabled)
 
 ## Current Feature Status
 
-Everything in the flows above is ✅ live, including: auth, onboarding (with referral source + consent capture), real-time chat (reactions, read receipts, typing, linkify, crisis banner), push + email notifications, favorites-first notification priority, quiet hours, always-available, re-notifications, listener directory, listener training, availability schedules, session history + thank-you notes, feedback, reporting, admin dashboard (incl. sign-ups tab), account deletion + data export, PWA, dark mode, Sentry, session cleanup.
+Everything in the flows above is ✅ live, including: auth, onboarding (with referral source + consent capture), real-time chat (reactions, read receipts, typing, linkify, crisis banner), push + email notifications, new-message pushes, favorites-first notification priority, quiet hours, always-available, re-notifications, listener directory, listener training, availability schedules, session history + thank-you notes, feedback, reporting, admin dashboard (incl. sign-ups and "Couldn't Connect" tabs), in-app notices, public contact form, SEO support pages, account deletion + data export, PWA, dark mode, Sentry, session cleanup.
 
 | Feature | Status | Notes |
 |---------|--------|-------|
 | SMS fallback | 🔇 Disabled | Code complete; Twilio verification pending (see below) |
 | In-app blog/stories | 🚚 Moved | Now on Ghost (stories.recoverybridge.app); DB tables 011–015 are legacy |
-| GitHub Actions cron | ⚠️ Needs secret | `CLEANUP_SECRET_KEY` repo secret must exist or runs 401 |
+| GitHub Actions cron | ✅ Running | 1,000+ consecutive successful runs; needs the `CLEANUP_SECRET_KEY` repo secret to stay set or runs 401 |
 
 ---
 
@@ -227,12 +241,12 @@ Everything in the flows above is ✅ live, including: auth, onboarding (with ref
 
 1. **Thin test coverage** — Vitest is set up (`npm test`) with 24 tests across `lib/favorites.test.ts`, `lib/timeWindows.test.ts`, `lib/constants.test.ts`. Still uncovered: notification batching, cleanup thresholds, the chat page's end-of-session flow.
 2. **ESLint warnings** — flat config is in place (`eslint.config.mjs`, `npm run lint`) and passes with 0 errors, but ~76 warnings remain (mostly `no-explicit-any` and unused vars). CI does not fail on warnings.
-3. **In-memory rate limiter** — the notification route's rate limit resets per serverless instance/cold start. Move to DB or KV if abuse matters.
+3. **In-memory rate limiters** — the notification route (3 req/60s per user) and the public contact route (5 per 10 min per IP) both reset per serverless instance/cold start. Move to DB or KV if abuse matters.
 4. **SMS feature disabled** — all code written but commented out in `app/api/notifications/send/route.ts` and profile page. Re-enable: uncomment both, add Twilio env vars, redeploy.
-5. **Large page components** — admin, chat, profile, dashboard are each 1,200–1,500 lines; extract components before major changes.
+5. **Large page components** — admin (~1,820), chat (~1,700), profile (~1,400), dashboard (~1,270) lines, and still growing; extract components before major changes.
 6. **Legacy blog tables** — migrations 011–015 create story tables no longer read by the app (stories moved to Ghost). `lib/email.ts` still has story emails.
 7. **Public repo** — internal docs in `docs/` (breach response, audits) are world-readable; decide if any should be removed.
-8. **Service worker cache** — `CACHE_NAME` in `public/sw.js` (currently v9); bump on breaking asset changes.
+8. **Service worker cache** — `CACHE_NAME` in `public/sw.js` (currently v11); bump on breaking asset changes.
 9. **RLS-null embeds crash render (⚠️ gotcha when writing profile joins)** — Supabase relation embeds like `favorite_profile:profiles!fkey(...)` are *non-inner* joins, so row-level security returns the embedded object as **`null`** (it does not drop the parent row) whenever the viewer can't read that profile. The `profiles` SELECT policy only exposes a profile that is your own, currently `role_state = 'available'`, an **active** session participant, or when you're admin — so any embed of an *offline* or *past-session* user comes back null. Dereferencing it (`fp.display_name`) throws during render and trips the error boundary ("Dashboard couldn't load"). **Always guard embedded profiles**: dashboard + profile favorites route through `lib/favorites.ts` `normalizeFavorites()`; profile thank-you notes, history, dashboard sessions, and admin all use `?.display_name || 'fallback'`. Use `!inner` only if you actually want RLS to filter the whole row instead.
 
 ---
