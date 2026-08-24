@@ -97,6 +97,7 @@ scripts/                              # Ad-hoc admin scripts (get-user-emails.js
 public/sw.js                          # Service worker (push, cache — bump CACHE_NAME on breaking changes; currently v9)
 middleware.ts                         # Route protection (auth + admin check)
 .github/workflows/cron.yml            # 15-min pings to cron API routes
+.github/workflows/ci.yml              # Typecheck, lint, test, build on every push (no secrets needed)
 ```
 
 ---
@@ -224,8 +225,8 @@ Everything in the flows above is ✅ live, including: auth, onboarding (with ref
 
 ## Known Issues & Technical Debt
 
-1. **No tests** — zero test files. Highest-value targets: quiet-hours math, availability-window parsing, notification batching, cleanup thresholds.
-2. **ESLint not configured** — `next lint` has never run (no config file); `next lint` is also deprecated. Migrate to ESLint CLI flat config.
+1. **Thin test coverage** — Vitest is set up (`npm test`) with 24 tests across `lib/favorites.test.ts`, `lib/timeWindows.test.ts`, `lib/constants.test.ts`. Still uncovered: notification batching, cleanup thresholds, the chat page's end-of-session flow.
+2. **ESLint warnings** — flat config is in place (`eslint.config.mjs`, `npm run lint`) and passes with 0 errors, but ~76 warnings remain (mostly `no-explicit-any` and unused vars). CI does not fail on warnings.
 3. **In-memory rate limiter** — the notification route's rate limit resets per serverless instance/cold start. Move to DB or KV if abuse matters.
 4. **SMS feature disabled** — all code written but commented out in `app/api/notifications/send/route.ts` and profile page. Re-enable: uncomment both, add Twilio env vars, redeploy.
 5. **Large page components** — admin, chat, profile, dashboard are each 1,200–1,500 lines; extract components before major changes.
@@ -239,6 +240,7 @@ Everything in the flows above is ✅ live, including: auth, onboarding (with ref
 ## Git & Deploy Workflow
 
 - **`main` auto-deploys to production** on Vercel (project `recovery-bridge`, team `burkjacksons-projects`)
+- **CI runs on every push** (`.github/workflows/ci.yml`): typecheck → lint → test → build. It needs no secrets — API routes construct their Resend/Supabase clients per request, so keep them out of module scope or the build breaks in CI and on Vercel alike
 - Solo project: commit to `main` directly or merge worktree branches to main — **never open PRs**
 - Domains: recoverybridge.app (+www), stories.recoverybridge.app (Ghost)
 
