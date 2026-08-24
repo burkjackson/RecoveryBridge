@@ -480,6 +480,13 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
             if (typedSession.status === 'ended' && !isEndingSession.current) {
               setSessionEndedByOther(true)
               setFeedbackModal(true)
+              // Redundancy, not duplication: whoever ended the session already
+              // asked the server to move both role_states, but if that request
+              // was lost (tab closed on send, network blip) nobody else would
+              // return the listener to 'available' — and they would stop
+              // receiving support requests until they noticed. The call is
+              // idempotent, so a second one from this side is harmless.
+              if (sessionId) void syncSessionRoleStates(supabase, sessionId, 'end')
             }
           }
         }
