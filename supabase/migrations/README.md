@@ -21,6 +21,31 @@ anyone requesting support, so People Seeking was empty and every notification
 tap reported "This person is no longer waiting for support". It is a read
 permission, so it fixed production on its own, ahead of any deploy.
 
+### End-to-end verification (24 Aug 2026)
+
+The whole conversation lifecycle was walked as real, auth-backed, non-admin
+users inside rolled-back transactions. All passed:
+
+| Path | Result |
+|------|--------|
+| Seeker sees an available listener → opens chat → sends a message | works |
+| Listener reads it, sees the seeker's profile, marks read, reacts, replies | works |
+| Listener ends the session; seeker leaves feedback and saves a favourite | works |
+| Past conversation still readable in /history | works |
+| Notification tap: listener sees a waiting seeker and connects | works |
+| Seeker connects to an always-available favourite who is offline | works |
+| Enabling push notifications | works |
+| A bystander reading someone else's conversation | 0 rows |
+| A second listener taking a seeker who is already in a chat | blocked (23505) |
+| A second seeker taking a listener who is already in a chat | blocked (23505) |
+| Opening a chat with someone who never asked for one | blocked |
+| A user promoting themselves to admin | blocked |
+
+Two harmless leftovers turned up while testing: profiles `test 2` and
+`Test Webhook User` exist with no matching `auth.users` row, so they can't log
+in and can't hold push subscriptions. Zero sessions between them; they just add
+2 to the profile count (91 profiles vs 89 real accounts). Safe to delete.
+
 ### Verifying the current policy set
 
 The SQL in `supabase/legacy/` is a historical snapshot — policies edited in the
