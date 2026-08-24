@@ -39,6 +39,14 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
   const [quietHoursEnd, setQuietHoursEnd] = useState(profile?.quiet_hours_end || '07:00')
   const [quietHoursTimezone, setQuietHoursTimezone] = useState(profile?.quiet_hours_timezone || '')
   const [quietHoursSaving, setQuietHoursSaving] = useState(false)
+  // Announcements default on (service messages); check-ins default off (opt-in).
+  const [announcementsEnabled, setAnnouncementsEnabled] = useState(
+    profile?.announcement_notifications_enabled !== false
+  )
+  const [reengagementEnabled, setReengagementEnabled] = useState(
+    profile?.reengagement_notifications_enabled === true
+  )
+  const [categorySaving, setCategorySaving] = useState(false)
   const [isPWA, setIsPWA] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
   const [platform, setPlatform] = useState<'ios' | 'android' | 'desktop'>('desktop')
@@ -74,6 +82,15 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally keyed on profile?.quiet_hours_enabled, profile?.quiet_hours_start, profile?.quiet_hours_end, profile?.quiet_hours_timezone — adding the callbacks would tear down and rebuild this on every render
   }, [profile?.quiet_hours_enabled, profile?.quiet_hours_start, profile?.quiet_hours_end, profile?.quiet_hours_timezone])
+
+  // Sync the message-category preferences when the profile changes
+  useEffect(() => {
+    if (profile) {
+      setAnnouncementsEnabled(profile.announcement_notifications_enabled !== false)
+      setReengagementEnabled(profile.reengagement_notifications_enabled === true)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally keyed on the two preference fields — adding the callbacks would tear down and rebuild this on every render
+  }, [profile?.announcement_notifications_enabled, profile?.reengagement_notifications_enabled])
 
   const checkPWAMode = () => {
     // Check if app is running as PWA
@@ -263,6 +280,51 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
       setError(err instanceof Error ? err.message : 'Failed to disable notifications. Please try again.')
     } finally {
       setLoading(false)
+    }
+  }
+
+  /**
+   * Save one of the message-category preferences.
+   *
+   * These deliberately do NOT touch the push subscription itself. Someone who
+   * wants no announcements should be able to say so and still be notified when
+   * a person needs support — that is the notification this app exists for, and
+   * making them choose between the two is how you lose it.
+   */
+  async function toggleCategory(
+    field: 'announcement_notifications_enabled' | 'reengagement_notifications_enabled',
+    value: boolean
+  ) {
+    if (!profile || categorySaving) return
+
+    // Optimistic: the checkbox has already moved for the user.
+    if (field === 'announcement_notifications_enabled') setAnnouncementsEnabled(value)
+    else setReengagementEnabled(value)
+
+    setCategorySaving(true)
+    setError(null)
+
+    try {
+      const { data, error: saveError } = await supabase
+        .from('profiles')
+        .update({ [field]: value })
+        .eq('id', profile.id)
+        .select()
+        .single()
+
+      if (saveError) throw saveError
+      if (onProfileUpdate && data) onProfileUpdate(data)
+      setSuccessMessage('Notification preferences saved.')
+      if (successTimerRef.current) clearTimeout(successTimerRef.current)
+      successTimerRef.current = setTimeout(() => setSuccessMessage(null), 5000)
+    } catch (err) {
+      console.error('Error saving notification preference:', err)
+      // Roll back so the checkbox reflects what is actually stored.
+      if (field === 'announcement_notifications_enabled') setAnnouncementsEnabled(!value)
+      else setReengagementEnabled(!value)
+      setError('Could not save that preference. Please try again.')
+    } finally {
+      setCategorySaving(false)
     }
   }
 
@@ -727,6 +789,65 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
                   </button>
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* What else we can send you.
+              Separate from the push toggle above on purpose: turning these off
+              must never cost someone the notification that a person needs
+              support. */}
+          {isSubscribed && (
+            <div className="mt-4 p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+              <p className="font-medium text-gray-900 dark:text-gray-100">What else we can send you</p>
+              <Body16 className="text-xs text-gray-500 dark:text-gray-300 mt-0.5">
+                Notifications about someone needing support are always on — these are everything else.
+              </Body16>
+
+              <div className="mt-3 space-y-3">
+                <div className="flex items-start space-x-3">
+                  <input
+                    type="checkbox"
+                    id="announcementNotifications"
+                    checked={announcementsEnabled}
+                    onChange={(e) => toggleCategory('announcement_notifications_enabled', e.target.checked)}
+                    disabled={categorySaving}
+                    className="mt-1 h-5 w-5 rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 disabled:opacity-50"
+                  />
+                  <div className="flex-1">
+                    <label htmlFor="announcementNotifications" className="block font-medium text-gray-900 dark:text-gray-100 cursor-pointer">
+                      Updates about your account
+                    </label>
+                    <Body16 className="text-xs text-gray-500 dark:text-gray-300 mt-0.5">
+                      Thank-you notes someone leaves you, reminders to finish listener training, and
+                      occasional announcements from RecoveryBridge.
+                    </Body16>
+                  </div>
+                </div>
+
+                <div className="flex items-start space-x-3">
+                  <input
+                    type="checkbox"
+                    id="reengagementNotifications"
+                    checked={reengagementEnabled}
+                    onChange={(e) => toggleCategory('reengagement_notifications_enabled', e.target.checked)}
+                    disabled={categorySaving}
+                    className="mt-1 h-5 w-5 rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 disabled:opacity-50"
+                  />
+                  <div className="flex-1">
+                    <label htmlFor="reengagementNotifications" className="block font-medium text-gray-900 dark:text-gray-100 cursor-pointer">
+                      Check in on me if I&apos;ve been away
+                    </label>
+                    <Body16 className="text-xs text-gray-500 dark:text-gray-300 mt-0.5">
+                      At most once a month, and only when listeners are actually online. Off unless
+                      you turn it on.
+                    </Body16>
+                  </div>
+                </div>
+              </div>
+
+              <Body16 className="text-xs text-gray-500 dark:text-gray-300 mt-3">
+                Anything sent while your Quiet Hours are on waits until they&apos;re over.
+              </Body16>
             </div>
           )}
         </div>

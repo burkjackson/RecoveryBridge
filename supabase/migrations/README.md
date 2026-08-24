@@ -21,6 +21,56 @@ anyone requesting support, so People Seeking was empty and every notification
 tap reported "This person is no longer waiting for support". It is a read
 permission, so it fixed production on its own, ahead of any deploy.
 
+### 035 — notification queue, message categories, training progress
+
+Applied 24 Aug 2026 (in two parts — the main body, then
+`listener_training_progress_at`). Verified by querying
+`information_schema.columns` for the three profile columns and
+`information_schema.tables` for both new tables.
+
+This is what lets a push subscription mean something other than "a seeker is
+waiting". Three pieces:
+
+**Consent per category.** `profiles.announcement_notifications_enabled`
+(default **true**) covers service messages — a thank-you note you were left, an
+unfinished-training nudge, an admin broadcast.
+`profiles.reengagement_notifications_enabled` (default **false**) covers the
+monthly "it's been a while" check-in, the one thing here close enough to
+marketing to require an explicit opt-in. Support-request notifications are
+governed by neither: they keep the original push toggle untouched, because the
+failure mode of blurring the two is someone muting push to escape an
+announcement and thereby missing the notification this app exists for.
+
+**A queue.** `notification_queue` holds one row per recipient per message;
+`/api/notifications/drain` works it in bounded batches on the shared cron. Two
+reasons it isn't an inline send loop: web-push is one HTTP request per
+subscription, so a broadcast to every user would exhaust the serverless budget
+partway through with no record of who was reached; and queued rows can be
+*deferred* through the recipient's quiet hours (`not_before` moves forward)
+rather than dropped. `not_before` doubles as a claim lease — a row is claimed
+by setting `status='sending'` and parking `not_before` 15 minutes out, so a run
+that dies mid-batch releases its rows instead of stranding them.
+
+Idempotency is the partial unique index on
+`(user_id, kind, dedupe_key) WHERE dedupe_key IS NOT NULL AND status='pending'`.
+Callers set `dedupe_key` to the feedback row's id, the broadcast's id, or
+`YYYY-MM` for a monthly cron, so an overlapping cron run or a client retry
+cannot double-notify anyone. Excluding terminal rows is what lets a monthly key
+be reused next month.
+
+**`broadcasts`** is the audit record for an admin announcement and the parent
+the queue rows hang off.
+
+Also `profiles.listener_training_progress` (JSONB, per-section acknowledgements)
+and `listener_training_progress_at`. The first fixes a standing bug — closing
+the tab lost all eight acknowledgements — and the second is what lets the nudge
+cron distinguish "stalled a week ago" from "working through the page right
+now". Deliberately not `profiles.updated_at`, which any unrelated profile edit
+bumps.
+
+Both new tables are admin-SELECT-only with no client write policies; every
+write goes through a server route using the service role.
+
 ### 034 — notification_log
 
 Applied 24 Aug 2026. Records that a support notification went out (listener,

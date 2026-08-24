@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest'
-import { parseReferralSource } from './constants'
+import {
+  parseReferralSource,
+  trainingNudgeBody,
+  trainingSectionsRemaining,
+  LISTENER_TRAINING_SECTION_IDS,
+} from './constants'
 
 describe('parseReferralSource', () => {
   it('returns null for empty values', () => {
@@ -27,5 +32,42 @@ describe('parseReferralSource', () => {
     expect(parseReferralSource('my therapist recommended it')).toEqual({
       emoji: '💬', label: 'Other', detail: 'my therapist recommended it',
     })
+  })
+})
+
+describe('trainingSectionsRemaining', () => {
+  const total = LISTENER_TRAINING_SECTION_IDS.length
+
+  it('counts every section as remaining when nothing is acknowledged', () => {
+    expect(trainingSectionsRemaining(null)).toBe(total)
+    expect(trainingSectionsRemaining({})).toBe(total)
+  })
+
+  it('subtracts acknowledged sections', () => {
+    expect(trainingSectionsRemaining({ presence: true, crisis: true })).toBe(total - 2)
+  })
+
+  it('ignores sections explicitly un-ticked', () => {
+    expect(trainingSectionsRemaining({ presence: true, crisis: false })).toBe(total - 1)
+  })
+
+  it('reaches zero when all are acknowledged', () => {
+    const all = Object.fromEntries(LISTENER_TRAINING_SECTION_IDS.map((id) => [id, true]))
+    expect(trainingSectionsRemaining(all)).toBe(0)
+  })
+
+  it('ignores unknown keys so a removed section cannot push the count negative', () => {
+    const all = Object.fromEntries(LISTENER_TRAINING_SECTION_IDS.map((id) => [id, true]))
+    expect(trainingSectionsRemaining({ ...all, 'retired-section': true })).toBe(0)
+  })
+})
+
+describe('trainingNudgeBody', () => {
+  it('uses the singular for one remaining section', () => {
+    expect(trainingNudgeBody(1)).toContain('one section left')
+  })
+
+  it('names the count for more than one', () => {
+    expect(trainingNudgeBody(3)).toContain('3 sections')
   })
 })

@@ -4,10 +4,23 @@ import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 import { errorMessage } from '@/lib/errors'
+import type { ListenerTrainingSectionId } from '@/lib/constants'
 import { useRouter } from 'next/navigation'
 import { Heading1, Body16, Body18 } from '@/components/ui/Typography'
 
-const TRAINING_SECTIONS = [
+// Typed against the shared id list so a section added here without being added
+// to LISTENER_TRAINING_SECTION_IDS is a compile error — the nudge cron counts
+// "sections remaining" from that list and never sees this array.
+interface TrainingSection {
+  id: ListenerTrainingSectionId
+  title: string
+  icon: string
+  intro: string
+  points: string[]
+  ack: string
+}
+
+const TRAINING_SECTIONS: readonly TrainingSection[] = [
   {
     id: 'presence',
     title: 'The Art of Being Present',
@@ -126,11 +139,52 @@ export default function TrainingPage() {
   const allAcknowledged = TRAINING_SECTIONS.every(s => acknowledged[s.id])
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user) setUserId(user.id)
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
+      if (!user) return
+      setUserId(user.id)
+
+      // Resume where they left off. Before this, closing the tab lost all eight
+      // acknowledgements and the whole module had to be re-read.
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('listener_training_progress')
+        .eq('id', user.id)
+        .maybeSingle()
+
+      const saved = profile?.listener_training_progress
+      if (saved && typeof saved === 'object') {
+        setAcknowledged(saved as Record<string, boolean>)
+        // Open the first section they haven't acknowledged yet.
+        const next = TRAINING_SECTIONS.find(sec => !(saved as Record<string, boolean>)[sec.id])
+        if (next) setExpanded(next.id)
+      }
     })
   // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once on mount; the loaders it calls are stable for the life of the component
   }, [])
+
+  // Persist one section's acknowledgement. Fire-and-forget: the checkbox has
+  // already moved, and a dropped write only costs them that box on next load.
+  // listener_training_progress_at is what tells the nudge cron they are still
+  // working through the page rather than stalled.
+  function toggleSection(sectionId: ListenerTrainingSectionId) {
+    // Computed outside setAcknowledged on purpose: React can call a state
+    // updater twice in StrictMode, and a write belongs in the handler rather
+    // than inside the reducer.
+    const next = { ...acknowledged, [sectionId]: !acknowledged[sectionId] }
+    setAcknowledged(next)
+    if (!userId) return
+
+    supabase
+      .from('profiles')
+      .update({
+        listener_training_progress: next,
+        listener_training_progress_at: new Date().toISOString(),
+      })
+      .eq('id', userId)
+      .then(({ error: saveError }) => {
+        if (saveError) console.error('Error saving training progress:', saveError)
+      })
+  }
 
   async function handleComplete() {
     if (!userId || !allAcknowledged) return
@@ -233,7 +287,7 @@ export default function TrainingPage() {
                       <input
                         type="checkbox"
                         checked={!!isAcked}
-                        onChange={() => setAcknowledged(prev => ({ ...prev, [section.id]: !prev[section.id] }))}
+                        onChange={() => toggleSection(section.id)}
                         className="mt-1 w-5 h-5 accent-rb-blue cursor-pointer shrink-0"
                       />
                       <Body16 className="text-sm font-medium text-gray-800 dark:text-gray-200">

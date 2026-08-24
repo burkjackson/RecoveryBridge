@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import webpush from 'web-push'
 import { createClient } from '@supabase/supabase-js'
 import { findWindowStartingNow, type AvailabilityWindow } from '@/lib/timeWindows'
+import { isAuthorizedCronRequest } from '@/lib/cronAuth'
 
 // How far back a window start still counts as "starting now". This has to
 // absorb the cron's real cadence, not its nominal one: GitHub Actions throttles
@@ -25,21 +26,7 @@ interface ScheduleProfile {
 }
 
 export async function POST(request: NextRequest) {
-  // Auth: cron secret header OR bearer token. Vercel crons send
-  // `Authorization: Bearer ${CRON_SECRET}`; GitHub Actions sends x-cron-secret.
-  const secret = request.headers.get('x-cron-secret')
-  const authHeader = request.headers.get('authorization')
-  const bearerToken = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null
-  const cronSecrets = [process.env.CLEANUP_SECRET_KEY, process.env.CRON_SECRET].filter(
-    (s): s is string => Boolean(s)
-  )
-
-  const isAuthorized =
-    cronSecrets.length > 0 &&
-    ((secret !== null && cronSecrets.includes(secret)) ||
-      (bearerToken !== null && cronSecrets.includes(bearerToken)))
-
-  if (!isAuthorized) {
+  if (!isAuthorizedCronRequest(request)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 

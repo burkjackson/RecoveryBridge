@@ -346,3 +346,123 @@ export function isHeartbeatStale(lastHeartbeat: string | null): boolean {
   if (!lastHeartbeat) return true
   return getMinutesAgo(lastHeartbeat) > TIME_MINUTES.HEARTBEAT_THRESHOLD
 }
+
+// ---------------------------------------------------------------------------
+// Push beyond "someone needs support"
+// ---------------------------------------------------------------------------
+
+/**
+ * Copy for the queued notification categories. Kept beside OUTREACH_COPY so
+ * every platform-initiated message is reviewable in one place.
+ *
+ * All of it is written to be lock-screen safe. A push renders on a locked
+ * phone that other people can see, and this is a recovery app: nothing here
+ * names the other person, quotes what they wrote, or implies why the recipient
+ * uses RecoveryBridge.
+ */
+export const NOTIFICATION_COPY = {
+  /** A seeker left a thank-you note after a session. Body names no one. */
+  THANK_YOU_TITLE: 'You received a thank-you note 💙',
+  THANK_YOU_BODY: 'Someone you listened to left you a note. Tap to read it.',
+
+  /** Partway through listener training and stalled. */
+  TRAINING_NUDGE_TITLE: 'You’re almost a listener 🎓',
+
+  /**
+   * Monthly check-in for people who haven't been around.
+   *
+   * Deliberately carries no listener count. The cron only queues this when
+   * someone is genuinely online, but the queue drains on the cron's real
+   * cadence (up to ~35 min later, longer if the recipient is in quiet hours),
+   * and a number baked in at queue time can be flatly wrong by the time it
+   * lands. "Listeners are here" stays true; "3 listeners are online" does not.
+   */
+  REENGAGEMENT_TITLE: 'We’re here whenever you’re ready 💙',
+  REENGAGEMENT_BODY:
+    'It’s been a while — no pressure at all. Listeners are around if you’d ever like to talk.',
+} as const
+
+/** Body for the training nudge, which depends on how much is left. */
+export function trainingNudgeBody(sectionsRemaining: number): string {
+  return sectionsRemaining === 1
+    ? 'You have one section left in listener training. Tap to finish it.'
+    : `You’re ${sectionsRemaining} sections from finishing listener training. Tap to pick up where you left off.`
+}
+
+/**
+ * Who an admin broadcast can go to. The values are stored on `broadcasts.audience`
+ * and resolved server-side in /api/admin/actions — the client never sends a
+ * recipient list.
+ */
+export const BROADCAST_AUDIENCES = [
+  {
+    key: 'all',
+    label: 'Everyone',
+    description: 'Every registered user.',
+  },
+  {
+    key: 'listeners',
+    label: 'Trained listeners',
+    description: 'Anyone who has completed listener training.',
+  },
+  {
+    key: 'active_30d',
+    label: 'Active in the last 30 days',
+    description: 'Users seen in the last 30 days.',
+  },
+  {
+    key: 'inactive_30d',
+    label: 'Inactive 30+ days',
+    description: 'Users not seen for 30 days, or never seen.',
+  },
+] as const
+
+export type BroadcastAudience = (typeof BROADCAST_AUDIENCES)[number]['key']
+
+export const BROADCAST_LIMITS = {
+  /** Push titles get truncated by the OS well before this; keep them short. */
+  TITLE_MAX_LENGTH: 80,
+  BODY_MAX_LENGTH: 500,
+} as const
+
+/** How long a user must be unseen before the monthly check-in considers them. */
+export const REENGAGEMENT_INACTIVE_DAYS = 30
+
+/**
+ * Section ids for /training, in order.
+ *
+ * These live here rather than only in app/training/page.tsx because the nudge
+ * cron needs the total to say "you're N sections from finishing" and never
+ * loads the page's content. The page types its section array against
+ * ListenerTrainingSectionId, so adding a section there without adding it here
+ * is a compile error.
+ */
+export const LISTENER_TRAINING_SECTION_IDS = [
+  'presence',
+  'empathy',
+  'safe-space',
+  'boundaries',
+  'scope',
+  'all-paths',
+  'meet-them',
+  'crisis',
+] as const
+
+export type ListenerTrainingSectionId = (typeof LISTENER_TRAINING_SECTION_IDS)[number]
+
+/** Shape of profiles.listener_training_progress. */
+export type ListenerTrainingProgress = Partial<Record<string, boolean>>
+
+/** How many sections are still unacknowledged. Ignores unknown keys, so a
+ *  renamed or removed section can't push the count negative. */
+export function trainingSectionsRemaining(progress: ListenerTrainingProgress | null): number {
+  const done = LISTENER_TRAINING_SECTION_IDS.filter((id) => progress?.[id] === true).length
+  return LISTENER_TRAINING_SECTION_IDS.length - done
+}
+
+/**
+ * How long training progress must sit untouched before the nudge cron will
+ * push. Guards against nudging someone who is working through the page right
+ * now — the cron runs every ~15-35 minutes and the page takes a few minutes.
+ */
+export const TRAINING_NUDGE_STALL_DAYS = 3

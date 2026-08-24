@@ -724,6 +724,27 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
     }
   }
 
+  // Let the listener know a thank-you note is waiting. Fire-and-forget, and
+  // deliberately after the insert: the server reads the note back out of
+  // session_feedback rather than trusting anything sent from here.
+  async function notifyThankYou() {
+    try {
+      const { data: { session: authSession } } = await supabase.auth.getSession()
+      const token = authSession?.access_token
+      if (!token || !sessionId) return
+      await fetch('/api/notifications/thank-you', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ sessionId }),
+      })
+    } catch {
+      // Best-effort — the note is already saved and shows up in /history
+    }
+  }
+
   async function submitFeedback(helpful: boolean) {
     if (!session || !currentUserId) return
     setFeedbackSubmitted(true)
@@ -733,13 +754,17 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
     const note = isSeeker && thankYouNote.trim() ? thankYouNote.trim() : null
 
     try {
-      await supabase.from('session_feedback').insert({
+      const { error } = await supabase.from('session_feedback').insert({
         session_id: session.id,
         from_user_id: currentUserId,
         to_user_id: otherUserId,
         helpful,
         ...(note ? { thank_you_note: note } : {}),
       })
+      // supabase-js resolves with an { error } payload rather than throwing, so
+      // notifying on a failed insert would push about a note that isn't there.
+      if (error) throw error
+      if (note) await notifyThankYou()
     } catch (error) {
       console.error('Error submitting feedback:', error)
     }

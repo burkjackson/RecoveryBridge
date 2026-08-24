@@ -20,8 +20,15 @@ export interface Profile {
   phone_number: string | null
   sms_notifications_enabled: boolean
   email_notifications_enabled: boolean
+  /** Service messages: thank-you notes, training nudges, admin broadcasts. Defaults on. */
+  announcement_notifications_enabled: boolean
+  /** Monthly "it's been a while" check-in. Opt-in, defaults off. */
+  reengagement_notifications_enabled: boolean
   referral_source: string | null
   listener_training_completed_at: string | null
+  /** Per-section acknowledgements for /training, e.g. { presence: true }. */
+  listener_training_progress: Record<string, boolean> | null
+  listener_training_progress_at: string | null
   availability_schedule: Array<{day: number, start: string, end: string}>
   consent_version: string | null
   consent_accepted_at: string | null

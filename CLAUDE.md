@@ -41,6 +41,10 @@ app/
 │   ├── scheduled-availability/route.ts # POST/GET: Push "your support time is starting" (cron)
 │   ├── notifications/send/route.ts   # POST: Push (+email fallback) to available listeners
 │   ├── notifications/message/route.ts # POST: Push a new chat message to the other participant (if they aren't looking)
+│   ├── notifications/thank-you/route.ts    # POST: Queue a "you got a thank-you note" push (server-verifies the feedback row)
+│   ├── notifications/training-nudge/route.ts # POST/GET: Queue nudges for stalled listener training (cron)
+│   ├── notifications/reengagement/route.ts   # POST/GET: Queue the opt-in monthly check-in (cron)
+│   ├── notifications/drain/route.ts   # POST/GET: Deliver queued notifications, honouring prefs + quiet hours (cron)
 │   ├── sessions/state/route.ts       # POST: Move BOTH participants' role_state on session start/end
 │   ├── account/export/route.ts       # GET: Self-service data export (CCPA/GDPR)
 │   ├── account/delete/route.ts       # POST: Self-service account deletion (service role → auth.admin.deleteUser)
@@ -82,12 +86,13 @@ components/
 ├── AvatarUpload.tsx                  # Image upload with crop (Supabase Storage)
 ├── CrisisResources.tsx               # Floating 988/crisis button (always visible)
 ├── NoticeBanner.tsx                  # Surfaces unread in-app notices (user_notices) on the dashboard
+├── BroadcastComposer.tsx             # Admin: compose/send a platform announcement to a named audience
 ├── TagSelector.tsx / Modal.tsx / ErrorState.tsx / Skeleton.tsx / Footer.tsx
 ├── ServiceWorkerRegistration.tsx / SkipLink.tsx
 └── ui/Typography.tsx                 # Semantic type scale (Heading1..., Body16, Body18)
 
 lib/
-├── constants.ts                      # Timing, validation, tags, reactions, timezones, parseReferralSource, outreach copy
+├── constants.ts                      # Timing, validation, tags, reactions, timezones, parseReferralSource, outreach + notification copy, broadcast audiences, training sections
 ├── email.ts                          # Resend senders: support-request fallback, contact form, report-resolved
 ├── email/welcomeEmailHtml.ts         # Welcome email template
 ├── email/escapeHtml.ts               # HTML escaping for user-supplied values in emails
@@ -95,7 +100,9 @@ lib/
 ├── rateLimit.ts                      # Shared in-memory limiter used by every API route
 ├── blocks.ts                         # getActiveBlock() — ignores lifted AND expired blocks
 ├── sessionState.ts                   # Client helper → /api/sessions/state
-├── serverPush.ts                     # Shared server-side web-push sender
+├── serverPush.ts                     # Shared server-side web-push sender (single-user + batched)
+├── notificationQueue.ts              # Queue for every non-support push: categories, consent + quiet-hours rules, enqueue
+├── cronAuth.ts                       # Shared cron-secret / Bearer auth for the cron API routes
 ├── favorites.ts                      # normalizeFavorites() — RLS-safe favorite handling (see Known Issues)
 ├── errors.ts                         # errorMessage() for `catch (e: unknown)`
 ├── faqs.ts                           # Landing page FAQ content
@@ -107,7 +114,7 @@ lib/
 └── *.test.ts                         # Vitest: constants, favorites, timeWindows, rateLimit, errors
 
 supabase/
-├── migrations/                       # 001–034, numbered (note: two files share 004) — see migrations/README.md
+├── migrations/                       # 001–035, numbered (note: two files share 004) — see migrations/README.md
 └── legacy/                           # Pre-migration setup SQL (historical snapshot; the live policy set has
                                       #   drifted — query pg_policies for the truth, see migrations/README.md)
 
@@ -123,12 +130,13 @@ middleware.ts                         # Route protection (auth + admin check)
 
 ## Database Schema (high level)
 
-Migrations live in `supabase/migrations/` (001–034) and are the source of truth. Summary:
+Migrations live in `supabase/migrations/` (001–035) and are the source of truth. Summary:
 
 ### profiles (central user table)
 Core: `id` (= auth.users.id), `display_name` (unique), `email`, `bio`, `tagline`, `avatar_url`, `tags` (max 5), `is_admin`.
 State: `role_state` (`available`/`requesting`/`offline`/null), `user_role` (`person_in_recovery`/`professional`/`ally`), `last_heartbeat_at`.
-Notifications: `always_available`, `quiet_hours_*` (enabled/start/end/timezone), `email_notifications_enabled` (008), `phone_number` + `sms_notifications_enabled` (006, feature disabled), `availability_schedule` JSONB windows (020), `last_availability_notify_key` (027, dedupes the "support time is starting" push — `"YYYY-MM-DD|day|HH:MM"` in the user's timezone).
+Notifications: `always_available`, `quiet_hours_*` (enabled/start/end/timezone), `email_notifications_enabled` (008), `phone_number` + `sms_notifications_enabled` (006, feature disabled), `availability_schedule` JSONB windows (020), `last_availability_notify_key` (027, dedupes the "support time is starting" push — `"YYYY-MM-DD|day|HH:MM"` in the user's timezone), `announcement_notifications_enabled` (035, default **true** — thank-you notes, training nudges, broadcasts) and `reengagement_notifications_enabled` (035, default **false** — the opt-in monthly check-in). Neither governs support-request pushes, which keep the original push toggle.
+Training: `listener_training_progress` JSONB + `listener_training_progress_at` (035, per-section acks so progress survives a reload and the nudge cron can tell stalled from in-progress).
 Compliance/audit: `referral_source` (010, free text since 018), `listener_training_completed_at` (019), `consent_version` + `consent_accepted_at` (021), `age_confirmed` (022), `health_data_consent` + `_at` (023, WA My Health My Data).
 
 ### Other tables
@@ -140,6 +148,8 @@ Compliance/audit: `referral_source` (010, free text since 018), `listener_traini
 - **reports / user_blocks / admin_logs** — moderation + audit trail (`user_blocks.expires_at` is honoured by `lib/blocks.ts` and swept by the cleanup cron)
 - **user_notices** (026) — in-app messages to a *user*: auto "we couldn't connect you" follow-ups (`kind='reconnect'`) and admin outreach (`kind='outreach'`)
 - **push_subscriptions** — Web Push endpoints per user/device
+- **notification_queue** (035) — one row per recipient per non-support notification (thank-you note, training nudge, check-in, broadcast). Drained by `/api/notifications/drain`; `dedupe_key` + a partial unique index make every enqueue idempotent, `not_before` doubles as a quiet-hours deferral and a claim lease
+- **broadcasts** (035) — audit record for an admin announcement; queue rows hang off it
 - **user_notices** (026) — in-app messages to a *user* (not an email): `kind` is `reconnect` (auto follow-up when a seeker never got connected) or `outreach` (personal note from an admin). Surfaced by `NoticeBanner` on the dashboard; the admin "Couldn't Connect" tab reads the `reconnect` rows
 - **blog/story tables** (011–015) — **legacy**: stories moved to Ghost at stories.recoverybridge.app; no in-app UI reads them
 
@@ -177,8 +187,24 @@ All tables have RLS. Admin mutations go through `/api/admin/*` routes (Bearer to
 
 **Separate from the above:** `/api/notifications/message` pushes a *new chat message* to the other participant of an active session, suppressed if they're already looking at the chat (server checks whether the message got marked read; the service worker also suppresses on window visibility). Deliberately skips quiet hours — it's a live conversation the recipient already opted into.
 
+**Everything that isn't a support request goes through the queue** (`notification_queue`, migration 035), not an inline send:
+
+| Message | Category | Queued by | Governed by |
+|---------|----------|-----------|-------------|
+| You received a thank-you note | `announcement` | `/api/notifications/thank-you`, from the post-session feedback modal | `announcement_notifications_enabled` (default on) |
+| Finish your listener training | `announcement` | `/api/notifications/training-nudge` (cron) | same; only for people who started and stalled 3+ days |
+| Admin broadcast | `announcement` | `send_broadcast` admin action | same; also writes a `user_notices` row so it lands without push |
+| "It's been a while" check-in | `reengagement` | `/api/notifications/reengagement` (cron) | `reengagement_notifications_enabled` (default **off**, opt-in) |
+
+`/api/notifications/drain` delivers them on the shared cron: it re-checks consent at send time, **defers** anything landing in the recipient's quiet hours (moves `not_before` forward rather than dropping it), retires rows past `expires_at`, and prunes terminal rows after 30 days.
+
+Three rules worth keeping:
+1. **Never fold these into the support-request toggle.** Someone who mutes push to escape an announcement also stops hearing that a person needs support. That's why the categories are separate preferences and why support requests keep the original toggle.
+2. **Push text renders on a locked phone.** Nothing in `NOTIFICATION_COPY` names the other person, quotes what they wrote, or implies why the recipient uses RecoveryBridge.
+3. **Don't bake a live count into a queued body.** The check-in deliberately says "listeners are around", not "3 listeners are online" — the queue can drain 35+ minutes later (longer through quiet hours), by which time a number is a lie.
+
 ### 5. Admin moderation (/admin)
-Tabs for reports, blocks, sessions, users, sign-ups (with referral source), and "Couldn't Connect" (`missed` — seekers whose request went unanswered, from `user_notices`; an admin can send them a personal note). All mutations via `/api/admin/actions` (server-verified `is_admin`, rate-limited, audit-logged including transcript views).
+Tabs for reports, blocks, sessions, users, sign-ups (with referral source), "Couldn't Connect", and Broadcast (`components/BroadcastComposer.tsx` — pick a named audience, preview its size and how many can receive a push, send) (`missed` — seekers whose request went unanswered, from `user_notices`; an admin can send them a personal note). All mutations via `/api/admin/actions` (server-verified `is_admin`, rate-limited, audit-logged including transcript views).
 
 ---
 
@@ -187,6 +213,9 @@ Tabs for reports, blocks, sessions, users, sign-ups (with referral source), and 
 **Primary trigger: GitHub Actions** (`.github/workflows/cron.yml`) — every 15 minutes, pings:
 - `POST /api/scheduled-availability` with `x-cron-secret` — notifies listeners whose availability window started within the last 90 min (wide because the cron cadence is unreliable), skipping anyone whose `last_availability_notify_key` already marks that occurrence, and never firing past the window's own end
 - `POST /api/cleanup-sessions` with `x-cleanup-secret` — closes empty (>10 min) and inactive (>30 min) sessions, resets stale requesting seekers, and records a `reconnect` notice + warm push for any seeker whose request went unanswered
+- `POST /api/notifications/training-nudge` with `x-cron-secret` — queues a nudge for anyone who started listener training and stalled 3+ days; monthly dedupe key
+- `POST /api/notifications/reengagement` with `x-cron-secret` — queues the opt-in monthly check-in, and only when a listener is genuinely online
+- `POST /api/notifications/drain` with `x-cron-secret` — **runs last**, so anything the two steps above queued goes out on the same tick. Delivers up to 200 queued rows, honouring category consent and quiet hours
 
 Requires GitHub repo secret `CLEANUP_SECRET_KEY` (same value as Vercel env var). Daily Vercel crons in `vercel.json` remain as backup; both routes also accept `Authorization: Bearer <CLEANUP_SECRET_KEY|CRON_SECRET>` and answer GET (Vercel crons send GET). The dashboard also triggers cleanup on page load.
 
@@ -248,18 +277,23 @@ Everything in the flows above is ✅ live, including: auth, onboarding (with ref
 | In-app notices | ✅ Live | Auto follow-up after a failed connection + admin outreach (`user_notices`, `NoticeBanner`) |
 | Unread-message push | ✅ Live | `/api/notifications/message` — pushes the other participant only when they aren't looking at the chat |
 | SEO support pages | ✅ Live | Seven static pages under `/support`, listed in `app/sitemap.ts` |
+| Thank-you-note push | ✅ Live | Queued from the feedback modal; server re-reads the note from `session_feedback` |
+| Training nudge push | ✅ Live | Only for people who started training and stalled 3+ days; monthly cap |
+| Re-engagement check-in | ✅ Live | Opt-in (default off), monthly cap, only sent when listeners are online |
+| Admin broadcast | ✅ Live | Admin → Broadcast tab; push + in-app notice to a named audience |
+| Notification categories | ✅ Live | Announcements (default on) and check-ins (opt-in), separate from support-request push |
 
 ---
 
 ## Known Issues & Technical Debt
 
-1. **Migrations 020 and 027–034 are applied** (24 Aug 2026) — admin-flag protection, one-active-session-per-listener, session-participant validation, temporary-block expiry, the `role_state='requesting'` SELECT policy, the availability-notify dedupe key, profile visibility for people you already know (033), the notification log (034), and — long overdue — `020_availability_schedule`, which had never been run. See `supabase/migrations/README.md` for what each does and how it was verified. `032` fixed a live outage: no non-admin listener could see anyone requesting support, so People Seeking was empty and every notification tap said "This person is no longer waiting for support".
+1. **Migrations 020 and 027–035 are applied** (24 Aug 2026) — admin-flag protection, one-active-session-per-listener, session-participant validation, temporary-block expiry, the `role_state='requesting'` SELECT policy, the availability-notify dedupe key, profile visibility for people you already know (033), the notification log (034), the notification queue with its per-category consent (035), and — long overdue — `020_availability_schedule`, which had never been run. See `supabase/migrations/README.md` for what each does and how it was verified. `032` fixed a live outage: no non-admin listener could see anyone requesting support, so People Seeking was empty and every notification tap said "This person is no longer waiting for support".
 2. **Check that a migration was actually applied, not just written** — `020_availability_schedule` sat unapplied for months. The old scheduled-availability route destructured only `data` from its query, so the "column does not exist" error was discarded and every run returned `{"notified": 0}` with a 200. The cron reported 1,000+ consecutive successes while the whole feature was inert. `supabase/migrations/README.md` now tracks what is applied; verify with `list_migrations` or by checking for the column, never by the file existing.
 3. **Session creation is now validated in the database** — a `BEFORE INSERT` trigger on `sessions` requires the counterpart to be `available`/`always_available` (seeker-initiated) or `requesting` (listener-initiated), and rejects blocked creators. If a new connect path ever needs different rules, change `validate_session_participants()`, not just the client.
 4. **`supabase/legacy/*.sql` is a stale snapshot** — policies edited in the Supabase dashboard never came back to the repo, so the files there do not describe the live database. Query `pg_policies` before reasoning about RLS (query in `supabase/migrations/README.md`).
 5. **In-memory rate limiter** — `lib/rateLimit.ts` is shared by every route but its counters live in one serverless instance's memory, so they reset on cold start and aren't shared across instances. Move to Postgres or KV if it ever needs to be authoritative.
 6. **SMS feature disabled** — all code written but commented out in `app/api/notifications/send/route.ts` and profile page (the unused `savingSms`/`smsSuccess`/`smsError` state and `handleSaveSms` are kept alongside it, with eslint-disables). Re-enable: uncomment both, add Twilio env vars, redeploy.
-7. **Large page components** — admin (~1,820), chat (~1,700), profile (~1,400), dashboard (~1,270) lines, and still growing; extract components before major changes.
+7. **Large page components** — admin (~1,840), chat (~1,720), profile (~1,400), dashboard (~1,270) lines, and still growing; extract components before major changes. The Broadcast tab was built as `components/BroadcastComposer.tsx` rather than more admin-page lines — keep doing that.
 8. **Legacy blog tables** — migrations 011–015 create story tables no longer read by the app (stories moved to Ghost). The story email senders have been removed from `lib/email.ts`; the tables themselves are still there.
 9. **Public repo** — the breach-response plan (marked "Internal — Do Not Publish") was removed from `docs/` in Aug 2026; it lives outside the repo now, so keep maintaining it there (the FTC Health Breach Notification Rule expects a written plan). Everything still in `docs/` is intentionally public: setup guides, plus dated audits whose findings are fixed. Note that git history still contains the removed file — the repo has always been public, so treat anything ever committed as disclosed.
 10. **Service worker cache** — `CACHE_NAME` in `public/sw.js` (currently v11); bump on breaking asset changes.
@@ -270,6 +304,8 @@ Everything in the flows above is ✅ live, including: auth, onboarding (with ref
 15. **Logos still use `<img>`** — seven sites carry an eslint-disable rather than `next/image`, because the responsive `w-auto` sizing fights next/image's required dimensions. Worth converting deliberately for LCP.
 16. **Stale `available` listeners — measure before resetting** — 14 profiles sit at `role_state='available'` with heartbeats hours to months old. Every list hides them (they filter on a 1-hour heartbeat), but `/api/notifications/send` targets `role_state='available'` with no freshness check. Resetting them looks obvious and mostly isn't: as of 24 Aug, 8 of the 11 non-always-available ones have neither push nor email enabled, so they receive nothing at all — the "reach" being preserved is 2 push and 3 email recipients. Whether that reach converts is now instrumented (`notification_log`, migration 034); run `supabase/queries/push_conversion.sql` after a few weeks and decide from the numbers. There is also an unused `cleanup_stale_availability()` function in the database from migration 017 that does the reset if you want it.
 17. **Admin accounts hide RLS bugs (⚠️ third RLS gotcha)** — the `is_admin()` SELECT policies let an admin read every profile, so a *missing* read policy looks perfectly fine when the owner tests it. Always check user-facing flows with a second, non-admin login. This is exactly how #1 survived in production. To test a policy without a second account, impersonate inside a rolled-back transaction: `set_config('request.jwt.claims', '{"sub":"<uuid>","role":"authenticated"}', true)` then `set local role authenticated` (full recipe in `supabase/migrations/README.md`).
+18. **Queued notifications are only as timely as the cron** — `notification_queue` is drained by `/api/notifications/drain` on the shared 15-minute GitHub Actions schedule, which really means gaps of up to ~35 minutes (issue #11), plus up to 30 more minutes per quiet-hours deferral. That is by design — nothing in the queue is urgent — but it rules the queue out for anything that is. Support requests and chat messages stay on their direct paths for exactly this reason; don't move them.
+19. **A broadcast can't be unsent** — `send_broadcast` writes a `user_notices` row per recipient immediately and queues the pushes, so by the time anyone notices a typo some of it has landed. There is no recall, and the composer says so before you confirm. If recall ever matters, the hook is deleting the broadcast's still-`pending` queue rows (the `user_notices` rows would need clearing separately).
 
 ---
 
@@ -278,7 +314,7 @@ Everything in the flows above is ✅ live, including: auth, onboarding (with ref
 All of these are clean as of August 2026 — keep them that way:
 
 ```
-npm test          # vitest — 34 tests across constants, favorites, timeWindows, rateLimit, errors
+npm test          # vitest — 75 tests across constants, favorites, timeWindows, rateLimit, errors, sessionState, missedConnections, notificationQueue
 npx tsc --noEmit  # no type errors
 npx eslint .      # 0 errors, 0 warnings
 npm audit         # 0 vulnerabilities

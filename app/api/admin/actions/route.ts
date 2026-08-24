@@ -1,11 +1,100 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import { sendReportResolvedToReporter, sendReportResolvedToReported } from '@/lib/email'
 import { sendPushToUser } from '@/lib/serverPush'
-import { OUTREACH_COPY } from '@/lib/constants'
+import {
+  BROADCAST_AUDIENCES,
+  BROADCAST_LIMITS,
+  OUTREACH_COPY,
+  REENGAGEMENT_INACTIVE_DAYS,
+  type BroadcastAudience,
+} from '@/lib/constants'
+import { enqueueNotifications, type QueuedNotificationInput } from '@/lib/notificationQueue'
 import { isRateLimited } from '@/lib/rateLimit'
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+const AUDIENCE_KEYS = BROADCAST_AUDIENCES.map((a) => a.key) as readonly string[]
+
+/** Rows per insert, and per page when reading the audience back. */
+const BROADCAST_CHUNK = 500
+
+/**
+ * A broadcast's tap target ends up in the push payload, which the service
+ * worker hands to clients.openWindow. Anything but an in-app path would make
+ * the notification an open redirect, so only same-origin paths are accepted
+ * ('//evil.com' is protocol-relative, not a path).
+ */
+function isInternalPath(url: string): boolean {
+  return url.startsWith('/') && !url.startsWith('//')
+}
+
+/**
+ * Resolve an audience key to user ids, server-side. The client picks a named
+ * audience and never sends a recipient list.
+ *
+ * Paginated because PostgREST caps an unbounded select (1,000 rows by default)
+ * and silently returns a truncated page — which for a broadcast would look
+ * exactly like a successful send to everyone.
+ */
+async function resolveBroadcastAudience(
+  supabase: SupabaseClient,
+  audience: BroadcastAudience
+): Promise<string[]> {
+  const cutoff = new Date(
+    Date.now() - REENGAGEMENT_INACTIVE_DAYS * 24 * 60 * 60 * 1000
+  ).toISOString()
+
+  const ids: string[] = []
+  for (let page = 0; ; page++) {
+    const base = supabase.from('profiles').select('id')
+
+    const filtered =
+      audience === 'listeners'
+        ? base.not('listener_training_completed_at', 'is', null)
+        : audience === 'active_30d'
+          ? base.gte('last_heartbeat_at', cutoff)
+          : audience === 'inactive_30d'
+            ? base.or(`last_heartbeat_at.is.null,last_heartbeat_at.lt.${cutoff}`)
+            : base
+
+    const { data, error } = await filtered
+      .order('id', { ascending: true })
+      .range(page * BROADCAST_CHUNK, (page + 1) * BROADCAST_CHUNK - 1)
+
+    if (error) throw error
+    const batch = (data ?? []) as { id: string }[]
+    ids.push(...batch.map((r) => r.id))
+    if (batch.length < BROADCAST_CHUNK) break
+  }
+  return ids
+}
+
+/**
+ * How many of an already-resolved audience have announcements switched on,
+ * i.e. could receive a push. Counted from the resolved id list rather than
+ * re-running the audience filter, so the preview can't disagree with the send.
+ *
+ * Chunked well below BROADCAST_CHUNK: `.in()` goes out as a query string, and
+ * 500 UUIDs makes an ~18KB URL that proxies start rejecting.
+ */
+const ID_FILTER_CHUNK = 150
+
+async function countPushable(
+  supabase: SupabaseClient,
+  recipientIds: string[]
+): Promise<number> {
+  let total = 0
+  for (let i = 0; i < recipientIds.length; i += ID_FILTER_CHUNK) {
+    const { count } = await supabase
+      .from('profiles')
+      .select('id', { count: 'exact', head: true })
+      .in('id', recipientIds.slice(i, i + ID_FILTER_CHUNK))
+      .eq('announcement_notifications_enabled', true)
+    total += count ?? 0
+  }
+  return total
+}
 
 async function getVerifiedAdmin(request: NextRequest) {
   const supabase = createClient(
@@ -271,6 +360,124 @@ export async function POST(request: NextRequest) {
       }])
 
       return NextResponse.json({ success: true, pushCount })
+    }
+
+    if (action === 'preview_broadcast') {
+      const { audience } = body
+      if (typeof audience !== 'string' || !AUDIENCE_KEYS.includes(audience)) {
+        return NextResponse.json({ error: 'Unknown audience' }, { status: 400 })
+      }
+
+      const recipients = await resolveBroadcastAudience(supabase, audience as BroadcastAudience)
+
+      // How many of them could actually receive a push, so the admin isn't
+      // surprised when "Everyone" reaches a fraction of everyone. The rest
+      // still get the in-app notice.
+      const optedInCount = await countPushable(supabase, recipients)
+
+      return NextResponse.json({
+        success: true,
+        recipientCount: recipients.length,
+        optedInCount,
+      })
+    }
+
+    if (action === 'send_broadcast') {
+      const { title, body: messageBody, url, audience } = body
+
+      const trimmedTitle = typeof title === 'string' ? title.trim() : ''
+      const trimmedBody = typeof messageBody === 'string' ? messageBody.trim() : ''
+      const targetUrl = typeof url === 'string' && url.trim() ? url.trim() : '/dashboard'
+
+      if (!trimmedTitle || !trimmedBody) {
+        return NextResponse.json({ error: 'Title and message are required' }, { status: 400 })
+      }
+      if (trimmedTitle.length > BROADCAST_LIMITS.TITLE_MAX_LENGTH) {
+        return NextResponse.json({ error: 'Title is too long' }, { status: 400 })
+      }
+      if (trimmedBody.length > BROADCAST_LIMITS.BODY_MAX_LENGTH) {
+        return NextResponse.json({ error: 'Message is too long' }, { status: 400 })
+      }
+      if (typeof audience !== 'string' || !AUDIENCE_KEYS.includes(audience)) {
+        return NextResponse.json({ error: 'Unknown audience' }, { status: 400 })
+      }
+      if (!isInternalPath(targetUrl)) {
+        return NextResponse.json({ error: 'Link must be an in-app path' }, { status: 400 })
+      }
+
+      const recipients = await resolveBroadcastAudience(supabase, audience as BroadcastAudience)
+      if (recipients.length === 0) {
+        return NextResponse.json({ error: 'That audience is empty' }, { status: 400 })
+      }
+
+      // The broadcast row first: it is the audit record, and its id is the
+      // queue's dedupe key, so a retried request can't double-send.
+      const { data: broadcast, error: broadcastError } = await supabase
+        .from('broadcasts')
+        .insert({
+          created_by: admin.id,
+          title: trimmedTitle,
+          body: trimmedBody,
+          url: targetUrl,
+          audience,
+          recipient_count: recipients.length,
+        })
+        .select('id')
+        .single()
+
+      if (broadcastError) throw broadcastError
+
+      // Two delivery paths, same as admin outreach: a push for anyone who has
+      // it enabled, and an in-app notice so the message still lands for
+      // everyone else on their next visit.
+      const notices = recipients.map((userId) => ({
+        user_id: userId,
+        kind: 'announcement',
+        title: trimmedTitle,
+        body: trimmedBody,
+        created_by: admin.id,
+      }))
+
+      for (let i = 0; i < notices.length; i += BROADCAST_CHUNK) {
+        const { error: noticeError } = await supabase
+          .from('user_notices')
+          .insert(notices.slice(i, i + BROADCAST_CHUNK))
+        if (noticeError) throw noticeError
+      }
+
+      const items: QueuedNotificationInput[] = recipients.map(
+        (userId): QueuedNotificationInput => ({
+          userId,
+          category: 'announcement',
+          kind: 'broadcast',
+          title: trimmedTitle,
+          body: trimmedBody,
+          url: targetUrl,
+          tag: `broadcast-${broadcast.id}`,
+          broadcastId: broadcast.id,
+          dedupeKey: broadcast.id,
+        })
+      )
+
+      const { queued } = await enqueueNotifications(supabase, items)
+
+      await supabase.from('admin_logs').insert([{
+        admin_id: admin.id,
+        action_type: 'broadcast_sent',
+        details: {
+          broadcast_id: broadcast.id,
+          audience,
+          recipient_count: recipients.length,
+          queued,
+        },
+      }])
+
+      return NextResponse.json({
+        success: true,
+        broadcastId: broadcast.id,
+        recipientCount: recipients.length,
+        queued,
+      })
     }
 
     if (action === 'delete_notices') {

@@ -2,8 +2,12 @@
 #
 # Vercel Hobby crons only run once per day, which is too coarse for
 # scheduled-availability (it matches windows starting within the last
-# ~20 minutes). This workflow provides the real cadence; the daily
+# ~90 minutes). This workflow provides the real cadence; the daily
 # Vercel crons in vercel.json remain as a backup.
+#
+# Note the ordering: the two queueing steps run before the drain, so
+# anything they queue goes out on this same tick rather than waiting for
+# the next one.
 #
 # Requires a repository secret named CLEANUP_SECRET_KEY whose value
 # matches the CLEANUP_SECRET_KEY environment variable in Vercel.
@@ -30,3 +34,29 @@ jobs:
           curl --silent --show-error --fail-with-body --max-time 60 \
             -X POST https://recoverybridge.app/api/cleanup-sessions \
             -H "x-cleanup-secret: ${{ secrets.CLEANUP_SECRET_KEY }}"
+
+      # Both of these are heavily deduped (at most one message per person per
+      # calendar month), so running them on the shared cadence costs one cheap
+      # query each and cannot over-notify anyone.
+      - name: Queue training nudges
+        if: ${{ always() }}
+        run: |
+          curl --silent --show-error --fail-with-body --max-time 60 \
+            -X POST https://recoverybridge.app/api/notifications/training-nudge \
+            -H "x-cron-secret: ${{ secrets.CLEANUP_SECRET_KEY }}"
+
+      - name: Queue re-engagement check-ins
+        if: ${{ always() }}
+        run: |
+          curl --silent --show-error --fail-with-body --max-time 60 \
+            -X POST https://recoverybridge.app/api/notifications/reengagement \
+            -H "x-cron-secret: ${{ secrets.CLEANUP_SECRET_KEY }}"
+
+      # Last: delivers everything queued above, plus thank-you notes and
+      # broadcasts queued since the previous run.
+      - name: Drain notification queue
+        if: ${{ always() }}
+        run: |
+          curl --silent --show-error --fail-with-body --max-time 60 \
+            -X POST https://recoverybridge.app/api/notifications/drain \
+            -H "x-cron-secret: ${{ secrets.CLEANUP_SECRET_KEY }}"

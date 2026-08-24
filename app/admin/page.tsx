@@ -7,6 +7,7 @@ import { Heading1, Body16, Body18 } from '@/components/ui/Typography'
 import Modal from '@/components/Modal'
 import { SkeletonAdminRow } from '@/components/Skeleton'
 import { CompactFooter } from '@/components/Footer'
+import BroadcastComposer from '@/components/BroadcastComposer'
 import { parseReferralSource, OUTREACH_COPY } from '@/lib/constants'
 
 interface Report {
@@ -71,7 +72,7 @@ interface Notice {
 export default function AdminPage() {
   const [loading, setLoading] = useState(true)
   const [isAdmin, setIsAdmin] = useState(false)
-  const [activeTab, setActiveTab] = useState<'reports' | 'blocks' | 'sessions' | 'users' | 'signups' | 'missed'>('reports')
+  const [activeTab, setActiveTab] = useState<'reports' | 'blocks' | 'sessions' | 'users' | 'signups' | 'missed' | 'broadcast'>('reports')
 
   const [reports, setReports] = useState<Report[]>([])
   const [blocks, setBlocks] = useState<UserBlock[]>([])
@@ -728,6 +729,16 @@ export default function AdminPage() {
             }`}
           >
             💔 Couldn&apos;t Connect
+          </button>
+          <button
+            onClick={() => setActiveTab('broadcast')}
+            className={`px-4 py-2 rounded-lg whitespace-nowrap ${
+              activeTab === 'broadcast'
+                ? 'bg-rb-blue text-white'
+                : 'bg-white dark:bg-gray-800 text-[#2D3436] dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-700/50'
+            }`}
+          >
+            📣 Broadcast
           </button>
         </div>
 
@@ -1571,6 +1582,15 @@ export default function AdminPage() {
                 </>
               )}
             </div>
+          )}
+
+          {/* Broadcast Tab */}
+          {activeTab === 'broadcast' && (
+            <BroadcastComposer
+              adminFetch={adminFetch}
+              onError={(message) => setErrorModal({ show: true, message })}
+              onSuccess={(message) => setSuccessModal({ show: true, message })}
+            />
           )}
         </div>
       </div>
