@@ -1,4 +1,8 @@
 # RecoveryBridge Website Redesign
+
+> **Historical snapshot — early 2026. Not current state.**  
+> Draft copy written for a redesign. Check the live site before treating any of it as current.
+
 ## Complete Content for Carrd.co
 
 **Based on:** Current site at recoverybridge.app

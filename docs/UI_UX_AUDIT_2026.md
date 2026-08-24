@@ -1,4 +1,8 @@
 # RecoveryBridge UI/UX Audit & Recommendations
+
+> **Historical snapshot — February 15, 2026. Not current state.**  
+> Recommendations from that date; many have since been implemented.
+
 ## 2026 Design Standards Review
 
 **Date:** February 15, 2026

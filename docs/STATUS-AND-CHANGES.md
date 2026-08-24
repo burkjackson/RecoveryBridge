@@ -1,4 +1,8 @@
 # RecoveryBridge - Status and Changes Document
+
+> **Historical snapshot — February 17, 2026. Not current state.**  
+> Superseded as a status document by `CLAUDE.md` in the repo root, which is kept current.
+
 **Last Updated:** February 17, 2026
 **Branch:** `claude/distracted-agnesi` (merged to `main`)
 **Deployment Status:** Deployed to production

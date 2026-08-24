@@ -1,4 +1,8 @@
 # RecoveryBridge Session Summary
+
+> **Historical snapshot — February 13, 2026. Not current state.**  
+> A working session log.
+
 **Date:** February 13, 2026  
 **Session Type:** Bug Fixes, Code Review & UX Improvements
 
