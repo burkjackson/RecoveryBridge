@@ -113,6 +113,9 @@ export const TIME = {
 
   /** How long before a stale 'requesting' role_state is reset to 'offline' by cleanup (30 minutes) */
   SEEKER_STALE_REQUESTING_MS: 30 * 60 * 1000,
+
+  /** How long the post-chat "Returning to dashboard..." confirmation shows before navigating (1.5 seconds) */
+  POST_CHAT_REDIRECT_MS: 1.5 * 1000,
 } as const
 
 // Re-notification tracking constants

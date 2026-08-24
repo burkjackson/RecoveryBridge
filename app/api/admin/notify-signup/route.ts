@@ -7,13 +7,10 @@ import { isRateLimited } from '@/lib/rateLimit'
 
 const ADMIN_EMAIL = 'admin@recoverybridge.app'
 
-// Clients are built per-request, not at module scope. Next.js imports every
-// route during the build's "collecting page data" step, and the Resend
-// constructor throws on a missing key — so a module-level client turns one
-// absent env var into a failed deploy for the whole site.
-
 export async function POST(request: NextRequest) {
   try {
+    // Constructed per request: at module scope, a missing key fails the whole
+    // production build during "Collecting page data" rather than just this route.
     const resend = new Resend(process.env.RESEND_API_KEY)
     const supabaseAdmin = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,

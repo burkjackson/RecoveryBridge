@@ -1,5 +1,9 @@
 # Security and Reliability Fixes
 
+> **Historical snapshot — February 8, 2026. Not current state.**  
+> A record of fixes made on that date. Not a description of current security posture.
+
+
 This document summarizes the critical security and reliability improvements made to RecoveryBridge following a comprehensive code review.
 
 ## Date: February 8, 2026

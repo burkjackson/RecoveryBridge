@@ -4,11 +4,10 @@ import { Resend } from 'resend'
 import { welcomeEmailHtml } from '@/lib/email/welcomeEmailHtml'
 import { isRateLimited } from '@/lib/rateLimit'
 
-// Built per-request: a module-level Resend client throws during the build's
-// page-data collection when RESEND_API_KEY is absent, failing the whole deploy.
-
 export async function POST(request: NextRequest) {
   try {
+    // Constructed per request: at module scope, a missing key fails the whole
+    // production build during "Collecting page data" rather than just this route.
     const resend = new Resend(process.env.RESEND_API_KEY)
     const supabaseAdmin = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,

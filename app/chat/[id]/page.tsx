@@ -53,18 +53,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   const [favoriteAdded, setFavoriteAdded] = useState(false)
   const [favoriteSaving, setFavoriteSaving] = useState(false)
   const [alreadyFavorited, setAlreadyFavorited] = useState(false)
-  const autoReturnScheduled = useRef(false)
-
-  // When the person is already a favorite there's nothing to save, so the
-  // favorite step just says "Returning to dashboard..." — actually do it.
-  useEffect(() => {
-    if (!favoriteStep || !alreadyFavorited || favoriteAdded) return
-    if (autoReturnScheduled.current) return
-    autoReturnScheduled.current = true
-    const timer = setTimeout(() => returnToDashboard(), 1500)
-    return () => clearTimeout(timer)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [favoriteStep, alreadyFavorited, favoriteAdded, currentUserId, session])
+  const [favoriteError, setFavoriteError] = useState(false)
 
   // Report flow modal state
   const [reportModal, setReportModal] = useState(false)
@@ -714,7 +703,8 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
       if (error) throw error
 
       // Seeker goes offline; listener returns to available so they can take
-      // more sessions. Server-side — see the note in endSessionDueToInactivity.
+      // more sessions. Server-side: RLS only lets a client write its own row,
+      // so doing this from here left the other person in the wrong state.
       if (sessionId) {
         await syncSessionRoleStates(supabase, sessionId, 'end')
       }
@@ -757,26 +747,42 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   async function addFavorite() {
     if (!session || !currentUserId || favoriteSaving) return
     setFavoriteSaving(true)
+    setFavoriteError(false)
     const otherUserId = currentUserId === session.listener_id ? session.seeker_id : session.listener_id
     setFavoriteAdded(true) // optimistic
-    try {
-      await supabase.from('user_favorites').insert({
-        user_id: currentUserId,
-        favorite_user_id: otherUserId,
-      })
-    } catch {
-      setFavoriteAdded(false) // roll back on error
-    } finally {
-      setFavoriteSaving(false)
-      setTimeout(() => returnToDashboard(), 800)
+
+    // supabase-js resolves with an { error } payload rather than throwing, so the
+    // insert has to be unwrapped to know whether the optimistic state holds.
+    const { error } = await supabase.from('user_favorites').insert({
+      user_id: currentUserId,
+      favorite_user_id: otherUserId,
+    })
+
+    // 23505 = unique violation, i.e. they were already a favorite (a race with the
+    // check in loadSession) — the outcome we wanted, so treat it as success.
+    if (error && error.code !== '23505') {
+      console.error('Error adding favorite:', error)
+      setFavoriteAdded(false) // roll back so the buttons come back
+      setFavoriteError(true)
     }
+    setFavoriteSaving(false)
   }
 
   // Seekers get a warm check-in banner when they return to the dashboard after a chat
-  function returnToDashboard() {
+  const returnToDashboard = useCallback(() => {
     const isSeeker = currentUserId === session?.seeker_id
     router.push(isSeeker ? '/dashboard?postChat=true' : '/dashboard')
-  }
+  }, [currentUserId, session, router])
+
+  // The favorite step's confirmation state leaves no button to press — it just
+  // promises "Returning to dashboard..." — so the navigation runs on a timer here.
+  // This covers both people who just saved a favorite and people who were already
+  // favorited, who previously had no path off this screen at all.
+  useEffect(() => {
+    if (!favoriteStep || (!alreadyFavorited && !favoriteAdded)) return
+    const redirect = setTimeout(returnToDashboard, TIME.POST_CHAT_REDIRECT_MS)
+    return () => clearTimeout(redirect)
+  }, [favoriteStep, alreadyFavorited, favoriteAdded, returnToDashboard])
 
   function skipFeedback() {
     setFeedbackModal(false)
@@ -1593,15 +1599,14 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                     <div className="py-3">
                       <Body16 className="text-amber-700 dark:text-amber-300 font-semibold">⭐ Already in your favorites!</Body16>
                       <Body16 className="text-gray-400 dark:text-gray-300 text-sm mt-1">Returning to dashboard...</Body16>
-                      <button
-                        onClick={returnToDashboard}
-                        className="min-h-[44px] mt-3 w-full px-4 py-2.5 bg-gray-100 dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 rounded-xl font-semibold hover:bg-gray-200 dark:hover:bg-gray-600 transition-all text-sm"
-                      >
-                        Go to dashboard
-                      </button>
                     </div>
                   ) : (
                     <div className="space-y-3">
+                      {favoriteError && (
+                        <Body16 className="text-red-600 dark:text-red-400 text-sm">
+                          Couldn't save that favorite. Please try again.
+                        </Body16>
+                      )}
                       <button
                         onClick={addFavorite}
                         disabled={favoriteSaving}

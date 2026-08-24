@@ -10,16 +10,23 @@ impersonating a non-admin user (recipe at the bottom of this file).
 
 | File | What it does | Verified |
 |------|--------------|----------|
-| `031_view_requesting_seekers.sql` | SELECT policy exposing seekers at `role_state='requesting'`; scopes the matching 'available' policy to authenticated | A non-admin can now see a waiting seeker (was 0 rows, now 1) and open the session |
-| `027_protect_admin_flag.sql` | Trigger blocking `is_admin` changes from end-user JWTs | Self-promotion attempt raises `is_admin can only be changed by an administrator` |
-| `028_one_active_session_per_listener.sql` | Unique partial index on `sessions(listener_id) WHERE status='active'` | No duplicates existed at apply time; index in place |
-| `029_validate_session_participants.sql` | Trigger validating who a session may be created with | Session with an unavailable counterpart raises; both legitimate paths still insert |
-| `030_expire_temporary_blocks.sql` | Retires blocks past `expires_at`, adds a supporting index | No expired-but-active blocks existed at apply time |
+| `032_view_requesting_seekers.sql` | SELECT policy exposing seekers at `role_state='requesting'`; scopes the matching 'available' policy to authenticated | A non-admin can now see a waiting seeker (was 0 rows, now 1) and open the session |
+| `028_protect_admin_flag.sql` | Trigger blocking `is_admin` changes from end-user JWTs | Self-promotion attempt raises `is_admin can only be changed by an administrator` |
+| `029_one_active_session_per_listener.sql` | Unique partial index on `sessions(listener_id) WHERE status='active'` | No duplicates existed at apply time; index in place |
+| `030_validate_session_participants.sql` | Trigger validating who a session may be created with | Session with an unavailable counterpart raises; both legitimate paths still insert |
+| `031_expire_temporary_blocks.sql` | Retires blocks past `expires_at`, adds a supporting index | No expired-but-active blocks existed at apply time |
 
-Note that `031` was the urgent one: without it no non-admin listener could see
+Note that `032` was the urgent one: without it no non-admin listener could see
 anyone requesting support, so People Seeking was empty and every notification
 tap reported "This person is no longer waiting for support". It is a read
 permission, so it fixed production on its own, ahead of any deploy.
+
+### Also applied
+
+`027_availability_notify_dedupe.sql` came from a parallel session and adds
+`profiles.last_availability_notify_key`, so a scheduled-availability push fires
+once per window occurrence. Its route degrades gracefully without the column
+(it logs and skips the dedupe), which is how it shipped ahead of the migration.
 
 ### End-to-end verification (24 Aug 2026)
 
@@ -111,4 +118,4 @@ rollback;
 ```
 
 `own_row_visible` is the control: it must be 1, or the impersonation didn't take
-and the other number means nothing. Before `031`, `seeker_visible` came back 0.
+and the other number means nothing. Before `032`, `seeker_visible` came back 0.
