@@ -21,6 +21,14 @@ anyone requesting support, so People Seeking was empty and every notification
 tap reported "This person is no longer waiting for support". It is a read
 permission, so it fixed production on its own, ahead of any deploy.
 
+### 034 — notification_log
+
+Applied 24 Aug 2026. Records that a support notification went out (listener,
+seeker, channel, whether the listener was stale) so the "should we stop
+notifying absent listeners?" question can be answered with data. No message
+content; pruned after 60 days by the cleanup cron. Analysis query:
+`supabase/queries/push_conversion.sql`.
+
 ### 033 — profile visibility for people you already know
 
 Applied 24 Aug 2026. `/history` was rendering "Anonymous" for every past

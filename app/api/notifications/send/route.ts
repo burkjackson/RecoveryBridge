@@ -3,6 +3,7 @@ import webpush from 'web-push'
 import { createClient } from '@supabase/supabase-js'
 import { sendSupportRequestEmail } from '@/lib/email'
 import { isInQuietHours } from '@/lib/timeWindows'
+import { TIME } from '@/lib/constants'
 import { isRateLimited } from '@/lib/rateLimit'
 // TODO: Re-enable when Twilio verification is complete
 // import { sendSMS } from '@/lib/sms'
@@ -200,7 +201,7 @@ export async function POST(request: NextRequest) {
     // 2. Users with "always_available" enabled (should receive notifications anytime)
     const { data: listeners, error: listenersError } = await supabase
       .from('profiles')
-      .select('id, display_name, email, email_notifications_enabled, role_state, always_available, quiet_hours_enabled, quiet_hours_start, quiet_hours_end, quiet_hours_timezone, phone_number, sms_notifications_enabled')
+      .select('id, display_name, email, email_notifications_enabled, role_state, always_available, last_heartbeat_at, quiet_hours_enabled, quiet_hours_start, quiet_hours_end, quiet_hours_timezone, phone_number, sms_notifications_enabled')
       .or('role_state.eq.available,always_available.eq.true')
       .neq('id', seekerId)
 
@@ -352,6 +353,7 @@ export async function POST(request: NextRequest) {
 
     // Email fallback: listeners who opted in but didn't receive a push notification
     let emailCount = 0
+    const emailedUserIds = new Set<string>()
     if (process.env.RESEND_API_KEY) {
       const emailEligible = activeListeners.filter((l: { id: string; email: string; email_notifications_enabled: boolean }) =>
         l.email_notifications_enabled &&
@@ -364,13 +366,16 @@ export async function POST(request: NextRequest) {
 
       async function sendEmailBatch(batch: typeof emailEligible, isFavorite: boolean) {
         const results = await Promise.all(
-          batch.map((l: { email: string; display_name: string }) =>
+          batch.map((l: { id: string; email: string; display_name: string }) =>
             sendSupportRequestEmail({
               to: l.email,
               listenerName: l.display_name,
               seekerName,
               isFavorite,
               isRenotification,
+            }).then((r) => {
+              if (r.success) emailedUserIds.add(l.id)
+              return r
             })
           )
         )
@@ -386,6 +391,36 @@ export async function POST(request: NextRequest) {
         }
         emailCount += await sendEmailBatch(generalEmailListeners, false)
       }
+    }
+
+    // Record who was reached, so the "does notifying an absent listener work?"
+    // question can be settled with data (supabase/queries/push_conversion.sql).
+    // Best-effort: a logging failure must never fail a support request.
+    try {
+      const staleBefore = Date.now() - TIME.HEARTBEAT_THRESHOLD_MS
+      const wasStale = (l: { role_state: string | null; last_heartbeat_at: string | null }) =>
+        l.role_state === 'available' &&
+        (!l.last_heartbeat_at || new Date(l.last_heartbeat_at).getTime() < staleBefore)
+
+      const rows = activeListeners
+        .filter((l) => pushSuccessUserIds.has(l.id) || emailedUserIds.has(l.id))
+        .flatMap((l) => {
+          const channels: string[] = []
+          if (pushSuccessUserIds.has(l.id)) channels.push('push')
+          if (emailedUserIds.has(l.id)) channels.push('email')
+          return channels.map((channel) => ({
+            listener_id: l.id,
+            seeker_id: seekerId,
+            channel,
+            listener_state: l.role_state,
+            listener_stale: wasStale(l),
+            is_renotification: isRenotification,
+          }))
+        })
+
+      if (rows.length > 0) await supabase.from('notification_log').insert(rows)
+    } catch (logError) {
+      console.error('[notify] Could not record notification log:', logError)
     }
 
     return NextResponse.json({

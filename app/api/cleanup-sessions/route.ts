@@ -94,6 +94,14 @@ export async function POST(request: NextRequest) {
       console.log(`Expired ${expiredBlocks.length} temporary block(s)`)
     }
 
+    // Prune the notification log. It exists to answer a question that needs
+    // weeks of data, not a permanent record of who was told that whom needed
+    // support.
+    await supabase
+      .from('notification_log')
+      .delete()
+      .lt('created_at', new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString())
+
     // Get all active sessions
     const { data: activeSessions, error: sessionsError } = await supabase
       .from('sessions')
