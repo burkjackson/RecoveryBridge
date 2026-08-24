@@ -21,6 +21,21 @@ anyone requesting support, so People Seeking was empty and every notification
 tap reported "This person is no longer waiting for support". It is a read
 permission, so it fixed production on its own, ahead of any deploy.
 
+### 033 — profile visibility for people you already know
+
+Applied 24 Aug 2026. `/history` was rendering "Anonymous" for every past
+conversation and the Favourites list dropped anyone who was offline, because
+profile reads required the person to be *currently* available, *currently*
+requesting, or in an **active** session with you.
+
+033 widens that to any session you shared (past or present) plus anyone you
+favourited, scoped to `authenticated`. It reveals nothing new — you saw these
+people's names while talking to them, and availability state is already visible
+platform-wide — and it stays scoped to relationships you're part of. Measured
+after applying: a user with 45 past sessions and 1 favourite could read 16 of
+91 profiles (themselves, the 14 currently-available listeners, and the one
+person they actually know).
+
 ### 020 was never applied until now
 
 `020_availability_schedule.sql` had sat unapplied since it was written. The old
