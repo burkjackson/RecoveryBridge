@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest'
-import { isInQuietHours, isWindowStartingNow, type QuietHoursSettings } from './timeWindows'
+import {
+  isInQuietHours,
+  isWindowStartingNow,
+  findWindowStartingNow,
+  type QuietHoursSettings,
+} from './timeWindows'
 
 // Helper: a UTC instant whose New York local time is the given hour/minute.
 // 2026-07-06 is EDT (UTC-4). 2026-01-05 is EST (UTC-5).
@@ -112,5 +117,78 @@ describe('isWindowStartingNow', () => {
   it('matches a window starting exactly at midnight', () => {
     const midnight = [{ day: 1, start: '00:00', end: '02:00' }]
     expect(isWindowStartingNow(midnight, 'America/New_York', 20, edt(0, 10))).toBe(true)
+  })
+})
+
+describe('findWindowStartingNow', () => {
+  const monday7pm = [{ day: 1, start: '19:00', end: '21:00' }]
+
+  it('returns a key identifying the specific occurrence', () => {
+    const match = findWindowStartingNow(monday7pm, 'America/New_York', 90, edt(19, 5))
+    expect(match?.key).toBe('2026-07-06|1|19:00')
+    expect(match?.window).toEqual(monday7pm[0])
+  })
+
+  it('returns the same key across every run inside the window', () => {
+    // This is what makes a wide tolerance safe: the caller stores the key, so
+    // three cron runs inside one window still produce a single push.
+    const keys = [edt(19, 0), edt(19, 21), edt(20, 15)].map(
+      t => findWindowStartingNow(monday7pm, 'America/New_York', 90, t)?.key
+    )
+    expect(new Set(keys).size).toBe(1)
+    expect(keys[0]).toBe('2026-07-06|1|19:00')
+  })
+
+  it('keys the same weekly window differently on a later date', () => {
+    const thisWeek = findWindowStartingNow(monday7pm, 'America/New_York', 90, edt(19, 5))
+    // Same wall-clock Monday slot, one week on.
+    const nextWeek = findWindowStartingNow(
+      monday7pm,
+      'America/New_York',
+      90,
+      new Date(Date.UTC(2026, 6, 13, 23, 5))
+    )
+    expect(nextWeek?.key).toBe('2026-07-13|1|19:00')
+    expect(nextWeek?.key).not.toBe(thisWeek?.key)
+  })
+
+  it('still catches a window start that the cron cadence skipped over', () => {
+    // The bug this fixes: no run landed in the first 20 minutes, so the old
+    // tolerance missed the window entirely. A 35-minute gap is within observed
+    // cron behaviour.
+    expect(isWindowStartingNow(monday7pm, 'America/New_York', 20, edt(19, 35))).toBe(false)
+    expect(findWindowStartingNow(monday7pm, 'America/New_York', 90, edt(19, 35))).not.toBeNull()
+  })
+
+  it('never announces a window that has already ended', () => {
+    // Tolerance is 90 min but the window is only 30 — matching must stop at 09:30,
+    // not run on for an hour after the window closed.
+    const shortWindow = [{ day: 1, start: '09:00', end: '09:30' }]
+    expect(findWindowStartingNow(shortWindow, 'America/New_York', 90, edt(9, 29))).not.toBeNull()
+    expect(findWindowStartingNow(shortWindow, 'America/New_York', 90, edt(9, 30))).toBeNull()
+    expect(findWindowStartingNow(shortWindow, 'America/New_York', 90, edt(10, 0))).toBeNull()
+  })
+
+  it('allows the full tolerance for a window running past midnight', () => {
+    // end <= start means the window crosses midnight, so the end must not be
+    // read as "already over" the moment it starts.
+    const overnight = [{ day: 1, start: '22:00', end: '02:00' }]
+    expect(findWindowStartingNow(overnight, 'America/New_York', 90, edt(22, 45))).not.toBeNull()
+    expect(findWindowStartingNow(overnight, 'America/New_York', 90, edt(23, 31))).toBeNull()
+  })
+
+  it('picks the most recently started window when two overlap', () => {
+    // Array order must not decide, or the stored dedupe key could flip between
+    // runs and buzz the same person twice.
+    const a = { day: 1, start: '09:00', end: '12:00' }
+    const b = { day: 1, start: '09:30', end: '11:00' }
+    const at945 = edt(9, 45)
+    expect(findWindowStartingNow([a, b], 'America/New_York', 90, at945)?.key).toBe('2026-07-06|1|09:30')
+    expect(findWindowStartingNow([b, a], 'America/New_York', 90, at945)?.key).toBe('2026-07-06|1|09:30')
+  })
+
+  it('returns null when nothing matches', () => {
+    expect(findWindowStartingNow(monday7pm, 'America/New_York', 90, edt(18, 59))).toBeNull()
+    expect(findWindowStartingNow([], 'America/New_York', 90, edt(19, 5))).toBeNull()
   })
 })

@@ -99,7 +99,7 @@ lib/
 └── *.test.ts                         # Vitest: constants, favorites, timeWindows
 
 supabase/
-├── migrations/                       # 001–026, numbered (note: two files share 004)
+├── migrations/                       # 001–027, numbered (note: two files share 004)
 └── legacy/                           # Pre-migration setup SQL (historical reference only)
 
 docs/                                 # Setup guides + dated historical snapshots (each labelled); all intentionally public
@@ -114,12 +114,12 @@ middleware.ts                         # Route protection (auth + admin check)
 
 ## Database Schema (high level)
 
-Migrations live in `supabase/migrations/` (001–026) and are the source of truth. Summary:
+Migrations live in `supabase/migrations/` (001–027) and are the source of truth. Summary:
 
 ### profiles (central user table)
 Core: `id` (= auth.users.id), `display_name` (unique), `email`, `bio`, `tagline`, `avatar_url`, `tags` (max 5), `is_admin`.
 State: `role_state` (`available`/`requesting`/`offline`/null), `user_role` (`person_in_recovery`/`professional`/`ally`), `last_heartbeat_at`.
-Notifications: `always_available`, `quiet_hours_*` (enabled/start/end/timezone), `email_notifications_enabled` (008), `phone_number` + `sms_notifications_enabled` (006, feature disabled), `availability_schedule` JSONB windows (020).
+Notifications: `always_available`, `quiet_hours_*` (enabled/start/end/timezone), `email_notifications_enabled` (008), `phone_number` + `sms_notifications_enabled` (006, feature disabled), `availability_schedule` JSONB windows (020), `last_availability_notify_key` (027, dedupes the "support time is starting" push — `"YYYY-MM-DD|day|HH:MM"` in the user's timezone).
 Compliance/audit: `referral_source` (010, free text since 018), `listener_training_completed_at` (019), `consent_version` + `consent_accepted_at` (021), `age_confirmed` (022), `health_data_consent` + `_at` (023, WA My Health My Data).
 
 ### Other tables
@@ -174,7 +174,7 @@ Tabs for reports, blocks, sessions, users, sign-ups (with referral source), and 
 ## Cron Jobs (fixed July 2026)
 
 **Primary trigger: GitHub Actions** (`.github/workflows/cron.yml`) — every 15 minutes, pings:
-- `POST /api/scheduled-availability` with `x-cron-secret` — notifies listeners whose availability window started within the last ~20 min
+- `POST /api/scheduled-availability` with `x-cron-secret` — notifies listeners whose availability window started within the last 90 min (wide because the cron cadence is unreliable), skipping anyone whose `last_availability_notify_key` already marks that occurrence, and never firing past the window's own end
 - `POST /api/cleanup-sessions` with `x-cleanup-secret` — closes empty (>10 min) and inactive (>30 min) sessions, resets stale requesting seekers, and records a `reconnect` notice + warm push for any seeker whose request went unanswered
 
 Requires GitHub repo secret `CLEANUP_SECRET_KEY` (same value as Vercel env var). Daily Vercel crons in `vercel.json` remain as backup; both routes also accept `Authorization: Bearer <CLEANUP_SECRET_KEY|CRON_SECRET>` and answer GET (Vercel crons send GET). The dashboard also triggers cleanup on page load.
@@ -239,7 +239,7 @@ Everything in the flows above is ✅ live, including: auth, onboarding (with ref
 
 ## Known Issues & Technical Debt
 
-1. **Thin test coverage** — Vitest is set up (`npm test`) with 24 tests across `lib/favorites.test.ts`, `lib/timeWindows.test.ts`, `lib/constants.test.ts`. Still uncovered: notification batching, cleanup thresholds, the chat page's end-of-session flow.
+1. **Thin test coverage** — Vitest is set up (`npm test`) with 32 tests across `lib/favorites.test.ts`, `lib/timeWindows.test.ts`, `lib/constants.test.ts`. Still uncovered: notification batching, cleanup thresholds, the chat page's end-of-session flow.
 2. **ESLint warnings** — flat config is in place (`eslint.config.mjs`, `npm run lint`) and passes with 0 errors, but ~76 warnings remain (mostly `no-explicit-any` and unused vars). CI does not fail on warnings.
 3. **In-memory rate limiters** — the notification route (3 req/60s per user) and the public contact route (5 per 10 min per IP) both reset per serverless instance/cold start. Move to DB or KV if abuse matters.
 4. **SMS feature disabled** — all code written but commented out in `app/api/notifications/send/route.ts` and profile page. Re-enable: uncomment both, add Twilio env vars, redeploy.
@@ -247,7 +247,7 @@ Everything in the flows above is ✅ live, including: auth, onboarding (with ref
 6. **Legacy blog tables** — migrations 011–015 create story tables no longer read by the app (stories moved to Ghost). `lib/email.ts` still has story emails.
 7. **Public repo** — the breach-response plan (marked "Internal — Do Not Publish") was removed from `docs/` in Aug 2026; it lives outside the repo now, so keep maintaining it there (the FTC Health Breach Notification Rule expects a written plan). Everything still in `docs/` is intentionally public: setup guides, plus dated audits whose findings are fixed. Note that git history still contains the removed file — the repo has always been public, so treat anything ever committed as disclosed.
 8. **Service worker cache** — `CACHE_NAME` in `public/sw.js` (currently v11); bump on breaking asset changes.
-9. **Scheduled-availability pushes get dropped** — GitHub Actions throttles the nominal `*/15` cron. Measured 2026-08-24 over 30 consecutive runs: gaps of min 14m / median 21m / max 35m, with **18 of 29 gaps exceeding the ~20 min lookback window** `scheduled-availability` matches against. So a listener's "your support time is starting" push silently fails to fire on most intervals. Fix is either a wider lookback or a "last notified" marker per window; `docs/CRON_TIGHTER_SCHEDULING.md` sketches options.
+9. **Cron cadence is unreliable (worked around, not solved)** — GitHub Actions throttles the nominal `*/15` schedule. Measured 2026-08-24 over 30 consecutive runs: gaps of min 14m / median 21m / max 35m. `scheduled-availability` absorbs this with a 90-minute match window plus a per-occurrence dedupe key (027), so a skipped tick delays a push rather than dropping it. Anything else added to `cron.yml` must tolerate ~35 min between runs — don't assume 15.
 10. **RLS-null embeds crash render (⚠️ gotcha when writing profile joins)** — Supabase relation embeds like `favorite_profile:profiles!fkey(...)` are *non-inner* joins, so row-level security returns the embedded object as **`null`** (it does not drop the parent row) whenever the viewer can't read that profile. The `profiles` SELECT policy only exposes a profile that is your own, currently `role_state = 'available'`, an **active** session participant, or when you're admin — so any embed of an *offline* or *past-session* user comes back null. Dereferencing it (`fp.display_name`) throws during render and trips the error boundary ("Dashboard couldn't load"). **Always guard embedded profiles**: dashboard + profile favorites route through `lib/favorites.ts` `normalizeFavorites()`; profile thank-you notes, history, dashboard sessions, and admin all use `?.display_name || 'fallback'`. Use `!inner` only if you actually want RLS to filter the whole row instead.
 
 ---
