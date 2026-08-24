@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { errorMessage } from '@/lib/errors'
 import { useRouter } from 'next/navigation'
 import { Heading1, Body16 } from '@/components/ui/Typography'
 
@@ -127,8 +128,8 @@ export default function ResetPasswordPage() {
 
       // Success! Redirect to login
       router.push('/login?message=Password reset successful. Please log in with your new password.')
-    } catch (error: any) {
-      setError(error.message || 'Failed to reset password. Please try again.')
+    } catch (error: unknown) {
+      setError(errorMessage(error, 'Failed to reset password. Please try again.'))
     } finally {
       setLoading(false)
     }

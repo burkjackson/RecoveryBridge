@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import { Resend } from 'resend'
 import { parseReferralSource } from '@/lib/constants'
 import { escapeHtml } from '@/lib/email/escapeHtml'
+import { isRateLimited } from '@/lib/rateLimit'
 
 const ADMIN_EMAIL = 'admin@recoverybridge.app'
 
@@ -26,6 +27,13 @@ export async function POST(request: NextRequest) {
     const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token)
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    // Onboarding completes once, so anything beyond a retry or two is a loop
+    // or an abuse attempt — and every call lands in the admin inbox and spends
+    // Resend quota that the support-request email fallback depends on.
+    if (isRateLimited('notify-signup', user.id, 2, 60 * 60 * 1000)) {
+      return NextResponse.json({ error: 'Already notified' }, { status: 429 })
     }
 
     // Fetch authoritative profile data server-side rather than trusting the client body —

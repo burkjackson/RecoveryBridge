@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
+import { errorMessage } from '@/lib/errors'
 import { useRouter } from 'next/navigation'
 import { Heading1, Body16, Body18 } from '@/components/ui/Typography'
 
@@ -128,6 +129,7 @@ export default function TrainingPage() {
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (user) setUserId(user.id)
     })
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once on mount; the loaders it calls are stable for the life of the component
   }, [])
 
   async function handleComplete() {
@@ -141,8 +143,8 @@ export default function TrainingPage() {
         .eq('id', userId)
       if (error) throw error
       router.push('/dashboard?trainingComplete=true')
-    } catch (e: any) {
-      setError(e.message)
+    } catch (e: unknown) {
+      setError(errorMessage(e, 'Could not save your progress. Please try again.'))
       setSaving(false)
     }
   }

@@ -60,10 +60,12 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // Routes that require authentication (redirect to /login if not signed in)
-  const authRoutes = ['/dashboard', '/chat', '/profile', '/listeners', '/admin', '/training', '/history']
+  const authRoutes = ['/dashboard', '/chat', '/profile', '/listeners', '/admin', '/training', '/history', '/connect']
   if (authRoutes.some((route) => pathname.startsWith(route)) && !user) {
     const loginUrl = new URL('/login', request.url)
-    loginUrl.searchParams.set('redirect', pathname)
+    // Keep the query string: /connect carries ?seekerId=, and dropping it
+    // strands a listener who tapped a notification while signed out.
+    loginUrl.searchParams.set('redirect', pathname + request.nextUrl.search)
     return NextResponse.redirect(loginUrl)
   }
 
@@ -97,6 +99,8 @@ export const config = {
     '/listeners/:path*',
     '/onboarding/:path*',
     '/training/:path*',
-    '/history/:path*'
+    '/history/:path*',
+    '/connect/:path*',
+    '/connect'
   ]
 }

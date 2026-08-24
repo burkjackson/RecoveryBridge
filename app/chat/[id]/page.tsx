@@ -4,14 +4,25 @@ import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
-import { Heading1, Body16, Body18 } from '@/components/ui/Typography'
+import { Body16, Body18 } from '@/components/ui/Typography'
 import Modal from '@/components/Modal'
 import { SkeletonChatMessage } from '@/components/Skeleton'
 import ErrorState from '@/components/ErrorState'
 import { PrivacyBadge } from '@/components/Footer'
 import { TIME, VALIDATION, CONVERSATION_STARTERS, REACTIONS, containsCrisisLanguage } from '@/lib/constants'
 import { linkifyText } from '@/lib/linkify'
+import { syncSessionRoleStates } from '@/lib/sessionState'
+import { getActiveBlock } from '@/lib/blocks'
 import type { ChatMessage as Message, Session, MessageReaction as Reaction } from '@/lib/types/database'
+
+// The subset of a profile the chat header and profile modal render.
+interface OtherUserProfile {
+  display_name: string
+  bio: string | null
+  user_role: string | null
+  avatar_url: string | null
+  tagline: string | null
+}
 
 export default function ChatPage({ params }: { params: Promise<{ id: string }> }) {
   const [messages, setMessages] = useState<Message[]>([])
@@ -19,7 +30,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   const [session, setSession] = useState<Session | null>(null)
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [otherUserName, setOtherUserName] = useState('')
-  const [otherUserProfile, setOtherUserProfile] = useState<any>(null)
+  const [otherUserProfile, setOtherUserProfile] = useState<OtherUserProfile | null>(null)
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
   const [sessionId, setSessionId] = useState<string | null>(null)
@@ -104,6 +115,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
     if (sessionId) {
       loadSession()
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally keyed on sessionId — adding the callbacks would tear down and rebuild this on every render
   }, [sessionId])
 
   // Depend on session?.id (stable) rather than the whole session object, which is
@@ -116,6 +128,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
       const cleanup = subscribeToMessages()
       return cleanup
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally keyed on session?.id, currentUserId — adding the callbacks would tear down and rebuild this on every render
   }, [session?.id, currentUserId])
 
   // Polling fallback: realtime postgres_changes can silently drop INSERT
@@ -149,6 +162,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
 
     const pollInterval = setInterval(pollNewMessages, 3000)
     return () => clearInterval(pollInterval)
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally keyed on session?.id, session?.status, currentUserId — adding the callbacks would tear down and rebuild this on every render
   }, [session?.id, session?.status, currentUserId])
 
   // Keep the incremental-poll cursor on the newest message we have
@@ -192,6 +206,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
     if (messages.length > 0 && currentUserId && session?.status === 'active' && viewerIsParticipant && isPageVisible) {
       markMessagesAsRead()
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally keyed on messages, currentUserId, session?.status, session?.listener_id, session?.seeker_id, isPageVisible — adding the callbacks would tear down and rebuild this on every render
   }, [messages, currentUserId, session?.status, session?.listener_id, session?.seeker_id, isPageVisible])
 
   // Close reaction picker when tapping outside
@@ -212,12 +227,11 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
 
       if (error) throw error
 
-      // Seeker goes offline; listener returns to available so they can take more sessions
-      if (session) {
-        await Promise.all([
-          supabase.from('profiles').update({ role_state: 'offline' }).eq('id', session.seeker_id),
-          supabase.from('profiles').update({ role_state: 'available' }).eq('id', session.listener_id),
-        ])
+      // Seeker goes offline; listener returns to available so they can take
+      // more sessions. Server-side: RLS only lets a client write its own row,
+      // so doing this from here left the other person in the wrong state.
+      if (sessionId) {
+        await syncSessionRoleStates(supabase, sessionId, 'end')
       }
 
       setInactivityModal(false)
@@ -225,7 +239,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
     } catch (error) {
       console.error('Error ending session:', error)
     }
-  }, [sessionId, session, router, supabase])
+  }, [sessionId, supabase])
 
   const dismissInactivityWarning = useCallback(() => {
     setInactivityModal(false)
@@ -273,15 +287,13 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
       }
       setCurrentUserId(user.id)
 
-      // Check if user is blocked
-      const { data: blockCheck } = await supabase
-        .from('user_blocks')
-        .select('id, reason')
-        .eq('user_id', user.id)
-        .maybeSingle()
+      // Check if user is blocked. getActiveBlock ignores lifted and expired
+      // blocks — this query used to match on user_id alone, so an unblocked
+      // person stayed locked out of chat forever.
+      const blockCheck = await getActiveBlock(supabase, user.id)
 
       if (blockCheck) {
-        setBlockModal({ show: true, reason: blockCheck.reason })
+        setBlockModal({ show: true, reason: blockCheck.reason ?? '' })
         return
       }
 
@@ -650,7 +662,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
       setLastActivityTime(Date.now()) // Reset inactivity timer
       setInactivityModal(false) // Dismiss warning if showing
       notifyRecipient((inserted as Message | null)?.id) // Ping only if they're away from this chat
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error sending message:', error)
       setSendError(true)
     } finally {
@@ -671,7 +683,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
       if (inserted) mergeMessages([inserted as Message])
       setLastActivityTime(Date.now())
       notifyRecipient((inserted as Message | null)?.id) // Ping only if they're away from this chat
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error sending starter:', error)
       setSendError(true)
     } finally {
@@ -690,12 +702,11 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
 
       if (error) throw error
 
-      // Seeker goes offline; listener returns to available so they can take more sessions
-      if (session) {
-        await Promise.all([
-          supabase.from('profiles').update({ role_state: 'offline' }).eq('id', session.seeker_id),
-          supabase.from('profiles').update({ role_state: 'available' }).eq('id', session.listener_id),
-        ])
+      // Seeker goes offline; listener returns to available so they can take
+      // more sessions. Server-side: RLS only lets a client write its own row,
+      // so doing this from here left the other person in the wrong state.
+      if (sessionId) {
+        await syncSessionRoleStates(supabase, sessionId, 'end')
       }
 
       setFeedbackModal(true)
@@ -1054,7 +1065,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                             reactionPickerMessageId === message.id ? null : message.id
                           )
                         }}
-                        onTouchStart={(e) => {
+                        onTouchStart={() => {
                           longPressFiredRef.current = false
                           longPressTimerRef.current = setTimeout(() => {
                             longPressFiredRef.current = true

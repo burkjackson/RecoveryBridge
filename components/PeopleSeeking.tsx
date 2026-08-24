@@ -8,6 +8,8 @@ import { Body16, Body18 } from '@/components/ui/Typography'
 import ErrorState from '@/components/ErrorState'
 import Modal from '@/components/Modal'
 import { TIME, UI } from '@/lib/constants'
+import { syncSessionRoleStates } from '@/lib/sessionState'
+import { getActiveBlock } from '@/lib/blocks'
 
 interface Seeker {
   id: string
@@ -49,6 +51,7 @@ export default function PeopleSeeking({ currentUserId, currentRoleState }: Peopl
 
       return () => clearInterval(pollInterval)
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally keyed on currentRoleState — adding the callbacks would tear down and rebuild this on every render
   }, [currentRoleState])
 
   // Real-time: refresh when profiles change or a new session is created
@@ -64,6 +67,7 @@ export default function PeopleSeeking({ currentUserId, currentRoleState }: Peopl
     return () => {
       supabase.removeChannel(channel)
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally keyed on supabase, currentRoleState — adding the callbacks would tear down and rebuild this on every render
   }, [supabase, currentRoleState])
 
   async function loadPeopleSeeking() {
@@ -128,13 +132,13 @@ export default function PeopleSeeking({ currentUserId, currentRoleState }: Peopl
       if (!user) return
 
       // Check block status and seeker availability in parallel
-      const [{ data: blockCheck }, { data: seeker }] = await Promise.all([
-        supabase.from('user_blocks').select('id, reason').eq('user_id', user.id).maybeSingle(),
+      const [blockCheck, { data: seeker }] = await Promise.all([
+        getActiveBlock(supabase, user.id),
         supabase.from('profiles').select('role_state').eq('id', seekerId).maybeSingle(),
       ])
 
       if (blockCheck) {
-        setBlockModal({ show: true, reason: blockCheck.reason })
+        setBlockModal({ show: true, reason: blockCheck.reason ?? '' })
         setConnecting(null)
         return
       }
@@ -173,11 +177,9 @@ export default function PeopleSeeking({ currentUserId, currentRoleState }: Peopl
       if (error) throw error
 
       // Mark both users as offline while in chat — seeker leaves seeking list,
-      // listener becomes unavailable to other seekers until the session ends
-      await supabase
-        .from('profiles')
-        .update({ role_state: 'offline' })
-        .in('id', [seekerId, user.id])
+      // listener becomes unavailable to other seekers until the session ends.
+      // Server-side: RLS blocks a client from writing the other person's row.
+      await syncSessionRoleStates(supabase, session.id, 'start')
 
       // Navigate to chat
       router.push(`/chat/${session.id}`)
