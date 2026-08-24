@@ -73,7 +73,20 @@ export async function POST(request: NextRequest) {
   let profilesError = primary.error
   let dedupeAvailable = true
 
-  if (profilesError?.code === '42703') {
+  // 42703 is Postgres's "undefined column"; PostgREST can also answer from its
+  // schema cache with PGRST204 before the query reaches Postgres at all, so
+  // match either. The message check keeps the fallback scoped to the dedupe
+  // column — any OTHER missing column is a real error and must surface, which
+  // is how 020_availability_schedule being unapplied finally became visible.
+  const missingColumn =
+    profilesError != null &&
+    (profilesError.code === '42703' ||
+      profilesError.code === 'PGRST204' ||
+      /last_availability_notify_key/i.test(
+        `${profilesError.message ?? ''} ${profilesError.details ?? ''}`
+      ))
+
+  if (missingColumn) {
     dedupeAvailable = false
     console.warn(
       'scheduled-availability: last_availability_notify_key missing (apply migration 027) — running without dedupe'

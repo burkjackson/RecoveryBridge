@@ -21,6 +21,19 @@ anyone requesting support, so People Seeking was empty and every notification
 tap reported "This person is no longer waiting for support". It is a read
 permission, so it fixed production on its own, ahead of any deploy.
 
+### 020 was never applied until now
+
+`020_availability_schedule.sql` had sat unapplied since it was written. The old
+scheduled-availability route destructured only `data` from its profile query,
+so the "column does not exist" error was thrown away and every run answered
+`{"notified": 0}` with a 200 — the cron showed 1,000+ consecutive successes
+while no scheduled push had ever fired, and the profile page's schedule editor
+had nothing to write to. The rewritten route surfaced it as a 500, which is
+what finally made it visible. Applied 24 Aug 2026; the cron is green again.
+
+**Never assume a migration file has been run.** Check `list_migrations`, or
+look for the column.
+
 ### Also applied
 
 `027_availability_notify_dedupe.sql` came from a parallel session and adds
