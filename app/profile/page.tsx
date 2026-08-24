@@ -20,6 +20,14 @@ function isValidE164(phone: string): boolean {
   return /^\+[1-9]\d{1,14}$/.test(phone)
 }
 
+function formatDate(dateStr: string): string {
+  return new Date(dateStr).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  })
+}
+
 export default function ProfilePage() {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
@@ -1140,6 +1148,25 @@ export default function ProfilePage() {
           </div>
         </div>
         */}
+
+        {/* Listener Training — always reachable, so anyone can refresh on the principles */}
+        <Link
+          href="/training"
+          className="mt-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm flex items-center justify-between p-5 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+        >
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="text-xl">🤝</span>
+            <div className="min-w-0">
+              <Body16 className="font-semibold text-gray-900 dark:text-gray-100">Listener Training</Body16>
+              <p className="text-xs text-rb-gray dark:text-gray-300 mt-0.5">
+                {profile.listener_training_completed_at
+                  ? `Completed ${formatDate(profile.listener_training_completed_at)} — review it any time`
+                  : 'Not yet completed — takes about 5 minutes'}
+              </p>
+            </div>
+          </div>
+          <span className="text-gray-400 dark:text-gray-300 ml-3 shrink-0" aria-hidden="true">→</span>
+        </Link>
 
         {/* Session History */}
         <Link
