@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { sendContactMessageEmail } from '@/lib/email'
+import { isRateLimited } from '@/lib/rateLimit'
 
 // Public contact-form endpoint. The form is available to logged-out visitors,
 // so there's no auth — instead we validate + cap input and apply a light
@@ -19,20 +20,6 @@ const VALID_SUBJECTS = new Set([
   'Other',
 ])
 
-const hits = new Map<string, number[]>()
-
-function rateLimited(ip: string): boolean {
-  const now = Date.now()
-  const recent = (hits.get(ip) || []).filter((t) => now - t < RATE_LIMIT.windowMs)
-  if (recent.length >= RATE_LIMIT.max) {
-    hits.set(ip, recent)
-    return true
-  }
-  recent.push(now)
-  hits.set(ip, recent)
-  return false
-}
-
 export async function POST(request: NextRequest) {
   try {
     const ip =
@@ -40,7 +27,7 @@ export async function POST(request: NextRequest) {
       request.headers.get('x-real-ip') ||
       'unknown'
 
-    if (rateLimited(ip)) {
+    if (isRateLimited('contact', ip, RATE_LIMIT.max, RATE_LIMIT.windowMs)) {
       return NextResponse.json(
         { error: 'Too many messages. Please try again in a little while, or email admin@recoverybridge.app directly.' },
         { status: 429 }

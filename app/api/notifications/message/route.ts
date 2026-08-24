@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import webpush from 'web-push'
 import { createClient } from '@supabase/supabase-js'
+import { isRateLimited } from '@/lib/rateLimit'
 
 // Notify the OTHER participant of an active chat session that a new message
 // arrived — but only if they aren't already looking at that chat.
@@ -28,22 +29,9 @@ import { createClient } from '@supabase/supabase-js'
 // delayed, and keeps the whole request well inside the serverless time limit.
 const PRESENCE_GRACE_MS = 5000
 
-// Simple in-memory rate limiter: max 10 message-notifications per user per 60s.
-// A rapid back-and-forth shouldn't fire a push per keystroke-fast message; the
-// collapsing tag already de-stacks them, and this caps abuse.
-const RATE_LIMIT_WINDOW_MS = 60 * 1000
-const RATE_LIMIT_MAX = 10
-const rateLimitMap = new Map<string, number[]>()
-
-function isRateLimited(userId: string): boolean {
-  const now = Date.now()
-  const timestamps = rateLimitMap.get(userId) || []
-  const recent = timestamps.filter((t) => now - t < RATE_LIMIT_WINDOW_MS)
-  if (recent.length >= RATE_LIMIT_MAX) return true
-  recent.push(now)
-  rateLimitMap.set(userId, recent)
-  return false
-}
+// The presence check above deliberately waits PRESENCE_GRACE_MS before
+// deciding, so give the route an explicit budget instead of the default.
+export const maxDuration = 30
 
 export async function POST(request: NextRequest) {
   try {
@@ -73,7 +61,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
     }
 
-    if (isRateLimited(user.id)) {
+    // A rapid back-and-forth shouldn't fire a push per message; the
+    // collapsing tag already de-stacks them, and this caps abuse.
+    if (isRateLimited('notifications-message', user.id, 10, 60 * 1000)) {
       return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
     }
 

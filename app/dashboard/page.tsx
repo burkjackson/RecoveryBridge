@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, Suspense } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Image from 'next/image'
-import { Heading1, Heading2, Heading4, Body16, Body18 } from '@/components/ui/Typography'
+import { Heading2, Heading4, Body16 } from '@/components/ui/Typography'
 import { SkeletonRoleCard } from '@/components/Skeleton'
 import ErrorState from '@/components/ErrorState'
 import Footer from '@/components/Footer'
@@ -15,7 +15,21 @@ import NoticeBanner from '@/components/NoticeBanner'
 import type { Profile, SessionWithUserName, ProfileUpdateData, FavoriteWithProfile } from '@/lib/types/database'
 import { TIME, NOTIFICATION } from '@/lib/constants'
 import { normalizeFavorites } from '@/lib/favorites'
+import { getActiveBlock } from '@/lib/blocks'
 import ThemeToggle from '@/components/ThemeToggle'
+
+// Shape of the session rows returned by the two queries below, which embed
+// both participants' profiles.
+interface SessionRowWithProfiles {
+  id: string
+  status: 'active' | 'ended'
+  created_at: string
+  ended_at: string | null
+  listener_id: string
+  seeker_id: string
+  listener: { id: string; display_name: string } | null
+  seeker: { id: string; display_name: string } | null
+}
 
 function DashboardContent() {
   const [profile, setProfile] = useState<Profile | null>(null)
@@ -130,6 +144,7 @@ function DashboardContent() {
     return () => {
       supabase.removeChannel(channel)
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once on mount; the loaders it calls are stable for the life of the component
   }, [])
 
   // Heartbeat system: Send "I'm still here" signal every 30 seconds when available or requesting
@@ -153,6 +168,7 @@ function DashboardContent() {
     return () => {
       clearInterval(heartbeatInterval)
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally keyed on profile?.role_state — adding the callbacks would tear down and rebuild this on every render
   }, [profile?.role_state])
 
   // Session poll: while seeker is requesting, poll every 2s for an active session.
@@ -190,6 +206,7 @@ function DashboardContent() {
     const pollInterval = setInterval(checkForSession, 2000)
 
     return () => clearInterval(pollInterval)
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally keyed on profile?.role_state — adding the callbacks would tear down and rebuild this on every render
   }, [profile?.role_state])
 
   // Listener-side poll: while available, poll every 2s for a seeker who connected
@@ -226,6 +243,7 @@ function DashboardContent() {
     const pollInterval = setInterval(checkForListenerSession, 2000)
 
     return () => clearInterval(pollInterval)
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally keyed on profile?.role_state — adding the callbacks would tear down and rebuild this on every render
   }, [profile?.role_state])
 
   async function sendHeartbeat() {
@@ -383,10 +401,13 @@ function DashboardContent() {
 
       if (error) throw error
 
-      const sessionsWithNames = (sessions || []).map((session: any) => {
-        const otherUser = session.listener_id === user.id ? session.seeker : session.listener
+      const sessionsWithNames = (sessions || []).map((session) => {
+        const row = session as unknown as SessionRowWithProfiles
+        const otherUser = row.listener_id === user.id ? row.seeker : row.listener
         return {
-          ...session,
+          ...row,
+          // The embeds are non-inner joins, so RLS can return null here —
+          // see the note in CLAUDE.md about guarding embedded profiles.
           otherUserName: otherUser?.display_name || 'User'
         }
       })
@@ -417,10 +438,13 @@ function DashboardContent() {
 
       if (error) throw error
 
-      const sessionsWithNames = (sessions || []).map((session: any) => {
-        const otherUser = session.listener_id === user.id ? session.seeker : session.listener
+      const sessionsWithNames = (sessions || []).map((session) => {
+        const row = session as unknown as SessionRowWithProfiles
+        const otherUser = row.listener_id === user.id ? row.seeker : row.listener
         return {
-          ...session,
+          ...row,
+          // The embeds are non-inner joins, so RLS can return null here —
+          // see the note in CLAUDE.md about guarding embedded profiles.
           otherUserName: otherUser?.display_name || 'User'
         }
       })
@@ -476,12 +500,7 @@ function DashboardContent() {
       if (!session?.user) return
 
       // Blocked users can't start sessions (same guard as every other connect path)
-      const { data: blockCheck } = await supabase
-        .from('user_blocks')
-        .select('id')
-        .eq('user_id', profile.id)
-        .eq('is_active', true)
-        .maybeSingle()
+      const blockCheck = await getActiveBlock(supabase, profile.id)
       if (blockCheck) {
         setError({ show: true, message: 'Your account is currently restricted from starting sessions.' })
         return
@@ -628,19 +647,16 @@ function DashboardContent() {
             return
           }
 
-          const response = await fetch('/api/notifications/send', {
+          await fetch('/api/notifications/send', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
               'Authorization': `Bearer ${session.access_token}`
             },
-            body: JSON.stringify({
-              seekerId: profile.id,
-              favoriteListenerIds: favorites.map(f => f.favorite_user_id)
-            })
+            // Favourites are resolved server-side — the client list is
+            // RLS-filtered and silently omits offline favourites.
+            body: JSON.stringify({ seekerId: profile.id })
           })
-
-          const result = await response.json()
 
           // Record notification timestamp for re-notification tracking
           const now = Date.now()
@@ -715,6 +731,9 @@ function DashboardContent() {
           {/* Top Navigation Bar */}
           <div className="flex justify-between items-center mb-6">
             {/* Left: Logo */}
+{/* eslint-disable-next-line @next/next/no-img-element -- intrinsically sized
+                logo from /public; next/image wants fixed dimensions, which fights the
+                responsive sizing used here */}
             <img
               src="/logo-icon.png"
               alt="RecoveryBridge"

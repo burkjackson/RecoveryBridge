@@ -64,6 +64,18 @@ async function getCroppedImg(imageSrc: string, pixelCrop: Area): Promise<Blob> {
   })
 }
 
+// Recover the storage object path from a public URL, so the old file can be
+// deleted when a new avatar replaces it. Returns null for anything that isn't
+// one of our own avatar URLs.
+function objectPathFromPublicUrl(url: string | null): string | null {
+  if (!url) return null
+  const marker = '/storage/v1/object/public/avatars/'
+  const index = url.indexOf(marker)
+  if (index === -1) return null
+  const path = url.slice(index + marker.length).split('?')[0]
+  return path ? decodeURIComponent(path) : null
+}
+
 export default function AvatarUpload({ userId, currentAvatarUrl, onUploadComplete }: AvatarUploadProps) {
   const [uploading, setUploading] = useState(false)
   const [previewUrl, setPreviewUrl] = useState<string | null>(currentAvatarUrl || null)
@@ -127,16 +139,16 @@ export default function AvatarUpload({ userId, currentAvatarUrl, onUploadComplet
       // Get the cropped image as a blob
       const croppedImageBlob = await getCroppedImg(imageToCrop, croppedAreaPixels)
 
-      // Create a file from the blob
-      const fileExt = originalFile.name.split('.').pop()
-      const fileName = `${userId}-${Math.random()}.${fileExt}`
+      // The crop always produces JPEG, so the extension is fixed rather than
+      // inherited from whatever the user's original file was called.
+      const fileName = `${userId}-${Date.now()}.jpg`
       const croppedFile = new File([croppedImageBlob], fileName, { type: 'image/jpeg' })
 
       // Upload to Supabase Storage
       const filePath = `${fileName}`
       const { error: uploadError } = await supabase.storage
         .from('avatars')
-        .upload(filePath, croppedFile, { upsert: true })
+        .upload(filePath, croppedFile, { upsert: true, contentType: 'image/jpeg' })
 
       if (uploadError) throw uploadError
 
@@ -154,6 +166,14 @@ export default function AvatarUpload({ userId, currentAvatarUrl, onUploadComplet
         .eq('id', userId)
 
       if (updateError) throw updateError
+
+      // Remove the previous avatar so re-cropping doesn't leave an orphan in
+      // the bucket forever. Best-effort — a failure here must not surface as
+      // an upload error, since the new avatar is already live.
+      const previousPath = objectPathFromPublicUrl(previewUrl)
+      if (previousPath && previousPath !== filePath) {
+        await supabase.storage.from('avatars').remove([previousPath])
+      }
 
       // Update preview
       setPreviewUrl(publicUrl)
@@ -186,6 +206,9 @@ export default function AvatarUpload({ userId, currentAvatarUrl, onUploadComplet
         {/* Avatar Preview */}
         <div className="relative">
           {previewUrl ? (
+            // src is a local object URL while cropping, which the image
+            // optimiser cannot fetch
+            // eslint-disable-next-line @next/next/no-img-element
             <img
               src={previewUrl}
               alt="Profile"

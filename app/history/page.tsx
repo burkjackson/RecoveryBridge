@@ -34,6 +34,7 @@ export default function HistoryPage() {
 
   useEffect(() => {
     loadHistory()
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once on mount; the loaders it calls are stable for the life of the component
   }, [])
 
   async function loadHistory() {
@@ -187,6 +188,9 @@ export default function HistoryPage() {
         {/* Header */}
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 mb-6 border border-rb-gray/10 dark:border-gray-700">
           <div className="flex justify-between items-center mb-6">
+{/* eslint-disable-next-line @next/next/no-img-element -- intrinsically sized
+                logo from /public; next/image wants fixed dimensions, which fights the
+                responsive sizing used here */}
             <img
               src="/logo-icon.png"
               alt="RecoveryBridge"

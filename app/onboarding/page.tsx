@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { errorMessage } from '@/lib/errors'
 import { useRouter } from 'next/navigation'
 import { Heading1, Body16, Body18 } from '@/components/ui/Typography'
 import TagSelector from '@/components/TagSelector'
@@ -160,6 +161,7 @@ export default function OnboardingPage() {
 
   useEffect(() => {
     checkUser()
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once on mount; the loaders it calls are stable for the life of the component
   }, [])
 
   const steps = getSteps(intent)
@@ -312,8 +314,8 @@ export default function OnboardingPage() {
       }
 
       router.push('/dashboard')
-    } catch (error: any) {
-      setError(error.message)
+    } catch (error: unknown) {
+      setError(errorMessage(error, 'Could not save your profile. Please try again.'))
     } finally {
       setSaving(false)
     }
@@ -325,6 +327,9 @@ export default function OnboardingPage() {
 
         {/* Branding */}
         <div className="text-center mb-6">
+{/* eslint-disable-next-line @next/next/no-img-element -- intrinsically sized
+              logo from /public; next/image wants fixed dimensions, which fights the
+              responsive sizing used here */}
           <img
             src="/logo-with-text.png"
             alt="RecoveryBridge Logo"

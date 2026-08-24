@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { errorMessage } from '@/lib/errors'
 import { useRouter } from 'next/navigation'
-import { Heading1, Body16 } from '@/components/ui/Typography'
+import { Body16 } from '@/components/ui/Typography'
 import Modal from '@/components/Modal'
 import { CONSENT_VERSION } from '@/lib/constants'
 
@@ -25,6 +26,7 @@ export default function SignupPage() {
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (user) router.push('/dashboard')
     })
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once on mount; the loaders it calls are stable for the life of the component
   }, [])
 
   const handleSignup = async (e: React.FormEvent) => {
@@ -73,12 +75,13 @@ export default function SignupPage() {
         console.warn('User created but no session returned')
         setShowSuccessModal(true)
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Handle unique constraint violation for duplicate usernames
-      if (error.message?.includes('duplicate') || error.message?.includes('unique')) {
+      const message = errorMessage(error, 'Could not create your account. Please try again.')
+      if (message.includes('duplicate') || message.includes('unique')) {
         setError('This username is already taken. Please choose another.')
       } else {
-        setError(error.message)
+        setError(message)
       }
     } finally {
       setLoading(false)
@@ -92,6 +95,9 @@ export default function SignupPage() {
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-8 sm:p-10">
             {/* Header */}
             <div className="text-center mb-8">
+{/* eslint-disable-next-line @next/next/no-img-element -- intrinsically sized
+                  logo from /public; next/image wants fixed dimensions, which fights the
+                  responsive sizing used here */}
               <img
                 src="/logo-with-text.png"
                 alt="RecoveryBridge Logo"

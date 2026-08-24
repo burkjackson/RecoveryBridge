@@ -17,11 +17,13 @@ export function normalizeFavorites(rows: unknown): FavoriteWithProfile[] {
   if (!Array.isArray(rows)) return []
 
   return rows
-    .map((row: any) => ({
-      ...row,
-      favorite_profile: Array.isArray(row?.favorite_profile)
-        ? row.favorite_profile[0]
-        : row?.favorite_profile,
-    }))
-    .filter((row: any) => row.favorite_profile != null) as FavoriteWithProfile[]
+    .map((row) => {
+      const record = row as Record<string, unknown>
+      const embedded = record.favorite_profile
+      return {
+        ...record,
+        favorite_profile: Array.isArray(embedded) ? embedded[0] : embedded,
+      }
+    })
+    .filter((row) => row.favorite_profile != null) as unknown as FavoriteWithProfile[]
 }

@@ -122,6 +122,7 @@ export default function AdminPage() {
       const stored = localStorage.getItem('rb_contacted_signups')
       if (stored) setContactedIds(new Set(JSON.parse(stored)))
     } catch { /* ignore */ }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once on mount; the loaders it calls are stable for the life of the component
   }, [])
 
   useEffect(() => {
@@ -129,6 +130,7 @@ export default function AdminPage() {
       loadData()
       subscribeToUpdates()
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally keyed on isAdmin, activeTab — adding the callbacks would tear down and rebuild this on every render
   }, [isAdmin, activeTab])
 
   // Reload sign-ups when the date range changes (avoids re-subscribing).
@@ -146,7 +148,8 @@ export default function AdminPage() {
   function toggleSelect(id: string) {
     setSelectedIds(prev => {
       const next = new Set(prev)
-      next.has(id) ? next.delete(id) : next.add(id)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
       return next
     })
   }
@@ -189,7 +192,8 @@ export default function AdminPage() {
   function toggleUserSelect(id: string) {
     setSelectedUserIds(prev => {
       const next = new Set(prev)
-      next.has(id) ? next.delete(id) : next.add(id)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
       return next
     })
   }
@@ -203,7 +207,8 @@ export default function AdminPage() {
   function toggleMissedSelect(id: string) {
     setSelectedMissedIds(prev => {
       const next = new Set(prev)
-      next.has(id) ? next.delete(id) : next.add(id)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
       return next
     })
   }

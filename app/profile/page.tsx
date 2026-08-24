@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Heading1, Heading2, Body16, Body18 } from '@/components/ui/Typography'
+import { Heading2, Body16, Body18 } from '@/components/ui/Typography'
 import AvatarUpload from '@/components/AvatarUpload'
 import Modal from '@/components/Modal'
 import { SkeletonProfile } from '@/components/Skeleton'
@@ -35,9 +35,13 @@ export default function ProfilePage() {
   const [deleting, setDeleting] = useState(false)
   const [phoneNumber, setPhoneNumber] = useState('')
   const [smsEnabled, setSmsEnabled] = useState(false)
+  /* eslint-disable @typescript-eslint/no-unused-vars -- the SMS UI below is
+     commented out until Twilio verification completes; this state and
+     handleSaveSms are kept alongside it so re-enabling is uncommenting. */
   const [savingSms, setSavingSms] = useState(false)
   const [smsSuccess, setSmsSuccess] = useState<string | null>(null)
   const [smsError, setSmsError] = useState<string | null>(null)
+  /* eslint-enable @typescript-eslint/no-unused-vars */
   const [emailNotificationsEnabled, setEmailNotificationsEnabled] = useState(false)
   const [savingEmail, setSavingEmail] = useState(false)
   const [emailSuccess, setEmailSuccess] = useState<string | null>(null)
@@ -63,6 +67,7 @@ export default function ProfilePage() {
     loadProfile()
     loadFavorites()
     loadThankYouNotes()
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once on mount; the loaders it calls are stable for the life of the component
   }, [])
 
   // Sync SMS, email, and schedule state when profile loads
@@ -73,6 +78,7 @@ export default function ProfilePage() {
       setEmailNotificationsEnabled(profile.email_notifications_enabled || false)
       setSchedule(profile.availability_schedule || [])
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally keyed on profile?.phone_number, profile?.sms_notifications_enabled, profile?.email_notifications_enabled, profile?.availability_schedule — adding the callbacks would tear down and rebuild this on every render
   }, [profile?.phone_number, profile?.sms_notifications_enabled, profile?.email_notifications_enabled, profile?.availability_schedule])
 
   async function loadProfile() {
@@ -161,6 +167,8 @@ export default function ProfilePage() {
     }
   }
 
+  // Retained for the disabled Twilio feature; see the SMS state above.
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async function handleSaveSms() {
     if (!profile) return
 
@@ -203,7 +211,7 @@ export default function ProfilePage() {
         : 'SMS settings saved.'
       )
       setTimeout(() => setSmsSuccess(null), 5000)
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error saving SMS settings:', error)
       setSmsError('Failed to save SMS settings. Please check your phone number format and try again.')
     } finally {
@@ -317,13 +325,13 @@ export default function ProfilePage() {
       if (error) throw error
       // Flatten the embed (Supabase may return object or 1-element array) and
       // coerce an RLS-hidden sender to null; the note text is still worth showing.
-      const notes = ((data as any[]) || []).map((row) => ({
+      const notes = ((data as Record<string, unknown>[]) || []).map((row) => ({
         ...row,
         sender_profile: Array.isArray(row.sender_profile)
           ? row.sender_profile[0] ?? null
           : row.sender_profile ?? null,
       }))
-      setThankYouNotes(notes as ThankYouNoteWithSender[])
+      setThankYouNotes(notes as unknown as ThankYouNoteWithSender[])
     } catch (err) {
       console.error('Error loading thank-you notes:', err)
     } finally {
@@ -331,7 +339,7 @@ export default function ProfilePage() {
     }
   }
 
-  async function handleRemoveFavorite(favoriteId: string, favoriteUserId: string) {
+  async function handleRemoveFavorite(favoriteId: string) {
     if (removingFavorite) return
     setRemovingFavorite(favoriteId)
 
@@ -418,64 +426,46 @@ export default function ProfilePage() {
     if (!profile) return
 
     setDeleting(true)
-    let deletionSucceeded = false
 
     try {
-      // Try to delete the user account (this will cascade delete the profile due to foreign key)
-      const { error: adminError } = await supabase.auth.admin.deleteUser(profile.id)
-
-      if (adminError) {
-        // If admin delete fails (requires service role), try deleting profile directly
-        // Note: This requires RLS policy allowing users to delete their own profile
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .delete()
-          .eq('id', profile.id)
-
-        if (profileError) {
-          // Check if it's a foreign key constraint error
-          if (profileError.message?.includes('violates foreign key constraint')) {
-            throw new Error('Your account has active data that must be cleaned up first. Please end any active sessions and try again, or contact support for assistance.')
-          }
-          // Check if it's a permissions error
-          if (profileError.message?.includes('permission denied') || profileError.message?.includes('RLS')) {
-            throw new Error('Account deletion is not available through this method. Please contact support to delete your account.')
-          }
-          throw new Error('We couldn\'t delete your account. Please try again or contact support if the problem persists.')
-        }
+      // Deletion runs server-side: removing an auth user needs the service
+      // role key, and there is no DELETE policy on `profiles` for clients.
+      // (The old client-side path reported success while deleting nothing —
+      // `auth.admin.deleteUser` always 403s from the browser, and the
+      // fallback profile delete matched zero rows under RLS, which Postgres
+      // does not treat as an error.)
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.access_token) {
+        throw new Error('Your session has expired. Please sign in again and retry.')
       }
 
-      deletionSucceeded = true
+      const res = await fetch('/api/account/delete', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${session.access_token}` },
+      })
 
-      // Try to sign out
-      const { error: signOutError } = await supabase.auth.signOut()
-
-      if (signOutError) {
-        // Account was deleted but sign out failed - still redirect
-        console.error('Sign out error after account deletion:', signOutError)
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}))
+        throw new Error(
+          body.error || 'We couldn\'t delete your account. Please try again, or email admin@recoverybridge.app.'
+        )
       }
 
-      // Redirect to homepage
+      // The account is gone; clear the local session and leave.
+      await supabase.auth.signOut().catch(() => {})
       router.push('/')
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error deleting account:', error)
-
-      // If deletion succeeded but we hit an error after, still redirect
-      if (deletionSucceeded) {
-        router.push('/')
-        return
-      }
-
       setErrorModal({
         show: true,
-        message: error.message || 'We couldn\'t delete your account right now. Please try again or contact support if the problem persists.'
+        message: error instanceof Error
+          ? error.message
+          : 'We couldn\'t delete your account right now. Please try again or contact support if the problem persists.'
       })
+      setShowDeleteModal(false)
+      setDeleteConfirmText('')
     } finally {
       setDeleting(false)
-      if (!deletionSucceeded) {
-        setShowDeleteModal(false)
-        setDeleteConfirmText('')
-      }
     }
   }
 
@@ -513,6 +503,9 @@ export default function ProfilePage() {
           <div className="flex flex-wrap justify-between items-center gap-3">
             {/* Left: Logo and Navigation */}
             <div className="flex items-center gap-2 sm:gap-4">
+{/* eslint-disable-next-line @next/next/no-img-element -- intrinsically sized
+                  logo from /public; next/image wants fixed dimensions, which fights the
+                  responsive sizing used here */}
               <img
                 src="/logo-icon.png"
                 alt="RecoveryBridge"
@@ -1055,7 +1048,7 @@ export default function ProfilePage() {
 
                       {/* Remove button */}
                       <button
-                        onClick={() => handleRemoveFavorite(fav.id, fav.favorite_user_id)}
+                        onClick={() => handleRemoveFavorite(fav.id)}
                         disabled={removingFavorite === fav.id}
                         aria-label={`Remove ${fav.favorite_profile.display_name} from favorites`}
                         className="min-h-[44px] min-w-[44px] flex items-center justify-center text-gray-400 hover:text-red-500 transition-colors flex-shrink-0 disabled:opacity-40"

@@ -5,8 +5,17 @@ export const runtime = 'edge'
 
 export function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
-  const w = Math.min(parseInt(searchParams.get('w') || '1170', 10), 3000)
-  const h = Math.min(parseInt(searchParams.get('h') || '2532', 10), 6000)
+
+  // Clamp with a floor and a NaN fallback: `Math.min(parseInt('x'), 3000)` is
+  // NaN, and ImageResponse rejects a NaN dimension with a 500.
+  const dimension = (raw: string | null, fallback: number, max: number) => {
+    const parsed = parseInt(raw ?? '', 10)
+    if (!Number.isFinite(parsed) || parsed < 1) return fallback
+    return Math.min(parsed, max)
+  }
+
+  const w = dimension(searchParams.get('w'), 1170, 3000)
+  const h = dimension(searchParams.get('h'), 2532, 6000)
 
   return new ImageResponse(
     (

@@ -1,6 +1,6 @@
 # RecoveryBridge — Project Status Document
 
-> **Last Updated:** July 2026
+> **Last Updated:** August 2026
 > **Purpose:** Get any Claude session up to speed on the entire app — architecture, features, current state, and known issues.
 
 ---
@@ -37,17 +37,22 @@ RecoveryBridge is a **peer-to-peer support platform for people in addiction reco
 app/
 ├── api/
 │   ├── heartbeat/route.ts            # POST: Update user's last_heartbeat_at
-│   ├── cleanup-sessions/route.ts     # POST/GET: Auto-close stale sessions, reset stale seekers (cron)
+│   ├── cleanup-sessions/route.ts     # POST/GET: Auto-close stale sessions, reset stale seekers, expire temp blocks (cron)
 │   ├── scheduled-availability/route.ts # POST/GET: Push "your support time is starting" (cron)
 │   ├── notifications/send/route.ts   # POST: Push (+email fallback) to available listeners
+│   ├── notifications/message/route.ts # POST: Push the other chat participant when a message goes unread
+│   ├── sessions/state/route.ts       # POST: Move BOTH participants' role_state on session start/end
 │   ├── account/export/route.ts       # GET: Self-service data export (CCPA/GDPR)
+│   ├── account/delete/route.ts       # POST: Self-service account deletion (service role → auth.admin.deleteUser)
+│   ├── contact/route.ts              # POST: Public contact form (IP rate-limited)
+│   ├── splash/route.tsx              # GET: Generated iOS PWA splash images (edge)
 │   ├── email/welcome/route.ts        # POST: Send welcome email (Resend)
-│   ├── webhooks/new-user/route.ts    # POST: Supabase webhook — admin new-user email (mostly superseded by notify-signup)
+│   ├── webhooks/new-user/route.ts    # POST: Supabase webhook — admin new-user email (superseded by notify-signup; confirm no dashboard webhook still points here before removing)
 │   └── admin/
 │       ├── actions/route.ts          # POST: All admin mutations (verify token → is_admin, rate-limited)
 │       ├── delete-user/route.ts      # POST: Admin user deletion
 │       ├── notify-signup/route.ts    # POST: Admin signup-alert email (called from onboarding completion)
-│       └── send-welcome-bulk/route.ts # POST: Bulk welcome emails
+│       └── send-welcome-bulk/route.ts # POST: Welcome-email backfill for a NAMED set of recipients
 ├── admin/page.tsx                    # Admin moderation dashboard (~1,500 lines)
 ├── chat/[id]/page.tsx                # Real-time 1:1 chat (~1,500 lines)
 ├── connect/page.tsx                  # Notification-tap landing: verifies seeker, creates session, → /chat
@@ -58,6 +63,7 @@ app/
 ├── listeners/page.tsx                # Browse & filter available listeners, connect
 ├── onboarding/page.tsx               # Post-signup setup (role, bio, tags, referral source, guidelines)
 ├── login/ signup/ forgot-password/ reset-password/  # Auth pages
+├── support/                          # 7 static SEO landing pages (peer support, recovery chat, …) + index
 ├── contact/ donate/ safety/ terms/ privacy/ offline/ # Static-ish pages
 ├── layout.tsx                        # Root layout: PWA metadata, CrisisResources, theme, service worker
 ├── page.tsx                          # Landing page (FAQ accordion, product preview popup)
@@ -79,22 +85,32 @@ components/
 └── ui/Typography.tsx                 # Semantic type scale (Heading1..., Body16, Body18)
 
 lib/
-├── constants.ts                      # Timing, validation, tags, reactions, timezones, parseReferralSource
-├── email.ts                          # Resend senders: new-user alert, support-request fallback, report-resolved, story emails
+├── constants.ts                      # Timing, validation, tags, reactions, timezones, parseReferralSource, outreach copy
+├── email.ts                          # Resend senders: support-request fallback, contact form, report-resolved
 ├── email/welcomeEmailHtml.ts         # Welcome email template
+├── email/escapeHtml.ts               # Escapes user input before it reaches an email template
+├── timeWindows.ts                    # Quiet-hours + availability-window maths (pure, unit-tested)
+├── rateLimit.ts                      # Shared in-memory limiter used by every API route
+├── blocks.ts                         # getActiveBlock() — ignores lifted AND expired blocks
+├── sessionState.ts                   # Client helper → /api/sessions/state
+├── serverPush.ts                     # Server-side web push to one user's devices
+├── favorites.ts                      # normalizeFavorites() — drops RLS-nulled embeds
+├── errors.ts                         # errorMessage() for `catch (e: unknown)`
 ├── pushNotifications.ts              # Web Push subscribe/unsubscribe
 ├── linkify.tsx                       # Safe URL autolinking in chat
-├── slugify.ts / sms.ts / env.ts
+├── sms.ts                            # Twilio sender (feature disabled)
 ├── supabase/client.ts, server.ts
-└── types/database.ts
+├── types/database.ts
+└── *.test.ts                         # vitest: constants, favorites, timeWindows, rateLimit, errors
 
 supabase/
-├── migrations/                       # 001–024, numbered (see below)
-└── legacy/                           # Pre-migration setup SQL (historical reference only)
+├── migrations/                       # 001–030, numbered — see migrations/README.md for applied vs pending
+└── legacy/                           # Pre-migration setup SQL (historical snapshot; the live policy set has
+                                      #   drifted — query pg_policies for the truth, see migrations/README.md)
 
 docs/                                 # Setup guides, audits, design assets (historical)
 scripts/                              # Ad-hoc admin scripts (get-user-emails.js, DEPLOY.sh)
-public/sw.js                          # Service worker (push, cache — bump CACHE_NAME on breaking changes; currently v9)
+public/sw.js                          # Service worker (push, cache — bump CACHE_NAME on breaking changes; currently v11)
 middleware.ts                         # Route protection (auth + admin check)
 .github/workflows/cron.yml            # 15-min pings to cron API routes
 ```
@@ -117,7 +133,8 @@ Compliance/audit: `referral_source` (010, free text since 018), `listener_traini
 - **message_reactions** — 8 emoji types (003/004)
 - **session_feedback** — helpful boolean + `thank_you_note` (009, max 300 chars, shown in /history)
 - **user_favorites** (007) — favorite contacts from past sessions; favorites get notified first
-- **reports / user_blocks / admin_logs** — moderation + audit trail
+- **reports / user_blocks / admin_logs** — moderation + audit trail (`user_blocks.expires_at` is honoured by `lib/blocks.ts` and swept by the cleanup cron)
+- **user_notices** (026) — in-app messages to a *user*: auto "we couldn't connect you" follow-ups (`kind='reconnect'`) and admin outreach (`kind='outreach'`)
 - **push_subscriptions** — Web Push endpoints per user/device
 - **blog/story tables** (011–015) — **legacy**: stories moved to Ghost at stories.recoverybridge.app; no in-app UI reads them
 
@@ -142,11 +159,12 @@ All tables have RLS. Admin mutations go through `/api/admin/*` routes (Bearer to
 
 ### 3. Chat session
 - Realtime messages (postgres_changes), typing indicators + read receipts (broadcast), reactions (double-click, 8 types), URL autolinking, conversation starters, crisis-language banner
-- Inactivity: warn at 15 min, auto-close 5 min later; either party can end → feedback modal (helpful? + optional thank-you note)
+- Inactivity: warn at 15 min, auto-close 5 min later; either party can end → feedback modal (helpful? + optional thank-you note) → favourite prompt → dashboard
+- Session start/end moves BOTH participants' `role_state` via `/api/sessions/state` (see Known Issues #10)
 - Report flow (3-step) available in chat
 
 ### 4. Notification system (in priority order)
-1. **Push** (VAPID web-push): favorites of the seeker get a personalized push first, general listeners 4s later; invalid subscriptions (4xx) auto-removed
+1. **Push** (VAPID web-push): favorites of the seeker get a personalized push first, general listeners 4s later; invalid subscriptions (4xx) auto-removed. Favourites are resolved **server-side** from `user_favorites` — the client's list is RLS-filtered and silently omits offline favourites
 2. **Email fallback** (Resend): listeners who opted in (`email_notifications_enabled`) and didn't get a successful push
 3. **SMS fallback**: fully coded but disabled pending Twilio verification
 - Server-side quiet-hours filtering (listener's local time); rate limit 3 req/60s per user (in-memory — see Known Issues)
@@ -212,27 +230,57 @@ TWILIO_ACCOUNT_SID / TWILIO_AUTH_TOKEN / TWILIO_PHONE_NUMBER   # SMS (disabled)
 
 ## Current Feature Status
 
-Everything in the flows above is ✅ live, including: auth, onboarding (with referral source + consent capture), real-time chat (reactions, read receipts, typing, linkify, crisis banner), push + email notifications, favorites-first notification priority, quiet hours, always-available, re-notifications, listener directory, listener training, availability schedules, session history + thank-you notes, feedback, reporting, admin dashboard (incl. sign-ups tab), account deletion + data export, PWA, dark mode, Sentry, session cleanup.
+Everything in the flows above is ✅ live, including: auth, onboarding (with referral source + consent capture), real-time chat (reactions, read receipts, typing, linkify, crisis banner), push + email notifications, favorites-first notification priority, quiet hours, always-available, re-notifications, listener directory, listener training, availability schedules, session history + thank-you notes, feedback, reporting, admin dashboard (incl. sign-ups tab), account deletion (server-side, `/api/account/delete`) + data export, PWA, dark mode, Sentry, session cleanup, in-app notices, unread-message push.
 
 | Feature | Status | Notes |
 |---------|--------|-------|
 | SMS fallback | 🔇 Disabled | Code complete; Twilio verification pending (see below) |
 | In-app blog/stories | 🚚 Moved | Now on Ghost (stories.recoverybridge.app); DB tables 011–015 are legacy |
 | GitHub Actions cron | ⚠️ Needs secret | `CLEANUP_SECRET_KEY` repo secret must exist or runs 401 |
+| Migrations 027–030 | ⏳ Written, not applied | Admin-flag guard, listener session index, session validation, block expiry — see `supabase/migrations/README.md` |
+| In-app notices | ✅ Live | Auto follow-up after a failed connection + admin outreach (`user_notices`, `NoticeBanner`) |
+| Unread-message push | ✅ Live | `/api/notifications/message` — pushes the other participant only when they aren't looking at the chat |
+| SEO support pages | ✅ Live | Seven static pages under `/support`, listed in `app/sitemap.ts` |
 
 ---
 
 ## Known Issues & Technical Debt
 
-1. **No tests** — zero test files. Highest-value targets: quiet-hours math, availability-window parsing, notification batching, cleanup thresholds.
-2. **ESLint not configured** — `next lint` has never run (no config file); `next lint` is also deprecated. Migrate to ESLint CLI flat config.
-3. **In-memory rate limiter** — the notification route's rate limit resets per serverless instance/cold start. Move to DB or KV if abuse matters.
-4. **SMS feature disabled** — all code written but commented out in `app/api/notifications/send/route.ts` and profile page. Re-enable: uncomment both, add Twilio env vars, redeploy.
-5. **Large page components** — admin, chat, profile, dashboard are each 1,200–1,500 lines; extract components before major changes.
-6. **Legacy blog tables** — migrations 011–015 create story tables no longer read by the app (stories moved to Ghost). `lib/email.ts` still has story emails.
+1. **Four migrations are written but NOT applied** — `027`–`030` (admin-flag protection, one-active-session-per-listener, session-participant validation, temporary-block expiry). See `supabase/migrations/README.md`. Until 027 runs, any signed-in user can set `is_admin` on their own profile row.
+2. **`supabase/legacy/*.sql` is a stale snapshot** — policies edited in the Supabase dashboard never came back to the repo, so the files there do not describe the live database. Query `pg_policies` before reasoning about RLS (query in `supabase/migrations/README.md`).
+3. **In-memory rate limiter** — `lib/rateLimit.ts` is shared by every route but its counters live in one serverless instance's memory, so they reset on cold start and aren't shared across instances. Move to Postgres or KV if it ever needs to be authoritative.
+4. **SMS feature disabled** — all code written but commented out in `app/api/notifications/send/route.ts` and profile page (the unused `savingSms`/`smsSuccess`/`smsError` state and `handleSaveSms` are kept alongside it, with eslint-disables). Re-enable: uncomment both, add Twilio env vars, redeploy.
+5. **Large page components** — admin, chat, profile, dashboard are each 1,200–1,800 lines; extract components before major changes.
+6. **Legacy blog tables** — migrations 011–015 create story tables no longer read by the app (stories moved to Ghost). The story email senders have been removed from `lib/email.ts`; the tables themselves are still there.
 7. **Public repo** — internal docs in `docs/` (breach response, audits) are world-readable; decide if any should be removed.
-8. **Service worker cache** — `CACHE_NAME` in `public/sw.js` (currently v9); bump on breaking asset changes.
+8. **Service worker cache** — `CACHE_NAME` in `public/sw.js` (currently v11); bump on breaking asset changes.
 9. **RLS-null embeds crash render (⚠️ gotcha when writing profile joins)** — Supabase relation embeds like `favorite_profile:profiles!fkey(...)` are *non-inner* joins, so row-level security returns the embedded object as **`null`** (it does not drop the parent row) whenever the viewer can't read that profile. The `profiles` SELECT policy only exposes a profile that is your own, currently `role_state = 'available'`, an **active** session participant, or when you're admin — so any embed of an *offline* or *past-session* user comes back null. Dereferencing it (`fp.display_name`) throws during render and trips the error boundary ("Dashboard couldn't load"). **Always guard embedded profiles**: dashboard + profile favorites route through `lib/favorites.ts` `normalizeFavorites()`; profile thank-you notes, history, dashboard sessions, and admin all use `?.display_name || 'fallback'`. Use `!inner` only if you actually want RLS to filter the whole row instead.
+10. **A client can only write its own profile row (⚠️ second RLS gotcha)** — `update(...)` against another user's row silently affects zero rows and returns **no error**. That's a footgun for anything that moves both chat participants at once; those transitions go through `/api/sessions/state` with the service role. Same shape of bug applies to any "delete my own X" that has no DELETE policy — a zero-row delete looks like success (this is what made self-service account deletion silently do nothing before `/api/account/delete` existed).
+11. **`next` is pinned below 16** — postcss and sharp inside next 15 carried high advisories; both are pinned to patched versions via `overrides` in package.json. `npm audit` is clean, but revisit the overrides whenever next is upgraded.
+12. **Logos still use `<img>`** — seven sites carry an eslint-disable rather than `next/image`, because the responsive `w-auto` sizing fights next/image's required dimensions. Worth converting deliberately for LCP.
+
+---
+
+## Quality Gates
+
+All of these are clean as of August 2026 — keep them that way:
+
+```
+npm test          # vitest — 34 tests across constants, favorites, timeWindows, rateLimit, errors
+npx tsc --noEmit  # no type errors
+npx eslint .      # 0 errors, 0 warnings
+npm audit         # 0 vulnerabilities
+npm run build     # succeeds with NO server secrets set (clients are built per-request, never at module scope)
+```
+
+That last point matters: never construct a Resend or service-role Supabase
+client at module scope in a route. Next imports every route during the build's
+page-data collection, and a constructor that throws on a missing key turns one
+absent env var into a failed deploy for the whole site.
+
+Effects with deliberately trimmed dependency arrays carry an explicit
+`// eslint-disable-next-line react-hooks/exhaustive-deps -- <reason>`. Keep that
+convention so a genuinely new warning stands out instead of joining a pile.
 
 ---
 

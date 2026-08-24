@@ -1,20 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-
-// 5 deletions per admin per minute — tight limit for a destructive operation
-const RATE_LIMIT_WINDOW_MS = 60 * 1000
-const RATE_LIMIT_MAX = 5
-const rateLimitMap = new Map<string, number[]>()
-
-function isRateLimited(adminId: string): boolean {
-  const now = Date.now()
-  const timestamps = rateLimitMap.get(adminId) || []
-  const recent = timestamps.filter((t) => now - t < RATE_LIMIT_WINDOW_MS)
-  if (recent.length >= RATE_LIMIT_MAX) return true
-  recent.push(now)
-  rateLimitMap.set(adminId, recent)
-  return false
-}
+import { isRateLimited } from '@/lib/rateLimit'
 
 export async function POST(request: NextRequest) {
   try {
@@ -50,7 +36,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    if (isRateLimited(user.id)) {
+    // Tight limit — this one is destructive.
+    if (isRateLimited('admin-delete-user', user.id, 5, 60 * 1000)) {
       return NextResponse.json({ error: 'Too many requests. Please slow down.' }, { status: 429 })
     }
 
@@ -77,8 +64,10 @@ export async function POST(request: NextRequest) {
     if (deleteError) throw deleteError
 
     return NextResponse.json({ success: true })
-  } catch (error: any) {
+  } catch (error: unknown) {
+    // Log the detail, return a generic message: Postgres errors carry table,
+    // column and constraint names.
     console.error('Delete user error:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ error: 'Something went wrong.' }, { status: 500 })
   }
 }

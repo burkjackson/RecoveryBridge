@@ -3,23 +3,16 @@ import webpush from 'web-push'
 import { createClient } from '@supabase/supabase-js'
 import { sendSupportRequestEmail } from '@/lib/email'
 import { isInQuietHours } from '@/lib/timeWindows'
+import { isRateLimited } from '@/lib/rateLimit'
 // TODO: Re-enable when Twilio verification is complete
 // import { sendSMS } from '@/lib/sms'
 
-// Simple in-memory rate limiter: max 3 requests per user per 60 seconds
-const RATE_LIMIT_WINDOW_MS = 60 * 1000
-const RATE_LIMIT_MAX = 3
-const rateLimitMap = new Map<string, number[]>()
-
-function isRateLimited(userId: string): boolean {
-  const now = Date.now()
-  const timestamps = rateLimitMap.get(userId) || []
-  const recent = timestamps.filter((t) => now - t < RATE_LIMIT_WINDOW_MS)
-  if (recent.length >= RATE_LIMIT_MAX) return true
-  recent.push(now)
-  rateLimitMap.set(userId, recent)
-  return false
-}
+// This route paces itself: up to 4s between the favourite and general push
+// batches, and again between the email batches, on top of the web-push and
+// Resend round trips. State the budget rather than inheriting the platform
+// default — a timeout here means the email fallback never runs and a seeker's
+// request reaches nobody.
+export const maxDuration = 30
 
 export async function POST(request: NextRequest) {
   try {
@@ -57,20 +50,24 @@ export async function POST(request: NextRequest) {
     }
 
     // Rate limit check
-    if (isRateLimited(user.id)) {
+    // 3 support broadcasts per minute is plenty for a real person.
+    if (isRateLimited('notifications-send', user.id, 3, 60 * 1000)) {
       return NextResponse.json({ error: 'Too many requests. Please wait before trying again.' }, { status: 429 })
     }
 
-    // Parse and validate request body
+    // Parse and validate request body.
+    // Note: favourites are NOT read from the body. The client used to send
+    // them, but its list is built from an RLS-filtered query that drops any
+    // favourite who isn't currently 'available' — so an always-available
+    // listener who was offline silently lost their favourite-first priority.
+    // They're resolved from the database below instead.
     let seekerId: string
     let isRenotification = false
-    let clientFavoriteIds: string[] = []
     let targetListenerId: string | undefined
     try {
       const body = await request.json()
       seekerId = body.seekerId
       isRenotification = body.isRenotification === true
-      clientFavoriteIds = Array.isArray(body.favoriteListenerIds) ? body.favoriteListenerIds : []
       targetListenerId = typeof body.targetListenerId === 'string' ? body.targetListenerId : undefined
     } catch {
       return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
@@ -244,16 +241,16 @@ export async function POST(request: NextRequest) {
     const activeSubs = subscriptions || []
     console.log(`[notify] Found ${activeSubs.length} push subscription(s) for ${activeListeners.length} active listener(s)`)
 
-    // Server-side verify favorite listener IDs (never trust client list)
-    let verifiedFavoriteIds = new Set<string>()
-    if (clientFavoriteIds.length > 0) {
-      const { data: favRows } = await supabase
-        .from('user_favorites')
-        .select('favorite_user_id')
-        .eq('user_id', seekerId)
-        .in('favorite_user_id', clientFavoriteIds)
-      verifiedFavoriteIds = new Set((favRows || []).map((r: { favorite_user_id: string }) => r.favorite_user_id))
-    }
+    // Who does this seeker consider a favourite? Read with the service key so
+    // the answer doesn't depend on what the seeker can currently see of them.
+    const { data: favRows } = await supabase
+      .from('user_favorites')
+      .select('favorite_user_id')
+      .eq('user_id', seekerId)
+      .in('favorite_user_id', listenerIds)
+    const verifiedFavoriteIds = new Set(
+      (favRows || []).map((r: { favorite_user_id: string }) => r.favorite_user_id)
+    )
 
     // Split subscriptions into favorites and general batches
     const favoriteSubscriptions = activeSubs.filter(sub => verifiedFavoriteIds.has(sub.user_id))

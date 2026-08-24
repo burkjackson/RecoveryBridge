@@ -25,6 +25,9 @@ export default function CrisisResources() {
 
     const previouslyFocused = document.activeElement as HTMLElement | null
     const dialog = dialogRef.current
+    // Capture the trigger now: by the time cleanup runs, triggerRef.current
+    // may point at a different node (or none).
+    const trigger = triggerRef.current
     dialog?.querySelector<HTMLElement>('button, a[href]')?.focus()
 
     function handleKeyDown(e: KeyboardEvent) {
@@ -51,7 +54,7 @@ export default function CrisisResources() {
     document.addEventListener('keydown', handleKeyDown)
     return () => {
       document.removeEventListener('keydown', handleKeyDown)
-      ;(previouslyFocused ?? triggerRef.current)?.focus()
+      ;(previouslyFocused ?? trigger)?.focus()
     }
   }, [isOpen])
 
