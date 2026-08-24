@@ -114,6 +114,21 @@ export const TIME = {
   /** How long before a stale 'requesting' role_state is reset to 'offline' by cleanup (30 minutes) */
   SEEKER_STALE_REQUESTING_MS: 30 * 60 * 1000,
 
+  /**
+   * How far back cleanup looks for a real conversation before sending the
+   * "we couldn't connect you" follow-up (3 hours).
+   *
+   * Must exceed: conversation length + up to 30 min before the seeker counts
+   * as stale (SEEKER_STALE_REQUESTING_MS) + up to 15 min until the next cron
+   * tick. Measured against production in Aug 2026, the longest conversation on
+   * record was 70 minutes (p99 52, median 1), so the worst case needs ~115
+   * minutes. 3 hours leaves real headroom.
+   *
+   * Deliberately generous: a follow-up that isn't sent is a small loss, while
+   * apologising to someone who just had a conversation is not.
+   */
+  MISSED_CONNECTION_LOOKBACK_MS: 3 * 60 * 60 * 1000,
+
   /** How long the post-chat "Returning to dashboard..." confirmation shows before navigating (1.5 seconds) */
   POST_CHAT_REDIRECT_MS: 1.5 * 1000,
 } as const

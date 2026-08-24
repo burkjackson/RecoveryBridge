@@ -2,17 +2,41 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient, SupabaseClient } from '@supabase/supabase-js'
 import { TIME_MINUTES, TIME, OUTREACH_COPY } from '@/lib/constants'
 import { sendPushToUser } from '@/lib/serverPush'
+import { seekersNeedingFollowUp } from '@/lib/missedConnections'
 
 // When cleanup resets seekers who were still 'requesting' after going stale,
 // they asked for support and never connected. Reach back out to each: record an
 // in-app 'reconnect' notice (surfaced on their next visit + read by the admin
 // "Couldn't Connect" view) and send a warm push. Best-effort and per-user
 // isolated so one failure can't abort the cleanup run.
+//
+// Anyone who actually had a conversation is filtered out first. A stale
+// 'requesting' state is only *evidence* that nobody connected, not proof: it
+// was a dropped cross-user write that once sent "we're so sorry we couldn't
+// connect you" to people who had just finished talking to a listener. That
+// write now goes through /api/sessions/state, but this check is the guard that
+// makes the mistake structurally impossible rather than merely unlikely.
 async function followUpMissedConnections(
   supabase: SupabaseClient,
   seekers: { id: string }[]
 ) {
-  for (const seeker of seekers) {
+  if (seekers.length === 0) return
+
+  const since = new Date(Date.now() - TIME.MISSED_CONNECTION_LOOKBACK_MS).toISOString()
+  const { data: recentSessions, error: sessionsError } = await supabase
+    .from('sessions')
+    .select('seeker_id')
+    .in('seeker_id', seekers.map((s) => s.id))
+    .gte('created_at', since)
+
+  // Fail closed. If we can't tell who was connected, send nothing: a missed
+  // follow-up costs far less than a wrongly apologetic one.
+  if (sessionsError) {
+    console.error('[cleanup] Could not check for recent sessions; sent no follow-ups:', sessionsError)
+    return
+  }
+
+  for (const seeker of seekersNeedingFollowUp(seekers, recentSessions ?? [])) {
     try {
       await supabase.from('user_notices').insert({
         user_id: seeker.id,
