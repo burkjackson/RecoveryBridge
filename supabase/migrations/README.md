@@ -3,6 +3,30 @@
 Numbered SQL, applied in order. Paste each into the Supabase SQL editor (the
 project has no CLI migration runner wired up) and run it once.
 
+## Pending — not yet applied
+
+### 038 — drop unused schema
+
+Written 24 Aug 2026 as `035_drop_unused_schema.sql`, renumbered to 038 when
+this branch was rebased onto migrations 035–037 that landed from a parallel
+session in the meantime. Not applied. Removes two things nothing uses:
+
+- `profiles.requesting_since` — added early and never wired up. No code writes
+  it, no code reads it, every row is null. It would have given the exact
+  boundary of a seeker's requesting episode, which the "we couldn't connect
+  you" guard in `/api/cleanup-sessions` currently approximates with a 3-hour
+  lookback — but reviving it means populating it first, at which point the
+  column can be re-added.
+- `public.blocks` — superseded by `user_blocks`, which carries the
+  `block_type`, `expires_at`, `is_active` and audit fields the app actually
+  uses. 0 rows, referenced by no code, foreign key, trigger, function or view.
+  Its own policy and its two outbound foreign keys to `profiles` drop with it.
+
+Verified empty and unreferenced before it was written; the migration re-checks
+`blocks` at apply time and raises rather than dropping a table with rows in it.
+Nothing in the application reads either object, so it can be applied at any
+time, independent of a deploy.
+
 ## Applied — from the August 2026 audit
 
 All five were applied to production on **24 Aug 2026** and verified by
