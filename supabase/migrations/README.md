@@ -116,7 +116,7 @@ sessions, messages, user_blocks, user_favorites, user_notices):
   needed a trigger rather than a policy.
 - `sessions` INSERT allows `(auth.uid() = listener_id) OR (auth.uid() = seeker_id)`
   with the counterpart unconstrained — what `029` closes.
-- `profiles` SELECT had no policy for `role_state = 'requesting'` — what `031`
+- `profiles` SELECT had no policy for `role_state = 'requesting'` — what `032`
   fixes.
 
 Worth confirming while you're in there:

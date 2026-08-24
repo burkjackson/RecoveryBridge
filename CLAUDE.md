@@ -107,7 +107,7 @@ lib/
 └── *.test.ts                         # Vitest: constants, favorites, timeWindows, rateLimit, errors
 
 supabase/
-├── migrations/                       # 001–033, numbered (note: two files share 004) — see migrations/README.md
+├── migrations/                       # 001–034, numbered (note: two files share 004) — see migrations/README.md
 └── legacy/                           # Pre-migration setup SQL (historical snapshot; the live policy set has
                                       #   drifted — query pg_policies for the truth, see migrations/README.md)
 
@@ -123,7 +123,7 @@ middleware.ts                         # Route protection (auth + admin check)
 
 ## Database Schema (high level)
 
-Migrations live in `supabase/migrations/` (001–027) and are the source of truth. Summary:
+Migrations live in `supabase/migrations/` (001–034) and are the source of truth. Summary:
 
 ### profiles (central user table)
 Core: `id` (= auth.users.id), `display_name` (unique), `email`, `bio`, `tagline`, `avatar_url`, `tags` (max 5), `is_admin`.
@@ -253,7 +253,7 @@ Everything in the flows above is ✅ live, including: auth, onboarding (with ref
 
 ## Known Issues & Technical Debt
 
-1. **Migrations 020 and 027–033 are applied** (24 Aug 2026) — admin-flag protection, one-active-session-per-listener, session-participant validation, temporary-block expiry, the `role_state='requesting'` SELECT policy, the availability-notify dedupe key, profile visibility for people you already know (033), and — long overdue — `020_availability_schedule`, which had never been run. See `supabase/migrations/README.md` for what each does and how it was verified. `031` fixed a live outage: no non-admin listener could see anyone requesting support, so People Seeking was empty and every notification tap said "This person is no longer waiting for support".
+1. **Migrations 020 and 027–034 are applied** (24 Aug 2026) — admin-flag protection, one-active-session-per-listener, session-participant validation, temporary-block expiry, the `role_state='requesting'` SELECT policy, the availability-notify dedupe key, profile visibility for people you already know (033), the notification log (034), and — long overdue — `020_availability_schedule`, which had never been run. See `supabase/migrations/README.md` for what each does and how it was verified. `032` fixed a live outage: no non-admin listener could see anyone requesting support, so People Seeking was empty and every notification tap said "This person is no longer waiting for support".
 2. **Check that a migration was actually applied, not just written** — `020_availability_schedule` sat unapplied for months. The old scheduled-availability route destructured only `data` from its query, so the "column does not exist" error was discarded and every run returned `{"notified": 0}` with a 200. The cron reported 1,000+ consecutive successes while the whole feature was inert. `supabase/migrations/README.md` now tracks what is applied; verify with `list_migrations` or by checking for the column, never by the file existing.
 3. **Session creation is now validated in the database** — a `BEFORE INSERT` trigger on `sessions` requires the counterpart to be `available`/`always_available` (seeker-initiated) or `requesting` (listener-initiated), and rejects blocked creators. If a new connect path ever needs different rules, change `validate_session_participants()`, not just the client.
 4. **`supabase/legacy/*.sql` is a stale snapshot** — policies edited in the Supabase dashboard never came back to the repo, so the files there do not describe the live database. Query `pg_policies` before reasoning about RLS (query in `supabase/migrations/README.md`).
