@@ -3,30 +3,23 @@
 Numbered SQL, applied in order. Paste each into the Supabase SQL editor (the
 project has no CLI migration runner wired up) and run it once.
 
-## Pending — from the August 2026 audit
+## Applied — from the August 2026 audit
 
-These came out of the full code audit and are **not yet applied**. Each is
-independent and safe to re-run. Apply `031` first — it's fixing something
-that is broken in production right now — then `027` through `030` in order.
+All five were applied to production on **24 Aug 2026** and verified by
+impersonating a non-admin user (recipe at the bottom of this file).
 
-| File | What it does | Why |
-|------|--------------|-----|
-| `031_view_requesting_seekers.sql` | **Run this first.** SELECT policy exposing seekers at `role_state='requesting'`; also scopes the matching 'available' policy to authenticated | Without it, People Seeking is empty and every notification tap says "no longer waiting" — for everyone except admins. Confirmed live 24 Aug 2026 |
-| `027_protect_admin_flag.sql` | Trigger blocking `is_admin` changes from end-user JWTs | Without it, any signed-in user can self-promote to admin — RLS is row-level, so "update your own profile" includes that column |
-| `028_one_active_session_per_listener.sql` | Unique partial index on `sessions(listener_id) WHERE status='active'` | Mirrors 025's seeker-side index; two seekers could direct-connect to one listener, stranding one of them |
-| `029_validate_session_participants.sql` | Trigger validating who a session may be created with | The INSERT policy only checks the creator is a participant; the counterpart was unconstrained |
-| `030_expire_temporary_blocks.sql` | Retires blocks past `expires_at`, adds a supporting index | Temporary blocks set `expires_at` but nothing ever cleared `is_active`, so a 7-day block was permanent |
+| File | What it does | Verified |
+|------|--------------|----------|
+| `031_view_requesting_seekers.sql` | SELECT policy exposing seekers at `role_state='requesting'`; scopes the matching 'available' policy to authenticated | A non-admin can now see a waiting seeker (was 0 rows, now 1) and open the session |
+| `027_protect_admin_flag.sql` | Trigger blocking `is_admin` changes from end-user JWTs | Self-promotion attempt raises `is_admin can only be changed by an administrator` |
+| `028_one_active_session_per_listener.sql` | Unique partial index on `sessions(listener_id) WHERE status='active'` | No duplicates existed at apply time; index in place |
+| `029_validate_session_participants.sql` | Trigger validating who a session may be created with | Session with an unavailable counterpart raises; both legitimate paths still insert |
+| `030_expire_temporary_blocks.sql` | Retires blocks past `expires_at`, adds a supporting index | No expired-but-active blocks existed at apply time |
 
-### After applying
-
-`031` should make People Seeking populate and notification taps connect, for a
-non-admin account. Test with a second, non-admin login — an admin sees every
-profile regardless and will tell you nothing.
-
-`029` changes what the app is allowed to insert, so exercise each connect path
-once: dashboard favourite, Available Listeners, People Seeking, and a
-notification tap into `/connect`. All four already handle a rejected insert
-gracefully, but it's worth seeing them do it.
+Note that `031` was the urgent one: without it no non-admin listener could see
+anyone requesting support, so People Seeking was empty and every notification
+tap reported "This person is no longer waiting for support". It is a read
+permission, so it fixed production on its own, ahead of any deploy.
 
 ### Verifying the current policy set
 
