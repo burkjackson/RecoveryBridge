@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, SupabaseClient } from '@supabase/supabase-js'
-import { TIME_MINUTES, TIME, OUTREACH_COPY } from '@/lib/constants'
+import { TIME_MINUTES, TIME, OUTREACH_COPY, NOTIFICATION_COPY } from '@/lib/constants'
 import { sendPushToUser } from '@/lib/serverPush'
+import { enqueueNotifications } from '@/lib/notificationQueue'
 import {
   seekersNeedingFollowUp,
   summariseSessions,
@@ -134,9 +135,44 @@ async function resetStaleAvailability(supabase: SupabaseClient) {
 
   if (error) {
     console.error('[cleanup] Error resetting stale availability:', error)
-    return { count: 0, error: error.message ?? 'failed' }
+    return { ids: [] as string[], count: 0, error: error.message ?? 'failed' }
   }
-  return { count: data?.length ?? 0, error: null as string | null }
+  const ids = (data ?? []).map((row) => row.id as string)
+  return { ids, count: ids.length, error: null as string | null }
+}
+
+// Tell the exact people resetStaleAvailability() just paused, plainly, and
+// invite them back. Queued rather than sent inline (see lib/notificationQueue.ts) —
+// this is warm, not urgent, and should wait out someone's quiet hours rather
+// than wake them to say their own status changed. Off by default like every
+// other automatic kind (notification_kind_settings, migration 037); an admin
+// has to turn it on.
+//
+// The atomic UPDATE...RETURNING in resetStaleAvailability() already makes the
+// `ids` list race-safe across overlapping cron runs (a row can only be
+// returned by whichever request's UPDATE actually commits it), but the
+// per-day dedupe key is kept anyway as the same belt-and-braces the rest of
+// this queue uses.
+async function notifyStaleAvailabilityReset(supabase: SupabaseClient, ids: string[]) {
+  if (ids.length === 0) return
+  const dayKey = new Date().toISOString().slice(0, 10)
+  try {
+    await enqueueNotifications(
+      supabase,
+      ids.map((userId) => ({
+        userId,
+        category: 'announcement' as const,
+        kind: 'listener_checkin' as const,
+        title: NOTIFICATION_COPY.LISTENER_CHECKIN_TITLE,
+        body: NOTIFICATION_COPY.LISTENER_CHECKIN_BODY,
+        url: '/dashboard',
+        tag: `listener-checkin-${userId}`,
+        dedupeKey: dayKey,
+      }))
+    )
+  } catch (err) {
+    console.error('[cleanup] Could not queue listener check-in notifications:', err)
+  }
 }
 
 export async function POST(request: NextRequest) {
@@ -243,6 +279,7 @@ export async function POST(request: NextRequest) {
       // someone who was connected to a silent listener and left 'offline'.
       await followUpMissedConnections(supabase, staleRequesters ?? [])
       const availabilityReset = await resetStaleAvailability(supabase)
+      await notifyStaleAvailabilityReset(supabase, availabilityReset.ids)
       return NextResponse.json({
         success: true,
         message: 'No sessions to clean up',
@@ -349,6 +386,7 @@ export async function POST(request: NextRequest) {
     await followUpMissedConnections(supabase, staleError ? [] : (staleRequesters ?? []))
 
     const availabilityReset = await resetStaleAvailability(supabase)
+    await notifyStaleAvailabilityReset(supabase, availabilityReset.ids)
 
     return NextResponse.json({
       success: true,

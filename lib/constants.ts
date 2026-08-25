@@ -423,6 +423,16 @@ export const NOTIFICATION_COPY = {
   REENGAGEMENT_TITLE: 'We’re here whenever you’re ready 💙',
   REENGAGEMENT_BODY:
     'It’s been a while — no pressure at all. Listeners are around if you’d ever like to talk.',
+
+  /**
+   * Sent alongside resetStaleAvailability() in cleanup-sessions, to the exact
+   * profiles it just flipped from 'available' to 'offline' (two weeks with no
+   * heartbeat). Tells them plainly what happened and that coming back is a
+   * tap away — not a guilt trip, and not implying they did anything wrong.
+   */
+  LISTENER_CHECKIN_TITLE: 'Still able to listen? 💙',
+  LISTENER_CHECKIN_BODY:
+    'We haven’t heard from you in a couple of weeks, so we’ve paused your availability for now. If you’re still up for it, open the app and mark yourself available again — no pressure if now isn’t the right time.',
 } as const
 
 /** Body for the training nudge, which depends on how much is left. */
@@ -550,6 +560,13 @@ export const NOTIFICATION_KIND_INFO = [
     automatic: false,
     description:
       'The messages you write below. Nothing sends unless you compose one and press send — this switch is here so you can stop it, not so you have to open it.',
+  },
+  {
+    key: 'listener_checkin',
+    label: 'Paused-availability check-in',
+    automatic: true,
+    description:
+      'Sent to a listener the moment their availability is auto-paused for two weeks of silence (see the stale-availability reset). Tells them what happened and invites them back.',
   },
 ] as const
 

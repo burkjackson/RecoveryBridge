@@ -26,6 +26,7 @@ export const NOTIFICATION_KINDS = [
   'training_nudge',
   'reengagement',
   'broadcast',
+  'listener_checkin',
 ] as const
 export type NotificationKind = (typeof NOTIFICATION_KINDS)[number]
 
