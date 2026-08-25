@@ -3,11 +3,13 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import { isAuthorizedCronRequest } from '@/lib/cronAuth'
 import {
   decideDelivery,
+  fetchEnabledKinds,
   MAX_DELIVERY_ATTEMPTS,
   QUEUE_RETENTION_DAYS,
   QUIET_HOURS_DEFER_MS,
   type DeliveryPreferences,
   type NotificationCategory,
+  type NotificationKind,
 } from '@/lib/notificationQueue'
 import {
   fetchSubscriptionsByUser,
@@ -172,6 +174,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ sent: 0, skipped: expired.length, deferred: 0, failed: 0 })
   }
 
+  // The platform switches, re-read every run. Checking here and not only at
+  // enqueue is what makes a switch a real kill switch: flipping a kind off
+  // cancels whatever it already queued instead of letting the backlog drain.
+  const enabledKinds = await fetchEnabledKinds(supabase)
+
   const userIds = [...new Set(claimed.map((r) => r.user_id))]
 
   const { data: profileRows } = await supabase
@@ -197,6 +204,12 @@ export async function POST(request: NextRequest) {
       // the claim and now. Nothing to deliver to.
       skipped++
       await finish(supabase, row.id, { status: 'skipped', skip_reason: 'no_profile' })
+      return
+    }
+
+    if (!enabledKinds.has(row.kind as NotificationKind)) {
+      skipped++
+      await finish(supabase, row.id, { status: 'skipped', skip_reason: 'kind_disabled' })
       return
     }
 

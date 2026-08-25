@@ -9,7 +9,11 @@ import {
   trainingSectionsRemaining,
   type ListenerTrainingProgress,
 } from '@/lib/constants'
-import { enqueueNotifications, type QueuedNotificationInput } from '@/lib/notificationQueue'
+import {
+  enqueueNotifications,
+  fetchEnabledKinds,
+  type QueuedNotificationInput,
+} from '@/lib/notificationQueue'
 
 /**
  * Nudge people who started listener training and stalled partway through.
@@ -38,6 +42,14 @@ export async function POST(request: NextRequest) {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
+
+  // Bail before the profile scan when the switch is off. enqueueNotifications
+  // would drop these anyway, but this cron runs ~96 times a day and there is no
+  // point querying for candidates nobody is going to message.
+  const enabledKinds = await fetchEnabledKinds(supabase)
+  if (!enabledKinds.has('training_nudge')) {
+    return NextResponse.json({ queued: 0, reason: 'training_nudge is switched off' })
+  }
 
   const now = new Date()
   const stalledBefore = new Date(

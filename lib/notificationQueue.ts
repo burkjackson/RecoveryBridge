@@ -43,6 +43,39 @@ export const MAX_DELIVERY_ATTEMPTS = 3
 /** Terminal rows older than this are pruned by the drain. */
 export const QUEUE_RETENTION_DAYS = 30
 
+/**
+ * Which notification kinds are switched on platform-wide.
+ *
+ * This is a different question from the per-recipient consent in
+ * decideDelivery(): that asks "does this person want it", this asks "do we
+ * want this going out at all yet". An admin owns it, and it changes without a
+ * deploy (migration 036).
+ *
+ * Fails closed in two ways that both matter:
+ *   - a kind with no row is disabled, so a newly added notification kind
+ *     ships inert until someone chooses to turn it on;
+ *   - a query error disables everything rather than defaulting to send. A
+ *     database blip must not become an unintended push to the whole userbase.
+ */
+export async function fetchEnabledKinds(
+  supabase: SupabaseClient
+): Promise<Set<NotificationKind>> {
+  const { data, error } = await supabase
+    .from('notification_kind_settings')
+    .select('kind, enabled')
+
+  if (error) {
+    console.error('[notificationQueue] kind settings unreadable — sending nothing', error)
+    return new Set()
+  }
+
+  return new Set(
+    (data ?? [])
+      .filter((row: { enabled: boolean }) => row.enabled)
+      .map((row: { kind: string }) => row.kind as NotificationKind)
+  )
+}
+
 /** The preference columns that govern whether a queued category may be sent. */
 export interface DeliveryPreferences extends QuietHoursSettings {
   announcement_notifications_enabled: boolean | null
@@ -153,8 +186,18 @@ const INSERT_CHUNK_SIZE = 500
 export async function enqueueNotifications(
   supabase: SupabaseClient,
   items: QueuedNotificationInput[]
-): Promise<{ queued: number; skipped: number }> {
-  if (items.length === 0) return { queued: 0, skipped: 0 }
+): Promise<{ queued: number; skipped: number; blocked: number }> {
+  if (items.length === 0) return { queued: 0, skipped: 0, blocked: 0 }
+
+  // The platform switch is checked here rather than in each caller, so a new
+  // notification kind can't reach anyone by someone forgetting to add a gate.
+  // Rows for a disabled kind are never created at all.
+  const enabledKinds = await fetchEnabledKinds(supabase)
+  const allowed = items.filter((i) => enabledKinds.has(i.kind))
+  const blocked = items.length - allowed.length
+  if (allowed.length === 0) return { queued: 0, skipped: 0, blocked }
+
+  items = allowed
 
   const deduped = items.filter((i) => i.dedupeKey)
   let alreadyPending = new Set<string>()
@@ -215,5 +258,5 @@ export async function enqueueNotifications(
     }
   }
 
-  return { queued, skipped }
+  return { queued, skipped, blocked }
 }

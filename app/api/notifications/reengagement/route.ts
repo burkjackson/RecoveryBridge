@@ -2,7 +2,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { isAuthorizedCronRequest } from '@/lib/cronAuth'
 import { NOTIFICATION_COPY, REENGAGEMENT_INACTIVE_DAYS, TIME } from '@/lib/constants'
-import { enqueueNotifications, type QueuedNotificationInput } from '@/lib/notificationQueue'
+import {
+  enqueueNotifications,
+  fetchEnabledKinds,
+  type QueuedNotificationInput,
+} from '@/lib/notificationQueue'
 
 /**
  * Monthly check-in for people who haven't been around in a while.
@@ -31,6 +35,13 @@ export async function POST(request: NextRequest) {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
+
+  // Bail before any scanning when the switch is off (see the training-nudge
+  // cron for why this is worth doing ahead of the enqueue gate).
+  const enabledKinds = await fetchEnabledKinds(supabase)
+  if (!enabledKinds.has('reengagement')) {
+    return NextResponse.json({ queued: 0, reason: 'reengagement is switched off' })
+  }
 
   const now = new Date()
 

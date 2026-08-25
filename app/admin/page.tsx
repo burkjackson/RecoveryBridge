@@ -8,6 +8,7 @@ import Modal from '@/components/Modal'
 import { SkeletonAdminRow } from '@/components/Skeleton'
 import { CompactFooter } from '@/components/Footer'
 import BroadcastComposer from '@/components/BroadcastComposer'
+import NotificationControls from '@/components/NotificationControls'
 import { parseReferralSource, OUTREACH_COPY } from '@/lib/constants'
 
 interface Report {
@@ -86,6 +87,8 @@ export default function AdminPage() {
   const [contactedIds, setContactedIds] = useState<Set<string>>(new Set())
   const [selectedUserIds, setSelectedUserIds] = useState<Set<string>>(new Set())
   const [selectedMissedIds, setSelectedMissedIds] = useState<Set<string>>(new Set())
+  // Which notification kinds are switched on; drives the composer's disabled state.
+  const [kindSettings, setKindSettings] = useState<Record<string, boolean>>({})
 
   // Search/filter state
   const [reportSearch, setReportSearch] = useState('')
@@ -738,7 +741,7 @@ export default function AdminPage() {
                 : 'bg-white dark:bg-gray-800 text-[#2D3436] dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-700/50'
             }`}
           >
-            📣 Broadcast
+            📣 Notifications
           </button>
         </div>
 
@@ -1584,13 +1587,23 @@ export default function AdminPage() {
             </div>
           )}
 
-          {/* Broadcast Tab */}
+          {/* Notifications Tab — what we're allowed to send, then the composer */}
           {activeTab === 'broadcast' && (
-            <BroadcastComposer
-              adminFetch={adminFetch}
-              onError={(message) => setErrorModal({ show: true, message })}
-              onSuccess={(message) => setSuccessModal({ show: true, message })}
-            />
+            <div>
+              <NotificationControls
+                adminFetch={adminFetch}
+                onError={(message) => setErrorModal({ show: true, message })}
+                onSettingsChange={setKindSettings}
+              />
+              <div className="pt-6 border-t border-gray-200 dark:border-gray-700">
+                <BroadcastComposer
+                  adminFetch={adminFetch}
+                  enabled={kindSettings.broadcast !== false}
+                  onError={(message) => setErrorModal({ show: true, message })}
+                  onSuccess={(message) => setSuccessModal({ show: true, message })}
+                />
+              </div>
+            </div>
           )}
         </div>
       </div>

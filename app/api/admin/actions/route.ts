@@ -9,7 +9,13 @@ import {
   REENGAGEMENT_INACTIVE_DAYS,
   type BroadcastAudience,
 } from '@/lib/constants'
-import { enqueueNotifications, type QueuedNotificationInput } from '@/lib/notificationQueue'
+import {
+  enqueueNotifications,
+  fetchEnabledKinds,
+  NOTIFICATION_KINDS,
+  type NotificationKind,
+  type QueuedNotificationInput,
+} from '@/lib/notificationQueue'
 import { isRateLimited } from '@/lib/rateLimit'
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
@@ -41,6 +47,26 @@ async function resolveBroadcastAudience(
   supabase: SupabaseClient,
   audience: BroadcastAudience
 ): Promise<string[]> {
+  // "People with push on" is the one audience that isn't a profiles filter:
+  // it's whoever has a registered device, which lives in push_subscriptions.
+  // One person can have several devices, hence the dedupe.
+  if (audience === 'push_enabled') {
+    const ids = new Set<string>()
+    for (let page = 0; ; page++) {
+      const { data, error } = await supabase
+        .from('push_subscriptions')
+        .select('user_id')
+        .order('user_id', { ascending: true })
+        .range(page * BROADCAST_CHUNK, (page + 1) * BROADCAST_CHUNK - 1)
+
+      if (error) throw error
+      const batch = (data ?? []) as { user_id: string }[]
+      for (const row of batch) ids.add(row.user_id)
+      if (batch.length < BROADCAST_CHUNK) break
+    }
+    return [...ids]
+  }
+
   const cutoff = new Date(
     Date.now() - REENGAGEMENT_INACTIVE_DAYS * 24 * 60 * 60 * 1000
   ).toISOString()
@@ -362,6 +388,69 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: true, pushCount })
     }
 
+    if (action === 'notification_settings') {
+      const { data: settings, error: settingsError } = await supabase
+        .from('notification_kind_settings')
+        .select('kind, enabled, updated_at')
+        .order('kind', { ascending: true })
+      if (settingsError) throw settingsError
+
+      // What is sitting in the queue right now, so an admin can see the
+      // consequence of flipping something off (pending rows get cancelled).
+      const { data: queueRows } = await supabase
+        .from('notification_queue')
+        .select('kind, status')
+        .in('status', ['pending', 'sending'])
+
+      const pending: Record<string, number> = {}
+      for (const row of (queueRows ?? []) as { kind: string }[]) {
+        pending[row.kind] = (pending[row.kind] ?? 0) + 1
+      }
+
+      return NextResponse.json({ success: true, settings: settings ?? [], pending })
+    }
+
+    if (action === 'set_notification_kind') {
+      const { kind, enabled } = body
+      if (typeof kind !== 'string' || !NOTIFICATION_KINDS.includes(kind as NotificationKind)) {
+        return NextResponse.json({ error: 'Unknown notification kind' }, { status: 400 })
+      }
+      if (typeof enabled !== 'boolean') {
+        return NextResponse.json({ error: 'enabled must be a boolean' }, { status: 400 })
+      }
+
+      // Upsert rather than update: a kind seeded later still gets a row, and
+      // the absence of one keeps meaning "off" until someone switches it on.
+      const { error: upsertError } = await supabase
+        .from('notification_kind_settings')
+        .upsert(
+          { kind, enabled, updated_by: admin.id, updated_at: new Date().toISOString() },
+          { onConflict: 'kind' }
+        )
+      if (upsertError) throw upsertError
+
+      // Turning a kind off cancels what it already queued — otherwise the
+      // backlog would keep draining after the switch said stop.
+      let cancelled = 0
+      if (!enabled) {
+        const { data: cancelledRows } = await supabase
+          .from('notification_queue')
+          .update({ status: 'skipped', skip_reason: 'kind_disabled' })
+          .eq('kind', kind)
+          .in('status', ['pending', 'sending'])
+          .select('id')
+        cancelled = (cancelledRows ?? []).length
+      }
+
+      await supabase.from('admin_logs').insert([{
+        admin_id: admin.id,
+        action_type: 'notification_kind_toggled',
+        details: { kind, enabled, cancelled },
+      }])
+
+      return NextResponse.json({ success: true, kind, enabled, cancelled })
+    }
+
     if (action === 'preview_broadcast') {
       const { audience } = body
       if (typeof audience !== 'string' || !AUDIENCE_KEYS.includes(audience)) {
@@ -403,6 +492,17 @@ export async function POST(request: NextRequest) {
       }
       if (!isInternalPath(targetUrl)) {
         return NextResponse.json({ error: 'Link must be an in-app path' }, { status: 400 })
+      }
+
+      // Check the switch here, not just at enqueue. The in-app notices below are
+      // written before anything is queued, so relying on the enqueue gate alone
+      // would let a switched-off broadcast still land in everyone's dashboard.
+      const enabledKinds = await fetchEnabledKinds(supabase)
+      if (!enabledKinds.has('broadcast')) {
+        return NextResponse.json(
+          { error: 'Announcements are switched off. Turn them on above to send one.' },
+          { status: 409 }
+        )
       }
 
       const recipients = await resolveBroadcastAudience(supabase, audience as BroadcastAudience)

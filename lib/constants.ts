@@ -401,6 +401,11 @@ export const BROADCAST_AUDIENCES = [
     description: 'Every registered user.',
   },
   {
+    key: 'push_enabled',
+    label: 'People with push on',
+    description: 'Anyone with a registered device. These are the people a push actually reaches.',
+  },
+  {
     key: 'listeners',
     label: 'Trained listeners',
     description: 'Anyone who has completed listener training.',
@@ -466,3 +471,41 @@ export function trainingSectionsRemaining(progress: ListenerTrainingProgress | n
  * now — the cron runs every ~15-35 minutes and the page takes a few minutes.
  */
 export const TRAINING_NUDGE_STALL_DAYS = 3
+
+/**
+ * Human-facing description of each notification kind, for the admin switches.
+ *
+ * `automatic` is the field that matters: those three fire with nobody
+ * watching, which is why they ship switched off. A broadcast can only happen
+ * when someone writes one and presses send.
+ */
+export const NOTIFICATION_KIND_INFO = [
+  {
+    key: 'thank_you',
+    label: 'Thank-you notes',
+    automatic: true,
+    description:
+      'Tells a listener that someone left them a note after a session. Fires whenever a note is written.',
+  },
+  {
+    key: 'training_nudge',
+    label: 'Unfinished training nudge',
+    automatic: true,
+    description:
+      'Reminds someone who started listener training and stopped. Only after 3 days of no progress, at most once a month, and never to anyone who has not started.',
+  },
+  {
+    key: 'reengagement',
+    label: 'It’s-been-a-while check-in',
+    automatic: true,
+    description:
+      'For people not seen in 30+ days who have opted in on their own profile. At most once a month, and only when a listener is genuinely online.',
+  },
+  {
+    key: 'broadcast',
+    label: 'Your announcements',
+    automatic: false,
+    description:
+      'The messages you write below. Nothing sends unless you compose one and press send — this switch is here so you can stop it, not so you have to open it.',
+  },
+] as const

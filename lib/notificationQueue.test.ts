@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { decideDelivery, type DeliveryPreferences } from './notificationQueue'
+import { decideDelivery, fetchEnabledKinds, type DeliveryPreferences } from './notificationQueue'
 
 // A UTC instant whose New York local time is the given hour. 2026-07-06 is EDT (UTC-4).
 function edt(hour: number, minute = 0): Date {
@@ -78,5 +78,42 @@ describe('decideDelivery — quiet hours', () => {
       action: 'skip',
       reason: 'announcements_disabled',
     })
+  })
+})
+
+// Minimal stand-in for the one call fetchEnabledKinds makes.
+function supabaseReturning(result: { data?: unknown; error?: unknown }) {
+  return {
+    from: () => ({ select: () => Promise.resolve(result) }),
+  } as never
+}
+
+describe('fetchEnabledKinds', () => {
+  it('returns only the kinds switched on', async () => {
+    const kinds = await fetchEnabledKinds(
+      supabaseReturning({
+        data: [
+          { kind: 'broadcast', enabled: true },
+          { kind: 'thank_you', enabled: false },
+          { kind: 'training_nudge', enabled: true },
+        ],
+        error: null,
+      })
+    )
+    expect([...kinds].sort()).toEqual(['broadcast', 'training_nudge'])
+  })
+
+  it('treats a kind with no row as off', async () => {
+    // A newly added notification kind must ship inert.
+    const kinds = await fetchEnabledKinds(supabaseReturning({ data: [], error: null }))
+    expect(kinds.has('thank_you')).toBe(false)
+  })
+
+  it('sends nothing when the settings table cannot be read', async () => {
+    // Failing open here would turn a database blip into a push to everyone.
+    const kinds = await fetchEnabledKinds(
+      supabaseReturning({ data: null, error: { message: 'boom' } })
+    )
+    expect(kinds.size).toBe(0)
   })
 })

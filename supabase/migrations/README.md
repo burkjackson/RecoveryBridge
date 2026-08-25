@@ -21,6 +21,34 @@ anyone requesting support, so People Seeking was empty and every notification
 tap reported "This person is no longer waiting for support". It is a read
 permission, so it fixed production on its own, ahead of any deploy.
 
+### 036 — per-kind send switches
+
+Applied 25 Aug 2026. `notification_kind_settings` is one row per notification
+kind with an `enabled` flag an admin owns, changeable without a deploy.
+
+This is a different question from the per-recipient consent in 035. That asks
+whether a given person wants a kind of message; this asks whether we want it
+going out at all yet. Both have to say yes.
+
+The three automatic kinds (`thank_you`, `training_nudge`, `reengagement`) are
+seeded **off** — they fire on a cron or an event with nobody watching, which is
+the thing worth holding back. `broadcast` is seeded **on**, because it cannot
+send unless an admin writes a message and presses send; its switch exists to
+stop it, not to open it.
+
+Enforced in three places, deliberately:
+- `enqueueNotifications` — never creates rows for a disabled kind;
+- `/api/notifications/drain` — re-checks at delivery, so switching a kind off
+  *cancels* its queued backlog (`skip_reason='kind_disabled'`) instead of
+  letting it drain out after the switch said stop;
+- `send_broadcast` — checks before writing `user_notices`, which happens ahead
+  of the enqueue and would otherwise still land in every dashboard.
+
+Fails closed twice over: a kind with no row is disabled, so a newly added kind
+ships inert; and a query error returns an empty set rather than defaulting to
+send, so a database blip cannot become an unintended push to the whole
+userbase.
+
 ### 035 — notification queue, message categories, training progress
 
 Applied 24 Aug 2026 (in two parts — the main body, then

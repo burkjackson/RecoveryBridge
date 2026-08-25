@@ -41,11 +41,13 @@ interface Props {
   }>
   onError: (message: string) => void
   onSuccess: (message: string) => void
+  /** False when announcements are switched off above; the server enforces it too. */
+  enabled?: boolean
 }
 
 const RECENT_LIMIT = 10
 
-export default function BroadcastComposer({ adminFetch, onError, onSuccess }: Props) {
+export default function BroadcastComposer({ adminFetch, onError, onSuccess, enabled = true }: Props) {
   const supabase = createClient()
 
   const [audience, setAudience] = useState<BroadcastAudience>('all')
@@ -70,6 +72,7 @@ export default function BroadcastComposer({ adminFetch, onError, onSuccess }: Pr
     trimmedMessage.length <= BROADCAST_LIMITS.BODY_MAX_LENGTH &&
     linkPath.startsWith('/') &&
     !linkPath.startsWith('//') &&
+    enabled &&
     !sending
 
   const loadRecent = useCallback(async () => {
@@ -280,6 +283,14 @@ export default function BroadcastComposer({ adminFetch, onError, onSuccess }: Pr
           that implies why someone uses RecoveryBridge.
         </Body14>
       </div>
+
+      {!enabled && (
+        <div className="rounded-lg bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 p-3 mb-4">
+          <Body14 className="text-rb-dark dark:text-gray-100">
+            Announcements are switched off above. Turn them on to send one.
+          </Body14>
+        </div>
+      )}
 
       <button
         onClick={() => setConfirmOpen(true)}

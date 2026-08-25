@@ -87,6 +87,7 @@ components/
 ├── CrisisResources.tsx               # Floating 988/crisis button (always visible)
 ├── NoticeBanner.tsx                  # Surfaces unread in-app notices (user_notices) on the dashboard
 ├── BroadcastComposer.tsx             # Admin: compose/send a platform announcement to a named audience
+├── NotificationControls.tsx          # Admin: per-kind on/off switches for what the platform may send
 ├── TagSelector.tsx / Modal.tsx / ErrorState.tsx / Skeleton.tsx / Footer.tsx
 ├── ServiceWorkerRegistration.tsx / SkipLink.tsx
 └── ui/Typography.tsx                 # Semantic type scale (Heading1..., Body16, Body18)
@@ -114,7 +115,7 @@ lib/
 └── *.test.ts                         # Vitest: constants, favorites, timeWindows, rateLimit, errors
 
 supabase/
-├── migrations/                       # 001–035, numbered (note: two files share 004) — see migrations/README.md
+├── migrations/                       # 001–036, numbered (note: two files share 004) — see migrations/README.md
 └── legacy/                           # Pre-migration setup SQL (historical snapshot; the live policy set has
                                       #   drifted — query pg_policies for the truth, see migrations/README.md)
 
@@ -130,7 +131,7 @@ middleware.ts                         # Route protection (auth + admin check)
 
 ## Database Schema (high level)
 
-Migrations live in `supabase/migrations/` (001–035) and are the source of truth. Summary:
+Migrations live in `supabase/migrations/` (001–036) and are the source of truth. Summary:
 
 ### profiles (central user table)
 Core: `id` (= auth.users.id), `display_name` (unique), `email`, `bio`, `tagline`, `avatar_url`, `tags` (max 5), `is_admin`.
@@ -150,6 +151,7 @@ Compliance/audit: `referral_source` (010, free text since 018), `listener_traini
 - **push_subscriptions** — Web Push endpoints per user/device
 - **notification_queue** (035) — one row per recipient per non-support notification (thank-you note, training nudge, check-in, broadcast). Drained by `/api/notifications/drain`; `dedupe_key` + a partial unique index make every enqueue idempotent, `not_before` doubles as a quiet-hours deferral and a claim lease
 - **broadcasts** (035) — audit record for an admin announcement; queue rows hang off it
+- **notification_kind_settings** (036) — the admin on/off switch per notification kind. Absent row = off; unreadable = everything off
 - **user_notices** (026) — in-app messages to a *user* (not an email): `kind` is `reconnect` (auto follow-up when a seeker never got connected) or `outreach` (personal note from an admin). Surfaced by `NoticeBanner` on the dashboard; the admin "Couldn't Connect" tab reads the `reconnect` rows
 - **blog/story tables** (011–015) — **legacy**: stories moved to Ghost at stories.recoverybridge.app; no in-app UI reads them
 
@@ -195,6 +197,10 @@ All tables have RLS. Admin mutations go through `/api/admin/*` routes (Bearer to
 | Finish your listener training | `announcement` | `/api/notifications/training-nudge` (cron) | same; only for people who started and stalled 3+ days |
 | Admin broadcast | `announcement` | `send_broadcast` admin action | same; also writes a `user_notices` row so it lands without push |
 | "It's been a while" check-in | `reengagement` | `/api/notifications/reengagement` (cron) | `reengagement_notifications_enabled` (default **off**, opt-in) |
+
+**Every kind is behind an admin switch** (`notification_kind_settings`, migration 036), separate from the per-recipient consent above — that one asks "does this person want it", this one asks "do we want it going out at all yet". Both must say yes. The three automatic kinds ship **off**; `broadcast` ships **on** because it cannot fire without an admin composing and sending. Managed in Admin → Notifications.
+
+The switch is enforced in three places, and all of them matter: `enqueueNotifications` won't create rows for a disabled kind, the drain re-checks at delivery (so switching off *cancels* an existing backlog rather than letting it drain), and `send_broadcast` checks before writing its `user_notices` rows. It fails closed — an unknown kind, or an unreadable settings table, sends nothing.
 
 `/api/notifications/drain` delivers them on the shared cron: it re-checks consent at send time, **defers** anything landing in the recipient's quiet hours (moves `not_before` forward rather than dropping it), retires rows past `expires_at`, and prunes terminal rows after 30 days.
 
@@ -282,6 +288,7 @@ Everything in the flows above is ✅ live, including: auth, onboarding (with ref
 | Re-engagement check-in | ✅ Live | Opt-in (default off), monthly cap, only sent when listeners are online |
 | Admin broadcast | ✅ Live | Admin → Broadcast tab; push + in-app notice to a named audience |
 | Notification categories | ✅ Live | Announcements (default on) and check-ins (opt-in), separate from support-request push |
+| Admin send switches | ✅ Live | Admin → Notifications. Automatic kinds ship **off**; flipping one off also cancels its queued backlog |
 
 ---
 
