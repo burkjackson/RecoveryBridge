@@ -108,6 +108,37 @@ async function followUpMissedConnections(
   }
 }
 
+// Quietly correct role_state for a listener who has sat at 'available' with no
+// fresh heartbeat for two weeks or more. Pure data hygiene: this never affects
+// who receives a live push (that's isListenerOnline(), decided fresh on every
+// request in the send route) — it only stops a stale profile from sitting in
+// a state nobody believes anymore.
+//
+// always_available is untouched on purpose. That toggle means "ignore
+// staleness" by design, which is the same reason the notification-freshness
+// fix on 25 Aug left it alone (see CLAUDE.md known issues #17, #21).
+async function resetStaleAvailability(supabase: SupabaseClient) {
+  const staleThreshold = new Date(Date.now() - TIME.STALE_AVAILABILITY_MS).toISOString()
+  const { data, error } = await supabase
+    .from('profiles')
+    .update({ role_state: 'offline' })
+    .eq('role_state', 'available')
+    .eq('always_available', false)
+    // `is.null` matters: a comparison against NULL is never true, so a
+    // profile with no heartbeat at all would never reset.
+    .or(`last_heartbeat_at.lt.${staleThreshold},last_heartbeat_at.is.null`)
+    // last_heartbeat_at must be selected even though only the id is used —
+    // see the identical note on the stale-requesting query below for why an
+    // `or=` column missing from `.select()` makes PostgREST 42703.
+    .select('id, last_heartbeat_at')
+
+  if (error) {
+    console.error('[cleanup] Error resetting stale availability:', error)
+    return { count: 0, error: error.message ?? 'failed' }
+  }
+  return { count: data?.length ?? 0, error: null as string | null }
+}
+
 export async function POST(request: NextRequest) {
   try {
     // Create Supabase client with service role for server-side operations
@@ -211,11 +242,14 @@ export async function POST(request: NextRequest) {
       // nobody is stuck in 'requesting', which is precisely the case for
       // someone who was connected to a silent listener and left 'offline'.
       await followUpMissedConnections(supabase, staleRequesters ?? [])
+      const availabilityReset = await resetStaleAvailability(supabase)
       return NextResponse.json({
         success: true,
         message: 'No sessions to clean up',
         cleaned: 0,
         staleSeekerReset: staleRequesters?.length ?? 0,
+        staleAvailabilityReset: availabilityReset.count,
+        staleAvailabilityError: availabilityReset.error,
         blocksExpired: expiredBlocks?.length ?? 0
       })
     }
@@ -314,6 +348,8 @@ export async function POST(request: NextRequest) {
     // who are left 'offline' and never appear in that reset at all.
     await followUpMissedConnections(supabase, staleError ? [] : (staleRequesters ?? []))
 
+    const availabilityReset = await resetStaleAvailability(supabase)
+
     return NextResponse.json({
       success: true,
       message: sessionsToClose.length > 0
@@ -325,6 +361,8 @@ export async function POST(request: NextRequest) {
       cleaned: sessionsToClose.length,
       sessionIds: sessionsToClose.length > 0 ? sessionsToClose : undefined,
       staleSeekerReset: staleRequesters?.length ?? 0,
+      staleAvailabilityReset: availabilityReset.count,
+      staleAvailabilityError: availabilityReset.error,
       blocksExpired: expiredBlocks?.length ?? 0
     })
 

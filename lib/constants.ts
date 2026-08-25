@@ -131,6 +131,28 @@ export const TIME = {
 
   /** How long the post-chat "Returning to dashboard..." confirmation shows before navigating (1.5 seconds) */
   POST_CHAT_REDIRECT_MS: 1.5 * 1000,
+
+  /**
+   * How long a listener can sit at role_state='available' with no heartbeat
+   * before cleanup quietly corrects it to 'offline' (two weeks).
+   *
+   * This is data hygiene, not a delivery decision — it never affects who
+   * receives a live push. That question is answered fresh on every request by
+   * isListenerOnline() (1 hour), which is exactly as tight as it needs to be
+   * for "is this person online right now". Two weeks answers a different,
+   * much less urgent question: how long do we let a profile sit in a state
+   * nobody believes anymore before correcting the record. An hour would be
+   * far too aggressive for that — someone who steps away for an afternoon
+   * shouldn't come back to find their status silently flipped. Two weeks
+   * (Burk's call, 25 Aug) is long enough that nobody could still reasonably
+   * consider themselves available.
+   *
+   * Deliberately excludes always_available profiles. That toggle means
+   * "ignore staleness" by design (see CLAUDE.md known issues #17 and #21) —
+   * resetting them here would undo the exact promise the notification-
+   * freshness fix on 25 Aug was careful to leave alone.
+   */
+  STALE_AVAILABILITY_MS: 14 * 24 * 60 * 60 * 1000,
 } as const
 
 // Re-notification tracking constants
