@@ -35,6 +35,7 @@ export async function GET(request: NextRequest) {
       favorites,
       pushSubscriptions,
       reportsFiled,
+      notices,
     ] = await Promise.all([
       supabaseAdmin.from('profiles').select('*').eq('id', userId).single(),
       supabaseAdmin.from('sessions').select('*').or(`listener_id.eq.${userId},seeker_id.eq.${userId}`),
@@ -45,6 +46,10 @@ export async function GET(request: NextRequest) {
       supabaseAdmin.from('user_favorites').select('*').eq('user_id', userId),
       supabaseAdmin.from('push_subscriptions').select('*').eq('user_id', userId),
       supabaseAdmin.from('reports').select('*').eq('reporter_id', userId),
+      // Messages the platform sent to this person — the "we couldn't connect
+      // you" follow-up, an admin's personal note, an announcement. Held about
+      // them and readable by them in-app, so it belongs in their export.
+      supabaseAdmin.from('user_notices').select('*').eq('user_id', userId),
     ])
 
     const exportData = {
@@ -64,6 +69,7 @@ export async function GET(request: NextRequest) {
       favorites: favorites.data ?? [],
       push_subscriptions: pushSubscriptions.data ?? [],
       reports_filed: reportsFiled.data ?? [],
+      messages_received_from_recoverybridge: notices.data ?? [],
     }
 
     const filename = `recoverybridge-data-${new Date().toISOString().slice(0, 10)}.json`
