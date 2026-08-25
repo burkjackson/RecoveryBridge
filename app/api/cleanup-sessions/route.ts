@@ -2,41 +2,93 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient, SupabaseClient } from '@supabase/supabase-js'
 import { TIME_MINUTES, TIME, OUTREACH_COPY } from '@/lib/constants'
 import { sendPushToUser } from '@/lib/serverPush'
-import { seekersNeedingFollowUp } from '@/lib/missedConnections'
+import {
+  seekersNeedingFollowUp,
+  summariseSessions,
+  unansweredSessions,
+} from '@/lib/missedConnections'
 
-// When cleanup resets seekers who were still 'requesting' after going stale,
-// they asked for support and never connected. Reach back out to each: record an
-// in-app 'reconnect' notice (surfaced on their next visit + read by the admin
-// "Couldn't Connect" view) and send a warm push. Best-effort and per-user
-// isolated so one failure can't abort the cleanup run.
+// Reach back out to anyone who asked for support and was met with silence.
 //
-// Anyone who actually had a conversation is filtered out first. A stale
-// 'requesting' state is only *evidence* that nobody connected, not proof: it
-// was a dropped cross-user write that once sent "we're so sorry we couldn't
-// connect you" to people who had just finished talking to a listener. That
-// write now goes through /api/sessions/state, but this check is the guard that
-// makes the mistake structurally impossible rather than merely unlikely.
+// There are two ways to end up here, and the second one is why this was
+// rewritten on 25 Aug 2026:
+//
+//  1. Still 'requesting' when cleanup reset them — nobody ever connected.
+//  2. Connected to a listener who never typed a word. Ending that session moves
+//     both participants' role_state, so these people are left 'offline' and the
+//     'requesting' sweep in (1) can never see them. They were invisible: no
+//     follow-up, and nothing in the admin "Couldn't Connect" list either.
+//
+// Both funnel through the same filter, which excludes anyone who had a real
+// two-way conversation in the window. Apologising to someone who just finished
+// talking to a listener is its own harm and was a live bug once.
+//
+// Best-effort and per-user isolated so one failure can't abort the cleanup run.
 async function followUpMissedConnections(
   supabase: SupabaseClient,
-  seekers: { id: string }[]
+  staleSeekers: { id: string }[]
 ) {
-  if (seekers.length === 0) return
-
   const since = new Date(Date.now() - TIME.MISSED_CONNECTION_LOOKBACK_MS).toISOString()
-  const { data: recentSessions, error: sessionsError } = await supabase
-    .from('sessions')
-    .select('seeker_id')
-    .in('seeker_id', seekers.map((s) => s.id))
-    .gte('created_at', since)
 
-  // Fail closed. If we can't tell who was connected, send nothing: a missed
-  // follow-up costs far less than a wrongly apologetic one.
-  if (sessionsError) {
-    console.error('[cleanup] Could not check for recent sessions; sent no follow-ups:', sessionsError)
+  // Sessions that ended in the window, to find people who were connected and
+  // then ignored. Kept to the same lookback as everything else here.
+  const { data: endedRows, error: endedError } = await supabase
+    .from('sessions')
+    .select('id, seeker_id, listener_id')
+    .eq('status', 'ended')
+    .gte('ended_at', since)
+
+  if (endedError) {
+    console.error('[cleanup] Could not read ended sessions; sent no follow-ups:', endedError)
     return
   }
 
-  for (const seeker of seekersNeedingFollowUp(seekers, recentSessions ?? [])) {
+  const endedSessions = endedRows ?? []
+  const messagesById = endedSessions.length > 0
+    ? (await supabase
+        .from('messages')
+        .select('session_id, sender_id')
+        .in('session_id', endedSessions.map((r) => r.id))
+      ).data ?? []
+    : []
+
+  const summarised = summariseSessions(endedSessions, messagesById)
+
+  // Candidates: the stale-'requesting' seekers, plus the seekers of any session
+  // where they wrote and nobody answered.
+  const candidateIds = new Set(staleSeekers.map((s) => s.id))
+  for (const session of unansweredSessions(summarised)) {
+    if (session.seeker_id) candidateIds.add(session.seeker_id)
+  }
+  if (candidateIds.size === 0) return
+
+  const candidates = [...candidateIds].map((id) => ({ id }))
+
+  // Exclude anyone genuinely answered in the window — including by a *different*
+  // listener after the silent one. Someone ignored at 09:54 who had a real
+  // conversation at 09:56 must not receive an apology.
+  const needFollowUp = seekersNeedingFollowUp(candidates, summarised)
+  if (needFollowUp.length === 0) return
+
+  // Don't say sorry twice. Unlike the 'requesting' path — where resetting the
+  // state removes them from the candidate set — an ended session stays in the
+  // lookback window for hours and would otherwise re-fire on every cron tick.
+  const { data: alreadyToldRows, error: noticesError } = await supabase
+    .from('user_notices')
+    .select('user_id')
+    .eq('kind', 'reconnect')
+    .in('user_id', needFollowUp.map((s) => s.id))
+    .gte('created_at', since)
+
+  if (noticesError) {
+    console.error('[cleanup] Could not check existing notices; sent no follow-ups:', noticesError)
+    return
+  }
+
+  const alreadyTold = new Set((alreadyToldRows ?? []).map((r: { user_id: string }) => r.user_id))
+
+  for (const seeker of needFollowUp) {
+    if (alreadyTold.has(seeker.id)) continue
     try {
       await supabase.from('user_notices').insert({
         user_id: seeker.id,
@@ -149,9 +201,10 @@ export async function POST(request: NextRequest) {
         // profile stuck in 'requesting' with no heartbeat would never reset.
         .or(`last_heartbeat_at.lt.${staleThreshold},last_heartbeat_at.is.null`)
         .select('id')
-      if (staleRequesters && staleRequesters.length > 0) {
-        await followUpMissedConnections(supabase, staleRequesters)
-      }
+      // Always run: the unanswered-session sweep inside has to work even when
+      // nobody is stuck in 'requesting', which is precisely the case for
+      // someone who was connected to a silent listener and left 'offline'.
+      await followUpMissedConnections(supabase, staleRequesters ?? [])
       return NextResponse.json({
         success: true,
         message: 'No sessions to clean up',
@@ -239,11 +292,14 @@ export async function POST(request: NextRequest) {
 
     if (staleError) {
       console.error('Error resetting stale requesting states:', staleError)
-    } else if (staleRequesters && staleRequesters.length > 0) {
-      if (isDev) console.log(`Reset ${staleRequesters.length} stale requesting state(s) to offline`)
-      // These seekers requested support and never connected — reach back out.
-      await followUpMissedConnections(supabase, staleRequesters)
+    } else if (staleRequesters && staleRequesters.length > 0 && isDev) {
+      console.log(`Reset ${staleRequesters.length} stale requesting state(s) to offline`)
     }
+
+    // Always run, even with no stale requesters and even if the reset above
+    // failed: the sweep also covers people who WERE connected and then ignored,
+    // who are left 'offline' and never appear in that reset at all.
+    await followUpMissedConnections(supabase, staleError ? [] : (staleRequesters ?? []))
 
     return NextResponse.json({
       success: true,
