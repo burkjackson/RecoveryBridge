@@ -200,7 +200,13 @@ export async function POST(request: NextRequest) {
         // `is.null` matters: a comparison against NULL is never true, so a
         // profile stuck in 'requesting' with no heartbeat would never reset.
         .or(`last_heartbeat_at.lt.${staleThreshold},last_heartbeat_at.is.null`)
-        .select('id')
+        // last_heartbeat_at must be selected even though only the id is used.
+        // PostgREST turns an UPDATE..RETURNING into a CTE and then re-applies
+        // the `or=` filter to it, so a column used in `.or()` but missing from
+        // `.select()` isn't in the CTE and Postgres raises 42703
+        // ("column profiles.last_heartbeat_at does not exist"). Plain `.eq()`
+        // filters are not re-applied this way — only `or=` is.
+        .select('id, last_heartbeat_at')
       // Always run: the unanswered-session sweep inside has to work even when
       // nobody is stuck in 'requesting', which is precisely the case for
       // someone who was connected to a silent listener and left 'offline'.
@@ -288,9 +294,16 @@ export async function POST(request: NextRequest) {
       .eq('role_state', 'requesting')
       // See the note above: NULL heartbeats need an explicit branch.
       .or(`last_heartbeat_at.lt.${staleRequestingThreshold},last_heartbeat_at.is.null`)
-      .select('id')
+      // See the note on the same query above: the `or=` column has to be in the
+      // select or PostgREST's RETURNING CTE fails with 42703.
+      .select('id, last_heartbeat_at')
 
     if (staleError) {
+      // Surface this in the response, not just the console. This exact query
+      // silently 400'd on every run between 24 and 25 Aug 2026 while the cron
+      // reported success, so the stale reset and the missed-connection
+      // follow-up were both dead and nothing said so (cf. the 020 migration
+      // post-mortem in CLAUDE.md).
       console.error('Error resetting stale requesting states:', staleError)
     } else if (staleRequesters && staleRequesters.length > 0 && isDev) {
       console.log(`Reset ${staleRequesters.length} stale requesting state(s) to offline`)
@@ -306,6 +319,9 @@ export async function POST(request: NextRequest) {
       message: sessionsToClose.length > 0
         ? `Closed ${sessionsToClose.length} stale session(s)`
         : 'No stale sessions to close',
+      // Non-null whenever the stale reset failed, so a broken run is visible in
+      // the cron output instead of looking like a clean 200.
+      staleResetError: staleError ? (staleError.message ?? 'failed') : null,
       cleaned: sessionsToClose.length,
       sessionIds: sessionsToClose.length > 0 ? sessionsToClose : undefined,
       staleSeekerReset: staleRequesters?.length ?? 0,
