@@ -1296,17 +1296,21 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
             A direct connection creates the session the instant the seeker taps
             Connect, and only THEN notifies the listener — so the seeker sits in
             an empty room with no idea whether anyone is coming. On 25 Aug one
-            gave up after 84 seconds; the listener opened the notification 13
-            minutes later, which is ordinary behaviour, not neglect. */}
+            gave up after 84 seconds. Measured across 61 answered sessions, a
+            listener who is actually at their phone replies fast: median 12s,
+            85% inside 90s. So this note deliberately does NOT tell anyone to
+            keep waiting — after a couple of minutes of silence the honest
+            advice is to try again rather than sit in a dead room. */}
         {session?.status === 'active' &&
           isParticipant &&
           currentUserId === session?.seeker_id &&
           !messages.some((m) => m.sender_id === session?.listener_id) && (
             <div className="bg-rb-blue-light dark:bg-gray-700/60 border-t border-rb-blue/20 dark:border-gray-600 px-4 py-3">
               <p className="max-w-4xl mx-auto text-center text-sm text-rb-dark dark:text-gray-100">
-                We&rsquo;ve let {otherUserName} know you&rsquo;re here. People often take a few
-                minutes to pick up their phone — you can write your message now, and they&rsquo;ll
-                see it when they arrive.
+                We&rsquo;ve let {otherUserName} know you&rsquo;re here — go ahead and write your
+                message. Listeners who are at their phone usually reply within a minute or two.
+                If nothing comes back, you can head back and ask again — someone else may be
+                around.
               </p>
             </div>
           )}

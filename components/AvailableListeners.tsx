@@ -517,8 +517,9 @@ export default function AvailableListeners({ onCountChange, currentUserId, curre
                 {profilePreview.last_heartbeat_at
                   ? `Last active ${formatTimeAgo(profilePreview.last_heartbeat_at)}. `
                   : ''}
-                We&rsquo;ll notify {profilePreview.display_name} as soon as you connect. They may
-                take a few minutes to reply — you can write your message straight away.
+                We&rsquo;ll notify {profilePreview.display_name} as soon as you connect. Write
+                your message straight away — if they&rsquo;re at their phone you&rsquo;ll usually
+                hear back within a minute or two.
               </p>
             </div>
 
