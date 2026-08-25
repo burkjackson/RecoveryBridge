@@ -9,7 +9,7 @@ import Modal from '@/components/Modal'
 import { SkeletonChatMessage } from '@/components/Skeleton'
 import ErrorState from '@/components/ErrorState'
 import { PrivacyBadge } from '@/components/Footer'
-import { TIME, VALIDATION, CONVERSATION_STARTERS, REACTIONS, containsCrisisLanguage } from '@/lib/constants'
+import { TIME, VALIDATION, CONVERSATION_STARTERS, REACTIONS, containsCrisisLanguage, formatTimeAgo } from '@/lib/constants'
 import { linkifyText } from '@/lib/linkify'
 import { syncSessionRoleStates } from '@/lib/sessionState'
 import { getActiveBlock } from '@/lib/blocks'
@@ -1254,6 +1254,35 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
           </div>
         )}
 
+        {/* Ended-session bar.
+            The composer below only renders while the session is active, so
+            without this a participant who opens an already-ended conversation
+            gets the transcript, no input, and no explanation. The
+            sessionEndedByOther banner does not cover it: that flag is only set
+            by a realtime UPDATE received while the page is already open, so
+            loading a session that ended earlier leaves it false. That is
+            exactly what a listener hit on 25 Aug arriving 13 minutes late —
+            reported as "I tried to respond and nothing happened". */}
+        {session && session.status !== 'active' && isParticipant && (
+          <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4">
+            <div className="max-w-4xl mx-auto text-center space-y-2">
+              <p className="font-semibold text-rb-dark dark:text-gray-100">
+                This conversation has ended
+              </p>
+              <p className="text-sm text-rb-gray dark:text-gray-300">
+                {session.ended_at ? `It ended ${formatTimeAgo(session.ended_at)}. ` : ''}
+                You can still read it here, but new messages can&rsquo;t be sent.
+              </p>
+              <button
+                onClick={() => router.push('/dashboard')}
+                className="min-h-[44px] px-5 py-2 bg-rb-blue text-white rounded-lg font-semibold hover:bg-rb-blue-hover transition"
+              >
+                Back to dashboard
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Read-only bar for a non-participant admin observing a live chat */}
         {session?.status === 'active' && !isParticipant && (
           <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4">
@@ -1262,6 +1291,25 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
             </p>
           </div>
         )}
+
+        {/* Waiting note for a seeker whose listener hasn't arrived yet.
+            A direct connection creates the session the instant the seeker taps
+            Connect, and only THEN notifies the listener — so the seeker sits in
+            an empty room with no idea whether anyone is coming. On 25 Aug one
+            gave up after 84 seconds; the listener opened the notification 13
+            minutes later, which is ordinary behaviour, not neglect. */}
+        {session?.status === 'active' &&
+          isParticipant &&
+          currentUserId === session?.seeker_id &&
+          !messages.some((m) => m.sender_id === session?.listener_id) && (
+            <div className="bg-rb-blue-light dark:bg-gray-700/60 border-t border-rb-blue/20 dark:border-gray-600 px-4 py-3">
+              <p className="max-w-4xl mx-auto text-center text-sm text-rb-dark dark:text-gray-100">
+                We&rsquo;ve let {otherUserName} know you&rsquo;re here. People often take a few
+                minutes to pick up their phone — you can write your message now, and they&rsquo;ll
+                see it when they arrive.
+              </p>
+            </div>
+          )}
 
         {/* Message Input */}
         {session?.status === 'active' && isParticipant && (

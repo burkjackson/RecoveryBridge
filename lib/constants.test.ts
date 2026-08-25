@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import {
+  formatTimeAgo,
   parseReferralSource,
   trainingNudgeBody,
   trainingSectionsRemaining,
@@ -69,5 +70,34 @@ describe('trainingNudgeBody', () => {
 
   it('names the count for more than one', () => {
     expect(trainingNudgeBody(3)).toContain('3 sections')
+  })
+})
+
+describe('formatTimeAgo', () => {
+  const agoMs = (ms: number) => new Date(Date.now() - ms)
+
+  it('returns an empty string for a missing timestamp', () => {
+    expect(formatTimeAgo(null)).toBe('')
+    expect(formatTimeAgo(undefined)).toBe('')
+  })
+
+  it('says "just now" under a minute', () => {
+    expect(formatTimeAgo(agoMs(30 * 1000))).toBe('just now')
+  })
+
+  it('uses singular at exactly one unit', () => {
+    expect(formatTimeAgo(agoMs(60 * 1000))).toBe('1 minute ago')
+    expect(formatTimeAgo(agoMs(60 * 60 * 1000))).toBe('1 hour ago')
+    expect(formatTimeAgo(agoMs(24 * 60 * 60 * 1000))).toBe('1 day ago')
+  })
+
+  // The case that prompted this: a listener opening a chat 13 minutes late.
+  it('reports minutes for a recent gap', () => {
+    expect(formatTimeAgo(agoMs(13 * 60 * 1000))).toBe('13 minutes ago')
+  })
+
+  it('rolls up to hours and days', () => {
+    expect(formatTimeAgo(agoMs(3 * 60 * 60 * 1000))).toBe('3 hours ago')
+    expect(formatTimeAgo(agoMs(50 * 60 * 60 * 1000))).toBe('2 days ago')
   })
 })

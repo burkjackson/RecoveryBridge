@@ -7,7 +7,7 @@ import Image from 'next/image'
 import { Body16, Body18 } from '@/components/ui/Typography'
 import ErrorState from '@/components/ErrorState'
 import Modal from '@/components/Modal'
-import { TIME, UI } from '@/lib/constants'
+import { TIME, UI, formatTimeAgo } from '@/lib/constants'
 import { syncSessionRoleStates } from '@/lib/sessionState'
 import { getActiveBlock } from '@/lib/blocks'
 import type { Profile } from '@/lib/types/database'
@@ -506,6 +506,22 @@ export default function AvailableListeners({ onCountChange, currentUserId, curre
           }}
         >
           <div className="space-y-4">
+            {/* What connecting actually does, before they commit to it.
+                The listener list admits anyone with a heartbeat inside the
+                one-hour window, so "available" can mean "was here 50 minutes
+                ago". Connecting opens the chat immediately and notifies them
+                after — saying so up front is the difference between waiting a
+                few minutes and concluding nobody came. */}
+            <div className="rounded-lg bg-rb-blue-light dark:bg-gray-700 border border-rb-blue/20 dark:border-gray-600 p-3">
+              <p className="text-sm text-rb-dark dark:text-gray-100">
+                {profilePreview.last_heartbeat_at
+                  ? `Last active ${formatTimeAgo(profilePreview.last_heartbeat_at)}. `
+                  : ''}
+                We&rsquo;ll notify {profilePreview.display_name} as soon as you connect. They may
+                take a few minutes to reply — you can write your message straight away.
+              </p>
+            </div>
+
             {/* Avatar + status */}
             <div className="flex items-center gap-3">
               {profilePreview.avatar_url ? (

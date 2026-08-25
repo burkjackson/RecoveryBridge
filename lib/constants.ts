@@ -509,3 +509,23 @@ export const NOTIFICATION_KIND_INFO = [
       'The messages you write below. Nothing sends unless you compose one and press send — this switch is here so you can stop it, not so you have to open it.',
   },
 ] as const
+
+/**
+ * Short "how long ago" label, e.g. "just now", "13 minutes ago", "2 hours ago".
+ *
+ * Used where a bare timestamp reads as noise but the age is the whole point —
+ * telling someone who opened an ended conversation how long ago it finished,
+ * or how recently a listener was last seen.
+ */
+export function formatTimeAgo(timestamp: string | Date | null | undefined): string {
+  if (!timestamp) return ''
+  const minutes = Math.floor(getMinutesAgo(timestamp))
+  if (minutes < 1) return 'just now'
+  if (minutes === 1) return '1 minute ago'
+  if (minutes < 60) return `${minutes} minutes ago`
+  const hours = Math.floor(minutes / 60)
+  if (hours === 1) return '1 hour ago'
+  if (hours < 24) return `${hours} hours ago`
+  const days = Math.floor(hours / 24)
+  return days === 1 ? '1 day ago' : `${days} days ago`
+}
