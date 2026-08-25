@@ -347,6 +347,27 @@ export function isHeartbeatStale(lastHeartbeat: string | null): boolean {
   return getMinutesAgo(lastHeartbeat) > TIME_MINUTES.HEARTBEAT_THRESHOLD
 }
 
+/**
+ * Whether a listener counts as online right now: always_available bypasses
+ * the heartbeat entirely (that toggle's whole purpose is "notify me even if
+ * I haven't opened the app"), otherwise presence requires a fresh heartbeat.
+ *
+ * This was duplicated inline in three places — AvailableListeners.tsx,
+ * app/listeners/page.tsx, and the support-request send route — with the send
+ * route missing the freshness half entirely (it targeted every
+ * role_state='available' profile with no heartbeat check, so 10 profiles
+ * stale for weeks to months still received a push, though they're invisible
+ * on the lists that use this same logic). Centralised so the three can't
+ * silently diverge again.
+ */
+export function isListenerOnline(listener: {
+  always_available: boolean | null
+  last_heartbeat_at: string | null
+}): boolean {
+  if (listener.always_available) return true
+  return !isHeartbeatStale(listener.last_heartbeat_at)
+}
+
 // ---------------------------------------------------------------------------
 // Push beyond "someone needs support"
 // ---------------------------------------------------------------------------

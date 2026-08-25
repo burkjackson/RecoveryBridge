@@ -7,7 +7,7 @@ import Image from 'next/image'
 import { Body16, Body18 } from '@/components/ui/Typography'
 import ErrorState from '@/components/ErrorState'
 import Modal from '@/components/Modal'
-import { TIME, UI, formatTimeAgo } from '@/lib/constants'
+import { UI, formatTimeAgo, isListenerOnline } from '@/lib/constants'
 import { syncSessionRoleStates } from '@/lib/sessionState'
 import { getActiveBlock } from '@/lib/blocks'
 import type { Profile } from '@/lib/types/database'
@@ -76,9 +76,6 @@ export default function AvailableListeners({ onCountChange, currentUserId, curre
       const { data: { user } } = await supabase.auth.getUser()
       const userId = currentUserId || user?.id
 
-      // Calculate timestamp for heartbeat threshold
-      const heartbeatThreshold = new Date(Date.now() - TIME.HEARTBEAT_THRESHOLD_MS).toISOString()
-
       const { data, error } = await supabase
         .from('profiles')
         .select('id, display_name, bio, tagline, tags, avatar_url, user_role, last_heartbeat_at, always_available')
@@ -88,11 +85,7 @@ export default function AvailableListeners({ onCountChange, currentUserId, curre
       if (error) throw error
 
       // Filter to active listeners only
-      const onlineListeners = (data || []).filter(listener => {
-        if (listener.always_available) return true
-        if (!listener.last_heartbeat_at) return false
-        return listener.last_heartbeat_at >= heartbeatThreshold
-      })
+      const onlineListeners = (data || []).filter(isListenerOnline)
 
       // Load favorites and shared session history
       let favIds = new Set<string>()

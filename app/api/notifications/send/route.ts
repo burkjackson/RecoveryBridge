@@ -3,7 +3,7 @@ import webpush from 'web-push'
 import { createClient } from '@supabase/supabase-js'
 import { sendSupportRequestEmail } from '@/lib/email'
 import { isInQuietHours } from '@/lib/timeWindows'
-import { TIME } from '@/lib/constants'
+import { TIME, isListenerOnline } from '@/lib/constants'
 import { isRateLimited } from '@/lib/rateLimit'
 // TODO: Re-enable when Twilio verification is complete
 // import { sendSMS } from '@/lib/sms'
@@ -199,7 +199,7 @@ export async function POST(request: NextRequest) {
     // Include both:
     // 1. Users currently in "available" state
     // 2. Users with "always_available" enabled (should receive notifications anytime)
-    const { data: listeners, error: listenersError } = await supabase
+    const { data: rawListeners, error: listenersError } = await supabase
       .from('profiles')
       .select('id, display_name, email, email_notifications_enabled, role_state, always_available, last_heartbeat_at, quiet_hours_enabled, quiet_hours_start, quiet_hours_end, quiet_hours_timezone, phone_number, sms_notifications_enabled')
       .or('role_state.eq.available,always_available.eq.true')
@@ -207,7 +207,17 @@ export async function POST(request: NextRequest) {
 
     if (listenersError) throw listenersError
 
-    if (!listeners || listeners.length === 0) {
+    // isListenerOnline() bypasses the heartbeat entirely for always_available
+    // (that toggle means "notify me even if I haven't opened the app" — every
+    // other listener-facing query already honours that), and requires a fresh
+    // heartbeat otherwise. A stale plain-'available' listener was the one
+    // inconsistency: invisible on every list that uses this same function, yet
+    // still pushed to here. Measured 25 Aug: 10 profiles sit at
+    // role_state='available' with a heartbeat over an hour old (or none at
+    // all) and always_available=false.
+    const listeners = (rawListeners ?? []).filter(isListenerOnline)
+
+    if (listeners.length === 0) {
       console.log(`[notify] No available listeners for seeker ${seekerId}`)
       return NextResponse.json({
         success: true,

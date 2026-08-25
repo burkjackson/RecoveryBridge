@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
-import { TIME, SPECIALTY_TAGS } from '@/lib/constants'
+import { SPECIALTY_TAGS, isListenerOnline } from '@/lib/constants'
 import { getActiveBlock } from '@/lib/blocks'
 import { errorMessage } from '@/lib/errors'
 import Image from 'next/image'
@@ -109,12 +109,7 @@ export default function ListenersPage() {
 
       if (error) throw error
 
-      const heartbeatThreshold = new Date(Date.now() - TIME.HEARTBEAT_THRESHOLD_MS).toISOString()
-      const onlineListeners = (data || []).filter(listener => {
-        if (listener.always_available) return true
-        if (!listener.last_heartbeat_at) return false
-        return listener.last_heartbeat_at >= heartbeatThreshold
-      })
+      const onlineListeners = (data || []).filter(isListenerOnline)
 
       // Load helpful counts for these listeners
       const listenerIds = onlineListeners.map(l => l.id)

@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import {
   formatTimeAgo,
+  isHeartbeatStale,
+  isListenerOnline,
   parseReferralSource,
   trainingNudgeBody,
   trainingSectionsRemaining,
@@ -99,5 +101,56 @@ describe('formatTimeAgo', () => {
   it('rolls up to hours and days', () => {
     expect(formatTimeAgo(agoMs(3 * 60 * 60 * 1000))).toBe('3 hours ago')
     expect(formatTimeAgo(agoMs(50 * 60 * 60 * 1000))).toBe('2 days ago')
+  })
+})
+
+describe('isHeartbeatStale', () => {
+  it('treats a missing heartbeat as stale', () => {
+    expect(isHeartbeatStale(null)).toBe(true)
+  })
+
+  it('treats a recent heartbeat as fresh', () => {
+    expect(isHeartbeatStale(new Date(Date.now() - 5 * 60 * 1000).toISOString())).toBe(false)
+  })
+
+  it('treats a heartbeat over an hour old as stale', () => {
+    expect(isHeartbeatStale(new Date(Date.now() - 90 * 60 * 1000).toISOString())).toBe(true)
+  })
+})
+
+describe('isListenerOnline', () => {
+  it('is online with a fresh heartbeat', () => {
+    expect(
+      isListenerOnline({
+        always_available: false,
+        last_heartbeat_at: new Date(Date.now() - 60 * 1000).toISOString(),
+      })
+    ).toBe(true)
+  })
+
+  it('is offline with a stale heartbeat', () => {
+    expect(
+      isListenerOnline({
+        always_available: false,
+        last_heartbeat_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+      })
+    ).toBe(false)
+  })
+
+  it('is offline with no heartbeat at all', () => {
+    expect(isListenerOnline({ always_available: false, last_heartbeat_at: null })).toBe(false)
+  })
+
+  // The bug this exists to prevent: two always_available accounts kept
+  // receiving support pushes with heartbeats ~a day stale, which is correct —
+  // this is the one place a stale heartbeat must NOT gate delivery.
+  it('bypasses the heartbeat entirely when always_available is set', () => {
+    expect(
+      isListenerOnline({
+        always_available: true,
+        last_heartbeat_at: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+      })
+    ).toBe(true)
+    expect(isListenerOnline({ always_available: true, last_heartbeat_at: null })).toBe(true)
   })
 })
