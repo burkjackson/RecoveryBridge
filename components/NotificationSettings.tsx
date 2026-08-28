@@ -39,6 +39,10 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
   const [quietHoursEnd, setQuietHoursEnd] = useState(profile?.quiet_hours_end || '07:00')
   const [quietHoursTimezone, setQuietHoursTimezone] = useState(profile?.quiet_hours_timezone || '')
   const [quietHoursSaving, setQuietHoursSaving] = useState(false)
+  // Shown right next to the Save button, not just in the top banner — the banner
+  // can be scrolled out of view by the time someone reaches Save (see below).
+  const [quietHoursMessage, setQuietHoursMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+  const quietHoursMessageTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   // Announcements default on (service messages); check-ins default off (opt-in).
   const [announcementsEnabled, setAnnouncementsEnabled] = useState(
     profile?.announcement_notifications_enabled !== false
@@ -381,6 +385,8 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
 
     setQuietHoursSaving(true)
     setError(null)
+    setQuietHoursMessage(null)
+    if (quietHoursMessageTimerRef.current) clearTimeout(quietHoursMessageTimerRef.current)
 
     try {
       const { data, error } = await supabase
@@ -401,6 +407,15 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
         onProfileUpdate(data)
       }
 
+      const savedText = quietHoursEnabled
+        ? `Saved — quiet hours ${quietHoursStart}–${quietHoursEnd} (${quietHoursTimezone || 'your timezone'}). No notifications during this time.`
+        : 'Saved — quiet hours disabled. You\'ll receive notifications anytime.'
+
+      // Inline message right by the button — guaranteed visible without scrolling.
+      setQuietHoursMessage({ type: 'success', text: savedText })
+      quietHoursMessageTimerRef.current = setTimeout(() => setQuietHoursMessage(null), 6000)
+
+      // Also surface it in the shared banner for consistency with the other toggles.
       setSuccessMessage(quietHoursEnabled
         ? `Quiet hours set: ${quietHoursStart} – ${quietHoursEnd}. No notifications during this time.`
         : 'Quiet hours disabled. You\'ll receive notifications anytime.'
@@ -410,6 +425,8 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
     } catch (err: unknown) {
       console.error('Error saving quiet hours:', err)
       setError('Failed to save quiet hours. Please try again.')
+      setQuietHoursMessage({ type: 'error', text: 'Could not save quiet hours. Please try again.' })
+      quietHoursMessageTimerRef.current = setTimeout(() => setQuietHoursMessage(null), 6000)
     } finally {
       setQuietHoursSaving(false)
     }
@@ -787,6 +804,22 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
                   >
                     {quietHoursSaving ? 'Saving...' : 'Save Quiet Hours'}
                   </button>
+
+                  {/* Rendered right here, not just in the banner up top — that banner
+                      can be scrolled out of view by the time someone reaches this button. */}
+                  {quietHoursMessage && (
+                    <div
+                      role="status"
+                      aria-live="polite"
+                      className={`mt-2 text-sm ${
+                        quietHoursMessage.type === 'success'
+                          ? 'text-green-700 dark:text-green-400'
+                          : 'text-red-700 dark:text-red-400'
+                      }`}
+                    >
+                      {quietHoursMessage.type === 'success' ? '✓ ' : ''}{quietHoursMessage.text}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
