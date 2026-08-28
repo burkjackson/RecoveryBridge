@@ -134,31 +134,39 @@ body {
   animation: fadeIn 0.2s ease-out;
 }
 
-/* 2026 UI Enhancements - Pulsing Glow Effect */
+/* 2026 UI Enhancements - Pulsing Glow Effect
+   A real radiating ring (the "0 0 <blur> <spread>" layer), not just a deepening
+   drop-shadow, plus a subtle breathing scale so the button reads as alive rather
+   than just shifting shadow opacity. Kept well within prefers-reduced-motion,
+   which already neutralizes all animation/transition below. */
 @keyframes pulse-glow-blue {
   0%, 100% {
-    box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.3), 0 8px 10px -6px rgba(59, 130, 246, 0.3);
+    box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.35), 0 8px 10px -6px rgba(59, 130, 246, 0.35), 0 0 0 0 rgba(59, 130, 246, 0.55);
+    transform: scale(1);
   }
   50% {
-    box-shadow: 0 15px 35px -5px rgba(59, 130, 246, 0.5), 0 10px 15px -6px rgba(59, 130, 246, 0.5);
+    box-shadow: 0 15px 35px -5px rgba(59, 130, 246, 0.65), 0 10px 15px -6px rgba(59, 130, 246, 0.65), 0 0 32px 10px rgba(59, 130, 246, 0.5);
+    transform: scale(1.015);
   }
 }
 
 @keyframes pulse-glow-purple {
   0%, 100% {
-    box-shadow: 0 10px 25px -5px rgba(168, 85, 247, 0.3), 0 8px 10px -6px rgba(168, 85, 247, 0.3);
+    box-shadow: 0 10px 25px -5px rgba(168, 85, 247, 0.35), 0 8px 10px -6px rgba(168, 85, 247, 0.35), 0 0 0 0 rgba(168, 85, 247, 0.55);
+    transform: scale(1);
   }
   50% {
-    box-shadow: 0 15px 35px -5px rgba(168, 85, 247, 0.5), 0 10px 15px -6px rgba(168, 85, 247, 0.5);
+    box-shadow: 0 15px 35px -5px rgba(168, 85, 247, 0.65), 0 10px 15px -6px rgba(168, 85, 247, 0.65), 0 0 32px 10px rgba(168, 85, 247, 0.5);
+    transform: scale(1.015);
   }
 }
 
 .animate-pulse-glow-blue {
-  animation: pulse-glow-blue 2s ease-in-out infinite;
+  animation: pulse-glow-blue 1.8s ease-in-out infinite;
 }
 
 .animate-pulse-glow-purple {
-  animation: pulse-glow-purple 2s ease-in-out infinite;
+  animation: pulse-glow-purple 1.8s ease-in-out infinite;
 }
 
 /* Slide in from right (for sent messages) */
