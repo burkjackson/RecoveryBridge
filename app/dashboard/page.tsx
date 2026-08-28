@@ -16,6 +16,7 @@ import type { Profile, SessionWithUserName, ProfileUpdateData, FavoriteWithProfi
 import { TIME, NOTIFICATION } from '@/lib/constants'
 import { normalizeFavorites } from '@/lib/favorites'
 import { getActiveBlock } from '@/lib/blocks'
+import { syncSessionRoleStates } from '@/lib/sessionState'
 import ThemeToggle from '@/components/ThemeToggle'
 
 // Shape of the session rows returned by the two queries below, which embed
@@ -547,13 +548,22 @@ function DashboardContent() {
 
     try {
       // End all active sessions where user is either listener or seeker
-      const { error } = await supabase
+      const { data: endedSessions, error } = await supabase
         .from('sessions')
         .update({ status: 'ended', ended_at: new Date().toISOString() })
         .eq('status', 'active')
         .or(`listener_id.eq.${profile.id},seeker_id.eq.${profile.id}`)
+        .select('id')
 
       if (error) throw error
+
+      // Move the other participant's role_state the same way the chat page
+      // does on a normal end — RLS only lets this client write its own
+      // profile row, so the counterpart's half has to go through the server
+      // route. Best-effort: signing out must never hang on this.
+      await Promise.all(
+        (endedSessions ?? []).map((session) => syncSessionRoleStates(supabase, session.id, 'end'))
+      )
     } catch (error) {
       console.error('Error ending sessions:', error)
     }

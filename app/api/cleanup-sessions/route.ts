@@ -3,6 +3,7 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js'
 import { TIME_MINUTES, TIME, OUTREACH_COPY, NOTIFICATION_COPY } from '@/lib/constants'
 import { sendPushToUser } from '@/lib/serverPush'
 import { enqueueNotifications } from '@/lib/notificationQueue'
+import { endSessionRoleStates } from '@/lib/serverSessionState'
 import {
   seekersNeedingFollowUp,
   summariseSessions,
@@ -248,7 +249,7 @@ export async function POST(request: NextRequest) {
     // Get all active sessions
     const { data: activeSessions, error: sessionsError } = await supabase
       .from('sessions')
-      .select('id, created_at')
+      .select('id, created_at, listener_id, seeker_id')
       .eq('status', 'active')
 
     if (sessionsError) {
@@ -295,6 +296,10 @@ export async function POST(request: NextRequest) {
 
     const now = new Date()
     const sessionsToClose: string[] = []
+    const participantsBySessionId = new Map<string, { listenerId: string; seekerId: string }>()
+    activeSessions.forEach(s => {
+      participantsBySessionId.set(s.id, { listenerId: s.listener_id, seekerId: s.seeker_id })
+    })
 
     // Batch query: Get last message for ALL active sessions at once (fixes N+1 query)
     const sessionIds = activeSessions.map(s => s.id)
@@ -349,6 +354,26 @@ export async function POST(request: NextRequest) {
         console.error('Error closing sessions:', updateError)
         return NextResponse.json({ error: 'Failed to close sessions' }, { status: 500 })
       }
+
+      // Mirror the /api/sessions/state 'end' transition for each session this
+      // cron just closed: seeker -> offline, listener -> available. The cron
+      // is exactly the case that route was built to also cover but couldn't —
+      // there's no participant JWT to authenticate a cron tick with — so this
+      // does the same two-sided update directly with the service role.
+      // Best-effort and per-session isolated: one failure shouldn't block the
+      // rest of the sweep, and this cron already reports partial failures via
+      // the response body rather than a hard error.
+      await Promise.all(
+        sessionsToClose.map(async (id) => {
+          const participants = participantsBySessionId.get(id)
+          if (!participants) return
+          try {
+            await endSessionRoleStates(supabase, participants)
+          } catch (err) {
+            console.error(`[cleanup] Could not sync role_state for closed session ${id}:`, err)
+          }
+        })
+      )
 
       if (isDev) console.log(`Closed ${sessionsToClose.length} stale session(s)`)
     } else {

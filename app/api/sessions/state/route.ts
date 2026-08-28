@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { isRateLimited } from '@/lib/rateLimit'
+import { endSessionRoleStates } from '@/lib/serverSessionState'
 
 // Move BOTH participants' role_state when a session starts or ends.
 //
@@ -77,13 +78,10 @@ export async function POST(request: NextRequest) {
       if (session.status !== 'ended') {
         return NextResponse.json({ error: 'Session is still active' }, { status: 409 })
       }
-      await Promise.all([
-        supabase.from('profiles').update({ role_state: 'offline' }).eq('id', session.seeker_id),
-        supabase
-          .from('profiles')
-          .update({ role_state: 'available', last_heartbeat_at: new Date().toISOString() })
-          .eq('id', session.listener_id),
-      ])
+      await endSessionRoleStates(supabase, {
+        seekerId: session.seeker_id,
+        listenerId: session.listener_id,
+      })
     }
 
     return NextResponse.json({ success: true })

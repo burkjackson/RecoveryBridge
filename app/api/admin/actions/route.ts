@@ -17,6 +17,7 @@ import {
   type QueuedNotificationInput,
 } from '@/lib/notificationQueue'
 import { isRateLimited } from '@/lib/rateLimit'
+import { endSessionRoleStates } from '@/lib/serverSessionState'
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
@@ -97,9 +98,17 @@ async function resolveBroadcastAudience(
 }
 
 /**
- * How many of an already-resolved audience have announcements switched on,
- * i.e. could receive a push. Counted from the resolved id list rather than
- * re-running the audience filter, so the preview can't disagree with the send.
+ * How many of an already-resolved audience have announcements switched on
+ * AND have a registered device, i.e. could actually receive a push — not
+ * just opted in. Counted from the resolved id list rather than re-running
+ * the audience filter, so the preview can't disagree with the send.
+ *
+ * Mirrors the drain route's own gate: a row for someone with no
+ * push_subscriptions row gets skipped there with skip_reason:
+ * 'no_subscription' rather than delivered. Counting opt-in alone
+ * overstated this — e.g. desktop-only signups, or anyone who never
+ * finished enabling push — and told the admin more people would hear a
+ * broadcast than actually would before they confirmed sending it.
  *
  * Chunked well below BROADCAST_CHUNK: `.in()` goes out as a query string, and
  * 500 UUIDs makes an ~18KB URL that proxies start rejecting.
@@ -112,12 +121,24 @@ async function countPushable(
 ): Promise<number> {
   let total = 0
   for (let i = 0; i < recipientIds.length; i += ID_FILTER_CHUNK) {
-    const { count } = await supabase
+    const chunk = recipientIds.slice(i, i + ID_FILTER_CHUNK)
+
+    const { data: optedIn } = await supabase
       .from('profiles')
-      .select('id', { count: 'exact', head: true })
-      .in('id', recipientIds.slice(i, i + ID_FILTER_CHUNK))
+      .select('id')
+      .in('id', chunk)
       .eq('announcement_notifications_enabled', true)
-    total += count ?? 0
+
+    const optedInIds = (optedIn ?? []).map((r) => r.id as string)
+    if (optedInIds.length === 0) continue
+
+    const { data: subscribed } = await supabase
+      .from('push_subscriptions')
+      .select('user_id')
+      .in('user_id', optedInIds)
+
+    // A person can have multiple devices/rows — count them once.
+    total += new Set((subscribed ?? []).map((r) => r.user_id as string)).size
   }
   return total
 }
@@ -259,11 +280,30 @@ export async function POST(request: NextRequest) {
       }])
 
       // End all active sessions for the blocked user
-      await supabase
+      const { data: endedSessions } = await supabase
         .from('sessions')
         .update({ status: 'ended', ended_at: new Date().toISOString() })
         .or(`listener_id.eq.${userId},seeker_id.eq.${userId}`)
         .eq('status', 'active')
+        .select('id, listener_id, seeker_id')
+
+      // Free the *other* participant the same way ending a chat normally does.
+      // Skip restoring the blocked user to 'available' if they were the
+      // listener — the whole point of this action is that they shouldn't be
+      // handed back into the pool.
+      await Promise.all(
+        (endedSessions ?? []).map(async (session) => {
+          try {
+            await endSessionRoleStates(
+              supabase,
+              { seekerId: session.seeker_id, listenerId: session.listener_id },
+              { restoreListener: session.listener_id !== userId }
+            )
+          } catch (err) {
+            console.error(`Could not sync role_state for session ${session.id} during block:`, err)
+          }
+        })
+      )
 
       return NextResponse.json({ success: true })
     }
@@ -296,12 +336,25 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'sessionId required' }, { status: 400 })
       }
 
-      const { error: sessionError } = await supabase
+      const { data: endedSession, error: sessionError } = await supabase
         .from('sessions')
         .update({ status: 'ended', ended_at: new Date().toISOString() })
         .eq('id', sessionId)
+        .select('id, listener_id, seeker_id')
+        .single()
 
       if (sessionError) throw sessionError
+
+      // A forced admin end is otherwise a normal end-of-conversation: free the
+      // listener back to 'available', not just close the session row.
+      try {
+        await endSessionRoleStates(supabase, {
+          seekerId: endedSession.seeker_id,
+          listenerId: endedSession.listener_id,
+        })
+      } catch (err) {
+        console.error(`Could not sync role_state for session ${sessionId} during admin end_session:`, err)
+      }
 
       await supabase.from('admin_logs').insert([{
         admin_id: admin.id,

@@ -64,6 +64,16 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
   // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once on mount; the loaders it calls are stable for the life of the component
   }, [])
 
+  // Clear pending auto-dismiss timers on unmount — without this, navigating
+  // away right after a save (quiet hours or otherwise) lets an orphaned
+  // setTimeout call setState on a component that's already gone.
+  useEffect(() => {
+    return () => {
+      if (successTimerRef.current) clearTimeout(successTimerRef.current)
+      if (quietHoursMessageTimerRef.current) clearTimeout(quietHoursMessageTimerRef.current)
+    }
+  }, [])
+
   // Sync alwaysAvailable state when profile changes
   useEffect(() => {
     if (profile) {
