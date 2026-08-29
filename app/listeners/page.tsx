@@ -218,14 +218,17 @@ export default function ListenersPage() {
         return
       }
 
-      // Create a new session
+      // Create a new session. accepted_at: null — this is a seeker-initiated
+      // direct connect, not yet accepted by the listener; the chat page gates
+      // messaging on it (see migration 036).
       const { data: session, error } = await supabase
         .from('sessions')
         .insert([
           {
             listener_id: listenerId,
             seeker_id: user.id,
-            status: 'active'
+            status: 'active',
+            accepted_at: null
           }
         ])
         .select()

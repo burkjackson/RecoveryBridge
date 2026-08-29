@@ -216,10 +216,12 @@ export default function AvailableListeners({ onCountChange, currentUserId, curre
         return
       }
 
-      // Create a new session
+      // Create a new session. accepted_at: null — this is a seeker-initiated
+      // direct connect, not yet accepted by the listener; the chat page gates
+      // messaging on it (see migration 036).
       const { data: session, error } = await supabase
         .from('sessions')
-        .insert([{ seeker_id: user.id, listener_id: listenerId, status: 'active' }])
+        .insert([{ seeker_id: user.id, listener_id: listenerId, status: 'active', accepted_at: null }])
         .select()
         .single()
 
@@ -502,17 +504,19 @@ export default function AvailableListeners({ onCountChange, currentUserId, curre
             {/* What connecting actually does, before they commit to it.
                 The listener list admits anyone with a heartbeat inside the
                 one-hour window, so "available" can mean "was here 50 minutes
-                ago". Connecting opens the chat immediately and notifies them
-                after — saying so up front is the difference between waiting a
-                few minutes and concluding nobody came. */}
+                ago" — worth saying up front regardless of what happens next.
+                This used to also say "write your message straight away"; as
+                of 29 Aug that's no longer true — the chat stays locked until
+                they accept (migration 039, Known Issue #26), so don't tell
+                someone to do a thing the composer won't let them do. */}
             <div className="rounded-lg bg-rb-blue-light dark:bg-gray-700 border border-rb-blue/20 dark:border-gray-600 p-3">
               <p className="text-sm text-rb-dark dark:text-gray-100">
                 {profilePreview.last_heartbeat_at
                   ? `Last active ${formatTimeAgo(profilePreview.last_heartbeat_at)}. `
                   : ''}
-                We&rsquo;ll notify {profilePreview.display_name} as soon as you connect. Write
-                your message straight away — if they&rsquo;re at their phone you&rsquo;ll usually
-                hear back within a minute or two.
+                We&rsquo;ll notify {profilePreview.display_name} right away. You&rsquo;ll be able
+                to send a message as soon as they accept — usually within a minute or two if
+                they&rsquo;re at their phone.
               </p>
             </div>
 

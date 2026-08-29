@@ -45,6 +45,54 @@ anyone requesting support, so People Seeking was empty and every notification
 tap reported "This person is no longer waiting for support". It is a read
 permission, so it fixed production on its own, ahead of any deploy.
 
+### 039 — session accept gate
+
+Written and applied 29 Aug 2026 (as `session_accept_gate`; the file was
+originally drafted as `036_session_accept_gate.sql` and renumbered to 039 when
+this branch was rebased onto the real 035–037 that had landed from a parallel
+session — see the note on 038 above for the same collision). Verified in
+rolled-back transactions against production data before it ran: seeker
+message-insert pre-accept → denied (42501 row-level security violation);
+listener message-insert pre-accept → allowed; seeker message-insert
+post-accept → allowed.
+
+A direct-connect session (Listeners directory, dashboard's Available
+Listeners widget, Favorites) is created and navigated into the instant the
+seeker picks a listener — before that listener has seen anything. The seeker
+could already send messages, which reads to them as an active conversation
+with someone who is, in reality, only just being paged. Reported after two
+overnight direct-connect requests both got this treatment and went
+unanswered.
+
+Adds `sessions.accepted_at` (nullable, `default now()`), NULL only when the
+three direct-connect call sites explicitly pass it — every listener-initiated
+path (answering a broadcast, People Seeking) keeps the default, since the
+listener choosing to connect already is acceptance. Adds a `RESTRICTIVE`
+policy on `messages` INSERT so a seeker cannot write into a session whose
+`accepted_at` is still NULL; the listener's own messages are never blocked
+(replying is self-evidently accepting). `app/chat/[id]/page.tsx` hides the
+composer and starter prompts on both sides while pending and shows the
+listener an Accept / Not now prompt instead — that's UX, the policy is the
+actual enforcement.
+
+**This deliberately reverses part of `f05e80c`/`284e082` (25 Aug).** Those
+commits chose transparency over blocking — tell the seeker the listener's
+last-active time, then invite them to "write your message straight away,"
+reasoning that median reply time for answered sessions was 12s and blocking
+would cost that fast-responder majority a tap for little benefit. Revisited
+29 Aug against `089148f`'s fuller number from the same audit: 96 of 202
+sessions (not just direct-connect) were "seeker wrote, listener never
+replied" — the reassuring copy was optimizing for the responsive half while
+the other, larger half kept writing into silence, which is what got reported.
+The one-tap Accept costs the fast-responder case almost nothing against a 12s
+median reply; the "Cancel request" option handles the 84-second-abandon case
+`284e082` was written for, without requiring a message to have been sent
+first. The last-active transparency line in the confirm modal stays — it's
+orthogonal and still useful — but the "write immediately" copy in
+`AvailableListeners.tsx` and the in-chat waiting note that told the seeker to
+go ahead and type were rewritten to match the gate instead of contradicting
+it.
+
 ### 036 — per-kind send switches
 
 Applied 25 Aug 2026. `notification_kind_settings` is one row per notification
@@ -257,3 +305,20 @@ rollback;
 
 `own_row_visible` is the control: it must be 1, or the impersonation didn't take
 and the other number means nothing. Before `032`, `seeker_visible` came back 0.
+
+## Drift found 29 Aug 2026 — undocumented migrations already live
+
+While applying 036, `list_migrations` showed four applied migrations with no
+matching file anywhere in this repo: `notification_queue`,
+`training_progress_timestamp`, `notification_kind_switches`,
+`listener_checkin_switch` (all dated 24–25 Aug 2026). They created three
+tables not mentioned in CLAUDE.md — `broadcasts`, `notification_queue`,
+`notification_kind_settings` — plus columns on `profiles`
+(`announcement_notifications_enabled`, `reengagement_notifications_enabled`,
+`listener_training_progress`, `listener_training_progress_at`). Nothing in
+`app/` currently reads or writes `notification_queue` or `broadcasts`, so this
+looks like an in-progress admin broadcast/announcement feature built directly
+against the database by another session, whose migration files and app code
+never made it back into this repo. Not investigated further as part of 036 —
+flagged here so the next person doesn't mistake "not in the repo" for "not in
+production."

@@ -64,6 +64,12 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   // End session confirmation
   const [endSessionConfirmModal, setEndSessionConfirmModal] = useState(false)
 
+  // Direct-connect sessions start pending (session.accepted_at === null) until
+  // the listener accepts — see migration 036. These track that bottom bar.
+  const [acceptingConnection, setAcceptingConnection] = useState(false)
+  const [cancellingConnection, setCancellingConnection] = useState(false)
+  const [pendingActionError, setPendingActionError] = useState(false)
+
   // Error states
   const [sendError, setSendError] = useState(false)
   const [endSessionError, setEndSessionError] = useState(false)
@@ -745,6 +751,58 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
     }
   }
 
+  // Listener accepts a pending direct-connect request. Guarded to only the
+  // listener's own row — a client can only write its own profile under RLS,
+  // and while sessions are participant-writable, this update is meaningless
+  // (and harmless) coming from anyone but the listener.
+  async function acceptConnection() {
+    if (!sessionId || !currentUserId) return
+    setAcceptingConnection(true)
+    setPendingActionError(false)
+    try {
+      const acceptedAt = new Date().toISOString()
+      const { error } = await supabase
+        .from('sessions')
+        .update({ accepted_at: acceptedAt })
+        .eq('id', sessionId)
+        .eq('listener_id', currentUserId)
+
+      if (error) throw error
+      // Optimistic — the realtime session subscription will also deliver this.
+      setSession((prev) => (prev ? { ...prev, accepted_at: acceptedAt } : prev))
+    } catch (error) {
+      console.error('Error accepting connection:', error)
+      setPendingActionError(true)
+    } finally {
+      setAcceptingConnection(false)
+    }
+  }
+
+  // Ends a still-pending session — either the listener declining ("Not now")
+  // or the seeker giving up on waiting ("Cancel request"). No feedback modal:
+  // nothing happened yet for either side to rate.
+  async function cancelPendingSession() {
+    if (!sessionId) return
+    setCancellingConnection(true)
+    setPendingActionError(false)
+    try {
+      isEndingSession.current = true // this user ended it — don't show them their own "ended by other" banner
+      const { error } = await supabase
+        .from('sessions')
+        .update({ status: 'ended', ended_at: new Date().toISOString() })
+        .eq('id', sessionId)
+
+      if (error) throw error
+      await syncSessionRoleStates(supabase, sessionId, 'end')
+      router.push('/dashboard')
+    } catch (error) {
+      console.error('Error cancelling pending session:', error)
+      isEndingSession.current = false
+      setPendingActionError(true)
+      setCancellingConnection(false)
+    }
+  }
+
   async function submitFeedback(helpful: boolean) {
     if (!session || !currentUserId) return
     setFeedbackSubmitted(true)
@@ -936,6 +994,12 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
     !!currentUserId &&
     (currentUserId === session?.listener_id || currentUserId === session?.seeker_id)
 
+  // A direct-connect session the listener hasn't accepted yet (session.accepted_at
+  // is null — see migration 036). Composer and starters stay hidden on both
+  // sides until this flips, so a seeker can't mistake "connected" for "answered".
+  const isPendingAcceptance = session?.status === 'active' && !session?.accepted_at
+  const isListenerViewer = !!currentUserId && currentUserId === session?.listener_id
+
   return (
     <>
       <main id="main-content" className="min-h-screen flex flex-col bg-[#F8F9FA] dark:bg-gray-900">
@@ -959,10 +1023,17 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
               <div className="flex flex-wrap items-center gap-2">
                 <div className="flex items-center gap-1.5">
                   {session?.status === 'active' ? (
-                    <>
-                      <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" aria-label="Active"></span>
-                      <Body16 className="text-sm text-gray-600 dark:text-gray-300">Active session</Body16>
-                    </>
+                    isPendingAcceptance ? (
+                      <>
+                        <span className="w-2 h-2 bg-amber-500 rounded-full animate-pulse" aria-label="Pending"></span>
+                        <Body16 className="text-sm text-gray-600 dark:text-gray-300">Request pending</Body16>
+                      </>
+                    ) : (
+                      <>
+                        <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" aria-label="Active"></span>
+                        <Body16 className="text-sm text-gray-600 dark:text-gray-300">Active session</Body16>
+                      </>
+                    )
                   ) : (
                     <Body16 className="text-sm text-gray-600 dark:text-gray-300">Session ended</Body16>
                   )}
@@ -1048,6 +1119,15 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
             {messages.length === 0 ? (
               /* --- V2: Conversation Starters --- */
               session?.status === 'active' ? (
+                isPendingAcceptance ? (
+                  <div className="bg-white dark:bg-gray-800 rounded-lg p-8 text-center shadow-sm">
+                    <Body16 className="text-gray-600 dark:text-gray-300">
+                      {isListenerViewer
+                        ? `${otherUserName} wants to connect with you directly. Accept below to start chatting.`
+                        : `Waiting for ${otherUserName} to accept your request. You'll be able to send a message as soon as they do.`}
+                    </Body16>
+                  </div>
+                ) : (
                 <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
                   <Body16 className="text-gray-500 dark:text-gray-300 text-center mb-4">Tap a prompt to start the conversation:</Body16>
                   <div className="flex flex-wrap gap-2 justify-center">
@@ -1066,6 +1146,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                     ))}
                   </div>
                 </div>
+                )
               ) : (
                 <div className="bg-white dark:bg-gray-800 rounded-lg p-8 text-center shadow-sm">
                   <Body16 className="text-gray-600 dark:text-gray-300">No messages in this session.</Body16>
@@ -1292,31 +1373,66 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
           </div>
         )}
 
-        {/* Waiting note for a seeker whose listener hasn't arrived yet.
-            A direct connection creates the session the instant the seeker taps
-            Connect, and only THEN notifies the listener — so the seeker sits in
-            an empty room with no idea whether anyone is coming. On 25 Aug one
-            gave up after 84 seconds. Measured across 61 answered sessions, a
-            listener who is actually at their phone replies fast: median 12s,
-            85% inside 90s. So this note deliberately does NOT tell anyone to
-            keep waiting — after a couple of minutes of silence the honest
-            advice is to try again rather than sit in a dead room. */}
-        {session?.status === 'active' &&
-          isParticipant &&
-          currentUserId === session?.seeker_id &&
-          !messages.some((m) => m.sender_id === session?.listener_id) && (
-            <div className="bg-rb-blue-light dark:bg-gray-700/60 border-t border-rb-blue/20 dark:border-gray-600 px-4 py-3">
-              <p className="max-w-4xl mx-auto text-center text-sm text-rb-dark dark:text-gray-100">
-                We&rsquo;ve let {otherUserName} know you&rsquo;re here — go ahead and write your
-                message. Listeners who are at their phone usually reply within a minute or two.
-                If nothing comes back, you can head back and ask again — someone else may be
-                around.
-              </p>
+        {/* Pending direct-connect request — listener hasn't accepted yet (migration 039).
+            This replaces the old "go ahead and write your message" waiting note
+            (284e082, 25 Aug) rather than sitting alongside it — see Known Issue
+            #26 / migrations/README.md 039 for why: that note optimized for the
+            listeners who reply fast (12s median) at the cost of the ~half of
+            sessions where nobody ever did. The 84-second-abandon case it was
+            written for is handled below by "Cancel request" instead. */}
+        {session?.status === 'active' && isParticipant && isPendingAcceptance && (
+          <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4">
+            <div className="max-w-4xl mx-auto">
+              {pendingActionError && (
+                <p className="text-sm text-red-600 dark:text-red-400 text-center mb-3">
+                  Something went wrong. Please try again.
+                </p>
+              )}
+              {isListenerViewer ? (
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                  <p className="text-sm text-gray-600 dark:text-gray-300 text-center sm:text-left sm:mr-2">
+                    {otherUserName} wants to connect with you directly.
+                  </p>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={cancelPendingSession}
+                      disabled={acceptingConnection || cancellingConnection}
+                      aria-label="Decline this connection request"
+                      className="min-h-[44px] px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-all font-semibold disabled:opacity-50"
+                    >
+                      Not now
+                    </button>
+                    <button
+                      onClick={acceptConnection}
+                      disabled={acceptingConnection || cancellingConnection}
+                      aria-label="Accept this connection request"
+                      className="min-h-[44px] px-6 py-2 text-sm rounded-lg font-semibold bg-rb-blue text-white hover:bg-rb-blue-hover disabled:opacity-50 transition-all"
+                    >
+                      {acceptingConnection ? 'Accepting...' : 'Accept'}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                  <p className="text-sm text-gray-600 dark:text-gray-300 text-center sm:text-left sm:mr-2">
+                    Waiting for {otherUserName} to accept your request...
+                  </p>
+                  <button
+                    onClick={cancelPendingSession}
+                    disabled={cancellingConnection}
+                    aria-label="Cancel this connection request"
+                    className="min-h-[44px] px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-all font-semibold disabled:opacity-50"
+                  >
+                    {cancellingConnection ? 'Cancelling...' : 'Cancel request'}
+                  </button>
+                </div>
+              )}
             </div>
-          )}
+          </div>
+        )}
 
         {/* Message Input */}
-        {session?.status === 'active' && isParticipant && (
+        {session?.status === 'active' && isParticipant && !isPendingAcceptance && (
           <div className="relative bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4">
             {/* SOS anchored to the input bar, in page flow — position:fixed
                 drifts mid-page in the iOS PWA when the keyboard pans the

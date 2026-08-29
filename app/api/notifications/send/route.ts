@@ -130,7 +130,7 @@ export async function POST(request: NextRequest) {
 
       const payload = JSON.stringify({
         title: '🎯 Direct Connection Request',
-        body: `${seekerName} chose to connect with you directly.`,
+        body: `${seekerName} chose to connect with you directly. Accept to start chatting.`,
         icon: '/icon-192.png',
         tag: `direct-connect-${seekerId}`,
         data: { seekerId }

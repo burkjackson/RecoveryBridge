@@ -507,9 +507,12 @@ function DashboardContent() {
         return
       }
 
+      // accepted_at: null — this is a seeker-initiated direct connect, not yet
+      // accepted by the listener; the chat page gates messaging on it (see
+      // migration 036).
       const { data: newSession, error } = await supabase
         .from('sessions')
-        .insert([{ listener_id: favoriteUserId, seeker_id: profile.id, status: 'active' }])
+        .insert([{ listener_id: favoriteUserId, seeker_id: profile.id, status: 'active', accepted_at: null }])
         .select()
         .single()
 

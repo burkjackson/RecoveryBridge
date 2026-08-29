@@ -12,18 +12,25 @@ import {
 
 // Reach back out to anyone who asked for support and was met with silence.
 //
-// There are two ways to end up here, and the second one is why this was
-// rewritten on 25 Aug 2026:
+// There are three ways to end up here:
 //
 //  1. Still 'requesting' when cleanup reset them — nobody ever connected.
 //  2. Connected to a listener who never typed a word. Ending that session moves
 //     both participants' role_state, so these people are left 'offline' and the
 //     'requesting' sweep in (1) can never see them. They were invisible: no
 //     follow-up, and nothing in the admin "Couldn't Connect" list either.
+//     (2) is why this was rewritten on 25 Aug 2026.
+//  3. Direct-connected but the listener never accepted (migration 039, 29 Aug).
+//     A pending session's seeker can't send a message at all — the restrictive
+//     RLS policy sees to that — so (2)'s "wrote and got no reply" test always
+//     reads false for them. Without this they'd fall out of the safety net
+//     the gate was supposed to strengthen, not weaken: reached out, nobody
+//     came, no follow-up, invisible in "Couldn't Connect" — the exact failure
+//     mode (1) and (2) exist to catch, just via a third door.
 //
-// Both funnel through the same filter, which excludes anyone who had a real
-// two-way conversation in the window. Apologising to someone who just finished
-// talking to a listener is its own harm and was a live bug once.
+// All three funnel through the same filter, which excludes anyone who had a
+// real two-way conversation in the window. Apologising to someone who just
+// finished talking to a listener is its own harm and was a live bug once.
 //
 // Best-effort and per-user isolated so one failure can't abort the cleanup run.
 async function followUpMissedConnections(
@@ -36,7 +43,7 @@ async function followUpMissedConnections(
   // then ignored. Kept to the same lookback as everything else here.
   const { data: endedRows, error: endedError } = await supabase
     .from('sessions')
-    .select('id, seeker_id, listener_id')
+    .select('id, seeker_id, listener_id, accepted_at')
     .eq('status', 'ended')
     .gte('ended_at', since)
 
@@ -56,11 +63,15 @@ async function followUpMissedConnections(
 
   const summarised = summariseSessions(endedSessions, messagesById)
 
-  // Candidates: the stale-'requesting' seekers, plus the seekers of any session
-  // where they wrote and nobody answered.
+  // Candidates: the stale-'requesting' seekers, the seekers of any session
+  // where they wrote and nobody answered, and the seekers of any direct
+  // connect that ended still pending (nobody ever accepted it).
   const candidateIds = new Set(staleSeekers.map((s) => s.id))
   for (const session of unansweredSessions(summarised)) {
     if (session.seeker_id) candidateIds.add(session.seeker_id)
+  }
+  for (const session of endedSessions) {
+    if (session.seeker_id && !session.accepted_at) candidateIds.add(session.seeker_id)
   }
   if (candidateIds.size === 0) return
 

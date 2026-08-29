@@ -34,7 +34,7 @@ function buildEmailHtml(listenerName: string, seekerName: string, isFavorite: bo
         : `Someone needs support right now`
 
   const body = isDirect
-    ? `${safeSeeker} chose to connect with you directly. Open the app to join the chat.`
+    ? `${safeSeeker} chose to connect with you directly. Open the app and accept the request to start chatting.`
     : isRenotification
       ? `${safeSeeker} has been waiting 2+ minutes for a listener. Can you help?`
       : `${safeSeeker} is looking for a listener right now. Opening the app only takes a moment.`

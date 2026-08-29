@@ -47,6 +47,9 @@ export interface Session {
   ended_at: string | null
   created_at: string
   updated_at?: string
+  // NULL = a direct-connect session pending the listener's acceptance.
+  // Every other session is stamped at creation (migration 036).
+  accepted_at?: string | null
 }
 
 export interface SessionWithUserName extends Session {
