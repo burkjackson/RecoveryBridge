@@ -262,9 +262,9 @@ export default function PeopleSeeking({ currentUserId, currentRoleState }: Peopl
     <div className="bg-white dark:bg-gray-800 rounded-lg p-5 shadow-sm mb-6">
       <div className="flex items-center justify-between mb-4">
         <Body18 className="font-semibold text-gray-900 dark:text-gray-100">People Seeking Support</Body18>
-        <div className="flex items-center gap-2 px-3 py-1.5 bg-purple-50 rounded-full border border-purple-200">
+        <div className="flex items-center gap-2 px-3 py-1.5 bg-purple-50 dark:bg-purple-900/20 rounded-full border border-purple-200 dark:border-purple-800">
           <span className="w-2 h-2 bg-purple-500 rounded-full animate-pulse"></span>
-          <Body16 className="text-sm text-purple-700 font-semibold">
+          <Body16 className="text-sm text-purple-700 dark:text-purple-400 font-semibold">
             {seekers.length} Seeking
           </Body16>
         </div>
@@ -274,7 +274,7 @@ export default function PeopleSeeking({ currentUserId, currentRoleState }: Peopl
         {seekers.map((seeker) => (
           <div
             key={seeker.id}
-            className="flex items-center gap-3 p-3 bg-purple-50/50 rounded-lg hover:bg-purple-50 transition-all"
+            className="flex items-center gap-3 p-3 bg-purple-50/50 dark:bg-purple-900/10 rounded-lg hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-all"
           >
             {/* Avatar — click to preview profile */}
             <button
@@ -291,7 +291,7 @@ export default function PeopleSeeking({ currentUserId, currentRoleState }: Peopl
                   className="w-10 h-10 rounded-full object-cover"
                 />
               ) : (
-                <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center text-purple-700 font-bold text-sm">
+                <div className="w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center text-purple-700 dark:text-purple-300 font-bold text-sm">
                   {seeker.display_name.charAt(0).toUpperCase()}
                 </div>
               )}
@@ -318,7 +318,7 @@ export default function PeopleSeeking({ currentUserId, currentRoleState }: Peopl
               {seeker.tags && seeker.tags.length > 0 && (
                 <div className="flex flex-wrap gap-1 mt-1">
                   {seeker.tags.slice(0, 3).map(tag => (
-                    <span key={tag} className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-purple-100 text-purple-700">
+                    <span key={tag} className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300">
                       {tag}
                     </span>
                   ))}
@@ -380,7 +380,7 @@ export default function PeopleSeeking({ currentUserId, currentRoleState }: Peopl
                   className="w-14 h-14 rounded-full object-cover flex-shrink-0"
                 />
               ) : (
-                <div className="w-14 h-14 rounded-full bg-purple-100 flex items-center justify-center text-purple-700 font-bold text-lg flex-shrink-0">
+                <div className="w-14 h-14 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center text-purple-700 dark:text-purple-300 font-bold text-lg flex-shrink-0">
                   {profilePreview.display_name.charAt(0).toUpperCase()}
                 </div>
               )}
@@ -390,7 +390,7 @@ export default function PeopleSeeking({ currentUserId, currentRoleState }: Peopl
                 )}
                 <div className="flex items-center gap-2 mt-1">
                   <span className="w-2 h-2 bg-purple-500 rounded-full animate-pulse" aria-hidden="true"></span>
-                  <span className="text-xs text-purple-600 font-medium">Seeking support</span>
+                  <span className="text-xs text-purple-600 dark:text-purple-400 font-medium">Seeking support</span>
                 </div>
               </div>
             </div>
@@ -409,7 +409,7 @@ export default function PeopleSeeking({ currentUserId, currentRoleState }: Peopl
                 <p className="text-xs font-semibold text-gray-500 dark:text-gray-300 uppercase tracking-wide mb-2">Topics</p>
                 <div className="flex flex-wrap gap-2">
                   {profilePreview.tags.map(tag => (
-                    <span key={tag} className="px-2.5 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-700">
+                    <span key={tag} className="px-2.5 py-1 rounded-full text-xs font-medium bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300">
                       {tag}
                     </span>
                   ))}
