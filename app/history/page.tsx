@@ -50,12 +50,19 @@ export default function HistoryPage() {
       const { data, error: fetchError } = await supabase
         .from('sessions')
         .select(`
-          id, created_at, ended_at, listener_id, seeker_id,
+          id, created_at, ended_at, listener_id, seeker_id, accepted_at,
           listener:profiles!sessions_listener_id_fkey(display_name, avatar_url),
           seeker:profiles!sessions_seeker_id_fkey(display_name, avatar_url),
           feedback:session_feedback(helpful, thank_you_note, from_user_id, to_user_id)
         `)
         .eq('status', 'ended')
+        // A direct connect the listener never accepted (accepted_at null,
+        // migration 039) is a request that went unanswered, not a conversation
+        // anyone had — the seeker was gated out of even sending a message. It
+        // has no transcript and nothing to look back on, so listing it here as
+        // a past session with someone's name on it is the same category error
+        // known issue #22 warns about: a `sessions` row is not a conversation.
+        .not('accepted_at', 'is', null)
         .or(`listener_id.eq.${user.id},seeker_id.eq.${user.id}`)
         .order('ended_at', { ascending: false })
         .limit(100)

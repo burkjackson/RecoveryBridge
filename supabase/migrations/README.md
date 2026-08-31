@@ -5,6 +5,57 @@ project has no CLI migration runner wired up) and run it once.
 
 ## Pending — not yet applied
 
+**Apply 040 and 041 together.** They close two halves of the same problem: 039
+put the accept gate on `messages` INSERT, but `sessions` UPDATE was wide open,
+so the person being gated could either forge their way past it (040) or simply
+switch it off (041). Either one alone leaves the gate defeatable.
+
+### 041 — protect session transitions
+
+Written 31 Aug 2026. Not applied.
+
+All three permissive UPDATE policies on `sessions` say the same thing — "are
+you the listener or the seeker?" — and none carries a `WITH CHECK`. For an
+UPDATE, Postgres falls back to the `USING` expression as the check, so the test
+applies to the row you are touching, never to the columns you are touching or
+the values you put in them. A participant could rewrite the row freely.
+Verified in rolled-back transactions, acting as the seeker:
+
+| attempt | before |
+|---|---|
+| set `accepted_at` on their own pending session | **ALLOWED** |
+| swap a third party in as `listener_id` | **ALLOWED** |
+| flip an `ended` session back to `active` | **ALLOWED** |
+| reassign `seeker_id` to someone else | blocked (implicit WITH CHECK caught it) |
+
+Each one that got through matters:
+
+- **`accepted_at`** is the whole of 039's accept gate, and the person it gates
+  could lift it. 040 closes the forgery route into a pending session; this
+  closes the front door.
+- **`listener_id`** — `validate_session_participants()` (030) checks
+  availability, consent and blocks, but it is a BEFORE **INSERT** trigger, so
+  an UPDATE walks past it. A seeker could attach any user id they know as the
+  listener, which then satisfies the session-participant branch of the
+  `profiles` SELECT policy and drops that person into a conversation they never
+  agreed to.
+- **`status`** — ending a session is how both people, and moderators, get out
+  of one. `block_user` and `end_session` end sessions as a moderation action; a
+  blocked user could reopen the room and carry on, since the messages policy
+  only asks that the session be `active`.
+
+A BEFORE UPDATE trigger rather than a tighter policy, because a policy cannot
+see OLD: "this column may not change" and "ended is one-way" are statements
+about the transition, not about either row alone. Same shape as 028 and 030.
+No-JWT callers (service role, cron, SQL editor) are exempt; admins are not,
+following 028 — no admin path updates `sessions` from a browser JWT.
+
+After, in the same rolled-back transaction: all three attacks raise, and every
+legitimate client write still passes — listener taps Accept, seeker ends a
+chat, seeker cancels a pending request, listener declines "Not now", and the
+service role ends a session (cleanup cron, admin `end_session`, account
+deletion).
+
 ### 040 — message sender integrity (apply this one first)
 
 Written 31 Aug 2026. **Closes a live impersonation hole and a bypass of 039's
