@@ -171,6 +171,39 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally keyed on session?.id, session?.status, currentUserId — adding the callbacks would tear down and rebuild this on every render
   }, [session?.id, session?.status, currentUserId])
 
+  // Polling fallback for the session row, mirroring the message poll above.
+  // Realtime drops an UPDATE as readily as an INSERT, and since migration 039
+  // that dropped event is the difference between a working chat and a dead
+  // one: the seeker's composer stays hidden until `accepted_at` arrives, so
+  // losing it strands them on "Waiting for X to accept..." — unable to reply —
+  // while the listener is already typing at them. Scoped to the pending window
+  // on purpose; once a session is accepted or ended there is nothing left here
+  // to recover, so an ordinary conversation pays nothing for this.
+  useEffect(() => {
+    if (!currentUserId || session?.status !== 'active' || session?.accepted_at) return
+
+    async function pollPendingSession() {
+      try {
+        const { data } = await supabase
+          .from('sessions')
+          .select('*')
+          .eq('id', sessionId)
+          .maybeSingle()
+        // Only apply a row that actually moved. Calling this every tick would
+        // replace the session object identity and re-render the page every 3s.
+        if (data && (data.accepted_at || data.status !== 'active')) {
+          applySessionUpdate(data as unknown as Session)
+        }
+      } catch {
+        // Silent — realtime remains the primary delivery path
+      }
+    }
+
+    const pollInterval = setInterval(pollPendingSession, 3000)
+    return () => clearInterval(pollInterval)
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally keyed on the pending window; adding the callbacks would tear down and rebuild this on every render
+  }, [session?.id, session?.status, session?.accepted_at, currentUserId])
+
   // Keep the incremental-poll cursor on the newest message we have
   useEffect(() => {
     if (messages.length > 0) {
@@ -443,6 +476,31 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
     }
   }
 
+  // The one place a session row arriving from anywhere — the realtime UPDATE
+  // below or the pending poll above — is applied, so the two paths cannot
+  // drift on what "the other party ended it" ought to do.
+  function applySessionUpdate(next: Session) {
+    setSession(next)
+    // If this user didn't trigger the end, the other party ended the session
+    if (next.status !== 'ended' || isEndingSession.current) return
+    setSessionEndedByOther(true)
+    // A session that ends while still pending (accepted_at null) was declined
+    // or cancelled — it never happened. "Was this conversation helpful?", with
+    // a thank-you-note box addressed to the other person, is the wrong question
+    // about a conversation that never started, and a cruel one to put to a
+    // seeker who has just been turned down. cancelPendingSession() already
+    // skips the modal for whoever pressed the button; this is the other side of
+    // that same decision, which previously only held for one of the two people.
+    if (next.accepted_at) setFeedbackModal(true)
+    // Redundancy, not duplication: whoever ended the session already
+    // asked the server to move both role_states, but if that request
+    // was lost (tab closed on send, network blip) nobody else would
+    // return the listener to 'available' — and they would stop
+    // receiving support requests until they noticed. The call is
+    // idempotent, so a second one from this side is harmless.
+    if (sessionId) void syncSessionRoleStates(supabase, sessionId, 'end')
+  }
+
   function subscribeToMessages() {
     const channel = supabase
       .channel(`session-and-messages:${sessionId}`)
@@ -480,20 +538,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
         (payload) => {
           const updatedSession = payload.new as Record<string, unknown>
           if (updatedSession.id && updatedSession.listener_id && updatedSession.seeker_id && updatedSession.status) {
-            const typedSession = updatedSession as unknown as Session
-            setSession(typedSession)
-            // If this user didn't trigger the end, the other party ended the session
-            if (typedSession.status === 'ended' && !isEndingSession.current) {
-              setSessionEndedByOther(true)
-              setFeedbackModal(true)
-              // Redundancy, not duplication: whoever ended the session already
-              // asked the server to move both role_states, but if that request
-              // was lost (tab closed on send, network blip) nobody else would
-              // return the listener to 'available' — and they would stop
-              // receiving support requests until they noticed. The call is
-              // idempotent, so a second one from this side is harmless.
-              if (sessionId) void syncSessionRoleStates(supabase, sessionId, 'end')
-            }
+            applySessionUpdate(updatedSession as unknown as Session)
           }
         }
       )
@@ -1097,7 +1142,14 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
         {sessionEndedByOther && !feedbackModal && (
           <div className="bg-amber-50 dark:bg-amber-900/20 border-b border-amber-200 dark:border-amber-800 px-4 py-3 text-center">
             <p className="text-amber-800 dark:text-amber-200 font-medium text-sm">
-              {otherUserName} has ended this session.
+              {/* A pending session (accepted_at null) that ended was declined or
+                  cancelled, never had — "ended this session" would describe a
+                  conversation that never took place. */}
+              {session && !session.accepted_at
+                ? isListenerViewer
+                  ? `${otherUserName} cancelled this request.`
+                  : `${otherUserName} isn’t available right now.`
+                : `${otherUserName} has ended this session.`}
             </p>
           </div>
         )}
@@ -1348,11 +1400,21 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
           <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4">
             <div className="max-w-4xl mx-auto text-center space-y-2">
               <p className="font-semibold text-rb-dark dark:text-gray-100">
-                This conversation has ended
+                {session.accepted_at ? 'This conversation has ended' : 'This request has ended'}
               </p>
+              {/* Same distinction as the banner above: a request that was never
+                  accepted has no transcript to invite anyone to re-read. */}
               <p className="text-sm text-rb-gray dark:text-gray-300">
-                {session.ended_at ? `It ended ${formatTimeAgo(session.ended_at)}. ` : ''}
-                You can still read it here, but new messages can&rsquo;t be sent.
+                {session.accepted_at ? (
+                  <>
+                    {session.ended_at ? `It ended ${formatTimeAgo(session.ended_at)}. ` : ''}
+                    You can still read it here, but new messages can&rsquo;t be sent.
+                  </>
+                ) : isListenerViewer ? (
+                  <>This request was cancelled before it started.</>
+                ) : (
+                  <>This one wasn&rsquo;t taken up. You can head back and connect with someone else.</>
+                )}
               </p>
               <button
                 onClick={() => router.push('/dashboard')}

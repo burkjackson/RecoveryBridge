@@ -5,6 +5,69 @@ project has no CLI migration runner wired up) and run it once.
 
 ## Pending — not yet applied
 
+### 040 — message sender integrity (apply this one first)
+
+Written 31 Aug 2026. **Closes a live impersonation hole and a bypass of 039's
+accept gate.** Not applied — it changes production RLS, so it wants a
+deliberate hand on it rather than being bundled with anything else.
+
+`messages` had accumulated three overlapping permissive INSERT policies.
+Permissive policies OR together, so the set is only as strong as its weakest
+member, and `"Users can insert messages in their sessions"` checked neither
+the sender nor the session status — only "are you in this session?". Either
+participant could therefore insert a row attributed to the *other* one, and
+into an already-ended conversation.
+
+Two consequences:
+
+- **Impersonation.** A seeker could write a message with
+  `sender_id = <the listener's id>`. It renders as the listener's own words in
+  the live chat, in `/history`, and in the admin transcript viewer — the same
+  transcript a moderator reads when judging a report.
+- **It defeated 039.** The accept gate allows an insert when `accepted_at is
+  not null OR seeker_id is distinct from sender_id` (that second branch is
+  what keeps a listener's own reply unblocked). A seeker in a *pending*
+  session could satisfy it simply by forging the listener as the sender.
+
+Verified against production data in rolled-back transactions (recipe at the
+bottom of this file), forcing a real session into the pending state. Before:
+
+| case | result |
+|------|--------|
+| seeker inserts as themselves, pending | blocked (42501) — 039 working |
+| seeker inserts **as the listener**, pending | **ALLOWED** — gate bypassed |
+| seeker inserts **as the listener**, ended | **ALLOWED** — forgery |
+
+After applying 040 in the same rolled-back transaction, all six probes match
+intent — the two holes closed, and the three legitimate paths (listener
+replying while pending, which 039 depends on; seeker and listener messaging in
+an accepted active session) still allowed, plus writing into an ended session
+now blocked:
+
+| case | want | got |
+|------|------|-----|
+| pending, seeker as self | blocked | blocked (42501) |
+| pending, seeker as listener | blocked | blocked (42501) |
+| pending, listener replying | ALLOWED | ALLOWED |
+| active, seeker as self | ALLOWED | ALLOWED |
+| active, seeker as listener | blocked | blocked (42501) |
+| ended, seeker as self | blocked | blocked (42501) |
+
+The migration drops the unsafe policy, drops the redundant twin of the safe
+one (`IN (...)` vs `EXISTS (...)`, otherwise identical), and recreates the
+survivor so the table ends with exactly one permissive INSERT rule. Three
+near-duplicate policies are how this stayed invisible; one is the point.
+Service-role writes bypass RLS and are unaffected.
+
+Note while you are in here: 039's comment reasons that "if they're replying,
+they've self-evidently accepted", and the policy lets a listener's message
+through while pending on that basis — but nothing actually *sets*
+`accepted_at` when they do. Today the chat UI hides the listener's composer
+until they press Accept, so the case cannot arise through the app, and the
+seeker would stay gated if it ever did. Left alone deliberately; if that
+branch ever needs to stand on its own, it wants a trigger setting
+`accepted_at` on the listener's first message, not a widened policy.
+
 ### 038 — drop unused schema
 
 Written 24 Aug 2026 as `035_drop_unused_schema.sql`, renumbered to 038 when
