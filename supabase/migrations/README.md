@@ -3,16 +3,41 @@
 Numbered SQL, applied in order. Paste each into the Supabase SQL editor (the
 project has no CLI migration runner wired up) and run it once.
 
-## Pending — not yet applied
+## Applied — 31 August 2026
 
-**Apply 040 and 041 together.** They close two halves of the same problem: 039
-put the accept gate on `messages` INSERT, but `sessions` UPDATE was wide open,
-so the person being gated could either forge their way past it (040) or simply
-switch it off (041). Either one alone leaves the gate defeatable.
+**040 and 041 were applied together**, in that order, on 31 Aug 2026. They
+close two halves of the same problem: 039 put the accept gate on `messages`
+INSERT, but `sessions` UPDATE was wide open, so the person being gated could
+either forge their way past it (040) or simply switch it off (041). Either one
+alone leaves the gate defeatable.
+
+Verified live after applying, in a rolled-back transaction against the real
+policies — five attacks blocked, five legitimate paths working:
+
+| | |
+|---|---|
+| seeker forges a message from the listener (pending) | blocked |
+| seeker messages while pending | blocked |
+| seeker self-accepts | blocked: *Only the listener can accept a connection request* |
+| seeker swaps in a third-party listener | blocked: *Session participants cannot be changed* |
+| seeker reopens an ended session | blocked: *An ended session cannot be reopened* |
+| listener replies while pending (039 depends on it) | allowed |
+| listener taps Accept | allowed |
+| seeker messages an accepted session | allowed |
+| seeker ends the chat | allowed |
+| service role ends a session (cron, admin, account delete) | allowed |
+
+Afterwards `messages` has exactly one permissive INSERT policy plus 039's
+restrictive one, the `protect_session_transitions` trigger is on `sessions`, no
+probe rows were left behind, and row counts were unchanged (209 sessions, 1441
+messages, 101 profiles). Supabase security advisors show no new warning class;
+`protect_session_transitions` lands only in the same RPC-exposure lint as the
+other trigger functions, which is harmless — it returns `trigger`, so an RPC
+call to it errors out.
 
 ### 041 — protect session transitions
 
-Written 31 Aug 2026. Not applied.
+Written and applied 31 Aug 2026.
 
 All three permissive UPDATE policies on `sessions` say the same thing — "are
 you the listener or the seeker?" — and none carries a `WITH CHECK`. For an
@@ -118,8 +143,6 @@ until they press Accept, so the case cannot arise through the app, and the
 seeker would stay gated if it ever did. Left alone deliberately; if that
 branch ever needs to stand on its own, it wants a trigger setting
 `accepted_at` on the listener's first message, not a widened policy.
-
-## Applied — 31 August 2026
 
 ### 038 — drop unused schema
 
