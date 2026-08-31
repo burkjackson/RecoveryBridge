@@ -56,7 +56,7 @@ chat, seeker cancels a pending request, listener declines "Not now", and the
 service role ends a session (cleanup cron, admin `end_session`, account
 deletion).
 
-### 040 — message sender integrity (apply this one first)
+### 040 — message sender integrity
 
 Written 31 Aug 2026. **Closes a live impersonation hole and a bypass of 039's
 accept gate.** Not applied — it changes production RLS, so it wants a
@@ -119,11 +119,13 @@ seeker would stay gated if it ever did. Left alone deliberately; if that
 branch ever needs to stand on its own, it wants a trigger setting
 `accepted_at` on the listener's first message, not a widened policy.
 
+## Applied — 31 August 2026
+
 ### 038 — drop unused schema
 
 Written 24 Aug 2026 as `035_drop_unused_schema.sql`, renumbered to 038 when
 this branch was rebased onto migrations 035–037 that landed from a parallel
-session in the meantime. Not applied. Removes two things nothing uses:
+session in the meantime. Applied 31 Aug 2026. Removed two things nothing used:
 
 - `profiles.requesting_since` — added early and never wired up. No code writes
   it, no code reads it, every row is null. It would have given the exact
@@ -140,6 +142,11 @@ Verified empty and unreferenced before it was written; the migration re-checks
 `blocks` at apply time and raises rather than dropping a table with rows in it.
 Nothing in the application reads either object, so it can be applied at any
 time, independent of a deploy.
+
+Preconditions re-checked immediately before applying: `blocks` held 0 rows with
+no inbound foreign keys, `requesting_since` was null on all 101 profiles, and
+neither object appeared in any view or function body. After: both gone, 101
+profiles and 209 sessions intact, `user_blocks` untouched.
 
 ## Applied — from the August 2026 audit
 
