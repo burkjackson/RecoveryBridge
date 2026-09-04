@@ -24,6 +24,15 @@ interface SessionRecord {
   feedback: SessionFeedback[]
 }
 
+// A direct-connect request the listener never accepted — declined, cancelled,
+// or timed out by the cleanup cron — ends with status='ended' and
+// accepted_at still null. It has no transcript and nothing happened for
+// either side to rate, so it isn't a past conversation, just a request that
+// died. Excluded below rather than shown as a 0-message "chat" with the
+// other person's name on it. The admin sessions tab still shows these on
+// purpose — that view is the raw record, and a moderator wants to see the
+// requests that died too.
+
 export default function HistoryPage() {
   const [sessions, setSessions] = useState<SessionRecord[]>([])
   const [userId, setUserId] = useState<string | null>(null)
@@ -56,6 +65,7 @@ export default function HistoryPage() {
           feedback:session_feedback(helpful, thank_you_note, from_user_id, to_user_id)
         `)
         .eq('status', 'ended')
+        .not('accepted_at', 'is', null)
         .or(`listener_id.eq.${user.id},seeker_id.eq.${user.id}`)
         .order('ended_at', { ascending: false })
         .limit(100)

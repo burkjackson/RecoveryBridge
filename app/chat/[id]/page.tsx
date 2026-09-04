@@ -126,6 +126,26 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   // Latest message timestamp, for the polling fallback's incremental fetch
   const lastMessageTimeRef = useRef<string | null>(null)
 
+  // Applies a fresh sessions row wherever one arrives from — the realtime
+  // UPDATE subscription, or the pending-session poll below. Both need the
+  // exact same side effects, so this is the one place that decides them: a
+  // still-pending session that ended was declined or cancelled (nothing to
+  // rate), an accepted one that ended gets the real feedback modal, and
+  // either way syncSessionRoleStates is fired so the other side's role_state
+  // doesn't get stuck if their own request to move it was lost.
+  const applySessionUpdate = useCallback((typedSession: Session) => {
+    setSession(typedSession)
+    if (typedSession.status === 'ended' && !isEndingSession.current) {
+      if (!typedSession.accepted_at) {
+        setPendingDeclined(true)
+      } else {
+        setSessionEndedByOther(true)
+        setFeedbackModal(true)
+      }
+      if (sessionId) void syncSessionRoleStates(supabase, sessionId, 'end')
+    }
+  }, [sessionId, supabase])
+
   useEffect(() => {
     params.then(({ id }) => setSessionId(id))
   }, [params])
@@ -183,6 +203,47 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
     return () => clearInterval(pollInterval)
   // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally keyed on session?.id, session?.status, currentUserId — adding the callbacks would tear down and rebuild this on every render
   }, [session?.id, session?.status, currentUserId])
+
+  // Session-row polling fallback while a direct connect is pending.
+  //
+  // loadSession() runs once on mount; after that the realtime UPDATE
+  // subscription is the only way this side learns the session row changed.
+  // That was fine when the row only carried status, but a direct connect now
+  // also carries accepted_at (migration 039), which gates the seeker's
+  // composer — see isPendingAcceptance below. A realtime event dropped the
+  // same way messages occasionally are (see the poll above) left a seeker on
+  // "Waiting for X to accept..." with no way to notice the listener had
+  // already accepted, unable to reply while the listener was already typing
+  // at them, until they refreshed the page by hand.
+  //
+  // Polls only while pending — status active, accepted_at still null — so an
+  // ordinary already-accepted conversation pays nothing for this.
+  useEffect(() => {
+    const isPending = session?.status === 'active' && !session?.accepted_at
+    if (!currentUserId || !sessionId || !isPending) return
+
+    async function pollSession() {
+      try {
+        const { data } = await supabase
+          .from('sessions')
+          .select('*')
+          .eq('id', sessionId)
+          .single()
+        if (
+          data &&
+          (data.accepted_at !== session?.accepted_at || data.status !== session?.status)
+        ) {
+          applySessionUpdate(data as Session)
+        }
+      } catch {
+        // Silent — realtime remains the primary delivery path
+      }
+    }
+
+    const pollInterval = setInterval(pollSession, 3000)
+    return () => clearInterval(pollInterval)
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally keyed on session?.status, session?.accepted_at, sessionId, currentUserId — adding applySessionUpdate would tear this down and rebuild it on every render
+  }, [session?.status, session?.accepted_at, sessionId, currentUserId])
 
   // Keep the incremental-poll cursor on the newest message we have
   useEffect(() => {
@@ -493,30 +554,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
         (payload) => {
           const updatedSession = payload.new as Record<string, unknown>
           if (updatedSession.id && updatedSession.listener_id && updatedSession.seeker_id && updatedSession.status) {
-            const typedSession = updatedSession as unknown as Session
-            setSession(typedSession)
-            // If this user didn't trigger the end, the other party ended the session
-            if (typedSession.status === 'ended' && !isEndingSession.current) {
-              if (!typedSession.accepted_at) {
-                // Still pending when it ended — the other party declined
-                // ("Not now"), cancelled ("Cancel request"), or the cleanup
-                // cron timed it out at 10 minutes. Nothing happened yet for
-                // either side to rate, so no feedback modal — that was asking
-                // "was this conversation helpful?" about a conversation that
-                // never started.
-                setPendingDeclined(true)
-              } else {
-                setSessionEndedByOther(true)
-                setFeedbackModal(true)
-              }
-              // Redundancy, not duplication: whoever ended the session already
-              // asked the server to move both role_states, but if that request
-              // was lost (tab closed on send, network blip) nobody else would
-              // return the listener to 'available' — and they would stop
-              // receiving support requests until they noticed. The call is
-              // idempotent, so a second one from this side is harmless.
-              if (sessionId) void syncSessionRoleStates(supabase, sessionId, 'end')
-            }
+            applySessionUpdate(updatedSession as unknown as Session)
           }
         }
       )

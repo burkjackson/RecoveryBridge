@@ -3,6 +3,40 @@
 Numbered SQL, applied in order. Paste each into the Supabase SQL editor (the
 project has no CLI migration runner wired up) and run it once.
 
+## Applied — backfilled from an abandoned branch (reconciled 4 Sep 2026)
+
+`051` and `052` were never pasted into the SQL editor by Burk. A different
+Claude session (Aug 31 2026, branch `claude/recovery-bridge-code-review-1zlgj0`,
+never merged to main) had its own database access and applied both directly
+to production. Found on 4 Sep 2026 while reconciling that branch — verified
+still live against production before writing these files. They exist here so
+the migration history matches what the database actually has; nothing below
+needs to be run again, both are idempotent if it ever is.
+
+### 051 — message sender integrity
+
+Closes real message impersonation: `messages` had three overlapping
+permissive INSERT policies, and the weakest one never checked `sender_id`
+against `auth.uid()` or the session's `status`. Either participant could
+insert a message attributed to the other one, including into an
+already-ended conversation, and a seeker in a still-pending session could
+use it to forge the listener as sender and defeat 039's accept gate. Now
+exactly one permissive INSERT policy remains, requiring `sender_id =
+auth.uid()` and `status = 'active'`.
+
+### 052 — protect session transitions
+
+Closes the front door 051 didn't: the three permissive UPDATE policies on
+`sessions` all ask "are you a participant?" with no `WITH CHECK`, so a
+participant could rewrite any column to any value on a row they're allowed
+to touch. As the seeker: self-accept a pending session, swap in a third
+party as `listener_id`, or reopen an `ended` session — all were allowed.
+New `protect_session_transitions` BEFORE UPDATE trigger blocks all three
+(participants and `created_at` are fixed at creation, `ended` is one-way,
+and only the listener may set `accepted_at`, once). Service-role callers
+(cron, server routes, SQL editor) are exempt; admins are not, since no
+admin path updates `sessions` from a browser JWT anyway.
+
 ## Pending — not yet applied
 
 ### 050 — user-to-user muting
