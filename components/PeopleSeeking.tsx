@@ -8,8 +8,8 @@ import { Body16, Body18 } from '@/components/ui/Typography'
 import ErrorState from '@/components/ErrorState'
 import Modal from '@/components/Modal'
 import { TIME, UI } from '@/lib/constants'
-import { syncSessionRoleStates } from '@/lib/sessionState'
-import { getActiveBlock } from '@/lib/blocks'
+import { acceptSeeker } from '@/lib/acceptSeeker'
+import { getMutedUserIds } from '@/lib/mutes'
 
 interface Seeker {
   id: string
@@ -111,7 +111,15 @@ export default function PeopleSeeking({ currentUserId, currentRoleState }: Peopl
         .in('seeker_id', seekerIds)
 
       const connectedSeekerIds = new Set(activeSessions?.map(s => s.seeker_id) || [])
-      const filteredSeekers = freshSeekers.filter(s => !connectedSeekerIds.has(s.id))
+
+      // Drop anyone muted-or-muting currentUserId — see lib/mutes.ts. This is
+      // the UX side of migration 050; the DB trigger is what actually stops
+      // a session if this list is stale.
+      const mutedIds = await getMutedUserIds(supabase, currentUserId)
+
+      const filteredSeekers = freshSeekers.filter(
+        s => !connectedSeekerIds.has(s.id) && !mutedIds.has(s.id)
+      )
 
       setSeekers(filteredSeekers)
     } catch (err) {
@@ -131,58 +139,40 @@ export default function PeopleSeeking({ currentUserId, currentRoleState }: Peopl
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
 
-      // Check block status and seeker availability in parallel
-      const [blockCheck, { data: seeker }] = await Promise.all([
-        getActiveBlock(supabase, user.id),
-        supabase.from('profiles').select('role_state').eq('id', seekerId).maybeSingle(),
-      ])
-
-      if (blockCheck) {
-        setBlockModal({ show: true, reason: blockCheck.reason ?? '' })
-        setConnecting(null)
-        return
-      }
+      // Re-check the seeker is still waiting before we bother acceptSeeker —
+      // avoids a pointless round trip when our own list is stale. acceptSeeker
+      // (and the validate_session_participants() trigger underneath it) is
+      // still the real guard either way.
+      const { data: seeker } = await supabase
+        .from('profiles')
+        .select('role_state')
+        .eq('id', seekerId)
+        .maybeSingle()
 
       if (!seeker || seeker.role_state !== 'requesting') {
         setErrorModal({ show: true, message: 'This person is no longer waiting for support. The list will refresh.' })
-        setConnecting(null)
-        isConnecting.current = false
-        // Refresh the seeker list
         await loadPeopleSeeking()
         return
       }
 
-      // Create session: current user is listener, requesting user is seeker
-      const { data: session, error } = await supabase
-        .from('sessions')
-        .insert([
-          {
-            listener_id: user.id,
-            seeker_id: seekerId,
-            status: 'active'
-          }
-        ])
-        .select()
-        .single()
+      const result = await acceptSeeker(supabase, { listenerId: user.id, seekerId })
 
-      // 23505 = unique violation on the one-active-session-per-seeker index:
-      // another listener connected with this person a moment earlier
-      if (error && error.code === '23505') {
+      if (result.kind === 'blocked') {
+        setBlockModal({ show: true, reason: result.reason })
+        return
+      }
+      if (result.kind === 'conflict') {
         setErrorModal({ show: true, message: 'Someone else just connected with this person. The list will refresh.' })
-        setConnecting(null)
-        isConnecting.current = false
         await loadPeopleSeeking()
         return
       }
-      if (error) throw error
-
-      // Mark both users as offline while in chat — seeker leaves seeking list,
-      // listener becomes unavailable to other seekers until the session ends.
-      // Server-side: RLS blocks a client from writing the other person's row.
-      await syncSessionRoleStates(supabase, session.id, 'start')
+      if (result.kind === 'error') {
+        setErrorModal({ show: true, message: result.message })
+        return
+      }
 
       // Navigate to chat
-      router.push(`/chat/${session.id}`)
+      router.push(`/chat/${result.id}`)
     } catch (error: unknown) {
       console.error('Error creating session:', error)
       setErrorModal({ show: true, message: error instanceof Error ? error.message : 'An unexpected error occurred' })

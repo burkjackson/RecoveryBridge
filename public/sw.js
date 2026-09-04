@@ -1,7 +1,7 @@
 // RecoveryBridge Service Worker for Push Notifications
 // This enables background notifications even when the browser tab is closed
 
-const CACHE_NAME = 'recoverybridge-v11'
+const CACHE_NAME = 'recoverybridge-v12'
 const OFFLINE_URL = '/offline'
 
 // Install event - pre-cache offline fallback page
@@ -109,10 +109,15 @@ self.addEventListener('push', (event) => {
         }
 
         if (seekerId) {
-          // If the user is already in an active chat session, suppress support-request
-          // notifications — they can't connect to another seeker while in a session,
-          // and this prevents stale re-notifications from firing after they've matched.
-          const inChat = clientList.some((client) => client.url.includes('/chat/'))
+          // If the user is actively on an active chat session's screen, suppress
+          // support-request notifications — they can't connect to another seeker
+          // while in a session, and this prevents stale re-notifications from
+          // firing after they've matched. Requires isOnScreen, not just a
+          // matching URL: a listener who left a tab open on an ended chat, or
+          // has the PWA backgrounded on the chat page they finished an hour
+          // ago, was getting zero support pushes until that tab closed — the
+          // URL alone doesn't mean they're actually looking at it.
+          const inChat = clientList.some((client) => client.url.includes('/chat/') && isOnScreen(client))
           if (inChat) return
 
           // Likewise if they're actively looking at the app: a waiting seeker

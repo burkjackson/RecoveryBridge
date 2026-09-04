@@ -12,11 +12,13 @@ import NotificationSettings from '@/components/NotificationSettings'
 import AvailableListeners from '@/components/AvailableListeners'
 import PeopleSeeking from '@/components/PeopleSeeking'
 import NoticeBanner from '@/components/NoticeBanner'
-import type { Profile, SessionWithUserName, ProfileUpdateData, FavoriteWithProfile } from '@/lib/types/database'
+import type { Profile, PrivateProfileFields, SessionWithUserName, ProfileUpdateData, FavoriteWithProfile } from '@/lib/types/database'
 import { TIME, NOTIFICATION } from '@/lib/constants'
 import { normalizeFavorites } from '@/lib/favorites'
-import { getActiveBlock } from '@/lib/blocks'
+import { getActiveBlock, type ActiveBlock } from '@/lib/blocks'
 import { syncSessionRoleStates } from '@/lib/sessionState'
+import { startDirectConnect } from '@/lib/directConnect'
+import { getMutedUserIds } from '@/lib/mutes'
 import ThemeToggle from '@/components/ThemeToggle'
 
 // Shape of the session rows returned by the two queries below, which embed
@@ -40,6 +42,7 @@ function DashboardContent() {
   const [availableListenerCount, setAvailableListenerCount] = useState(0)
   const [favorites, setFavorites] = useState<FavoriteWithProfile[]>([])
   const [connectingFavorite, setConnectingFavorite] = useState<string | null>(null)
+  const [activeBlock, setActiveBlock] = useState<ActiveBlock | null>(null)
   const [error, setError] = useState<{ show: boolean; message: string; action?: () => void }>({ show: false, message: '' })
   const [nudgeDismissed, setNudgeDismissed] = useState(false)
   const [trainingBannerDismissed, setTrainingBannerDismissed] = useState(false)
@@ -103,7 +106,6 @@ function DashboardContent() {
     loadActiveSessions()
     loadRecentSessions()
     loadFavorites()
-    cleanupStaleSessions() // Clean up abandoned sessions in the background
 
     // Subscribe to new sessions
     const channel = supabase
@@ -325,32 +327,6 @@ function DashboardContent() {
     }
   }
 
-  async function cleanupStaleSessions() {
-    try {
-      // Get auth token to authorize the cleanup request
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) return // Not authenticated, skip cleanup
-
-      const response = await fetch('/api/cleanup-sessions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`
-        }
-      })
-
-      if (response.ok) {
-        const result = await response.json()
-        if (result.cleaned > 0) {
-          // Refresh the active sessions list if any were cleaned up
-          loadActiveSessions()
-        }
-      }
-    } catch (error) {
-      // Silent fail - don't disrupt user experience if cleanup fails
-      console.error('Session cleanup failed:', error)
-    }
-  }
-
   async function loadProfile() {
     try {
       // Use getSession() instead of getUser() for better browser navigation support
@@ -368,14 +344,32 @@ function DashboardContent() {
         }
       }
 
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single()
+      // Sensitive columns have SELECT revoked for a plain client query
+      // (migration 040); NotificationSettings below needs quiet hours and
+      // the two notification-category flags, so pull those from
+      // get_my_private_profile() and merge.
+      const [{ data: publicData, error: publicError }, { data: privateData, error: privateError }, block] = await Promise.all([
+        supabase
+          .from('profiles')
+          .select('id, display_name, bio, tagline, role_state, tags, avatar_url, user_role, is_admin, last_heartbeat_at, always_available, listener_training_completed_at, created_at, updated_at')
+          .eq('id', user.id)
+          .single(),
+        supabase.rpc('get_my_private_profile').single(),
+        getActiveBlock(supabase, user.id),
+      ])
 
-      if (error) throw error
-      setProfile(data)
+      if (publicError) throw publicError
+      if (privateError) throw privateError
+      setProfile({
+        ...publicData,
+        ...(privateData as PrivateProfileFields | null),
+        email: user.email,
+      } as Profile)
+      // A blocked user still sees the dashboard (it's the only place to go),
+      // but the role buttons are swapped for an explanation and setRoleState
+      // itself refuses — this is belt-and-suspenders, migration 041 enforces
+      // it in the database regardless of what the client does.
+      setActiveBlock(block)
     } catch (error) {
       console.error('Error loading profile:', error)
     } finally {
@@ -487,7 +481,14 @@ function DashboardContent() {
       // normalizeFavorites drops rows whose profile the viewer can't read under
       // RLS (e.g. the favorited listener is offline) — a null favorite_profile
       // would otherwise crash the dashboard render.
-      setFavorites(normalizeFavorites(data))
+      const normalized = normalizeFavorites(data)
+
+      // Also drop anyone muted-or-muting this user — see lib/mutes.ts. A
+      // mute doesn't remove the favorite row itself, it just stops this
+      // person from showing up as a connect option; the trigger would
+      // reject the session anyway if this list were stale.
+      const mutedIds = await getMutedUserIds(supabase, session.user.id)
+      setFavorites(normalized.filter((f) => !mutedIds.has(f.favorite_user_id)))
     } catch (error) {
       console.error('Error loading favorites:', error)
     }
@@ -500,40 +501,20 @@ function DashboardContent() {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session?.user) return
 
-      // Blocked users can't start sessions (same guard as every other connect path)
-      const blockCheck = await getActiveBlock(supabase, profile.id)
-      if (blockCheck) {
+      // startDirectConnect covers the block check, the existing-session
+      // rejoin/fallback, the "direct connect" push, and the role_state sync
+      // that this path used to skip (see Known Issue #43) — all in one call.
+      const result = await startDirectConnect(supabase, { seekerId: profile.id, listenerId: favoriteUserId })
+
+      if (result.kind === 'blocked') {
         setError({ show: true, message: 'Your account is currently restricted from starting sessions.' })
         return
       }
-
-      // accepted_at: null — this is a seeker-initiated direct connect, not yet
-      // accepted by the listener; the chat page gates messaging on it (see
-      // migration 036).
-      const { data: newSession, error } = await supabase
-        .from('sessions')
-        .insert([{ listener_id: favoriteUserId, seeker_id: profile.id, status: 'active', accepted_at: null }])
-        .select()
-        .single()
-
-      if (error) {
-        // The DB enforces one active session per seeker — if the insert lost
-        // that race (or one already exists), join the existing session instead
-        const { data: existing } = await supabase
-          .from('sessions')
-          .select('id')
-          .eq('seeker_id', profile.id)
-          .eq('status', 'active')
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle()
-        if (existing) {
-          router.push(`/chat/${existing.id}`)
-          return
-        }
-        throw error
+      if (result.kind === 'error') {
+        throw new Error(result.message)
       }
-      router.push(`/chat/${newSession.id}`)
+
+      router.push(`/chat/${result.id}`)
     } catch (error) {
       console.error('Error connecting with favorite:', error)
       setError({
@@ -615,6 +596,10 @@ function DashboardContent() {
 
   async function setRoleState(newState: Profile['role_state']) {
     if (!profile) return
+    if (activeBlock && (newState === 'available' || newState === 'requesting')) {
+      setError({ show: true, message: 'Your account is currently restricted from starting sessions.' })
+      return
+    }
 
     try {
       // Set heartbeat timestamp when going available or requesting
@@ -995,6 +980,22 @@ function DashboardContent() {
         )}
 
         {/* Role Buttons */}
+        {activeBlock ? (
+          <div className="mb-8 p-6 rounded-2xl border-2 border-red-200 bg-red-50 dark:bg-red-900/20 dark:border-red-800">
+            <Heading4 className="text-red-700 dark:text-red-300 mb-2">Account Restricted</Heading4>
+            <Body16 className="text-sm text-red-800 dark:text-red-200 mb-3">
+              Your account has been restricted, so you can't offer or request support right now.
+            </Body16>
+            {activeBlock.reason && (
+              <Body16 className="text-sm text-red-800 dark:text-red-200 mb-3">
+                <strong>Reason:</strong> {activeBlock.reason}
+              </Body16>
+            )}
+            <Body16 className="text-xs text-red-700 dark:text-red-300">
+              If you believe this is a mistake, please contact support for assistance.
+            </Body16>
+          </div>
+        ) : (
         <div className="grid sm:grid-cols-2 gap-4 mb-8" role="group" aria-label="Choose your current role">
           <button
             onClick={handleListenerToggle}
@@ -1064,6 +1065,7 @@ function DashboardContent() {
             )}
           </button>
         </div>
+        )}
 
         {/* Notification Settings — surfaced early so new listeners discover push opt-in */}
         <div className="mb-4 sm:mb-6">

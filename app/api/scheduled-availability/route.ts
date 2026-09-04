@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import webpush from 'web-push'
 import { createClient } from '@supabase/supabase-js'
 import { findWindowStartingNow, type AvailabilityWindow } from '@/lib/timeWindows'
 import { isAuthorizedCronRequest } from '@/lib/cronAuth'
+import { isPushConfigured, fetchSubscriptionsByUser, sendPushToSubscriptions } from '@/lib/serverPush'
 
 // How far back a window start still counts as "starting now". This has to
 // absorb the cron's real cadence, not its nominal one: GitHub Actions throttles
@@ -21,8 +21,7 @@ interface ScheduleProfile {
   availability_schedule: AvailabilityWindow[] | null
   quiet_hours_timezone: string | null
   role_state: string | null
-  // Absent until migration 027 is applied — see the fallback query below.
-  last_availability_notify_key?: string | null
+  last_availability_notify_key: string | null
 }
 
 export async function POST(request: NextRequest) {
@@ -30,15 +29,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  if (!process.env.VAPID_SUBJECT || !process.env.VAPID_PUBLIC_KEY || !process.env.VAPID_PRIVATE_KEY) {
+  if (!isPushConfigured()) {
     return NextResponse.json({ error: 'Push config missing' }, { status: 500 })
   }
-
-  webpush.setVapidDetails(
-    process.env.VAPID_SUBJECT,
-    process.env.VAPID_PUBLIC_KEY,
-    process.env.VAPID_PRIVATE_KEY
-  )
 
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -46,45 +39,11 @@ export async function POST(request: NextRequest) {
   )
 
   // Get all profiles with non-empty schedules that are NOT already available.
-  // last_availability_notify_key arrives with migration 027; if the migration
-  // hasn't been applied yet, fall back to the un-deduped query rather than
-  // failing the whole run (which would stop every availability push).
-  const BASE_COLUMNS = 'id, availability_schedule, quiet_hours_timezone, role_state'
-
-  const primary = await supabase
+  const { data, error: profilesError } = await supabase
     .from('profiles')
-    .select(`${BASE_COLUMNS}, last_availability_notify_key`)
+    .select('id, availability_schedule, quiet_hours_timezone, role_state, last_availability_notify_key')
     .neq('availability_schedule', '[]')
-
-  let profiles = primary.data as ScheduleProfile[] | null
-  let profilesError = primary.error
-  let dedupeAvailable = true
-
-  // 42703 is Postgres's "undefined column"; PostgREST can also answer from its
-  // schema cache with PGRST204 before the query reaches Postgres at all, so
-  // match either. The message check keeps the fallback scoped to the dedupe
-  // column — any OTHER missing column is a real error and must surface, which
-  // is how 020_availability_schedule being unapplied finally became visible.
-  const missingColumn =
-    profilesError != null &&
-    (profilesError.code === '42703' ||
-      profilesError.code === 'PGRST204' ||
-      /last_availability_notify_key/i.test(
-        `${profilesError.message ?? ''} ${profilesError.details ?? ''}`
-      ))
-
-  if (missingColumn) {
-    dedupeAvailable = false
-    console.warn(
-      'scheduled-availability: last_availability_notify_key missing (apply migration 027) — running without dedupe'
-    )
-    const fallback = await supabase
-      .from('profiles')
-      .select(BASE_COLUMNS)
-      .neq('availability_schedule', '[]')
-    profiles = fallback.data as ScheduleProfile[] | null
-    profilesError = fallback.error
-  }
+  const profiles = data as ScheduleProfile[] | null
 
   if (profilesError) {
     console.error('scheduled-availability: profile query failed', profilesError)
@@ -95,7 +54,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ notified: 0 })
   }
 
-  let notified = 0
   const toNotify: string[] = []
   // user id -> the window occurrence key we're notifying them for
   const notifyKeys = new Map<string, string>()
@@ -111,7 +69,7 @@ export async function POST(request: NextRequest) {
 
     // Already pushed for this exact window occurrence — a later run inside the
     // same tolerance window must not buzz them again.
-    if (dedupeAvailable && profile.last_availability_notify_key === match.key) continue
+    if (profile.last_availability_notify_key === match.key) continue
 
     toNotify.push(profile.id)
     notifyKeys.set(profile.id, match.key)
@@ -124,50 +82,23 @@ export async function POST(request: NextRequest) {
   // Mark the occurrence before sending. A user with no push subscription still
   // gets marked, so a failed or impossible send doesn't retry every run for the
   // next 90 minutes.
-  if (dedupeAvailable) {
-    await Promise.all(
-      [...notifyKeys.entries()].map(([userId, key]) =>
-        supabase.from('profiles').update({ last_availability_notify_key: key }).eq('id', userId)
-      )
+  await Promise.all(
+    [...notifyKeys.entries()].map(([userId, key]) =>
+      supabase.from('profiles').update({ last_availability_notify_key: key }).eq('id', userId)
     )
-  }
+  )
 
-  // Fetch push subscriptions for these users
-  const { data: subscriptions } = await supabase
-    .from('push_subscriptions')
-    .select('user_id, subscription')
-    .in('user_id', toNotify)
-
-  const payload = JSON.stringify({
-    title: 'Your support time is starting',
-    body: 'Your scheduled availability window is now — tap to go available.',
-    url: '/dashboard',
-    tag: 'scheduled-availability',
-  })
-
-  const invalidEndpoints: string[] = []
-
-  for (const sub of subscriptions || []) {
-    try {
-      await webpush.sendNotification(sub.subscription, payload)
-      notified++
-    } catch (err: unknown) {
-      const status = (err as { statusCode?: number }).statusCode
-      if (status === 410 || status === 404) {
-        invalidEndpoints.push((sub.subscription as { endpoint: string }).endpoint)
-      }
-    }
-  }
-
-  // Clean up stale subscriptions
-  if (invalidEndpoints.length > 0) {
-    for (const endpoint of invalidEndpoints) {
-      await supabase
-        .from('push_subscriptions')
-        .delete()
-        .eq('subscription->>endpoint', endpoint)
-    }
-  }
+  const byUser = await fetchSubscriptionsByUser(supabase, toNotify)
+  const notified = await sendPushToSubscriptions(
+    supabase,
+    toNotify.flatMap((userId) => byUser.get(userId) ?? []),
+    {
+      title: 'Your support time is starting',
+      body: 'Your scheduled availability window is now — tap to go available.',
+      url: '/dashboard',
+    },
+    'scheduled-availability'
+  )
 
   return NextResponse.json({ notified })
 }

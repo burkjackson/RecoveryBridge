@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
 
     const { data: session } = await supabase
       .from('sessions')
-      .select('id, listener_id, seeker_id, status')
+      .select('id, listener_id, seeker_id, status, accepted_at')
       .eq('id', sessionId)
       .maybeSingle()
 
@@ -66,11 +66,25 @@ export async function POST(request: NextRequest) {
     }
 
     if (phase === 'start') {
-      // Both parties leave the public lists for the duration of the chat.
-      await supabase
-        .from('profiles')
-        .update({ role_state: 'offline' })
-        .in('id', [session.seeker_id, session.listener_id])
+      // A still-pending direct connect (accepted_at null) only moves the
+      // seeker — see Known Issue #35 (2 Sep 2026): a seeker's tap used to
+      // take the listener 'offline' immediately, up to 10 minutes before
+      // they'd done anything, removing them from every list and every
+      // broadcast push for a request they might decline outright. The
+      // listener only leaves the pool once acceptConnection() calls this
+      // same phase again after accepted_at is actually set. An
+      // already-accepted session (every non-direct-connect path, and a
+      // direct connect re-confirming after accept) keeps moving both sides,
+      // same as before.
+      const updates = [
+        supabase.from('profiles').update({ role_state: 'offline' }).eq('id', session.seeker_id),
+      ]
+      if (session.accepted_at) {
+        updates.push(
+          supabase.from('profiles').update({ role_state: 'offline' }).eq('id', session.listener_id)
+        )
+      }
+      await Promise.all(updates)
     } else {
       // Seeker goes offline; the listener returns to available so they can
       // take another conversation. Only do this once the session is actually
@@ -78,10 +92,14 @@ export async function POST(request: NextRequest) {
       if (session.status !== 'ended') {
         return NextResponse.json({ error: 'Session is still active' }, { status: 409 })
       }
+      // A pending direct-connect that was declined ("Not now") or cancelled
+      // ("Cancel request") ends with accepted_at still null — see
+      // wasAccepted's doc comment in serverSessionState.ts for why that
+      // seeker goes back to 'requesting' instead of 'offline'.
       await endSessionRoleStates(supabase, {
         seekerId: session.seeker_id,
         listenerId: session.listener_id,
-      })
+      }, { wasAccepted: !!session.accepted_at })
     }
 
     return NextResponse.json({ success: true })

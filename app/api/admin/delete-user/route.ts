@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { isRateLimited } from '@/lib/rateLimit'
+import { deleteUserAccount } from '@/lib/deleteUserAccount'
+import { UUID_RE } from '@/lib/validation'
 
 export async function POST(request: NextRequest) {
   try {
@@ -46,6 +48,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'targetUserId required' }, { status: 400 })
     }
 
+    // Gets interpolated into a PostgREST `.or()` filter inside
+    // deleteUserAccount() and passed straight to auth.admin.deleteUser() —
+    // validate before either sees it, same reasoning as block_user's userId
+    // check in app/api/admin/actions/route.ts.
+    if (!UUID_RE.test(targetUserId)) {
+      return NextResponse.json({ error: 'Invalid targetUserId' }, { status: 400 })
+    }
+
     // Prevent admins from deleting themselves
     if (targetUserId === user.id) {
       return NextResponse.json({ error: 'Cannot delete your own account' }, { status: 400 })
@@ -58,10 +68,7 @@ export async function POST(request: NextRequest) {
       target_user_id: targetUserId,
     }])
 
-    // Delete the auth user — this cascades to the profile via Supabase's
-    // auth.users → public.profiles foreign key relationship
-    const { error: deleteError } = await supabase.auth.admin.deleteUser(targetUserId)
-    if (deleteError) throw deleteError
+    await deleteUserAccount(supabase, targetUserId)
 
     return NextResponse.json({ success: true })
   } catch (error: unknown) {

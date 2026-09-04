@@ -55,6 +55,14 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   const [alreadyFavorited, setAlreadyFavorited] = useState(false)
   const [favoriteError, setFavoriteError] = useState(false)
 
+  // Mute ("don't match me with this person again") — a two-step confirm so
+  // it can't be tapped by accident. muteConfirming shows the "are you sure"
+  // sub-step; muteDone is the terminal state after it's actually written.
+  const [muteConfirming, setMuteConfirming] = useState(false)
+  const [muteSaving, setMuteSaving] = useState(false)
+  const [muteDone, setMuteDone] = useState(false)
+  const [muteError, setMuteError] = useState(false)
+
   // Report flow modal state
   const [reportModal, setReportModal] = useState(false)
   const [reportStep, setReportStep] = useState<'reason' | 'details' | 'confirm'>('reason')
@@ -77,6 +85,11 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   // Track when the OTHER user ends the session
   const [sessionEndedByOther, setSessionEndedByOther] = useState(false)
   const isEndingSession = useRef(false) // true when THIS user triggered endSession
+
+  // The OTHER party ended a session that was still pending (accepted_at was
+  // never set) — a decline or a cancel. Nothing happened yet for either side
+  // to rate, so this replaces the feedback modal with a short bar instead.
+  const [pendingDeclined, setPendingDeclined] = useState(false)
 
   // Inactivity tracking
   const [lastActivityTime, setLastActivityTime] = useState(Date.now())
@@ -484,8 +497,18 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
             setSession(typedSession)
             // If this user didn't trigger the end, the other party ended the session
             if (typedSession.status === 'ended' && !isEndingSession.current) {
-              setSessionEndedByOther(true)
-              setFeedbackModal(true)
+              if (!typedSession.accepted_at) {
+                // Still pending when it ended — the other party declined
+                // ("Not now"), cancelled ("Cancel request"), or the cleanup
+                // cron timed it out at 10 minutes. Nothing happened yet for
+                // either side to rate, so no feedback modal — that was asking
+                // "was this conversation helpful?" about a conversation that
+                // never started.
+                setPendingDeclined(true)
+              } else {
+                setSessionEndedByOther(true)
+                setFeedbackModal(true)
+              }
               // Redundancy, not duplication: whoever ended the session already
               // asked the server to move both role_states, but if that request
               // was lost (tab closed on send, network blip) nobody else would
@@ -770,6 +793,13 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
       if (error) throw error
       // Optimistic — the realtime session subscription will also deliver this.
       setSession((prev) => (prev ? { ...prev, accepted_at: acceptedAt } : prev))
+
+      // Only NOW does the listener actually leave the pool — see Known Issue
+      // #35: the session's own 'start' call (fired when the seeker created
+      // it) deliberately left the listener alone while accepted_at was still
+      // null, so accepting is what takes them offline for the chat, not the
+      // seeker's original tap.
+      if (sessionId) void syncSessionRoleStates(supabase, sessionId, 'start')
     } catch (error) {
       console.error('Error accepting connection:', error)
       setPendingActionError(true)
@@ -858,6 +888,35 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
     setFavoriteSaving(false)
   }
 
+  // "Don't match me with this person again" — the confirm step itself is
+  // just UI state (muteConfirming); this only runs once someone has actually
+  // clicked through it. Not optimistic like addFavorite — this one shouldn't
+  // ever show "done" before it's actually written.
+  async function muteOtherUser() {
+    if (!session || !currentUserId || muteSaving) return
+    setMuteSaving(true)
+    setMuteError(false)
+    const otherUserId = currentUserId === session.listener_id ? session.seeker_id : session.listener_id
+
+    // 23505 = already muted (favorited-then-muted-twice, or a race) — treat
+    // as success rather than surfacing an error for something already true.
+    const { error } = await supabase.from('user_mutes').insert({
+      muter_id: currentUserId,
+      muted_id: otherUserId,
+      session_id: session.id,
+    })
+
+    if (error && error.code !== '23505') {
+      console.error('Error muting user:', error)
+      setMuteError(true)
+      setMuteSaving(false)
+      return
+    }
+
+    setMuteSaving(false)
+    setMuteDone(true)
+  }
+
   // Seekers get a warm check-in banner when they return to the dashboard after a chat
   const returnToDashboard = useCallback(() => {
     const isSeeker = currentUserId === session?.seeker_id
@@ -866,13 +925,14 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
 
   // The favorite step's confirmation state leaves no button to press — it just
   // promises "Returning to dashboard..." — so the navigation runs on a timer here.
-  // This covers both people who just saved a favorite and people who were already
-  // favorited, who previously had no path off this screen at all.
+  // This covers people who just saved a favorite, people who were already
+  // favorited, and people who just confirmed a mute — all three land on a
+  // screen with no button, just a redirect.
   useEffect(() => {
-    if (!favoriteStep || (!alreadyFavorited && !favoriteAdded)) return
+    if (!favoriteStep || (!alreadyFavorited && !favoriteAdded && !muteDone)) return
     const redirect = setTimeout(returnToDashboard, TIME.POST_CHAT_REDIRECT_MS)
     return () => clearTimeout(redirect)
-  }, [favoriteStep, alreadyFavorited, favoriteAdded, returnToDashboard])
+  }, [favoriteStep, alreadyFavorited, favoriteAdded, muteDone, returnToDashboard])
 
   function skipFeedback() {
     setFeedbackModal(false)
@@ -1431,6 +1491,28 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
           </div>
         )}
 
+        {/* The other party declined, cancelled, or timed out a still-pending
+            direct-connect — see the accepted_at check in the sessions UPDATE
+            handler above. Replaces the pending-request bar in place; the
+            feedback modal never opens for this case. */}
+        {isParticipant && pendingDeclined && (
+          <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4">
+            <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-center gap-3">
+              <p className="text-sm text-gray-600 dark:text-gray-300 text-center sm:text-left sm:mr-2">
+                {isListenerViewer
+                  ? `${otherUserName} cancelled the request.`
+                  : `${otherUserName} isn't able to talk right now. You can try another listener or send a request to everyone.`}
+              </p>
+              <button
+                onClick={() => router.push('/dashboard')}
+                className="min-h-[44px] px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-all font-semibold"
+              >
+                Back to dashboard
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Message Input */}
         {session?.status === 'active' && isParticipant && !isPendingAcceptance && (
           <div className="relative bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4">
@@ -1787,51 +1869,105 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                 </div>
               ) : favoriteStep ? (
                 <div className="py-2">
-                  <span className="text-5xl block mb-3">⭐</span>
-                  <Body18 className="font-bold text-gray-900 dark:text-gray-100 mb-2">
-                    Save {otherUserName}?
-                  </Body18>
-                  <Body16 className="text-gray-600 dark:text-gray-300 mb-6">
-                    Add them to your favorites so you can find them quickly next time.
-                  </Body16>
+                  {muteConfirming || muteDone ? (
+                    <>
+                      <span className="text-5xl block mb-3">🔕</span>
+                      <Body18 className="font-bold text-gray-900 dark:text-gray-100 mb-2">
+                        {muteDone ? 'Done' : `Don't match with ${otherUserName} again?`}
+                      </Body18>
 
-                  {alreadyFavorited || favoriteAdded ? (
-                    <div className="py-3">
-                      <Body16 className="text-amber-700 dark:text-amber-300 font-semibold">⭐ Already in your favorites!</Body16>
-                      <Body16 className="text-gray-400 dark:text-gray-300 text-sm mt-1">Returning to dashboard...</Body16>
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      {favoriteError && (
-                        <Body16 className="text-red-600 dark:text-red-400 text-sm">
-                          Couldn't save that favorite. Please try again.
-                        </Body16>
+                      {muteDone ? (
+                        <div className="py-3">
+                          <Body16 className="text-gray-600 dark:text-gray-300">
+                            You won't be matched with {otherUserName} again.
+                          </Body16>
+                          <Body16 className="text-gray-400 dark:text-gray-300 text-sm mt-1">Returning to dashboard...</Body16>
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          <Body16 className="text-gray-600 dark:text-gray-300 mb-3">
+                            Neither of you will be shown as a match for the other again. This can't be undone from here — if you want it reversed later, reach out and we'll take care of it.
+                          </Body16>
+                          {muteError && (
+                            <Body16 className="text-red-600 dark:text-red-400 text-sm">
+                              Something went wrong. Please try again.
+                            </Body16>
+                          )}
+                          <button
+                            onClick={muteOtherUser}
+                            disabled={muteSaving}
+                            className="min-h-[44px] w-full px-5 py-3 bg-red-50 dark:bg-red-900/20 border-2 border-red-300 dark:border-red-800 text-red-700 dark:text-red-300 rounded-xl font-semibold hover:bg-red-100 dark:hover:bg-red-900/30 hover:border-red-400 transition-all text-lg disabled:opacity-50"
+                          >
+                            {muteSaving ? 'Saving...' : "Yes, don't match us again"}
+                          </button>
+                          <button
+                            onClick={() => setMuteConfirming(false)}
+                            className="min-h-[44px] w-full px-4 py-2.5 bg-gray-100 dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-300 rounded-xl font-semibold hover:bg-gray-200 dark:hover:bg-gray-600 transition-all text-sm"
+                          >
+                            Cancel
+                          </button>
+                        </div>
                       )}
-                      <button
-                        onClick={addFavorite}
-                        disabled={favoriteSaving}
-                        className="min-h-[44px] w-full px-5 py-3 bg-amber-50 dark:bg-amber-900/20 border-2 border-amber-300 dark:border-amber-700 text-amber-800 dark:text-amber-200 rounded-xl font-semibold hover:bg-amber-100 dark:hover:bg-amber-900/30 hover:border-amber-400 transition-all text-lg disabled:opacity-50"
-                      >
-                        {favoriteSaving ? 'Saving...' : '⭐ Yes, save to favorites'}
-                      </button>
-                      <button
-                        onClick={returnToDashboard}
-                        className="min-h-[44px] w-full px-4 py-2.5 bg-gray-100 dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-300 rounded-xl font-semibold hover:bg-gray-200 dark:hover:bg-gray-600 transition-all text-sm"
-                      >
-                        Not now
-                      </button>
-                    </div>
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-5xl block mb-3">⭐</span>
+                      <Body18 className="font-bold text-gray-900 dark:text-gray-100 mb-2">
+                        Save {otherUserName}?
+                      </Body18>
+                      <Body16 className="text-gray-600 dark:text-gray-300 mb-6">
+                        Add them to your favorites so you can find them quickly next time.
+                      </Body16>
+
+                      {alreadyFavorited || favoriteAdded ? (
+                        <div className="py-3">
+                          <Body16 className="text-amber-700 dark:text-amber-300 font-semibold">⭐ Already in your favorites!</Body16>
+                          <Body16 className="text-gray-400 dark:text-gray-300 text-sm mt-1">Returning to dashboard...</Body16>
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          {favoriteError && (
+                            <Body16 className="text-red-600 dark:text-red-400 text-sm">
+                              Couldn't save that favorite. Please try again.
+                            </Body16>
+                          )}
+                          <button
+                            onClick={addFavorite}
+                            disabled={favoriteSaving}
+                            className="min-h-[44px] w-full px-5 py-3 bg-amber-50 dark:bg-amber-900/20 border-2 border-amber-300 dark:border-amber-700 text-amber-800 dark:text-amber-200 rounded-xl font-semibold hover:bg-amber-100 dark:hover:bg-amber-900/30 hover:border-amber-400 transition-all text-lg disabled:opacity-50"
+                          >
+                            {favoriteSaving ? 'Saving...' : '⭐ Yes, save to favorites'}
+                          </button>
+                          <button
+                            onClick={returnToDashboard}
+                            className="min-h-[44px] w-full px-4 py-2.5 bg-gray-100 dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-300 rounded-xl font-semibold hover:bg-gray-200 dark:hover:bg-gray-600 transition-all text-sm"
+                          >
+                            Not now
+                          </button>
+                          <button
+                            onClick={() => setMuteConfirming(true)}
+                            className="block w-full text-center text-xs text-gray-400 dark:text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 hover:underline pt-1"
+                          >
+                            Don't match me with this person again
+                          </button>
+                        </div>
+                      )}
+                    </>
                   )}
 
-                  {/* Gentle, optional support nudge */}
-                  <div className="mt-6 pt-4 border-t border-gray-100 dark:border-gray-700">
-                    <Body16 className="text-xs text-gray-400 dark:text-gray-300">
-                      RecoveryBridge is free thanks to people like you.{' '}
-                      <a href="/donate" className="text-rb-blue dark:text-blue-400 font-semibold hover:underline">
-                        Consider giving back 💙
-                      </a>
-                    </Body16>
-                  </div>
+                  {/* Gentle, optional support nudge — hidden during the mute
+                      flow so a moderation decision doesn't get muddied by a
+                      donation ask */}
+                  {!muteConfirming && !muteDone && (
+                    <div className="mt-6 pt-4 border-t border-gray-100 dark:border-gray-700">
+                      <Body16 className="text-xs text-gray-400 dark:text-gray-300">
+                        RecoveryBridge is free thanks to people like you.{' '}
+                        <a href="/donate" className="text-rb-blue dark:text-blue-400 font-semibold hover:underline">
+                          Consider giving back 💙
+                        </a>
+                      </Body16>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <>

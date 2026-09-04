@@ -1,6 +1,14 @@
 /**
  * SMS utility module using Twilio
  * Gracefully returns false if Twilio is not configured
+ *
+ * TODO(1 Dec 2026): this has been "pending Twilio verification" since before
+ * this file's git history starts, and the calling code in
+ * app/api/notifications/send/route.ts has had its SMS block commented out
+ * (const smsCount = 0 standing in for it) for just as long. If Twilio still
+ * isn'''t verified by 1 Dec 2026, delete this file and the commented block
+ * rather than let it keep sitting here unused — a disabled feature with no
+ * target date is a maintenance cost with no upside.
  */
 
 // Twilio's own client type isn't imported: the package is only required at

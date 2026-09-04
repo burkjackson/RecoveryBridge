@@ -1,9 +1,16 @@
 // Database types for Supabase tables
 
+/**
+ * A plain `select('*')`/`select()` against profiles from the browser client
+ * only ever returns the public columns below (see migration 040 — the rest
+ * have SELECT revoked at the column level for authenticated/anon). Fields
+ * marked optional here are the ones that only come back from
+ * `get_my_private_profile()` (own row only) or a service-role route — code
+ * reading them off a plain profiles row must not assume they're present.
+ */
 export interface Profile {
   id: string
   display_name: string
-  email: string
   bio: string | null
   tagline: string | null
   role_state: 'available' | 'requesting' | 'offline' | null
@@ -13,30 +20,34 @@ export interface Profile {
   is_admin: boolean | null
   last_heartbeat_at: string | null
   always_available: boolean
-  quiet_hours_enabled: boolean
-  quiet_hours_start: string
-  quiet_hours_end: string
-  quiet_hours_timezone: string
-  phone_number: string | null
-  sms_notifications_enabled: boolean
-  email_notifications_enabled: boolean
-  /** Service messages: thank-you notes, training nudges, admin broadcasts. Defaults on. */
-  announcement_notifications_enabled: boolean
-  /** Monthly "it's been a while" check-in. Opt-in, defaults off. */
-  reengagement_notifications_enabled: boolean
-  referral_source: string | null
   listener_training_completed_at: string | null
-  /** Per-section acknowledgements for /training, e.g. { presence: true }. */
-  listener_training_progress: Record<string, boolean> | null
-  listener_training_progress_at: string | null
-  availability_schedule: Array<{day: number, start: string, end: string}>
-  consent_version: string | null
-  consent_accepted_at: string | null
-  age_confirmed: boolean | null
-  health_data_consent: boolean | null
-  health_data_consent_at: string | null
   created_at?: string
   updated_at?: string
+  // --- Column-level SELECT revoked for authenticated/anon (migration 040).
+  // Only readable via get_my_private_profile() (own row) or a service-role
+  // route (e.g. admin). Never present on a plain profiles select().
+  email?: string
+  quiet_hours_enabled?: boolean
+  quiet_hours_start?: string
+  quiet_hours_end?: string
+  quiet_hours_timezone?: string
+  phone_number?: string | null
+  sms_notifications_enabled?: boolean
+  email_notifications_enabled?: boolean
+  /** Service messages: thank-you notes, training nudges, admin broadcasts. Defaults on. */
+  announcement_notifications_enabled?: boolean
+  /** Monthly "it's been a while" check-in. Opt-in, defaults off. */
+  reengagement_notifications_enabled?: boolean
+  referral_source?: string | null
+  /** Per-section acknowledgements for /training, e.g. { presence: true }. */
+  listener_training_progress?: Record<string, boolean> | null
+  listener_training_progress_at?: string | null
+  availability_schedule?: Array<{day: number, start: string, end: string}>
+  consent_version?: string | null
+  consent_accepted_at?: string | null
+  age_confirmed?: boolean | null
+  health_data_consent?: boolean | null
+  health_data_consent_at?: string | null
 }
 
 export interface Session {
@@ -199,6 +210,33 @@ export interface BlogPostWithAuthor extends BlogPost {
 }
 
 // Type for profile update operations
+/**
+ * Shape returned by the get_my_private_profile() RPC (migration 040) — the
+ * columns SELECT-revoked from a plain profiles query, scoped server-side to
+ * auth.uid(). supabase-js has no generated types to infer this from, so
+ * call sites cast to it explicitly.
+ */
+export type PrivateProfileFields = Pick<Profile,
+  | 'email'
+  | 'quiet_hours_enabled'
+  | 'quiet_hours_start'
+  | 'quiet_hours_end'
+  | 'quiet_hours_timezone'
+  | 'sms_notifications_enabled'
+  | 'email_notifications_enabled'
+  | 'announcement_notifications_enabled'
+  | 'reengagement_notifications_enabled'
+  | 'referral_source'
+  | 'listener_training_progress'
+  | 'listener_training_progress_at'
+  | 'availability_schedule'
+  | 'consent_version'
+  | 'consent_accepted_at'
+  | 'age_confirmed'
+  | 'health_data_consent'
+  | 'health_data_consent_at'
+>
+
 export interface ProfileUpdateData {
   role_state?: Profile['role_state']
   last_heartbeat_at?: string

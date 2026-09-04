@@ -5,6 +5,8 @@ import { sendSupportRequestEmail } from '@/lib/email'
 import { isInQuietHours } from '@/lib/timeWindows'
 import { TIME, isListenerOnline } from '@/lib/constants'
 import { isRateLimited } from '@/lib/rateLimit'
+import { getActiveBlock } from '@/lib/blocks'
+import { getMutedUserIds } from '@/lib/mutes'
 // TODO: Re-enable when Twilio verification is complete
 // import { sendSMS } from '@/lib/sms'
 
@@ -83,12 +85,27 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    // Fetch seekerName from the database (don't trust client-provided value)
-    const { data: seekerProfile } = await supabase
-      .from('profiles')
-      .select('display_name')
-      .eq('id', user.id)
-      .single()
+    // Fetch seeker profile (don't trust client-provided values) and check
+    // for an active block in parallel — this route never checked either,
+    // so a blocked account could broadcast to every listener from the
+    // console, and there was nothing stopping any account from hitting the
+    // broadcast path without ever actually being in 'requesting' state.
+    const [{ data: seekerProfile }, activeBlock] = await Promise.all([
+      supabase.from('profiles').select('display_name, role_state').eq('id', user.id).single(),
+      getActiveBlock(supabase, seekerId),
+    ])
+
+    if (activeBlock) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
+    // Broadcast (no targetListenerId) only makes sense for someone actually
+    // requesting support right now. Direct-connect doesn't require
+    // 'requesting' — a favorite or listener-directory connect can happen
+    // from 'available' too — so it only needs the block check above.
+    if (!targetListenerId && seekerProfile?.role_state !== 'requesting') {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
 
     const seekerName = seekerProfile?.display_name || 'Someone'
 
@@ -215,7 +232,14 @@ export async function POST(request: NextRequest) {
     // still pushed to here. Measured 25 Aug: 10 profiles sit at
     // role_state='available' with a heartbeat over an hour old (or none at
     // all) and always_available=false.
-    const listeners = (rawListeners ?? []).filter(isListenerOnline)
+    const onlineListeners = (rawListeners ?? []).filter(isListenerOnline)
+
+    // Don't page a listener this seeker has muted, or who has muted this
+    // seeker (see lib/mutes.ts) — a broadcast never goes through session
+    // creation, so this is the one filtering point that actually matters on
+    // its own rather than just avoiding a dead-end click.
+    const mutedIds = await getMutedUserIds(supabase, seekerId)
+    const listeners = onlineListeners.filter((l) => !mutedIds.has(l.id))
 
     if (listeners.length === 0) {
       console.log(`[notify] No available listeners for seeker ${seekerId}`)

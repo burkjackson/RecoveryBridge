@@ -8,6 +8,25 @@ interface EndTransitionOptions {
    * actually respond. Defaults to true (the normal end-of-conversation case).
    */
   restoreListener?: boolean
+  /**
+   * Whether this session ever got past the direct-connect pending stage
+   * (session.accepted_at is set). Defaults to true, which keeps the original
+   * seeker -> 'offline' behavior for every caller that doesn't pass this —
+   * admin end_session, block_user, and account deletion never had to
+   * distinguish it, so they still don't.
+   *
+   * A pending direct-connect that was declined or timed out (accepted_at
+   * still null when it ends) never became a real conversation, so dropping
+   * the seeker to 'offline' the same way a finished chat does was itself a
+   * bug: they'd asked for support and nothing had happened yet, but they'd
+   * silently vanish from People Seeking and every push target until they
+   * noticed and re-toggled. Pass `wasAccepted: false` and the seeker is
+   * restored to 'requesting' instead — visible again, free to try another
+   * listener or a broadcast — matching the "you can try another listener or
+   * send a request to everyone" message app/chat/[id]/page.tsx shows them.
+   * See CLAUDE.md Known Issue on this (item 8 of the 2 Sep 2026 review).
+   */
+  wasAccepted?: boolean
 }
 
 /**
@@ -30,10 +49,13 @@ interface EndTransitionOptions {
 export async function endSessionRoleStates(
   supabase: SupabaseClient,
   { seekerId, listenerId }: { seekerId: string; listenerId: string },
-  { restoreListener = true }: EndTransitionOptions = {}
+  { restoreListener = true, wasAccepted = true }: EndTransitionOptions = {}
 ): Promise<void> {
+  const seekerUpdate = wasAccepted
+    ? { role_state: 'offline' as const }
+    : { role_state: 'requesting' as const, last_heartbeat_at: new Date().toISOString() }
   const updates = [
-    supabase.from('profiles').update({ role_state: 'offline' }).eq('id', seekerId),
+    supabase.from('profiles').update(seekerUpdate).eq('id', seekerId),
   ]
   if (restoreListener) {
     updates.push(

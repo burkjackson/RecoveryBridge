@@ -1,0 +1,51 @@
+-- 049: cover the FK columns that are actually filtered on in application
+-- code, and leave a dated note on the indexes pg_stat says nobody uses.
+--
+-- Checked all 16 FKs the advisor lists as uncovered (not just the ones the
+-- review named) against how the app actually queries each table:
+--
+--   messages.sender_id        -- app/api/account/export/route.ts filters
+--                              -- .eq('sender_id', userId) for the data-export
+--                              -- endpoint. (The cleanup cron's summariseSessions
+--                              -- reads sender_id but only as a selected column
+--                              -- after filtering by session_id — that path
+--                              -- doesn't need this index, the export one does.)
+--   reports.reporter_id       -- same export route: .eq('reporter_id', userId)
+--   reports.reported_user_id  -- admin page embeds profiles!reports_reported_user_id_fkey,
+--                              -- which resolves as a join on this column
+--   session_feedback.from_user_id -- same export route: .eq('from_user_id', userId).
+--                              -- (to_user_id already has idx_session_feedback_to_user;
+--                              -- the (session_id, from_user_id) index that exists
+--                              -- doesn't serve a from_user_id-only lookup since
+--                              -- session_id is the leading column)
+--
+-- Skipped, and why:
+--
+--   user_notices.created_by   -- unindexed, but nothing filters by it — every
+--                              -- real query filters by user_id or kind, and
+--                              -- idx_user_notices_user_created (user_id, created_at)
+--                              -- and idx_user_notices_kind_created (kind, created_at)
+--                              -- already cover both. Adding created_by would be
+--                              -- an index with no query to serve.
+--   admin_logs.* (4 FKs), blog_posts.author_id -- per review: admin-only,
+--                              -- low-traffic, not worth the write overhead.
+--   broadcasts.created_by, notification_kind_settings.updated_by,
+--   notification_log.seeker_id, user_blocks.blocked_by,
+--   reports.resolved_by, reports.session_id -- not in the review's list;
+--                              -- checked the same way (grepped for a real
+--                              -- .eq()/.in() filter on each) and found none —
+--                              -- same bucket as admin_logs, deferred for the
+--                              -- same reason.
+--
+-- Unused indexes (idx_messages_read_at, idx_reports_status,
+-- idx_notification_queue_broadcast, idx_admin_logs_created_at,
+-- idx_notification_log_listener_created, blog_posts_tags_idx): all still show
+-- idx_scan = 0 in pg_stat_user_indexes as of 3 Sep 2026. Not dropping yet —
+-- pg_stat resets on a Postgres restart/upgrade, and none of these are old
+-- enough to be confident they've seen a realistic traffic window. Re-check
+-- pg_stat_user_indexes around 3 Dec 2026; if they're still at 0, drop them.
+
+create index if not exists idx_messages_sender_id on public.messages (sender_id);
+create index if not exists idx_reports_reporter_id on public.reports (reporter_id);
+create index if not exists idx_reports_reported_user_id on public.reports (reported_user_id);
+create index if not exists idx_session_feedback_from_user_id on public.session_feedback (from_user_id);

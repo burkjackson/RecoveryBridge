@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { isRateLimited } from '@/lib/rateLimit'
-import { endSessionRoleStates } from '@/lib/serverSessionState'
+import { deleteUserAccount } from '@/lib/deleteUserAccount'
 
 // Self-service account deletion (CCPA/GDPR erasure right).
 //
@@ -34,43 +34,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Too many requests. Please wait a moment.' }, { status: 429 })
     }
 
-    // End any active sessions first so the other participant isn't left in a
-    // chat whose counterpart is about to disappear.
-    const { data: endedSessions } = await supabaseAdmin
-      .from('sessions')
-      .update({ status: 'ended', ended_at: new Date().toISOString() })
-      .eq('status', 'active')
-      .or(`listener_id.eq.${user.id},seeker_id.eq.${user.id}`)
-      .select('id, listener_id, seeker_id')
-
-    // Move the surviving participant's role_state the same way ending a chat
-    // normally does — seeker offline, listener back to available. Whichever
-    // side `user.id` was on is about to be deleted anyway, so only the other
-    // person's state actually matters here, but running the normal two-sided
-    // update is simpler than special-casing which side to skip.
-    await Promise.all(
-      (endedSessions ?? []).map(async (session) => {
-        try {
-          await endSessionRoleStates(supabaseAdmin, {
-            seekerId: session.seeker_id,
-            listenerId: session.listener_id,
-          })
-        } catch (err) {
-          console.error(`Could not sync role_state for session ${session.id} during account deletion:`, err)
-        }
-      })
-    )
-
-    // Deleting the auth user cascades to public.profiles (and from there to
-    // messages, favorites, push subscriptions, … via their FKs).
-    const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(user.id)
-    if (deleteError) {
-      console.error('Account deletion failed:', deleteError)
-      return NextResponse.json(
-        { error: 'We could not delete your account. Please contact admin@recoverybridge.app.' },
-        { status: 500 }
-      )
-    }
+    await deleteUserAccount(supabaseAdmin, user.id)
 
     return NextResponse.json({ success: true })
   } catch (error) {

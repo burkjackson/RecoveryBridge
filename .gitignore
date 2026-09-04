@@ -43,3 +43,7 @@ next-env.d.ts
 
 # Claude Code local worktrees (never commit)
 .claude/worktrees/
+
+# stray office/editor lock files
+.~lock.*
+*.pdf#

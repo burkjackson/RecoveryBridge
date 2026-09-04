@@ -12,7 +12,7 @@ import { SkeletonProfile } from '@/components/Skeleton'
 import Footer from '@/components/Footer'
 import NotificationSettings from '@/components/NotificationSettings'
 import TagSelector from '@/components/TagSelector'
-import type { Profile, FavoriteWithProfile, ThankYouNoteWithSender } from '@/lib/types/database'
+import type { Profile, PrivateProfileFields, FavoriteWithProfile, ThankYouNoteWithSender } from '@/lib/types/database'
 import { normalizeFavorites } from '@/lib/favorites'
 
 // E.164 phone number validation (same as lib/sms.ts but client-safe)
@@ -98,14 +98,31 @@ export default function ProfilePage() {
         return
       }
 
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single()
+      // Sensitive columns (phone, quiet hours, consent, etc.) have SELECT
+      // revoked for a plain client query (migration 040) — the public
+      // columns and the private ones come from two different reads and get
+      // merged. get_my_private_profile() is scoped server-side to auth.uid(),
+      // so there's nothing to pass it.
+      const [{ data: publicData, error: publicError }, { data: privateData, error: privateError }] = await Promise.all([
+        supabase
+          .from('profiles')
+          .select('id, display_name, bio, tagline, role_state, tags, avatar_url, user_role, is_admin, last_heartbeat_at, always_available, listener_training_completed_at, created_at, updated_at')
+          .eq('id', user.id)
+          .single(),
+        supabase.rpc('get_my_private_profile').single(),
+      ])
 
-      if (error) throw error
-      setProfile(data)
+      if (publicError) throw publicError
+      if (privateError) throw privateError
+
+      // auth.getUser() is the source of truth for email now that
+      // profiles.email isn't client-readable — it's the same value
+      // handle_new_user() copied into profiles at signup.
+      setProfile({
+        ...publicData,
+        ...(privateData as PrivateProfileFields | null),
+        email: user.email,
+      } as Profile)
     } catch (error) {
       console.error('Error loading profile:', error)
     } finally {
@@ -203,16 +220,17 @@ export default function ProfilePage() {
         sms_notifications_enabled: smsEnabled && !!phoneNumber.trim(),
       }
 
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('profiles')
         .update(updateData)
         .eq('id', profile.id)
-        .select()
-        .single()
 
       if (error) throw error
 
-      if (data) setProfile(data)
+      // phone_number/sms_notifications_enabled aren't client-readable
+      // (migration 040) — merge what was just written instead of a
+      // round-trip select that would 403 on those columns.
+      setProfile({ ...profile, ...updateData })
 
       setSmsSuccess(smsEnabled
         ? 'SMS notifications enabled. You\'ll receive a text when push notifications can\'t reach you.'
@@ -232,15 +250,14 @@ export default function ProfilePage() {
     setSavingEmail(true)
     setEmailSuccess(null)
     try {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('profiles')
         .update({ email_notifications_enabled: enabled })
         .eq('id', profile.id)
-        .select()
-        .single()
 
       if (error) throw error
-      if (data) setProfile(data)
+      // Not client-readable back (migration 040) — merge locally.
+      setProfile({ ...profile, email_notifications_enabled: enabled })
       setEmailNotificationsEnabled(enabled)
       setEmailSuccess(enabled ? 'Email notifications enabled.' : 'Email notifications disabled.')
       setTimeout(() => setEmailSuccess(null), 4000)
@@ -257,14 +274,13 @@ export default function ProfilePage() {
     if (!profile) return
     setSavingSchedule(true)
     try {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('profiles')
         .update({ availability_schedule: schedule })
         .eq('id', profile.id)
-        .select()
-        .single()
       if (error) throw error
-      if (data) setProfile(data)
+      // Not client-readable back (migration 040) — merge locally.
+      setProfile({ ...profile, availability_schedule: schedule })
     } catch (err) {
       console.error('Error saving schedule:', err)
       setErrorModal({ show: true, message: 'Could not save schedule. Please try again.' })

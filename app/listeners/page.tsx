@@ -4,7 +4,8 @@ import { useState, useEffect, useRef, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { SPECIALTY_TAGS, isListenerOnline } from '@/lib/constants'
-import { getActiveBlock } from '@/lib/blocks'
+import { startDirectConnect } from '@/lib/directConnect'
+import { getMutedUserIds } from '@/lib/mutes'
 import { errorMessage } from '@/lib/errors'
 import Image from 'next/image'
 import { Heading1, Body16, Body18 } from '@/components/ui/Typography'
@@ -109,7 +110,12 @@ export default function ListenersPage() {
 
       if (error) throw error
 
-      const onlineListeners = (data || []).filter(isListenerOnline)
+      const activeListeners = (data || []).filter(isListenerOnline)
+
+      // Drop anyone muted-or-muting the current user (see lib/mutes.ts) —
+      // UX side of migration 050, the DB trigger backstops a stale list.
+      const mutedIds = await getMutedUserIds(supabase, user.id)
+      const onlineListeners = activeListeners.filter(l => !mutedIds.has(l.id))
 
       // Load helpful counts for these listeners
       const listenerIds = onlineListeners.map(l => l.id)
@@ -209,49 +215,18 @@ export default function ListenersPage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
 
-      // Check if user is blocked (lifted and expired blocks don't count)
-      const blockCheck = await getActiveBlock(supabase, user.id)
+      const result = await startDirectConnect(supabase, { seekerId: user.id, listenerId })
 
-      if (blockCheck) {
-        setBlockModal({ show: true, reason: blockCheck.reason ?? '' })
-        setConnecting(null)
+      if (result.kind === 'blocked') {
+        setBlockModal({ show: true, reason: result.reason })
         return
       }
-
-      // Create a new session. accepted_at: null — this is a seeker-initiated
-      // direct connect, not yet accepted by the listener; the chat page gates
-      // messaging on it (see migration 036).
-      const { data: session, error } = await supabase
-        .from('sessions')
-        .insert([
-          {
-            listener_id: listenerId,
-            seeker_id: user.id,
-            status: 'active',
-            accepted_at: null
-          }
-        ])
-        .select()
-        .single()
-
-      if (error) throw error
-
-      // Notify the listener with a distinct "direct connect" push (fire-and-forget —
-      // shouldn't block navigation into the chat)
-      supabase.auth.getSession().then(({ data: { session: authSession } }) => {
-        if (!authSession) return
-        fetch('/api/notifications/send', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${authSession.access_token}`
-          },
-          body: JSON.stringify({ seekerId: user.id, targetListenerId: listenerId })
-        }).catch(() => {})
-      })
+      if (result.kind === 'error') {
+        throw new Error(result.message)
+      }
 
       // Navigate to chat
-      router.push(`/chat/${session.id}`)
+      router.push(`/chat/${result.id}`)
     } catch (error: unknown) {
       console.error('Error creating session:', error)
       setErrorModal({ show: true, message: errorMessage(error, 'An unexpected error occurred') })

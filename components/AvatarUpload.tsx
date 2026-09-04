@@ -140,12 +140,14 @@ export default function AvatarUpload({ userId, currentAvatarUrl, onUploadComplet
       const croppedImageBlob = await getCroppedImg(imageToCrop, croppedAreaPixels)
 
       // The crop always produces JPEG, so the extension is fixed rather than
-      // inherited from whatever the user's original file was called.
-      const fileName = `${userId}-${Date.now()}.jpg`
+      // inherited from whatever the user's original file was called. Stored
+      // in a per-user folder so storage policies can scope writes to the
+      // caller's own files (supabase/migrations/042_storage_policies.sql).
+      const fileName = `${Date.now()}.jpg`
       const croppedFile = new File([croppedImageBlob], fileName, { type: 'image/jpeg' })
 
       // Upload to Supabase Storage
-      const filePath = `${fileName}`
+      const filePath = `${userId}/${fileName}`
       const { error: uploadError } = await supabase.storage
         .from('avatars')
         .upload(filePath, croppedFile, { upsert: true, contentType: 'image/jpeg' })

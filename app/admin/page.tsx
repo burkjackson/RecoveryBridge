@@ -76,6 +76,10 @@ export default function AdminPage() {
   const [activeTab, setActiveTab] = useState<'reports' | 'blocks' | 'sessions' | 'users' | 'signups' | 'missed' | 'broadcast'>('reports')
 
   const [reports, setReports] = useState<Report[]>([])
+  // muted_id -> how many people currently have that user muted. Loaded
+  // alongside reports so a listener racking up mutes shows up here even
+  // without anyone filing a formal report — see migration 050.
+  const [muteCounts, setMuteCounts] = useState<Record<string, number>>({})
   const [blocks, setBlocks] = useState<UserBlock[]>([])
   const [sessions, setSessions] = useState<Session[]>([])
   const [users, setUsers] = useState<User[]>([])
@@ -323,9 +327,38 @@ export default function AdminPage() {
 
       if (error) throw error
       setReports(data || [])
+      await loadMuteCounts(data || [])
     } catch (error) {
       console.error('Error loading reports:', error)
     }
+  }
+
+  // How many people currently have each reported user muted — scoped to just
+  // the users shown on this page rather than the whole table. A count on its
+  // own, deliberately: this is a "worth a look" signal next to reports, not
+  // a moderation action by itself.
+  async function loadMuteCounts(reportRows: Report[]) {
+    const reportedIds = [...new Set(reportRows.map((r) => r.reported_user_id))]
+    if (reportedIds.length === 0) {
+      setMuteCounts({})
+      return
+    }
+
+    const { data, error } = await supabase
+      .from('user_mutes')
+      .select('muted_id')
+      .in('muted_id', reportedIds)
+
+    if (error) {
+      console.error('Error loading mute counts:', error)
+      return
+    }
+
+    const counts: Record<string, number> = {}
+    for (const row of data || []) {
+      counts[row.muted_id] = (counts[row.muted_id] || 0) + 1
+    }
+    setMuteCounts(counts)
   }
 
   async function loadBlocks() {
@@ -367,13 +400,9 @@ export default function AdminPage() {
 
   async function loadUsers() {
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(200)
-
-      if (error) throw error
+      // Most profiles columns aren't client-readable anymore (migration
+      // 040) — this now goes through the service-role admin route.
+      const { users: data } = await adminFetch({ action: 'list_users' })
       setUsers(data || [])
     } catch (error) {
       console.error('Error loading users:', error)
@@ -382,21 +411,10 @@ export default function AdminPage() {
 
   async function loadSignups() {
     try {
-      let query = supabase
-        .from('profiles')
-        .select('id, display_name, email, user_role, role_state, created_at, is_admin, referral_source, listener_training_completed_at')
-        .order('created_at', { ascending: false })
-        .limit(signupRange === 'all' ? 1000 : 100)
-
-      if (signupRange !== 'all') {
-        const since = new Date()
-        since.setDate(since.getDate() - signupRange)
-        query = query.gte('created_at', since.toISOString())
-      }
-
-      const { data, error } = await query
-
-      if (error) throw error
+      const { signups: data } = await adminFetch({
+        action: 'list_signups',
+        rangeDays: signupRange,
+      })
       setSignups(data || [])
     } catch (error) {
       console.error('Error loading sign-ups:', error)
@@ -804,6 +822,11 @@ export default function AdminPage() {
                         <div>
                           <Body16 className="font-semibold dark:text-gray-100">
                             {report.reporter?.display_name || 'Unknown'} reported {report.reported_user?.display_name || 'Unknown'}
+                            {muteCounts[report.reported_user_id] > 1 && (
+                              <span className="ml-2 px-2 py-0.5 rounded-full text-xs font-normal bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300">
+                                muted by {muteCounts[report.reported_user_id]} people
+                              </span>
+                            )}
                           </Body16>
                           <Body16 className="text-sm text-rb-gray dark:text-gray-300">
                             {new Date(report.created_at).toLocaleString()}

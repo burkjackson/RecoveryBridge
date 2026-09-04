@@ -3,8 +3,8 @@
 import { Suspense, useCallback, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { syncSessionRoleStates } from '@/lib/sessionState'
 import { getActiveBlock } from '@/lib/blocks'
+import { acceptSeeker } from '@/lib/acceptSeeker'
 
 /**
  * /connect?seekerId=XXX — where a support-request notification lands.
@@ -122,13 +122,16 @@ function ConnectInner() {
       return
     }
 
-    const { data: session, error } = await supabase
-      .from('sessions')
-      .insert([{ listener_id: user.id, seeker_id: seekerId, status: 'active' }])
-      .select()
-      .single()
+    // seekerId is guaranteed non-null here — the effect below redirects to
+    // /dashboard before check()/accept() can run without one.
+    const result = await acceptSeeker(supabase, { listenerId: user.id, seekerId: seekerId! })
 
-    if (error || !session) {
+    if (result.kind === 'blocked') {
+      router.replace('/dashboard')
+      return
+    }
+
+    if (result.kind === 'conflict' || result.kind === 'error') {
       // Between the preflight and this tap the seeker may have been taken by
       // someone else, or left. The DB enforces both (unique active session per
       // seeker; a trigger requiring the counterpart to still be 'requesting'),
@@ -137,11 +140,7 @@ function ConnectInner() {
       return
     }
 
-    // Mark both users offline while in chat. Server-side: RLS only lets a
-    // client update its own row, so the seeker's half never landed from here.
-    await syncSessionRoleStates(supabase, session.id, 'start')
-
-    router.replace(`/chat/${session.id}`)
+    router.replace(`/chat/${result.id}`)
   }
 
   /** Declining leaves the seeker 'requesting' so another listener can reach them. */

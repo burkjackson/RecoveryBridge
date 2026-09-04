@@ -3,6 +3,7 @@
 import { useState, useEffect, Suspense } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { errorMessage } from '@/lib/errors'
+import { safeRedirectPath } from '@/lib/safeRedirect'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Body16 } from '@/components/ui/Typography'
 
@@ -24,7 +25,7 @@ function LoginForm() {
   const searchParams = useSearchParams()
   const supabase = createClient()
 
-  const redirectTo = searchParams.get('redirect') || '/dashboard'
+  const redirectTo = safeRedirectPath(searchParams.get('redirect'))
 
   // Redirect already-authenticated users
   useEffect(() => {

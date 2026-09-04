@@ -151,11 +151,6 @@ export default function OnboardingPage() {
   const [websiteName, setWebsiteName] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
-  const [consentVersion, setConsentVersion] = useState<string | null>(null)
-  const [consentAcceptedAt, setConsentAcceptedAt] = useState<string | null>(null)
-  const [ageConfirmed, setAgeConfirmed] = useState(false)
-  const [healthDataConsent, setHealthDataConsent] = useState(false)
-  const [healthDataConsentAt, setHealthDataConsentAt] = useState<string | null>(null)
   const router = useRouter()
   const supabase = createClient()
 
@@ -197,15 +192,12 @@ export default function OnboardingPage() {
       return
     }
     setUserId(user.id)
-    setConsentVersion((user.user_metadata?.consent_version as string) ?? null)
-    setConsentAcceptedAt((user.user_metadata?.consent_accepted_at as string) ?? null)
-    setAgeConfirmed((user.user_metadata?.age_confirmed as boolean) ?? false)
-    setHealthDataConsent((user.user_metadata?.health_data_consent as boolean) ?? false)
-    setHealthDataConsentAt((user.user_metadata?.health_data_consent_at as string) ?? null)
 
+    // Only public columns needed here (migration 040 revoked the rest for
+    // a plain client select anyway).
     const { data: profile } = await supabase
       .from('profiles')
-      .select('*')
+      .select('display_name, bio, user_role')
       .eq('id', user.id)
       .single()
 
@@ -272,14 +264,21 @@ export default function OnboardingPage() {
           tags: tags.length > 0 ? tags : null,
           // Only mark training complete for paths that actually include it.
           // Seekers complete it just-in-time when they first choose to listen.
-          listener_training_completed_at: steps.includes('training')
-            ? new Date().toISOString()
-            : null,
-          consent_version: consentVersion,
-          consent_accepted_at: consentAcceptedAt,
-          age_confirmed: ageConfirmed,
-          health_data_consent: healthDataConsent,
-          health_data_consent_at: healthDataConsentAt,
+          // listener_training_progress must land in the same UPDATE as
+          // listener_training_completed_at — the protect_training_completion
+          // trigger (047) checks NEW.listener_training_progress, and progress
+          // was never persisted to the DB during onboarding before this (it
+          // only lived in trainingAcknowledged local state), so without this
+          // the trigger would see an empty progress object and reject the
+          // completion.
+          ...(steps.includes('training')
+            ? { listener_training_completed_at: new Date().toISOString(), listener_training_progress: trainingAcknowledged }
+            : { listener_training_completed_at: null }),
+          // consent_version / consent_accepted_at / age_confirmed /
+          // health_data_consent / health_data_consent_at are no longer
+          // written here — handle_new_user() (047) copies them from signup
+          // metadata at profile creation, with the timestamps generated
+          // server-side. There's no read-only display of them on this page.
           referral_source: referralSource === 'other'
             ? (otherReferral.trim() || 'other')
             : referralSource === 'podcast'

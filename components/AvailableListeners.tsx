@@ -8,8 +8,8 @@ import { Body16, Body18 } from '@/components/ui/Typography'
 import ErrorState from '@/components/ErrorState'
 import Modal from '@/components/Modal'
 import { UI, formatTimeAgo, isListenerOnline } from '@/lib/constants'
-import { syncSessionRoleStates } from '@/lib/sessionState'
-import { getActiveBlock } from '@/lib/blocks'
+import { startDirectConnect } from '@/lib/directConnect'
+import { getMutedUserIds } from '@/lib/mutes'
 import type { Profile } from '@/lib/types/database'
 
 interface Listener {
@@ -85,7 +85,13 @@ export default function AvailableListeners({ onCountChange, currentUserId, curre
       if (error) throw error
 
       // Filter to active listeners only
-      const onlineListeners = (data || []).filter(isListenerOnline)
+      const activeListeners = (data || []).filter(isListenerOnline)
+
+      // Drop anyone muted-or-muting userId (see lib/mutes.ts) before doing
+      // any further work on this list — UX side of migration 050, the DB
+      // trigger is the real backstop if this list is stale.
+      const mutedIds = userId ? await getMutedUserIds(supabase, userId) : new Set<string>()
+      const onlineListeners = activeListeners.filter(l => !mutedIds.has(l.id))
 
       // Load favorites and shared session history
       let favIds = new Set<string>()
@@ -194,78 +200,19 @@ export default function AvailableListeners({ onCountChange, currentUserId, curre
         return
       }
 
-      // Check if user is blocked (lifted and expired blocks don't count)
-      const blockCheck = await getActiveBlock(supabase, user.id)
+      const result = await startDirectConnect(supabase, { seekerId: user.id, listenerId })
 
-      if (blockCheck) {
-        setBlockModal({ show: true, reason: blockCheck.reason ?? '' })
+      if (result.kind === 'blocked') {
+        setBlockModal({ show: true, reason: result.reason })
+        return
+      }
+      if (result.kind === 'error') {
+        console.error('Error creating session:', result.message)
+        setErrorModal({ show: true, message: result.message })
         return
       }
 
-      // Check for existing active session first
-      const { data: existingSession } = await supabase
-        .from('sessions')
-        .select('id')
-        .eq('seeker_id', user.id)
-        .eq('listener_id', listenerId)
-        .eq('status', 'active')
-        .maybeSingle()
-
-      if (existingSession) {
-        router.push(`/chat/${existingSession.id}`)
-        return
-      }
-
-      // Create a new session. accepted_at: null — this is a seeker-initiated
-      // direct connect, not yet accepted by the listener; the chat page gates
-      // messaging on it (see migration 036).
-      const { data: session, error } = await supabase
-        .from('sessions')
-        .insert([{ seeker_id: user.id, listener_id: listenerId, status: 'active', accepted_at: null }])
-        .select()
-        .single()
-
-      if (error || !session) {
-        // The DB enforces one active session per seeker — if we already have
-        // one (e.g. a listener answered our request moments ago), join it
-        // instead of surfacing an error
-        const { data: existing } = await supabase
-          .from('sessions')
-          .select('id')
-          .eq('seeker_id', user.id)
-          .eq('status', 'active')
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle()
-        if (existing) {
-          router.push(`/chat/${existing.id}`)
-          return
-        }
-        console.error('Error creating session:', error)
-        setErrorModal({ show: true, message: error?.message || 'An unexpected error occurred' })
-        return
-      }
-
-      // Notify the listener with a distinct "direct connect" push (fire-and-forget —
-      // shouldn't block navigation into the chat)
-      supabase.auth.getSession().then(({ data: { session: authSession } }) => {
-        if (!authSession) return
-        fetch('/api/notifications/send', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${authSession.access_token}`
-          },
-          body: JSON.stringify({ seekerId: user.id, targetListenerId: listenerId })
-        }).catch(() => {})
-      })
-
-      // Mark both users as offline while in chat — seeker leaves seeking list,
-      // listener becomes unavailable to other seekers until the session ends.
-      // Server-side: RLS blocks a client from writing the other person's row.
-      await syncSessionRoleStates(supabase, session.id, 'start')
-
-      router.push(`/chat/${session.id}`)
+      router.push(`/chat/${result.id}`)
     } catch (err) {
       console.error('Error connecting with listener:', err)
       setErrorModal({ show: true, message: err instanceof Error ? err.message : 'An unexpected error occurred' })

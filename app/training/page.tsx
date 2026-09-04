@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 import { errorMessage } from '@/lib/errors'
 import type { ListenerTrainingSectionId } from '@/lib/constants'
+import type { PrivateProfileFields } from '@/lib/types/database'
 import { useRouter } from 'next/navigation'
 import { Heading1, Body16, Body18 } from '@/components/ui/Typography'
 
@@ -145,13 +146,14 @@ export default function TrainingPage() {
 
       // Resume where they left off. Before this, closing the tab lost all eight
       // acknowledgements and the whole module had to be re-read.
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('listener_training_progress')
-        .eq('id', user.id)
+      // listener_training_progress has SELECT revoked for a plain client
+      // query, own row included (migration 040) — read it via the
+      // caller-scoped RPC instead.
+      const { data: privateProfile } = await supabase
+        .rpc('get_my_private_profile')
         .maybeSingle()
 
-      const saved = profile?.listener_training_progress
+      const saved = (privateProfile as PrivateProfileFields | null)?.listener_training_progress
       if (saved && typeof saved === 'object') {
         setAcknowledged(saved as Record<string, boolean>)
         // Open the first section they haven't acknowledged yet.

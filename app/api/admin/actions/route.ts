@@ -18,8 +18,7 @@ import {
 } from '@/lib/notificationQueue'
 import { isRateLimited } from '@/lib/rateLimit'
 import { endSessionRoleStates } from '@/lib/serverSessionState'
-
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+import { UUID_RE } from '@/lib/validation'
 
 const AUDIENCE_KEYS = BROADCAST_AUDIENCES.map((a) => a.key) as readonly string[]
 
@@ -278,6 +277,16 @@ export async function POST(request: NextRequest) {
         target_user_id: userId,
         details: { reason, block_type: blockType },
       }])
+
+      // Drop them out of the pool immediately — otherwise a blocked user who
+      // isn't in an active session (just sitting 'available' or
+      // 'requesting') stays visible and connectable until they happen to
+      // touch their own role_state again. Migration 041's trigger stops them
+      // from setting it back while blocked; this is what clears it now.
+      await supabase
+        .from('profiles')
+        .update({ role_state: 'offline', always_available: false })
+        .eq('id', userId)
 
       // End all active sessions for the blocked user
       const { data: endedSessions } = await supabase
@@ -655,6 +664,41 @@ export async function POST(request: NextRequest) {
       }])
 
       return NextResponse.json({ success: true })
+    }
+
+    if (action === 'list_users') {
+      // Full profiles rows for the admin user table — moved server-side
+      // because migration 040 revoked client-readable SELECT on most of
+      // these columns (email, phone_number, etc.); this route runs as
+      // service role, which the column revoke never touched.
+      const { data, error: listError } = await supabase
+        .from('profiles')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(200)
+
+      if (listError) throw listError
+      return NextResponse.json({ users: data || [] })
+    }
+
+    if (action === 'list_signups') {
+      const { rangeDays } = body as { rangeDays?: number | 'all' }
+
+      let query = supabase
+        .from('profiles')
+        .select('id, display_name, email, user_role, role_state, created_at, is_admin, referral_source, listener_training_completed_at')
+        .order('created_at', { ascending: false })
+        .limit(rangeDays === 'all' ? 1000 : 100)
+
+      if (rangeDays !== 'all' && typeof rangeDays === 'number') {
+        const since = new Date()
+        since.setDate(since.getDate() - rangeDays)
+        query = query.gte('created_at', since.toISOString())
+      }
+
+      const { data, error: signupsError } = await query
+      if (signupsError) throw signupsError
+      return NextResponse.json({ signups: data || [] })
     }
 
     return NextResponse.json({ error: 'Unknown action' }, { status: 400 })

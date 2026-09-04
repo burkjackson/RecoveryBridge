@@ -319,15 +319,16 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
     setError(null)
 
     try {
-      const { data, error: saveError } = await supabase
+      const { error: saveError } = await supabase
         .from('profiles')
         .update({ [field]: value })
         .eq('id', profile.id)
-        .select()
-        .single()
 
       if (saveError) throw saveError
-      if (onProfileUpdate && data) onProfileUpdate(data)
+      // announcement_/reengagement_notifications_enabled aren't client-readable
+      // back (migration 040) — merge what was just written instead of a
+      // round-trip select that would 403 on those columns.
+      if (onProfileUpdate) onProfileUpdate({ ...profile, [field]: value })
       setSuccessMessage('Notification preferences saved.')
       if (successTimerRef.current) clearTimeout(successTimerRef.current)
       successTimerRef.current = setTimeout(() => setSuccessMessage(null), 5000)
@@ -399,22 +400,25 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
     if (quietHoursMessageTimerRef.current) clearTimeout(quietHoursMessageTimerRef.current)
 
     try {
-      const { data, error } = await supabase
+      const quietHoursUpdate = {
+        quiet_hours_enabled: quietHoursEnabled,
+        quiet_hours_start: quietHoursStart,
+        quiet_hours_end: quietHoursEnd,
+        quiet_hours_timezone: quietHoursTimezone,
+      }
+
+      const { error } = await supabase
         .from('profiles')
-        .update({
-          quiet_hours_enabled: quietHoursEnabled,
-          quiet_hours_start: quietHoursStart,
-          quiet_hours_end: quietHoursEnd,
-          quiet_hours_timezone: quietHoursTimezone,
-        })
+        .update(quietHoursUpdate)
         .eq('id', profile.id)
-        .select()
-        .single()
 
       if (error) throw error
 
-      if (onProfileUpdate && data) {
-        onProfileUpdate(data)
+      // quiet_hours_* aren't client-readable back (migration 040) — merge
+      // what was just written instead of a round-trip select that would
+      // 403 on those columns.
+      if (onProfileUpdate) {
+        onProfileUpdate({ ...profile, ...quietHoursUpdate })
       }
 
       const savedText = quietHoursEnabled

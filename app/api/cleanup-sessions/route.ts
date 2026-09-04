@@ -4,6 +4,7 @@ import { TIME_MINUTES, TIME, OUTREACH_COPY, NOTIFICATION_COPY } from '@/lib/cons
 import { sendPushToUser } from '@/lib/serverPush'
 import { enqueueNotifications } from '@/lib/notificationQueue'
 import { endSessionRoleStates } from '@/lib/serverSessionState'
+import { isAuthorizedCronRequest } from '@/lib/cronAuth'
 import {
   seekersNeedingFollowUp,
   summariseSessions,
@@ -195,40 +196,18 @@ export async function POST(request: NextRequest) {
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     )
 
-    // Authentication: Allow either authenticated users OR secret key (for cron jobs)
-    const authHeader = request.headers.get('authorization')
-    const secretKey = request.headers.get('x-cleanup-secret')
-    const bearerToken = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null
-    // Vercel crons send `Authorization: Bearer ${CRON_SECRET}`; GitHub Actions and
-    // manual triggers send x-cleanup-secret. Accept either secret via either channel.
-    const cronSecrets = [process.env.CLEANUP_SECRET_KEY, process.env.CRON_SECRET].filter(Boolean)
-
-    // Check for secret key first (for cron jobs or manual triggers)
-    if (secretKey) {
-      if (cronSecrets.length === 0) {
-        return NextResponse.json({ error: 'Server misconfiguration' }, { status: 500 })
-      }
-      if (!cronSecrets.includes(secretKey)) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-      }
-    }
-    // Bearer token carrying a cron secret (Vercel cron invocations)
-    else if (bearerToken && cronSecrets.includes(bearerToken)) {
-      // Authorized as cron
-    }
-    // Otherwise require authentication (for dashboard-triggered cleanups)
-    else if (bearerToken) {
-      const { data: { user }, error: authError } = await supabase.auth.getUser(bearerToken)
-
-      if (authError || !user) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-      }
-    }
-    // No authentication provided
-    else {
-      return NextResponse.json({
-        error: 'Authentication required. Provide either Authorization header or x-cleanup-secret.'
-      }, { status: 401 })
+    // Cron-only. This used to also accept any signed-in user's bearer token —
+    // the dashboard called it on every page load — which meant any account
+    // could trigger a full sweep (every active session and its messages read,
+    // three profile UPDATEs, notice inserts, pushes) on demand, with no rate
+    // limit. The GitHub Actions cron (~15 min, see Known Issues on its actual
+    // cadence) and the Vercel daily backup are the only real callers now; the
+    // dashboard trigger was a leftover from before the cron was trusted to
+    // run reliably. x-cleanup-secret keeps working for the existing GitHub
+    // Actions workflow alongside the shared x-cron-secret/CRON_SECRET
+    // convention every other cron route uses (lib/cronAuth.ts).
+    if (!isAuthorizedCronRequest(request, 'x-cleanup-secret') && !isAuthorizedCronRequest(request)) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const isDev = process.env.NODE_ENV !== 'production'
@@ -260,7 +239,7 @@ export async function POST(request: NextRequest) {
     // Get all active sessions
     const { data: activeSessions, error: sessionsError } = await supabase
       .from('sessions')
-      .select('id, created_at, listener_id, seeker_id')
+      .select('id, created_at, listener_id, seeker_id, accepted_at')
       .eq('status', 'active')
 
     if (sessionsError) {
@@ -268,127 +247,108 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to fetch sessions' }, { status: 500 })
     }
 
-    if (!activeSessions || activeSessions.length === 0) {
-      if (isDev) console.log('No active sessions to clean up')
-      // Still reset stale seekers even when no sessions exist
-      const staleThreshold = new Date(Date.now() - TIME.SEEKER_STALE_REQUESTING_MS).toISOString()
-      const { data: staleRequesters } = await supabase
-        .from('profiles')
-        .update({ role_state: 'offline' })
-        .eq('role_state', 'requesting')
-        // `is.null` matters: a comparison against NULL is never true, so a
-        // profile stuck in 'requesting' with no heartbeat would never reset.
-        .or(`last_heartbeat_at.lt.${staleThreshold},last_heartbeat_at.is.null`)
-        // last_heartbeat_at must be selected even though only the id is used.
-        // PostgREST turns an UPDATE..RETURNING into a CTE and then re-applies
-        // the `or=` filter to it, so a column used in `.or()` but missing from
-        // `.select()` isn't in the CTE and Postgres raises 42703
-        // ("column profiles.last_heartbeat_at does not exist"). Plain `.eq()`
-        // filters are not re-applied this way — only `or=` is.
-        .select('id, last_heartbeat_at')
-      // Always run: the unanswered-session sweep inside has to work even when
-      // nobody is stuck in 'requesting', which is precisely the case for
-      // someone who was connected to a silent listener and left 'offline'.
-      await followUpMissedConnections(supabase, staleRequesters ?? [])
-      const availabilityReset = await resetStaleAvailability(supabase)
-      await notifyStaleAvailabilityReset(supabase, availabilityReset.ids)
-      return NextResponse.json({
-        success: true,
-        message: 'No sessions to clean up',
-        cleaned: 0,
-        staleSeekerReset: staleRequesters?.length ?? 0,
-        staleAvailabilityReset: availabilityReset.count,
-        staleAvailabilityError: availabilityReset.error,
-        blocksExpired: expiredBlocks?.length ?? 0
-      })
-    }
-
-    if (isDev) console.log(`Found ${activeSessions.length} active sessions`)
+    if (isDev) console.log(`Found ${activeSessions?.length ?? 0} active session(s)`)
 
     const now = new Date()
     const sessionsToClose: string[] = []
-    const participantsBySessionId = new Map<string, { listenerId: string; seekerId: string }>()
-    activeSessions.forEach(s => {
-      participantsBySessionId.set(s.id, { listenerId: s.listener_id, seekerId: s.seeker_id })
-    })
 
-    // Batch query: Get last message for ALL active sessions at once (fixes N+1 query)
-    const sessionIds = activeSessions.map(s => s.id)
-    const { data: allMessages } = await supabase
-      .from('messages')
-      .select('session_id, created_at')
-      .in('session_id', sessionIds)
-      .order('created_at', { ascending: false })
+    // Everything below this block always runs — the stale-requesting reset,
+    // the missed-connection follow-up, and the availability reset don't
+    // depend on there being any active sessions at all (that used to be a
+    // separate early-return path that duplicated all three calls; a session
+    // with nothing to close still needs the rest of the sweep).
+    if (activeSessions && activeSessions.length > 0) {
+      const participantsBySessionId = new Map<string, { listenerId: string; seekerId: string; acceptedAt: string | null }>()
+      activeSessions.forEach(s => {
+        participantsBySessionId.set(s.id, { listenerId: s.listener_id, seekerId: s.seeker_id, acceptedAt: s.accepted_at })
+      })
 
-    // Create a map of session_id to last message timestamp
-    const lastMessageMap = new Map<string, string>()
-    allMessages?.forEach(msg => {
-      if (!lastMessageMap.has(msg.session_id)) {
-        lastMessageMap.set(msg.session_id, msg.created_at)
-      }
-    })
+      // Batch query: Get last message for ALL active sessions at once (fixes N+1 query)
+      const sessionIds = activeSessions.map(s => s.id)
+      const { data: allMessages } = await supabase
+        .from('messages')
+        .select('session_id, created_at')
+        .in('session_id', sessionIds)
+        .order('created_at', { ascending: false })
 
-    // Check each session for cleanup criteria (with in-memory lookups)
-    for (const session of activeSessions) {
-      const lastMessageTimestamp = lastMessageMap.get(session.id)
+      // Create a map of session_id to last message timestamp
+      const lastMessageMap = new Map<string, string>()
+      allMessages?.forEach(msg => {
+        if (!lastMessageMap.has(msg.session_id)) {
+          lastMessageMap.set(msg.session_id, msg.created_at)
+        }
+      })
 
-      // Calculate time since last activity
-      const lastActivityTime = lastMessageTimestamp
-        ? new Date(lastMessageTimestamp)
-        : new Date(session.created_at)
+      // Check each session for cleanup criteria (with in-memory lookups)
+      for (const session of activeSessions) {
+        const lastMessageTimestamp = lastMessageMap.get(session.id)
 
-      const minutesSinceLastActivity = (now.getTime() - lastActivityTime.getTime()) / 1000 / 60
+        // Calculate time since last activity
+        const lastActivityTime = lastMessageTimestamp
+          ? new Date(lastMessageTimestamp)
+          : new Date(session.created_at)
 
-      // Close session if:
-      // 1. No messages and session is older than threshold (abandoned before chatting)
-      // 2. Last message exceeds inactivity threshold
-      const shouldClose = (!lastMessageTimestamp && minutesSinceLastActivity > TIME_MINUTES.CLEANUP_NO_MESSAGES) ||
-                          (lastMessageTimestamp && minutesSinceLastActivity > TIME_MINUTES.CLEANUP_INACTIVE)
+        const minutesSinceLastActivity = (now.getTime() - lastActivityTime.getTime()) / 1000 / 60
 
-      if (shouldClose) {
-        if (isDev) console.log(`Session ${session.id}: ${minutesSinceLastActivity.toFixed(1)} minutes inactive - will close`)
-        sessionsToClose.push(session.id)
-      }
-    }
+        // Close session if:
+        // 1. No messages and session is older than threshold (abandoned before chatting)
+        // 2. Last message exceeds inactivity threshold
+        const shouldClose = (!lastMessageTimestamp && minutesSinceLastActivity > TIME_MINUTES.CLEANUP_NO_MESSAGES) ||
+                            (lastMessageTimestamp && minutesSinceLastActivity > TIME_MINUTES.CLEANUP_INACTIVE)
 
-    // Close all stale sessions
-    if (sessionsToClose.length > 0) {
-      const { error: updateError } = await supabase
-        .from('sessions')
-        .update({
-          status: 'ended',
-          ended_at: now.toISOString()
-        })
-        .in('id', sessionsToClose)
-
-      if (updateError) {
-        console.error('Error closing sessions:', updateError)
-        return NextResponse.json({ error: 'Failed to close sessions' }, { status: 500 })
+        if (shouldClose) {
+          if (isDev) console.log(`Session ${session.id}: ${minutesSinceLastActivity.toFixed(1)} minutes inactive - will close`)
+          sessionsToClose.push(session.id)
+        }
       }
 
-      // Mirror the /api/sessions/state 'end' transition for each session this
-      // cron just closed: seeker -> offline, listener -> available. The cron
-      // is exactly the case that route was built to also cover but couldn't —
-      // there's no participant JWT to authenticate a cron tick with — so this
-      // does the same two-sided update directly with the service role.
-      // Best-effort and per-session isolated: one failure shouldn't block the
-      // rest of the sweep, and this cron already reports partial failures via
-      // the response body rather than a hard error.
-      await Promise.all(
-        sessionsToClose.map(async (id) => {
-          const participants = participantsBySessionId.get(id)
-          if (!participants) return
-          try {
-            await endSessionRoleStates(supabase, participants)
-          } catch (err) {
-            console.error(`[cleanup] Could not sync role_state for closed session ${id}:`, err)
-          }
-        })
-      )
+      // Close all stale sessions
+      if (sessionsToClose.length > 0) {
+        const { error: updateError } = await supabase
+          .from('sessions')
+          .update({
+            status: 'ended',
+            ended_at: now.toISOString()
+          })
+          .in('id', sessionsToClose)
 
-      if (isDev) console.log(`Closed ${sessionsToClose.length} stale session(s)`)
+        if (updateError) {
+          console.error('Error closing sessions:', updateError)
+          return NextResponse.json({ error: 'Failed to close sessions' }, { status: 500 })
+        }
+
+        // Mirror the /api/sessions/state 'end' transition for each session this
+        // cron just closed: seeker -> offline (or 'requesting' if the session
+        // was still pending), listener -> available. The cron is exactly the
+        // case that route was built to also cover but couldn't — there's no
+        // participant JWT to authenticate a cron tick with — so this does the
+        // same two-sided update directly with the service role. Best-effort
+        // and per-session isolated: one failure shouldn't block the rest of
+        // the sweep, and this cron already reports partial failures via the
+        // response body rather than a hard error.
+        await Promise.all(
+          sessionsToClose.map(async (id) => {
+            const participants = participantsBySessionId.get(id)
+            if (!participants) return
+            try {
+              // A direct-connect the listener never accepted within the cleanup
+              // window (comment 3 above the function this belongs to) — same
+              // "restore to requesting, not offline" rule as a declined/
+              // cancelled pending session. See wasAccepted's doc comment in
+              // serverSessionState.ts.
+              await endSessionRoleStates(supabase, participants, { wasAccepted: !!participants.acceptedAt })
+            } catch (err) {
+              console.error(`[cleanup] Could not sync role_state for closed session ${id}:`, err)
+            }
+          })
+        )
+
+        if (isDev) console.log(`Closed ${sessionsToClose.length} stale session(s)`)
+      } else {
+        if (isDev) console.log('No stale sessions found')
+      }
     } else {
-      if (isDev) console.log('No stale sessions found')
+      if (isDev) console.log('No active sessions to clean up')
     }
 
     // Reset stale 'requesting' role states — seekers who left without logging out.
