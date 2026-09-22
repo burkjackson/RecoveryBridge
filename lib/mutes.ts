@@ -22,6 +22,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 export async function getMutedUserIds(
   supabase: SupabaseClient,
   // Kept for call-site compatibility; the RPC always uses auth.uid().
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- see above
   _userId?: string
 ): Promise<Set<string>> {
   const { data, error } = await supabase.rpc('get_my_mute_counterparts')

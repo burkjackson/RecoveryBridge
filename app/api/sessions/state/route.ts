@@ -120,12 +120,13 @@ export async function POST(request: NextRequest) {
       // role_state doesn't apply here), or who is already in another live
       // session — moving them would pull them out of, or push strangers into,
       // a conversation that's actually happening.
-      const [listenerBlock, seekerBlock, listenerBusy, seekerBusy, seekerProfile] = await Promise.all([
+      const [listenerBlock, seekerBlock, listenerBusy, seekerBusy, seekerProfile, listenerProfile] = await Promise.all([
         getActiveBlock(supabase, session.listener_id),
         getActiveBlock(supabase, session.seeker_id),
         hasOtherActiveSession(supabase, session.listener_id, session.id),
         hasOtherActiveSession(supabase, session.seeker_id, session.id),
         supabase.from('profiles').select('role_state').eq('id', session.seeker_id).maybeSingle(),
+        supabase.from('profiles').select('last_heartbeat_at').eq('id', session.listener_id).maybeSingle(),
       ])
       // A seeker who has already asked for help again (e.g. "Find another
       // listener" in chat, or a fresh request from the dashboard) must not be
@@ -133,6 +134,16 @@ export async function POST(request: NextRequest) {
       // 'end' a few seconds later.
       const seekerRequeued =
         (seekerProfile.data as { role_state?: string } | null)?.role_state === 'requesting'
+      // Both clients call 'end' (the one who ended it, then the other side's
+      // tab when realtime tells it), so the second call is an echo. Restoring
+      // the listener stamps a fresh heartbeat, so a heartbeat at or after
+      // ended_at means that already happened. Doing it again would undo
+      // anything the listener did in between: most importantly signing out,
+      // which sets them offline and would otherwise be flipped straight back
+      // to 'available' by the seeker's tab a second later.
+      const listenerHeartbeat = (listenerProfile.data as { last_heartbeat_at?: string | null } | null)?.last_heartbeat_at
+      const listenerAlreadyRestored =
+        !!listenerHeartbeat && new Date(listenerHeartbeat).getTime() >= endedAtMs
 
       // A pending direct-connect that was declined ("Not now") or cancelled
       // ("Cancel request") ends with accepted_at still null — see
@@ -143,7 +154,7 @@ export async function POST(request: NextRequest) {
         listenerId: session.listener_id,
       }, {
         wasAccepted: !!session.accepted_at,
-        restoreListener: !listenerBlock && !listenerBusy,
+        restoreListener: !listenerBlock && !listenerBusy && !listenerAlreadyRestored,
         restoreSeeker: !seekerBlock && !seekerBusy && !seekerRequeued,
       })
     }

@@ -7,6 +7,7 @@ import { TIME, isListenerOnline } from '@/lib/constants'
 import { isRateLimited } from '@/lib/rateLimit'
 import { getActiveBlock } from '@/lib/blocks'
 import { getMutedUserIdsForUser } from '@/lib/mutes'
+import { isSubscriptionGone, PUSH_SEND_TIMEOUT_MS, SUPPORT_PUSH_TTL_SECONDS } from '@/lib/serverPush'
 // TODO: Re-enable when Twilio verification is complete
 // import { sendSMS } from '@/lib/sms'
 
@@ -150,7 +151,16 @@ export async function POST(request: NextRequest) {
         body: `${seekerName} chose to connect with you directly. Accept to start chatting.`,
         icon: '/icon-192.png',
         tag: `direct-connect-${seekerId}`,
-        data: { seekerId }
+        // Its own type, so the service worker doesn't treat it as a broadcast
+        // and swallow it whenever the listener has the app open on another
+        // page. The seeker here is 'offline', so they're in no list the
+        // listener could be looking at — the push is the only signal.
+        data: {
+          type: 'direct-connect',
+          seekerId,
+          sessionId: directSession.id,
+          url: `/chat/${directSession.id}`,
+        }
       })
 
       let pushCount = 0
@@ -159,14 +169,16 @@ export async function POST(request: NextRequest) {
         try {
           await webpush.sendNotification(sub.subscription, payload, {
             urgency: 'high',
-            TTL: 60,
+            TTL: SUPPORT_PUSH_TTL_SECONDS.directConnect,
+            timeout: PUSH_SEND_TIMEOUT_MS,
           })
           pushCount++
           pushSucceeded = true
         } catch (error: unknown) {
-          const statusCode = (error as { statusCode?: number })?.statusCode
-          if (statusCode && statusCode >= 400 && statusCode < 500) {
+          if (isSubscriptionGone(error)) {
             await supabase.from('push_subscriptions').delete().eq('id', sub.id)
+          } else {
+            console.error(`[notify] direct-connect push failed for sub ${sub.id}:`, (error as { statusCode?: number })?.statusCode)
           }
         }
       }))
@@ -330,7 +342,8 @@ export async function POST(request: NextRequest) {
         try {
           await webpush.sendNotification(sub.subscription, payload, {
             urgency: 'high',       // APNs priority 10 — deliver immediately
-            TTL: 60,               // Expire after 60s — stale support-request notifications aren't useful
+            TTL: SUPPORT_PUSH_TTL_SECONDS.broadcast, // see lib/serverPush.ts for why not 60s
+            timeout: PUSH_SEND_TIMEOUT_MS,
           })
           count++
           successUserIds.add(sub.user_id)
@@ -338,8 +351,8 @@ export async function POST(request: NextRequest) {
           const statusCode = (error as { statusCode?: number })?.statusCode
           const body = (error as { body?: string })?.body
           console.error(`[notify] Push failed for sub ${sub.id} (user ${sub.user_id?.slice(0,8)}): status=${statusCode} body=${body}`)
-          if (statusCode && statusCode >= 400 && statusCode < 500) {
-            console.log(`[notify] Removing invalid subscription ${sub.id}`)
+          if (isSubscriptionGone(error)) {
+            console.log(`[notify] Removing gone subscription ${sub.id}`)
             await supabase.from('push_subscriptions').delete().eq('id', sub.id)
           }
         }

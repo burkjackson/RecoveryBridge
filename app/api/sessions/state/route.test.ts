@@ -322,4 +322,44 @@ describe('POST /api/sessions/state', () => {
       { wasAccepted: true, restoreListener: true, restoreSeeker: false }
     )
   })
+
+  it('does not restore a listener a second time when the other side echoes the end', async () => {
+    const endedAt = new Date(Date.now() - 5 * 1000).toISOString()
+    const { client } = fakeSupabase({
+      authUser: { id: 'k1' },
+      tables: {
+        sessions: [
+          {
+            data: {
+              id: 's1',
+              listener_id: 'l1',
+              seeker_id: 'k1',
+              status: 'ended',
+              accepted_at: '2026-09-01T00:00:00Z',
+              ended_at: endedAt,
+            },
+            error: null,
+          },
+          { data: [], error: null },
+        ],
+        user_blocks: { data: null, error: null },
+        // First profiles read is the seeker's role_state, second the
+        // listener's heartbeat — already stamped by the first 'end' call.
+        profiles: [
+          { data: { role_state: 'offline' }, error: null },
+          { data: { last_heartbeat_at: new Date().toISOString() }, error: null },
+        ],
+      },
+    })
+    currentClient = client
+
+    const res = await POST(makeRequest({ sessionId: 's1', phase: 'end' }))
+
+    expect(res.status).toBe(200)
+    expect(endSessionRoleStatesMock).toHaveBeenCalledWith(
+      client,
+      { seekerId: 'k1', listenerId: 'l1' },
+      { wasAccepted: true, restoreListener: false, restoreSeeker: true }
+    )
+  })
 })

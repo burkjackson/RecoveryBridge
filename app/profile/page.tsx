@@ -14,6 +14,7 @@ import NotificationSettings from '@/components/NotificationSettings'
 import TagSelector from '@/components/TagSelector'
 import type { Profile, PrivateProfileFields, FavoriteWithProfile, ThankYouNoteWithSender } from '@/lib/types/database'
 import { normalizeFavorites } from '@/lib/favorites'
+import { signOutAndCleanUp } from '@/lib/signOut'
 
 // E.164 phone number validation (same as lib/sms.ts but client-safe)
 function isValidE164(phone: string): boolean {
@@ -387,7 +388,7 @@ export default function ProfilePage() {
   }
 
   async function handleSignOut() {
-    await supabase.auth.signOut()
+    await signOutAndCleanUp(supabase)
     router.push('/')
   }
 

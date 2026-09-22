@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import webpush from 'web-push'
 import { createClient } from '@supabase/supabase-js'
 import { isRateLimited } from '@/lib/rateLimit'
+import { isSubscriptionGone, PUSH_SEND_TIMEOUT_MS } from '@/lib/serverPush'
 
 // Notify the OTHER participant of an active chat session that a new message
 // arrived — but only if they aren't already looking at that chat.
@@ -178,12 +179,14 @@ export async function POST(request: NextRequest) {
         await webpush.sendNotification(sub.subscription, payload, {
           urgency: 'high',
           TTL: 600, // A chat reply stays relevant for a while, but not forever
+          timeout: PUSH_SEND_TIMEOUT_MS,
         })
         pushCount++
       } catch (error: unknown) {
-        const statusCode = (error as { statusCode?: number })?.statusCode
-        if (statusCode && statusCode >= 400 && statusCode < 500) {
+        if (isSubscriptionGone(error)) {
           await supabase.from('push_subscriptions').delete().eq('id', sub.id)
+        } else {
+          console.error(`[message-notify] push failed for sub ${sub.id}:`, (error as { statusCode?: number })?.statusCode)
         }
       }
     }))

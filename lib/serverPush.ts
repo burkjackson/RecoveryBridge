@@ -24,6 +24,33 @@ function ensureVapidConfigured(): boolean {
   return true
 }
 
+/**
+ * True only when the push service says the subscription no longer exists
+ * (404 Not Found / 410 Gone). Anything else — 429 throttling during a burst,
+ * 413, 400, or a 403 from a VAPID key mismatch between environments — is not
+ * proof the device is gone. Every send path used to delete on any 4xx, which
+ * quietly cut working listeners off from support requests; one misconfigured
+ * deploy returning 403 would have wiped every subscription at once.
+ */
+export function isSubscriptionGone(error: unknown): boolean {
+  const statusCode = (error as { statusCode?: number })?.statusCode
+  return statusCode === 404 || statusCode === 410
+}
+
+/** Give up on a single push endpoint after this long, so one hung push
+ *  service can't stall a whole route (they run with maxDuration=30). */
+export const PUSH_SEND_TIMEOUT_MS = 10 * 1000
+
+/** How long the push service should hold a support push for a phone that is
+ *  asleep or offline. This was 60s, so a phone dozing for a minute never got
+ *  the request at all — while a direct connect stays open for 10+ minutes and
+ *  a seeker stays 'requesting' for 30. Tapping a late one is safe: /connect
+ *  and the chat page both re-check the current state. */
+export const SUPPORT_PUSH_TTL_SECONDS = {
+  directConnect: 10 * 60,
+  broadcast: 15 * 60,
+} as const
+
 /** Whether the VAPID env vars needed to send anything are present. */
 export function isPushConfigured(): boolean {
   return ensureVapidConfigured()
@@ -84,8 +111,8 @@ export async function fetchSubscriptionsByUser(
 
 /**
  * Send one payload to an already-fetched set of subscriptions. Returns the
- * number of successful sends. Invalid subscriptions (4xx from the push service)
- * are deleted, mirroring the self-healing in the notify route.
+ * number of successful sends. Subscriptions the push service reports as gone
+ * (404/410) are deleted; other failures are logged and the row is kept.
  */
 export async function sendPushToSubscriptions(
   supabase: SupabaseClient,
@@ -106,12 +133,14 @@ export async function sendPushToSubscriptions(
           // These are gentle, non-time-critical messages; let the push service
           // hold them for a day so a closed device still gets them on wake.
           TTL: 24 * 60 * 60,
+          timeout: PUSH_SEND_TIMEOUT_MS,
         })
         count++
       } catch (error: unknown) {
-        const statusCode = (error as { statusCode?: number })?.statusCode
-        if (statusCode && statusCode >= 400 && statusCode < 500) {
+        if (isSubscriptionGone(error)) {
           await supabase.from('push_subscriptions').delete().eq('id', sub.id)
+        } else {
+          console.error(`[push] send failed for sub ${sub.id}:`, (error as { statusCode?: number })?.statusCode)
         }
       }
     })

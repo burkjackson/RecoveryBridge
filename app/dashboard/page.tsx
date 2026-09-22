@@ -20,6 +20,8 @@ import { syncSessionRoleStates } from '@/lib/sessionState'
 import { startDirectConnect } from '@/lib/directConnect'
 import { getMutedUserIds } from '@/lib/mutes'
 import ThemeToggle from '@/components/ThemeToggle'
+import { signOutAndCleanUp } from '@/lib/signOut'
+import { ensurePushSubscriptionSaved } from '@/lib/pushNotifications'
 
 // Shape of the session rows returned by the two queries below, which embed
 // both participants' profiles.
@@ -63,6 +65,15 @@ function DashboardContent() {
   useEffect(() => {
     profileRef.current = profile
   }, [profile])
+
+  // Re-save this device's push subscription if its server row is missing
+  // (after a sign-out on this device, or an endpoint rotation). Used to only
+  // run on Profile, so a listener who never opened Profile again stayed
+  // unreachable while their settings still said "Enabled".
+  useEffect(() => {
+    if (profile?.id) void ensurePushSubscriptionSaved(supabase, profile.id)
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- once per signed-in user; supabase is recreated each render here
+  }, [profile?.id])
 
   // Restore re-notification tracking state from sessionStorage on mount
   useEffect(() => {
@@ -554,9 +565,7 @@ function DashboardContent() {
   }
 
   async function handleSignOut() {
-    // End all active sessions before signing out
-    await endAllActiveSessions()
-    await supabase.auth.signOut()
+    await signOutAndCleanUp(supabase)
     router.push('/')
   }
 

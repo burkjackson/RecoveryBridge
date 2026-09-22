@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { Heading1, Body16, Body18 } from '@/components/ui/Typography'
 import Footer from '@/components/Footer'
+import { signOutAndCleanUp } from '@/lib/signOut'
 
 interface SessionFeedback {
   helpful: boolean | null
@@ -82,7 +83,7 @@ export default function HistoryPage() {
   }
 
   async function handleSignOut() {
-    await supabase.auth.signOut()
+    await signOutAndCleanUp(supabase)
     router.push('/')
   }
 

@@ -1,5 +1,7 @@
 // Push Notification Utilities for RecoveryBridge
 
+import type { SupabaseClient } from '@supabase/supabase-js'
+
 export interface PushSubscriptionData {
   endpoint: string
   keys: {
@@ -146,4 +148,46 @@ export function isIOSNeedsPWAInstall(): boolean {
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
   const isInStandaloneMode = ('standalone' in window.navigator) && (window.navigator as { standalone?: boolean }).standalone
   return isIOS && !isInStandaloneMode
+}
+
+/**
+ * Make sure this device's current push subscription is saved for `userId`.
+ *
+ * A device can hold a working local subscription while its server row is
+ * gone: signing out removes it (see lib/signOut.ts), the push service can
+ * rotate the endpoint, or an older one-device-per-account behavior deleted it.
+ * Without a row, nothing reaches the device, even though the Profile page
+ * still says "Enabled". Runs on the dashboard and on Profile. Insert only:
+ * never touches other devices' rows. Returns true if it saved a new row.
+ */
+export async function ensurePushSubscriptionSaved(
+  supabase: SupabaseClient,
+  userId: string
+): Promise<boolean> {
+  try {
+    if (!isPushNotificationSupported() || getNotificationPermission() !== 'granted') return false
+    const registration = await navigator.serviceWorker.ready
+    const subscription = await registration.pushManager.getSubscription()
+    if (!subscription) return false
+
+    const { data: existing, error } = await supabase
+      .from('push_subscriptions')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('subscription->>endpoint', subscription.endpoint)
+      .maybeSingle()
+    if (error || existing) return false
+
+    // If the legacy UNIQUE(user_id) constraint is still present this fails
+    // quietly (23505) rather than stealing another device's slot.
+    const keys = subscription.toJSON().keys
+    const { error: insertError } = await supabase.from('push_subscriptions').insert({
+      user_id: userId,
+      subscription: { endpoint: subscription.endpoint, keys },
+    })
+    return !insertError
+  } catch (error) {
+    console.error('Error checking push subscription:', error)
+    return false
+  }
 }
