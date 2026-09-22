@@ -141,6 +141,14 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   // Latest message timestamp, for the polling fallback's incremental fetch
   const lastMessageTimeRef = useRef<string | null>(null)
 
+  // The message poll's fetch, so a resume can run it immediately.
+  const catchUpMessagesRef = useRef<(() => Promise<void>) | null>(null)
+
+  // Inactivity bookkeeping (see the inactivity effect): when the check last
+  // ran, and when the warning went up in the foreground.
+  const lastInactivityTickRef = useRef(Date.now())
+  const inactivityWarningShownAtRef = useRef<number | null>(null)
+
   // Applies a fresh sessions row wherever one arrives from — the realtime
   // UPDATE subscription, or the pending-session poll below. Both need the
   // exact same side effects, so this is the one place that decides them: a
@@ -160,6 +168,38 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
       if (sessionId) void syncSessionRoleStates(supabase, sessionId, 'end')
     }
   }, [sessionId, supabase])
+
+  // Latest session row, for callbacks that outlive a render (event listeners,
+  // intervals) and must not compare against a stale copy.
+  const sessionRef = useRef<Session | null>(null)
+  useEffect(() => {
+    sessionRef.current = session
+  }, [session])
+
+  // Re-read the session row and apply it if anything changed. Realtime
+  // doesn't replay events missed while the socket was down, and iOS drops the
+  // socket whenever the PWA is backgrounded. Without this, a chat the other
+  // person ended while this phone was asleep stayed "live" forever on wake,
+  // and every send failed with a misleading "connection unstable" error.
+  const refreshSession = useCallback(async () => {
+    if (!sessionId) return
+    try {
+      const { data } = await supabase
+        .from('sessions')
+        .select('*')
+        .eq('id', sessionId)
+        .single()
+      const current = sessionRef.current
+      if (
+        data &&
+        (!current || data.status !== current.status || data.accepted_at !== current.accepted_at)
+      ) {
+        applySessionUpdate(data as Session)
+      }
+    } catch {
+      // Silent — the next poll or resume tries again
+    }
+  }, [sessionId, supabase, applySessionUpdate])
 
   useEffect(() => {
     params.then(({ id }) => setSessionId(id))
@@ -222,51 +262,46 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
       }
     }
 
+    catchUpMessagesRef.current = pollNewMessages
     const pollInterval = setInterval(pollNewMessages, 3000)
-    return () => clearInterval(pollInterval)
+    return () => {
+      clearInterval(pollInterval)
+      catchUpMessagesRef.current = null
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally keyed on session?.id, session?.status, currentUserId — adding the callbacks would tear down and rebuild this on every render
   }, [session?.id, session?.status, currentUserId])
 
-  // Session-row polling fallback while a direct connect is pending.
-  //
-  // loadSession() runs once on mount; after that the realtime UPDATE
-  // subscription is the only way this side learns the session row changed.
-  // That was fine when the row only carried status, but a direct connect now
-  // also carries accepted_at (migration 039), which gates the seeker's
-  // composer — see isPendingAcceptance below. A realtime event dropped the
-  // same way messages occasionally are (see the poll above) left a seeker on
-  // "Waiting for X to accept..." with no way to notice the listener had
-  // already accepted, unable to reply while the listener was already typing
-  // at them, until they refreshed the page by hand.
-  //
-  // Polls only while pending — status active, accepted_at still null — so an
-  // ordinary already-accepted conversation pays nothing for this.
+  // Session-row polling fallback. loadSession() runs once on mount; after
+  // that realtime is the fast path for status/accepted_at changes, and this
+  // catches whatever it drops. Every 3s while a direct connect is pending
+  // (accepted_at gates the seeker's composer, so a missed accept would strand
+  // them on "Waiting for X to accept..."), every 15s once the chat is live
+  // (so a missed "ended" is noticed within seconds, not never).
   useEffect(() => {
-    const isPending = session?.status === 'active' && !session?.accepted_at
-    if (!currentUserId || !sessionId || !isPending) return
-
-    async function pollSession() {
-      try {
-        const { data } = await supabase
-          .from('sessions')
-          .select('*')
-          .eq('id', sessionId)
-          .single()
-        if (
-          data &&
-          (data.accepted_at !== session?.accepted_at || data.status !== session?.status)
-        ) {
-          applySessionUpdate(data as Session)
-        }
-      } catch {
-        // Silent — realtime remains the primary delivery path
-      }
-    }
-
-    const pollInterval = setInterval(pollSession, 3000)
+    if (!currentUserId || !sessionId || session?.status !== 'active') return
+    const isPending = !session?.accepted_at
+    const pollInterval = setInterval(refreshSession, isPending ? 3000 : 15000)
     return () => clearInterval(pollInterval)
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally keyed on session?.status, session?.accepted_at, sessionId, currentUserId — adding applySessionUpdate would tear this down and rebuild it on every render
-  }, [session?.status, session?.accepted_at, sessionId, currentUserId])
+  }, [session?.status, session?.accepted_at, sessionId, currentUserId, refreshSession])
+
+  // Catch up the moment the phone wakes, the tab comes back, or the network
+  // returns, instead of waiting for the next poll tick.
+  useEffect(() => {
+    if (!sessionId) return
+    function resync() {
+      if (document.visibilityState !== 'visible') return
+      void refreshSession()
+      void catchUpMessagesRef.current?.()
+    }
+    document.addEventListener('visibilitychange', resync)
+    window.addEventListener('online', resync)
+    window.addEventListener('pageshow', resync)
+    return () => {
+      document.removeEventListener('visibilitychange', resync)
+      window.removeEventListener('online', resync)
+      window.removeEventListener('pageshow', resync)
+    }
+  }, [sessionId, refreshSession])
 
   // Keep the incremental-poll cursor on the newest message we have
   useEffect(() => {
@@ -323,13 +358,24 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   // Define callbacks BEFORE useEffects that use them
   const endSessionDueToInactivity = useCallback(async () => {
     try {
-      const { error } = await supabase
+      isEndingSession.current = true
+      const { data: endedRows, error } = await supabase
         .from('sessions')
         .update({ status: 'ended', ended_at: new Date().toISOString() })
         .eq('id', sessionId)
         .eq('status', 'active') // ended_at is frozen once ended (migration 054)
+        .select('id')
 
       if (error) throw error
+
+      // Nothing to end: the other side (or the cron) already did while this
+      // page wasn't looking. Show what actually happened instead.
+      if (!endedRows || endedRows.length === 0) {
+        isEndingSession.current = false
+        setInactivityModal(false)
+        await refreshSession()
+        return
+      }
 
       // Seeker goes offline; listener returns to available so they can take
       // more sessions. Server-side: RLS only lets a client write its own row,
@@ -342,37 +388,60 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
       setFeedbackModal(true)
     } catch (error) {
       console.error('Error ending session:', error)
+      isEndingSession.current = false
     }
-  }, [sessionId, supabase])
+  }, [sessionId, supabase, refreshSession])
 
   const dismissInactivityWarning = useCallback(() => {
     setInactivityModal(false)
     setLastActivityTime(Date.now()) // Reset timer
   }, [])
 
-  // Inactivity warning and auto-close
+  // Inactivity warning and auto-close.
+  //
+  // Two things this guards against. A pending direct connect has nothing to
+  // be inactive about (the cron times it out), and used to get "Are you still
+  // there?" and then a "was this helpful?" modal for a request nobody
+  // accepted. And iOS freezes timers while the phone sleeps: on wake, the
+  // first tick saw 20+ minutes of "inactivity" and closed a live chat before
+  // the message poll could even fetch the reply that came in meanwhile. A tick
+  // that arrives long after the last one is treated as a resume: catch up
+  // first, and at most show the warning. The chat only auto-closes after the
+  // warning has actually been on screen for the full grace period.
   useEffect(() => {
-    if (!session || session.status !== 'active') return
+    if (!session || session.status !== 'active' || !session.accepted_at) return
     // Only participants drive inactivity; an admin observing the live chat
     // must never auto-close the session just by leaving the tab open.
     if (currentUserId !== session.listener_id && currentUserId !== session.seeker_id) return
 
     const checkInactivity = setInterval(() => {
-      const timeSinceLastActivity = Date.now() - lastActivityTime
+      const now = Date.now()
+      const resumed = now - lastInactivityTickRef.current > TIME.INACTIVITY_CHECK_INTERVAL_MS * 2 + 30 * 1000
+      lastInactivityTickRef.current = now
 
-      // Show warning after 15 minutes of inactivity
-      if (timeSinceLastActivity >= inactivityWarningTime && !inactivityModal) {
-        setInactivityModal(true)
+      if (resumed) {
+        void refreshSession()
+        void catchUpMessagesRef.current?.()
       }
 
-      // Auto-close after 20 minutes total (15 min + 5 min warning)
-      if (timeSinceLastActivity >= inactivityWarningTime + autoCloseTime) {
+      const timeSinceLastActivity = now - lastActivityTime
+      if (timeSinceLastActivity < inactivityWarningTime) return
+
+      if (!inactivityModal || resumed) {
+        // (Re)start the grace period from when the warning is actually visible.
+        inactivityWarningShownAtRef.current = now
+        setInactivityModal(true)
+        return
+      }
+
+      const shownAt = inactivityWarningShownAtRef.current ?? now
+      if (now - shownAt >= autoCloseTime) {
         endSessionDueToInactivity()
       }
     }, TIME.INACTIVITY_CHECK_INTERVAL_MS)
 
     return () => clearInterval(checkInactivity)
-  }, [session, currentUserId, lastActivityTime, inactivityModal, inactivityWarningTime, autoCloseTime, endSessionDueToInactivity])
+  }, [session, currentUserId, lastActivityTime, inactivityModal, inactivityWarningTime, autoCloseTime, endSessionDueToInactivity, refreshSession])
 
   // Update activity on new messages
   useEffect(() => {
@@ -552,6 +621,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
       ? (currentUserId === session.listener_id ? session.seeker_id : session.listener_id)
       : null
 
+    let hasSubscribedOnce = false
     const channel = supabase.channel(`session-and-messages:${sessionId}`, {
       config: { presence: { key: currentUserId ?? '' } },
     })
@@ -577,11 +647,9 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
         (payload) => {
           const newMsg = payload.new as Record<string, unknown>
           if (newMsg.id && newMsg.sender_id && newMsg.content && newMsg.created_at) {
-            setMessages((current) => {
-              // Deduplicate: skip if message already exists
-              if (current.some((m) => m.id === newMsg.id)) return current
-              return [...current, newMsg as unknown as Message]
-            })
+            // Same dedupe-and-sort as the poll, so a message the poll already
+            // added can't end up out of order.
+            mergeMessages([newMsg as unknown as Message])
             // Clear typing indicator when a message arrives from the other user
             if (newMsg.sender_id !== currentUserId) {
               setIsOtherTyping(false)
@@ -658,9 +726,15 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
         }
       })
       .subscribe((status) => {
-        if (status === REALTIME_SUBSCRIBE_STATES.SUBSCRIBED && amParticipant) {
-          void channel.track({ online_at: new Date().toISOString() })
+        if (status !== REALTIME_SUBSCRIBE_STATES.SUBSCRIBED) return
+        if (amParticipant) void channel.track({ online_at: new Date().toISOString() })
+        // Every SUBSCRIBED after the first is a reconnect; anything that
+        // happened while the socket was down was not replayed.
+        if (hasSubscribedOnce) {
+          void refreshSession()
+          void catchUpMessagesRef.current?.()
         }
+        hasSubscribedOnce = true
       })
 
     channelRef.current = channel
@@ -789,6 +863,10 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
     } catch (error: unknown) {
       console.error('Error sending message:', error)
       setSendError(true)
+      // A send fails the messages RLS check once the session has ended. If
+      // that's why, this swaps the "connection unstable" error for the
+      // ended-conversation bar.
+      void refreshSession()
     } finally {
       setSending(false)
     }
@@ -810,6 +888,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
     } catch (error: unknown) {
       console.error('Error sending starter:', error)
       setSendError(true)
+      void refreshSession()
     } finally {
       setSending(false)
     }
@@ -936,13 +1015,24 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
     setPendingActionError(false)
     try {
       const acceptedAt = new Date().toISOString()
-      const { error } = await supabase
+      const { data: acceptedRows, error } = await supabase
         .from('sessions')
         .update({ accepted_at: acceptedAt })
         .eq('id', sessionId)
         .eq('listener_id', currentUserId)
+        .eq('status', 'active')
+        .is('accepted_at', null)
+        .select('id')
 
       if (error) throw error
+
+      // The request ended (seeker cancelled, or it timed out) a moment before
+      // the tap. Accepting it anyway used to take both people offline for a
+      // conversation that no longer exists. Show the real state instead.
+      if (!acceptedRows || acceptedRows.length === 0) {
+        await refreshSession()
+        return
+      }
       // Optimistic — the realtime session subscription will also deliver this.
       setSession((prev) => (prev ? { ...prev, accepted_at: acceptedAt } : prev))
 

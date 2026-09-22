@@ -54,13 +54,21 @@ async function followUpMissedConnections(
   }
 
   const endedSessions = endedRows ?? []
-  const messagesById = endedSessions.length > 0
-    ? (await supabase
-        .from('messages')
-        .select('session_id, sender_id')
-        .in('session_id', endedSessions.map((r) => r.id))
-      ).data ?? []
-    : []
+  let messagesById: { session_id: string; sender_id: string }[] = []
+  if (endedSessions.length > 0) {
+    const { data: messageRows, error: messagesError } = await supabase
+      .from('messages')
+      .select('session_id, sender_id')
+      .in('session_id', endedSessions.map((r) => r.id))
+    // With no message rows, every session looks unanswered, and people who
+    // did get a real conversation would be sent "sorry we couldn't connect
+    // you". Better to skip one round than send that.
+    if (messagesError) {
+      console.error('[cleanup] Could not read messages; sent no follow-ups:', messagesError)
+      return
+    }
+    messagesById = messageRows ?? []
+  }
 
   const summarised = summariseSessions(endedSessions, messagesById)
 
@@ -263,30 +271,40 @@ export async function POST(request: NextRequest) {
         participantsBySessionId.set(s.id, { listenerId: s.listener_id, seekerId: s.seeker_id, acceptedAt: s.accepted_at })
       })
 
-      // Batch query: Get last message for ALL active sessions at once (fixes N+1 query)
-      const sessionIds = activeSessions.map(s => s.id)
-      const { data: allMessages } = await supabase
-        .from('messages')
-        .select('session_id, created_at')
-        .in('session_id', sessionIds)
-        .order('created_at', { ascending: false })
+      // Newest message per active session. One small query each, in
+      // parallel: the old single query had no limit, so past PostgREST's
+      // 1,000-row cap a busy session's newest message could fall off the page
+      // and the session looked empty. And it ignored errors: one failed read
+      // made every session look empty, and every live chat older than 10
+      // minutes got closed mid-conversation.
+      const lastMessageResults = await Promise.all(
+        activeSessions.map(async (s) => {
+          const { data, error } = await supabase
+            .from('messages')
+            .select('created_at')
+            .eq('session_id', s.id)
+            .order('created_at', { ascending: false })
+            .limit(1)
+          return { id: s.id, error, lastAt: (data?.[0]?.created_at as string | undefined) ?? null }
+        })
+      )
 
-      // Create a map of session_id to last message timestamp
-      const lastMessageMap = new Map<string, string>()
-      allMessages?.forEach(msg => {
-        if (!lastMessageMap.has(msg.session_id)) {
-          lastMessageMap.set(msg.session_id, msg.created_at)
-        }
-      })
-
-      // Check each session for cleanup criteria (with in-memory lookups)
       for (const session of activeSessions) {
-        const lastMessageTimestamp = lastMessageMap.get(session.id)
+        const result = lastMessageResults.find((r) => r.id === session.id)
+        // Can't tell whether it's active, so leave it alone this round.
+        if (!result || result.error) {
+          console.error(`[cleanup] Could not read messages for session ${session.id}; not closing it this round`, result?.error)
+          continue
+        }
+        const lastMessageTimestamp = result.lastAt
 
-        // Calculate time since last activity
+        // Time since last activity. With no messages yet, the clock starts when
+        // the conversation actually opened: accepted_at for a direct connect.
+        // Counting from created_at closed a late-accepted chat on the very next
+        // tick, while the listener was typing their first message.
         const lastActivityTime = lastMessageTimestamp
           ? new Date(lastMessageTimestamp)
-          : new Date(session.created_at)
+          : new Date(session.accepted_at ?? session.created_at)
 
         const minutesSinceLastActivity = (now.getTime() - lastActivityTime.getTime()) / 1000 / 60
 
@@ -304,13 +322,19 @@ export async function POST(request: NextRequest) {
 
       // Close all stale sessions
       if (sessionsToClose.length > 0) {
-        const { error: updateError } = await supabase
+        // status='active' in the filter, and participants/accepted_at read
+        // back from what was actually closed: a session the chat page ended,
+        // or a listener accepted, between the read above and this write must
+        // not be closed again or synced from a stale snapshot.
+        const { data: closedRows, error: updateError } = await supabase
           .from('sessions')
           .update({
             status: 'ended',
             ended_at: now.toISOString()
           })
           .in('id', sessionsToClose)
+          .eq('status', 'active')
+          .select('id, listener_id, seeker_id, accepted_at')
 
         if (updateError) {
           console.error('Error closing sessions:', updateError)
@@ -326,8 +350,16 @@ export async function POST(request: NextRequest) {
         // and per-session isolated: one failure shouldn't block the rest of
         // the sweep, and this cron already reports partial failures via the
         // response body rather than a hard error.
+        for (const row of closedRows ?? []) {
+          participantsBySessionId.set(row.id, {
+            listenerId: row.listener_id,
+            seekerId: row.seeker_id,
+            acceptedAt: row.accepted_at,
+          })
+        }
+        const closedIds = (closedRows ?? []).map((r) => r.id as string)
         await Promise.all(
-          sessionsToClose.map(async (id) => {
+          closedIds.map(async (id) => {
             const participants = participantsBySessionId.get(id)
             if (!participants) return
             try {
