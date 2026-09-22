@@ -37,6 +37,28 @@ and only the listener may set `accepted_at`, once). Service-role callers
 (cron, server routes, SQL editor) are exempt; admins are not, since no
 admin path updates `sessions` from a browser JWT anyway.
 
+## Applied 22 Sep 2026
+
+### 053 — mute privacy
+
+050's SELECT policy on `user_mutes` let the muted side read the row, and
+`mute_on_report()` writes one per report (`muter_id` = reporter,
+`source = 'report'`), so a reported user could look up who reported them
+and for which session. Now a user can only SELECT mutes they created.
+`lib/mutes.ts` reads the two-way exclusion set through the new
+`get_my_mute_counterparts()` SECURITY DEFINER RPC, which returns bare ids
+with no direction or source. Server routes on the service role use
+`getMutedUserIdsForUser()` instead. `user_mutes` had 0 rows when applied.
+
+### 054 — freeze ended_at
+
+`protect_session_transitions()` (052) plus one rule: once a session is
+`ended`, a participant can't change its `ended_at`. `/api/sessions/state`
+now only honours `end` within 2 minutes of `ended_at`, and that window
+means nothing if a client can rewrite `ended_at` first. Every client path
+that ends a session now filters on `status = 'active'`, so none touch an
+already-ended row.
+
 ## Pending — not yet applied
 
 ### 050 — user-to-user muting

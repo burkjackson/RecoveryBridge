@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { REALTIME_SUBSCRIBE_STATES } from '@supabase/supabase-js'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { Body16, Body18 } from '@/components/ui/Typography'
@@ -9,7 +10,7 @@ import Modal from '@/components/Modal'
 import { SkeletonChatMessage } from '@/components/Skeleton'
 import ErrorState from '@/components/ErrorState'
 import { PrivacyBadge } from '@/components/Footer'
-import { TIME, VALIDATION, CONVERSATION_STARTERS, REACTIONS, containsCrisisLanguage, formatTimeAgo } from '@/lib/constants'
+import { TIME, VALIDATION, CONVERSATION_STARTERS, REACTIONS, NOTIFICATION, containsCrisisLanguage, formatTimeAgo } from '@/lib/constants'
 import { linkifyText } from '@/lib/linkify'
 import { syncSessionRoleStates } from '@/lib/sessionState'
 import { getActiveBlock } from '@/lib/blocks'
@@ -91,6 +92,20 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   // to rate, so this replaces the feedback modal with a short bar instead.
   const [pendingDeclined, setPendingDeclined] = useState(false)
 
+  // Presence of the other participant, via Realtime presence on the chat
+  // channel. Before this, nothing told a seeker their listener was gone: if
+  // the listener's phone died, the seeker could keep writing into silence
+  // indefinitely, and every message they sent reset the inactivity timers.
+  // otherSeen: the other person has been on this page at least once since it
+  // loaded (so we never warn before they've arrived). otherAwaySince: when
+  // they dropped off, or null while they're here.
+  const [otherSeen, setOtherSeen] = useState(false)
+  const [otherAwaySince, setOtherAwaySince] = useState<number | null>(null)
+  const [presenceTick, setPresenceTick] = useState(Date.now())
+  const [connectionWarningDismissedAt, setConnectionWarningDismissedAt] = useState<number | null>(null)
+  const [findingAnother, setFindingAnother] = useState(false)
+  const [findAnotherError, setFindAnotherError] = useState(false)
+
   // Inactivity tracking
   const [lastActivityTime, setLastActivityTime] = useState(Date.now())
   const inactivityWarningTime = TIME.INACTIVITY_WARNING_MS
@@ -169,6 +184,14 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally keyed on session?.id, currentUserId — adding the callbacks would tear down and rebuild this on every render
   }, [session?.id, currentUserId])
+
+  // Re-evaluate the "may have lost connection" warning while a live,
+  // accepted conversation is open. Cheap: it only bumps a timestamp.
+  useEffect(() => {
+    if (session?.status !== 'active' || !session?.accepted_at) return
+    const id = setInterval(() => setPresenceTick(Date.now()), 15 * 1000)
+    return () => clearInterval(id)
+  }, [session?.status, session?.accepted_at])
 
   // Polling fallback: realtime postgres_changes can silently drop INSERT
   // events (websocket hiccups, RLS payload filtering), and chat previously
@@ -304,6 +327,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
         .from('sessions')
         .update({ status: 'ended', ended_at: new Date().toISOString() })
         .eq('id', sessionId)
+        .eq('status', 'active') // ended_at is frozen once ended (migration 054)
 
       if (error) throw error
 
@@ -518,8 +542,30 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   }
 
   function subscribeToMessages() {
-    const channel = supabase
-      .channel(`session-and-messages:${sessionId}`)
+    // Only participants announce themselves, and only the counterpart's key
+    // counts as "the other person is here" — an admin observing the chat must
+    // not mask a listener who has dropped off.
+    const amParticipant =
+      !!session && !!currentUserId &&
+      (currentUserId === session.listener_id || currentUserId === session.seeker_id)
+    const otherId = session
+      ? (currentUserId === session.listener_id ? session.seeker_id : session.listener_id)
+      : null
+
+    const channel = supabase.channel(`session-and-messages:${sessionId}`, {
+      config: { presence: { key: currentUserId ?? '' } },
+    })
+    channel
+      .on('presence', { event: 'sync' }, () => {
+        if (!otherId) return
+        const present = Object.prototype.hasOwnProperty.call(channel.presenceState(), otherId)
+        if (present) {
+          setOtherSeen(true)
+          setOtherAwaySince(null)
+        } else {
+          setOtherAwaySince((prev) => prev ?? Date.now())
+        }
+      })
       .on(
         'postgres_changes',
         {
@@ -611,7 +657,11 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
           )
         }
       })
-      .subscribe()
+      .subscribe((status) => {
+        if (status === REALTIME_SUBSCRIBE_STATES.SUBSCRIBED && amParticipant) {
+          void channel.track({ online_at: new Date().toISOString() })
+        }
+      })
 
     channelRef.current = channel
 
@@ -765,6 +815,69 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
     }
   }
 
+  // Seeker-only escape hatch from the "may have lost connection" warning:
+  // end this conversation and go straight back to asking everyone, without
+  // having to find the dashboard button and re-request by hand.
+  async function findAnotherListener() {
+    if (!sessionId || !currentUserId) return
+    setFindingAnother(true)
+    setFindAnotherError(false)
+    try {
+      isEndingSession.current = true
+      const nowIso = new Date().toISOString()
+      const { error } = await supabase
+        .from('sessions')
+        .update({ status: 'ended', ended_at: nowIso })
+        .eq('id', sessionId)
+        .eq('status', 'active') // ended_at is frozen once ended (migration 054)
+      if (error) throw error
+
+      // Moves the listener back to available (and this seeker to offline)...
+      await syncSessionRoleStates(supabase, sessionId, 'end')
+
+      // ...then put this seeker back in the queue.
+      const { error: stateError } = await supabase
+        .from('profiles')
+        .update({ role_state: 'requesting', last_heartbeat_at: new Date().toISOString() })
+        .eq('id', currentUserId)
+      if (stateError) throw stateError
+
+      // Same bookkeeping the dashboard does after its own initial send, so
+      // its re-notify loop picks up from here instead of firing at once.
+      try {
+        sessionStorage.setItem(NOTIFICATION.STORAGE_KEY_LAST_NOTIFY, String(Date.now()))
+        sessionStorage.setItem(NOTIFICATION.STORAGE_KEY_NOTIFY_COUNT, '0')
+      } catch {
+        // sessionStorage may not be available
+      }
+
+      try {
+        const { data: { session: auth } } = await supabase.auth.getSession()
+        if (auth) {
+          await fetch('/api/notifications/send', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${auth.access_token}`,
+            },
+            body: JSON.stringify({ seekerId: currentUserId }),
+          })
+        }
+      } catch (notifyError) {
+        // Don't strand them here if the push fails; the dashboard's
+        // re-notify loop will try again.
+        console.error('Failed to notify listeners:', notifyError)
+      }
+
+      router.push('/dashboard')
+    } catch (error) {
+      console.error('Error finding another listener:', error)
+      isEndingSession.current = false
+      setFindingAnother(false)
+      setFindAnotherError(true)
+    }
+  }
+
   async function endSession() {
     setEndSessionConfirmModal(false)
     try {
@@ -773,6 +886,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
         .from('sessions')
         .update({ status: 'ended', ended_at: new Date().toISOString() })
         .eq('id', sessionId)
+        .eq('status', 'active') // ended_at is frozen once ended (migration 054)
 
       if (error) throw error
 
@@ -859,6 +973,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
         .from('sessions')
         .update({ status: 'ended', ended_at: new Date().toISOString() })
         .eq('id', sessionId)
+        .eq('status', 'active') // ended_at is frozen once ended (migration 054)
 
       if (error) throw error
       await syncSessionRoleStates(supabase, sessionId, 'end')
@@ -1097,6 +1212,37 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   // sides until this flips, so a seeker can't mistake "connected" for "answered".
   const isPendingAcceptance = session?.status === 'active' && !session?.accepted_at
   const isListenerViewer = !!currentUserId && currentUserId === session?.listener_id
+
+  // The composer (and the SOS button anchored to it) only renders for a live,
+  // accepted conversation. Everywhere else a participant can land — waiting
+  // for accept, declined, ended — the global floating crisis button is also
+  // hidden on /chat, so without a stand-in there was no crisis button at all.
+  const showComposer = session?.status === 'active' && isParticipant && !isPendingAcceptance
+
+  // "They may have lost connection": the other person was here and has been
+  // gone 90s+, or (seeker side) the seeker has been waiting 5+ minutes on a
+  // reply. "Keep waiting" snoozes it for 5 minutes.
+  const OTHER_AWAY_MS = 90 * 1000
+  const UNANSWERED_MS = 5 * 60 * 1000
+  const otherAwayTooLong =
+    otherSeen && otherAwaySince !== null && presenceTick - otherAwaySince > OTHER_AWAY_MS
+  let seekerUnanswered = false
+  if (showComposer && !isListenerViewer && session && !isOtherTyping) {
+    let lastListenerIdx = -1
+    for (let i = messages.length - 1; i >= 0; i--) {
+      if (messages[i].sender_id === session.listener_id) { lastListenerIdx = i; break }
+    }
+    const firstWaiting = messages
+      .slice(lastListenerIdx + 1)
+      .find((m) => m.sender_id === currentUserId)
+    if (firstWaiting && presenceTick - new Date(firstWaiting.created_at).getTime() > UNANSWERED_MS) {
+      seekerUnanswered = true
+    }
+  }
+  const showConnectionWarning =
+    showComposer &&
+    (otherAwayTooLong || seekerUnanswered) &&
+    (connectionWarningDismissedAt === null || presenceTick - connectionWarningDismissedAt > UNANSWERED_MS)
 
   return (
     <>
@@ -1433,6 +1579,69 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
           </div>
         )}
 
+        {/* The other person may be gone — see showConnectionWarning. */}
+        {showConnectionWarning && (
+          <div className="bg-amber-50 dark:bg-amber-900/20 border-t-2 border-amber-300 dark:border-amber-800 px-4 py-3" role="status">
+            <div className="max-w-4xl mx-auto text-sm text-amber-900 dark:text-amber-100">
+              {isListenerViewer ? (
+                <p>
+                  <span className="font-semibold">{otherUserName || 'They'} may have lost connection or stepped away.</span>{' '}
+                  You can wait for them to come back, or end the session when you&rsquo;re ready.
+                </p>
+              ) : (
+                <>
+                  <p className="font-semibold mb-1">
+                    {otherAwayTooLong
+                      ? `${otherUserName || 'Your listener'} may have lost connection.`
+                      : `${otherUserName || 'Your listener'} hasn't replied in a few minutes.`}
+                  </p>
+                  <p className="mb-2">
+                    You can keep waiting or find another listener. If you need someone right now, you can{' '}
+                    <a href="sms:988" className="underline font-bold">text</a> or <a href="tel:988" className="underline font-bold">call</a> 988, or text <strong>HOME</strong> to{' '}
+                    <a href="sms:741741?&body=HOME" className="underline font-bold">741741</a>.
+                  </p>
+                  {findAnotherError && (
+                    <p className="text-red-700 dark:text-red-300 mb-2">Something went wrong. Please try again.</p>
+                  )}
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      onClick={findAnotherListener}
+                      disabled={findingAnother}
+                      className="min-h-[44px] px-4 py-2 rounded-lg font-semibold bg-rb-blue text-white hover:bg-rb-blue-hover disabled:opacity-50 transition"
+                    >
+                      {findingAnother ? 'Finding someone...' : 'Find another listener'}
+                    </button>
+                    <button
+                      onClick={() => setConnectionWarningDismissedAt(Date.now())}
+                      disabled={findingAnother}
+                      className="min-h-[44px] px-4 py-2 rounded-lg font-semibold border border-amber-400 dark:border-amber-700 text-amber-900 dark:text-amber-100 hover:bg-amber-100 dark:hover:bg-amber-900/40 transition disabled:opacity-50"
+                    >
+                      Keep waiting
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* SOS stand-in for when the composer isn't mounted (pending, declined,
+            ended). Zero-height anchor so the button floats just above whichever
+            bottom bar is showing, same spot the composer's own SOS sits. */}
+        {isParticipant && !showComposer && (
+          <div className="relative h-0">
+            <button
+              type="button"
+              onClick={() => window.dispatchEvent(new Event('rb:open-crisis'))}
+              aria-label="Access crisis resources and emergency contacts"
+              className="absolute right-4 bottom-full mb-3 z-40 bg-red-600 hover:bg-red-700 text-white px-4 py-3 rounded-full shadow-lg font-semibold flex items-center gap-2"
+            >
+              <span className="text-xl" aria-hidden="true">🆘</span>
+              <span className="hidden sm:inline">Crisis Help</span>
+            </button>
+          </div>
+        )}
+
         {/* Ended-session bar.
             The composer below only renders while the session is active, so
             without this a participant who opens an already-ended conversation
@@ -1552,7 +1761,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
         )}
 
         {/* Message Input */}
-        {session?.status === 'active' && isParticipant && !isPendingAcceptance && (
+        {showComposer && (
           <div className="relative bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4">
             {/* SOS anchored to the input bar, in page flow — position:fixed
                 drifts mid-page in the iOS PWA when the keyboard pans the

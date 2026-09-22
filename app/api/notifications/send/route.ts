@@ -6,7 +6,7 @@ import { isInQuietHours } from '@/lib/timeWindows'
 import { TIME, isListenerOnline } from '@/lib/constants'
 import { isRateLimited } from '@/lib/rateLimit'
 import { getActiveBlock } from '@/lib/blocks'
-import { getMutedUserIds } from '@/lib/mutes'
+import { getMutedUserIdsForUser } from '@/lib/mutes'
 // TODO: Re-enable when Twilio verification is complete
 // import { sendSMS } from '@/lib/sms'
 
@@ -238,7 +238,14 @@ export async function POST(request: NextRequest) {
     // seeker (see lib/mutes.ts) — a broadcast never goes through session
     // creation, so this is the one filtering point that actually matters on
     // its own rather than just avoiding a dead-end click.
-    const mutedIds = await getMutedUserIds(supabase, seekerId)
+    // Fail open: a mute-lookup error must never stop a support request from
+    // going out. The session trigger still enforces the mute on connect.
+    let mutedIds = new Set<string>()
+    try {
+      mutedIds = await getMutedUserIdsForUser(supabase, seekerId)
+    } catch (e) {
+      console.error('[notify] mute lookup failed; sending without mute filter', e)
+    }
     const listeners = onlineListeners.filter((l) => !mutedIds.has(l.id))
 
     if (listeners.length === 0) {

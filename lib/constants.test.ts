@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import {
+  containsCrisisLanguage,
   formatTimeAgo,
+  normalizeForCrisisMatch,
   isHeartbeatStale,
   isListenerOnline,
   parseReferralSource,
@@ -152,5 +154,65 @@ describe('isListenerOnline', () => {
       })
     ).toBe(true)
     expect(isListenerOnline({ always_available: true, last_heartbeat_at: null })).toBe(true)
+  })
+})
+
+describe('containsCrisisLanguage', () => {
+  const shouldMatch = [
+    'I want to kill myself',
+    'I don’t want to be here anymore', // iOS curly apostrophe
+    "i don't want to be here anymore",
+    'i dont want to be here',
+    'kms',
+    'honestly kms lol',
+    'I want to be dead',
+    'I wish I was dead',
+    'i dont want to live anymore',
+    'there’s no point living',
+    "I don't want to wake up tomorrow",
+    'thinking about how to hang myself',
+    'gonna kill my self',
+    'I cut myself again last night',
+    'I keep cutting myself',
+    'I want to unalive myself',
+    "I can't do this anymore",
+    'I can’t go on',
+    'im going to od',
+    'I think I OD’d... going to OD again',
+    'I took all my pills',
+    'took too many pills',
+    'I overdosed last year and I feel close to it again',
+    'feeling suicidal',
+    'SUICIDE',
+    'self-harm',
+    'better off without me',
+    'end it all.',
+  ]
+
+  const shouldNotMatch = [
+    "that's odd",
+    'I want to diet',
+    'my rent is overdue',
+    'I killed it at work today',
+    'the dog died last year',
+    'watched a good episode',
+    'I dont want to be late',
+    'I cant go out tonight',
+    'how many days sober are you?',
+    '',
+  ]
+
+  it.each(shouldMatch)('flags %j', (text) => {
+    expect(containsCrisisLanguage(text)).toBe(true)
+  })
+
+  it.each(shouldNotMatch)('does not flag %j', (text) => {
+    expect(containsCrisisLanguage(text)).toBe(false)
+  })
+})
+
+describe('normalizeForCrisisMatch', () => {
+  it('folds curly apostrophes and strips punctuation', () => {
+    expect(normalizeForCrisisMatch('I Don’t  want—to be here!!')).toBe('i dont want to be here')
   })
 })

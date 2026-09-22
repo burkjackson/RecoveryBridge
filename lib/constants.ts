@@ -43,37 +43,66 @@ export function parseReferralSource(raw: string | null | undefined): ParsedRefer
   return { ...REFERRAL_SOURCE_LABELS.other, detail: raw }
 }
 
-/** Phrases that suggest a user may be in acute crisis. Matched word-by-word against
- *  message text to surface 988/crisis resources in chat. Intentionally high-recall —
- *  a false positive just shows supportive resources, which is low-harm. */
+/** Phrases that suggest a user may be in acute crisis. Used to surface
+ *  988/crisis resources in chat. Intentionally high-recall: a false positive
+ *  just shows supportive resources, which is low-harm, while a miss leaves
+ *  someone in crisis with nothing on screen.
+ *
+ *  Written in normalized form (see normalizeForCrisisMatch): lowercase, no
+ *  apostrophes ("dont", "cant", "im"), single spaces. Matched on word
+ *  boundaries, so "want to die" doesn't fire on "want to diet". A trailing
+ *  `*` matches any word ending ("suicid*" covers suicide/suicidal).
+ *  Add real phrasings to the tests in lib/constants.test.ts when you add here. */
 const CRISIS_PHRASES = [
-  'kill myself',
-  'killing myself',
-  'want to die',
-  'wanna die',
-  'end my life',
-  'ending my life',
-  'end it all',
-  'take my own life',
-  'suicidal',
-  'suicide',
-  'better off dead',
-  'no reason to live',
-  "don't want to be here anymore",
-  'dont want to be here anymore',
-  'hurt myself',
-  'harm myself',
-  'self harm',
-  'self-harm',
-  'overdose',
-  'wanna overdose',
+  // Suicidal intent
+  'kill myself', 'killing myself', 'kill my self', 'kms', 'kys',
+  'want to die', 'wanna die', 'wanting to die', 'ready to die',
+  'end my life', 'ending my life', 'end it all', 'ending it all',
+  'take my own life', 'take my life', 'suicid*', 'unalive*',
+  'better off dead', 'better off without me', 'rather be dead',
+  'wish i was dead', 'wish i were dead', 'want to be dead', 'wanna be dead',
+  'no reason to live', 'nothing to live for', 'no point living', 'no point in living',
+  'dont want to live', 'dont wanna live', 'dont want to be alive',
+  'dont want to be here', 'dont wanna be here', 'dont want to exist',
+  'dont want to wake up', 'tired of living', 'done with life',
+  'give up on life', 'giving up on life', 'want it all to end',
+  'cant go on', 'cannot go on', 'cant do this anymore', 'cant take it anymore',
+  // Methods
+  'hang myself', 'hanging myself', 'shoot myself', 'slit my wrists',
+  'jump off a bridge', 'jump off a building',
+  // Self-harm
+  'hurt myself', 'hurting myself', 'harm myself', 'self harm*',
+  'cut myself', 'cutting myself',
+  // Overdose (a recovery app hears this one more than most)
+  'overdos*', 'od', 'oding', 'going to od',
+  'all my pills', 'too many pills', 'bunch of pills', 'whole bottle',
 ]
 
-/** Returns true if the text contains language suggesting acute crisis. Case-insensitive,
- *  ignores surrounding punctuation. Used to surface crisis resources in chat. */
+/** Lowercase, fold curly quotes and strip apostrophes (so "don’t", "don't"
+ *  and "dont" all become "dont" — iOS types ’ by default, and the old
+ *  matcher missed every message typed that way), turn everything else that
+ *  isn't a letter or digit into a space, and collapse whitespace. */
+export function normalizeForCrisisMatch(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[\u2018\u2019\u02bc\u0060\u00b4]/g, "'")
+    .replace(/'/g, '')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
+}
+
+const CRISIS_PATTERN = new RegExp(
+  CRISIS_PHRASES.map((phrase) => {
+    const prefix = phrase.endsWith('*')
+    const words = (prefix ? phrase.slice(0, -1) : phrase).split(' ')
+    return `\\b${words.join(' ')}${prefix ? '[a-z]*' : ''}\\b`
+  }).join('|')
+)
+
+/** Returns true if the text contains language suggesting acute crisis.
+ *  Used to surface crisis resources in chat. */
 export function containsCrisisLanguage(text: string): boolean {
-  const normalized = text.toLowerCase().replace(/[^a-z\s']/g, ' ')
-  return CRISIS_PHRASES.some((phrase) => normalized.includes(phrase))
+  return CRISIS_PATTERN.test(normalizeForCrisisMatch(text))
 }
 
 // Time constants in milliseconds

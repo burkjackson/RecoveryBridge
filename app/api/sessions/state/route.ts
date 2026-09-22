@@ -1,7 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import { isRateLimited } from '@/lib/rateLimit'
 import { endSessionRoleStates } from '@/lib/serverSessionState'
+import { getActiveBlock } from '@/lib/blocks'
+
+/** How long after a session ends a participant may still call 'end' for it.
+ *  The client that ends a session calls this straight away, and the other
+ *  side's tab follows within seconds via realtime. Anything later is a stale
+ *  tab or a replay of an old session id, and must not move anyone. */
+const END_WINDOW_MS = 2 * 60 * 1000
 
 // Move BOTH participants' role_state when a session starts or ends.
 //
@@ -54,7 +61,7 @@ export async function POST(request: NextRequest) {
 
     const { data: session } = await supabase
       .from('sessions')
-      .select('id, listener_id, seeker_id, status, accepted_at')
+      .select('id, listener_id, seeker_id, status, accepted_at, ended_at')
       .eq('id', sessionId)
       .maybeSingle()
 
@@ -66,6 +73,12 @@ export async function POST(request: NextRequest) {
     }
 
     if (phase === 'start') {
+      // Only a live session can take anyone offline. Without this, anyone who
+      // ever shared a session with a listener could replay its id and knock
+      // that listener out of the pool whenever they liked.
+      if (session.status !== 'active') {
+        return NextResponse.json({ error: 'Session is not active' }, { status: 409 })
+      }
       // A still-pending direct connect (accepted_at null) only moves the
       // seeker — see Known Issue #35 (2 Sep 2026): a seeker's tap used to
       // take the listener 'offline' immediately, up to 10 minutes before
@@ -92,6 +105,35 @@ export async function POST(request: NextRequest) {
       if (session.status !== 'ended') {
         return NextResponse.json({ error: 'Session is still active' }, { status: 409 })
       }
+      // Only a session that just ended. An old session id replayed later used
+      // to put a blocked listener straight back into the pool, or flip a
+      // listener who'd since started another chat back to 'available'.
+      // ended_at is frozen once a session ends (migration 054), so a client
+      // can't refresh it to reopen this window.
+      const endedAtMs = session.ended_at ? new Date(session.ended_at).getTime() : NaN
+      if (!Number.isFinite(endedAtMs) || Date.now() - endedAtMs > END_WINDOW_MS) {
+        return NextResponse.json({ error: 'Session ended too long ago' }, { status: 409 })
+      }
+
+      // Never restore someone who is blocked (this route runs as the service
+      // role, so the 041 trigger that stops a blocked user setting their own
+      // role_state doesn't apply here), or who is already in another live
+      // session — moving them would pull them out of, or push strangers into,
+      // a conversation that's actually happening.
+      const [listenerBlock, seekerBlock, listenerBusy, seekerBusy, seekerProfile] = await Promise.all([
+        getActiveBlock(supabase, session.listener_id),
+        getActiveBlock(supabase, session.seeker_id),
+        hasOtherActiveSession(supabase, session.listener_id, session.id),
+        hasOtherActiveSession(supabase, session.seeker_id, session.id),
+        supabase.from('profiles').select('role_state').eq('id', session.seeker_id).maybeSingle(),
+      ])
+      // A seeker who has already asked for help again (e.g. "Find another
+      // listener" in chat, or a fresh request from the dashboard) must not be
+      // pulled back out of the queue when the other side's tab echoes this
+      // 'end' a few seconds later.
+      const seekerRequeued =
+        (seekerProfile.data as { role_state?: string } | null)?.role_state === 'requesting'
+
       // A pending direct-connect that was declined ("Not now") or cancelled
       // ("Cancel request") ends with accepted_at still null — see
       // wasAccepted's doc comment in serverSessionState.ts for why that
@@ -99,7 +141,11 @@ export async function POST(request: NextRequest) {
       await endSessionRoleStates(supabase, {
         seekerId: session.seeker_id,
         listenerId: session.listener_id,
-      }, { wasAccepted: !!session.accepted_at })
+      }, {
+        wasAccepted: !!session.accepted_at,
+        restoreListener: !listenerBlock && !listenerBusy,
+        restoreSeeker: !seekerBlock && !seekerBusy && !seekerRequeued,
+      })
     }
 
     return NextResponse.json({ success: true })
@@ -107,4 +153,21 @@ export async function POST(request: NextRequest) {
     console.error('Session state transition error:', error)
     return NextResponse.json({ error: 'Something went wrong.' }, { status: 500 })
   }
+}
+
+async function hasOtherActiveSession(
+  supabase: SupabaseClient,
+  userId: string,
+  excludeSessionId: string
+): Promise<boolean> {
+  const { data, error } = await supabase
+    .from('sessions')
+    .select('id')
+    .eq('status', 'active')
+    .neq('id', excludeSessionId)
+    .or(`listener_id.eq.${userId},seeker_id.eq.${userId}`)
+    .limit(1)
+  // Fail safe: if we can't tell, assume they're busy and leave them alone.
+  if (error) return true
+  return Array.isArray(data) && data.length > 0
 }

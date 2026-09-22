@@ -56,6 +56,11 @@ export async function syncSessionRoleStates(
 
         if (res.ok) return true
 
+        // 409 = the session isn't in a state this phase applies to (still
+        // active, already ended a while ago, or not live). Expected when the
+        // other side's tab echoes an 'end' late; nothing to report.
+        if (res.status === 409) return false
+
         lastDetail = `HTTP ${res.status}`
         // A 4xx is a decision (bad token, not a participant, session still
         // active), not a blip — retrying it changes nothing.

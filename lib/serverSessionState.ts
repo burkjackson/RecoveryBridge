@@ -9,6 +9,12 @@ interface EndTransitionOptions {
    */
   restoreListener?: boolean
   /**
+   * Skip touching the seeker's role_state entirely. Use this when the seeker
+   * is blocked or already in another active session, so a late or replayed
+   * 'end' can't move them. Defaults to true.
+   */
+  restoreSeeker?: boolean
+  /**
    * Whether this session ever got past the direct-connect pending stage
    * (session.accepted_at is set). Defaults to true, which keeps the original
    * seeker -> 'offline' behavior for every caller that doesn't pass this —
@@ -49,14 +55,15 @@ interface EndTransitionOptions {
 export async function endSessionRoleStates(
   supabase: SupabaseClient,
   { seekerId, listenerId }: { seekerId: string; listenerId: string },
-  { restoreListener = true, wasAccepted = true }: EndTransitionOptions = {}
+  { restoreListener = true, restoreSeeker = true, wasAccepted = true }: EndTransitionOptions = {}
 ): Promise<void> {
   const seekerUpdate = wasAccepted
     ? { role_state: 'offline' as const }
     : { role_state: 'requesting' as const, last_heartbeat_at: new Date().toISOString() }
-  const updates = [
-    supabase.from('profiles').update(seekerUpdate).eq('id', seekerId),
-  ]
+  const updates = []
+  if (restoreSeeker) {
+    updates.push(supabase.from('profiles').update(seekerUpdate).eq('id', seekerId))
+  }
   if (restoreListener) {
     updates.push(
       supabase
