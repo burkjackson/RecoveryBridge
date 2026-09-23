@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
     if (targetListenerId) {
       const { data: directSession } = await supabase
         .from('sessions')
-        .select('id')
+        .select('id, direct_connect_notified_at')
         .eq('seeker_id', seekerId)
         .eq('listener_id', targetListenerId)
         .eq('status', 'active')
@@ -125,6 +125,35 @@ export async function POST(request: NextRequest) {
 
       if (!directSession) {
         return NextResponse.json({ error: 'No active session with this listener' }, { status: 403 })
+      }
+
+      // Once per session (migration 057) — a retried or repeated call for a
+      // pending direct connect shouldn't re-page the listener every time.
+      if (directSession.direct_connect_notified_at) {
+        return NextResponse.json({
+          success: true,
+          message: 'Already notified for this session',
+          notified: 0,
+        })
+      }
+
+      // Claim it before sending, not after: if two calls race, only the one
+      // that actually flips this from null wins and sends. is('...', null)
+      // makes the update itself the compare-and-swap.
+      const { data: claimed } = await supabase
+        .from('sessions')
+        .update({ direct_connect_notified_at: new Date().toISOString() })
+        .eq('id', directSession.id)
+        .is('direct_connect_notified_at', null)
+        .select('id')
+        .maybeSingle()
+
+      if (!claimed) {
+        return NextResponse.json({
+          success: true,
+          message: 'Already notified for this session',
+          notified: 0,
+        })
       }
 
       const { data: listener } = await supabase

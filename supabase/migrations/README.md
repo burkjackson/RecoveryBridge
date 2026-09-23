@@ -70,6 +70,45 @@ trigger on `auth.users` keeps `profiles.email` in step with the account
 email. **Adding a client-editable column to `profiles` now means adding it
 to this grant.**
 
+## Applied 22 Sep 2026 (second pass)
+
+### 056 — crisis flag
+
+Adds `sessions.crisis_flagged_at`, set once by `POST
+/api/sessions/flag-crisis` (service role) the first time the server re-scans
+a session's actual messages and confirms `containsCrisisLanguage()` matches
+one. Extends `protect_session_transitions()` (052/054) to reject any client
+JWT trying to set or clear this column — only the service role may write it.
+Powers the 🆘 Crisis badge on admin's Sessions tab. See CLAUDE.md #62.
+
+### 057 — direct-connect notified once
+
+Adds `sessions.direct_connect_notified_at`. `/api/notifications/send`'s
+direct-connect branch now claims it with `.is('direct_connect_notified_at',
+null)` as an atomic compare-and-swap before sending, so a retried or
+repeated call for the same pending session can't re-page the listener.
+Same `protect_session_transitions()` extension as 056 — service-role-only.
+
+### 058 — feedback requires an accepted, ended session
+
+Redefines `session_feedback`'s INSERT policy to add `session_id in (select
+id from sessions where status = 'ended' and accepted_at is not null)` to the
+existing `WITH CHECK`. Closes the gap behind `#34`'s `pendingDeclined` UI fix
+— the database itself never enforced "only rate a conversation that actually
+happened," just the client.
+
+### 059 — hide is_admin
+
+Revokes `SELECT (is_admin)` on `profiles` from anon and authenticated —
+migration 040's column-by-column grant-back mistakenly included it, so any
+signed-in user could read whether an arbitrary profile was an admin. Adds
+`get_my_admin_status()` (SECURITY DEFINER, `auth.uid()`-scoped) for the
+handful of places that need the caller's own value:  `middleware.ts`'s
+`/admin` gate, the admin page's own re-check, and the "Admin" badge on
+`/profile` and `/dashboard`. **A future admin-only or otherwise sensitive
+column needs the same treatment — check `information_schema.column_privileges`
+before assuming a column isn't client-readable.**
+
 ## Pending — not yet applied
 
 ### 050 — user-to-user muting

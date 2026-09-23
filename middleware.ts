@@ -74,15 +74,14 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/signup', request.url))
   }
 
-  // Admin routes additionally require is_admin = true
+  // Admin routes additionally require is_admin = true. is_admin isn't a
+  // client-SELECT-able column anymore (migration 059 — it let anyone read
+  // whether an arbitrary profile was an admin), so this goes through the
+  // get_my_admin_status() RPC, which only ever answers for the caller.
   if (pathname.startsWith('/admin') && user) {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('is_admin')
-      .eq('id', user.id)
-      .single()
+    const { data: isAdmin } = await supabase.rpc('get_my_admin_status')
 
-    if (!profile?.is_admin) {
+    if (!isAdmin) {
       return NextResponse.redirect(new URL('/dashboard', request.url))
     }
   }

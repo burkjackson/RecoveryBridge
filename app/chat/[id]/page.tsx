@@ -10,7 +10,7 @@ import Modal from '@/components/Modal'
 import { SkeletonChatMessage } from '@/components/Skeleton'
 import ErrorState from '@/components/ErrorState'
 import { PrivacyBadge } from '@/components/Footer'
-import { TIME, VALIDATION, CONVERSATION_STARTERS, REACTIONS, NOTIFICATION, containsCrisisLanguage, formatTimeAgo } from '@/lib/constants'
+import { TIME, VALIDATION, CONVERSATION_STARTERS, REACTIONS, NOTIFICATION, containsCrisisLanguage, CRISIS_RESOURCE_SHARE_MESSAGE, formatTimeAgo } from '@/lib/constants'
 import { linkifyText } from '@/lib/linkify'
 import { syncSessionRoleStates } from '@/lib/sessionState'
 import { getActiveBlock } from '@/lib/blocks'
@@ -123,6 +123,9 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   // Crisis safety net: id of the most recent crisis-language message the user dismissed.
   // A newer crisis message re-shows the banner.
   const [dismissedCrisisMsgId, setDismissedCrisisMsgId] = useState<string | null>(null)
+  // Guards the server-side crisis flag call (see the effect below) so it
+  // fires once per session per client, not once per render.
+  const crisisFlagSentRef = useRef(false)
   const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const longPressFiredRef = useRef(false)
 
@@ -813,6 +816,9 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   // the message got marked read. That check is the reliable one; the service
   // worker's visibility check is a fast path that iOS doesn't always honour.
   async function notifyRecipient(messageId?: string) {
+    // The server now requires a real message id (review item #24) — without
+    // one there's nothing to push about.
+    if (!messageId) return
     try {
       const { data: { session: authSession } } = await supabase.auth.getSession()
       const token = authSession?.access_token
@@ -1252,10 +1258,37 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
     () => [...messages].reverse().find((m) => containsCrisisLanguage(m.content)),
     [messages]
   )
+  // Deliberately NOT gated on session.status — a crisis message doesn't stop
+  // mattering because the chat ended. Stays up through the declined/ended
+  // states too, until dismissed.
   const showCrisisBanner =
-    session?.status === 'active' &&
     !!latestCrisisMessage &&
     latestCrisisMessage.id !== dismissedCrisisMsgId
+
+  // Tell the server once this client's own detector has flagged the
+  // conversation, so admin can see it (migration 056). Re-scans server-side
+  // before writing anything — see app/api/sessions/flag-crisis/route.ts.
+  // Must stay above the `loading` return below for the same hooks-ordering
+  // reason as the useMemo above it.
+  useEffect(() => {
+    if (!latestCrisisMessage || !currentUserId || !sessionId) return
+    if (crisisFlagSentRef.current) return
+    crisisFlagSentRef.current = true
+    ;(async () => {
+      try {
+        const { data: { session: authSession } } = await supabase.auth.getSession()
+        const token = authSession?.access_token
+        if (!token) return
+        await fetch('/api/sessions/flag-crisis', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ sessionId }),
+        })
+      } catch (error) {
+        console.error('Error flagging crisis session:', error)
+      }
+    })()
+  }, [latestCrisisMessage, currentUserId, sessionId, supabase])
 
   if (loading) {
     return (
@@ -1643,20 +1676,44 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
         </div>
 
         {/* Crisis Scope Notice */}
-        {/* Crisis safety net — surfaces when crisis language is detected in the conversation */}
+        {/* Crisis safety net — surfaces when crisis language is detected in the conversation.
+            Listener sees their own guidance; the seeker sees the resources directly. */}
         {showCrisisBanner && (
           <div className="bg-red-50 dark:bg-red-900/20 border-t-2 border-red-300 dark:border-red-800 px-4 py-3" role="alert">
             <div className="max-w-4xl mx-auto flex items-start gap-3">
               <span className="text-xl shrink-0" aria-hidden="true">🆘</span>
               <div className="flex-1 text-sm text-red-900 dark:text-red-200">
-                <p className="font-semibold mb-1">It sounds like things may be really hard right now. You don't have to face this alone.</p>
-                <p>
-                  Reach a trained counselor 24/7:{' '}
-                  <a href="sms:988" className="underline font-bold">text</a> or <a href="tel:988" className="underline font-bold">call</a> 988,{' '}
-                  text <strong>HOME</strong> to{' '}
-                  <a href="sms:741741?&body=HOME" className="underline font-bold">741741</a>, or{' '}
-                  <a href="tel:911" className="underline font-bold">call 911</a> in immediate danger.
-                </p>
+                {isListenerViewer ? (
+                  <>
+                    <p className="font-semibold mb-1">{otherUserName} may be in crisis.</p>
+                    <p className="mb-2">
+                      Stay present and let them keep talking — you don&rsquo;t need to diagnose or fix anything. Make sure
+                      they have 988 (call or text) and 741741 (text HOME) in front of them, and if there&rsquo;s immediate
+                      danger, encourage them to call 911 or go to an ER. This is peer support, not crisis intervention —
+                      it&rsquo;s okay to lean on these resources yourself.
+                    </p>
+                    {showComposer && (
+                      <button
+                        onClick={() => sendStarter(CRISIS_RESOURCE_SHARE_MESSAGE)}
+                        disabled={sending}
+                        className="text-xs font-semibold px-3 py-2 min-h-[36px] bg-red-100 dark:bg-red-900/40 hover:bg-red-200 dark:hover:bg-red-900/60 border border-red-300 dark:border-red-700 rounded-lg transition-all disabled:opacity-50"
+                      >
+                        Send them 988 &amp; 741741
+                      </button>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <p className="font-semibold mb-1">It sounds like things may be really hard right now. You don't have to face this alone.</p>
+                    <p>
+                      Reach a trained counselor 24/7:{' '}
+                      <a href="sms:988" className="underline font-bold">text</a> or <a href="tel:988" className="underline font-bold">call</a> 988,{' '}
+                      text <strong>HOME</strong> to{' '}
+                      <a href="sms:741741?&body=HOME" className="underline font-bold">741741</a>, or{' '}
+                      <a href="tel:911" className="underline font-bold">call 911</a> in immediate danger.
+                    </p>
+                  </>
+                )}
               </div>
               <button
                 onClick={() => setDismissedCrisisMsgId(latestCrisisMessage!.id)}
@@ -2101,6 +2158,13 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
           <p className="text-gray-700 mb-2">
             Are you sure you want to end this conversation?
           </p>
+          {showCrisisBanner && isListenerViewer && (
+            <p className="text-sm font-semibold text-red-700 bg-red-50 border border-red-200 rounded-lg p-3 mb-2">
+              {otherUserName} may be in crisis. The 988 and 741741 resources will stay on screen after you
+              end, but if this feels urgent, consider staying a bit longer or making sure they have those
+              numbers first.
+            </p>
+          )}
           <p className="text-sm text-gray-500">
             You&apos;ll have a chance to leave feedback after ending.
           </p>

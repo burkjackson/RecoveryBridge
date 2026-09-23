@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { Heading1, Body16, Body18 } from '@/components/ui/Typography'
@@ -42,6 +42,7 @@ interface Session {
   seeker_id: string
   status: string
   created_at: string
+  crisis_flagged_at: string | null
   listener?: { display_name: string }
   seeker?: { display_name: string }
 }
@@ -122,6 +123,15 @@ export default function AdminPage() {
 
   const router = useRouter()
   const supabase = createClient()
+  // subscribeToUpdates()'s realtime handlers read this instead of `activeTab`
+  // directly, so the subscription itself can be set up once (see the effect
+  // below) instead of torn down and rebuilt — with the cleanup function
+  // never actually wired to anything — on every tab switch.
+  const activeTabRef = useRef(activeTab)
+
+  useEffect(() => {
+    activeTabRef.current = activeTab
+  }, [activeTab])
 
   useEffect(() => {
     checkAdminAccess()
@@ -133,13 +143,21 @@ export default function AdminPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once on mount; the loaders it calls are stable for the life of the component
   }, [])
 
+  // Fires loadData() (which itself reads activeTab) on every tab switch, but
+  // the realtime subscription is opened once per admin session and properly
+  // torn down on unmount — previously this ran subscribeToUpdates() again on
+  // every activeTab change and discarded the teardown function each time,
+  // leaking one open channel per tab switch for the life of the page.
   useEffect(() => {
-    if (isAdmin) {
-      loadData()
-      subscribeToUpdates()
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally keyed on isAdmin, activeTab — adding the callbacks would tear down and rebuild this on every render
+    if (isAdmin) loadData()
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally keyed on isAdmin, activeTab — adding loadData would tear down and rebuild this on every render
   }, [isAdmin, activeTab])
+
+  useEffect(() => {
+    if (!isAdmin) return
+    return subscribeToUpdates()
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- subscribe once per admin session; handlers read activeTabRef, not activeTab, so they don't need a resubscribe
+  }, [isAdmin])
 
   // Reload sign-ups when the date range changes (avoids re-subscribing).
   useEffect(() => {
@@ -284,13 +302,12 @@ export default function AdminPage() {
       //
       // TODO: Consider moving admin operations to server-side API routes with
       // proper authentication middleware for defense-in-depth security.
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('is_admin')
-        .eq('id', user.id)
-        .single()
+      // is_admin isn't client-SELECT-able anymore (migration 059), so this
+      // goes through get_my_admin_status(), which only ever answers for
+      // the caller — same reasoning as middleware.ts's own gate above.
+      const { data: isAdmin } = await supabase.rpc('get_my_admin_status')
 
-      if (!profile?.is_admin) {
+      if (!isAdmin) {
         router.push('/dashboard')
         return
       }
@@ -466,27 +483,27 @@ export default function AdminPage() {
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'reports' },
-        () => { if (activeTab === 'reports') loadReports() }
+        () => { if (activeTabRef.current === 'reports') loadReports() }
       )
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'user_blocks' },
-        () => { if (activeTab === 'blocks') loadBlocks() }
+        () => { if (activeTabRef.current === 'blocks') loadBlocks() }
       )
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'sessions' },
-        () => { if (activeTab === 'sessions') loadSessions() }
+        () => { if (activeTabRef.current === 'sessions') loadSessions() }
       )
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'profiles' },
-        () => { if (activeTab === 'signups') loadSignups() }
+        () => { if (activeTabRef.current === 'signups') loadSignups() }
       )
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'user_notices' },
-        () => { if (activeTab === 'missed') loadMissedConnections() }
+        () => { if (activeTabRef.current === 'missed') loadMissedConnections() }
       )
       .subscribe()
 
@@ -1063,11 +1080,21 @@ export default function AdminPage() {
                       <Body16 className="dark:text-gray-100">
                         <strong>{session.listener?.display_name || 'Unknown'}</strong> ↔ <strong>{session.seeker?.display_name || 'Unknown'}</strong>
                       </Body16>
-                      <span className={`px-3 py-1 rounded-full text-xs ${
-                        session.status === 'active' ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300' : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300'
-                      }`}>
-                        {session.status}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        {session.crisis_flagged_at && (
+                          <span
+                            className="px-3 py-1 rounded-full text-xs bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 font-semibold"
+                            title={`Crisis language detected in this conversation (${new Date(session.crisis_flagged_at).toLocaleString()})`}
+                          >
+                            🆘 Crisis
+                          </span>
+                        )}
+                        <span className={`px-3 py-1 rounded-full text-xs ${
+                          session.status === 'active' ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300' : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300'
+                        }`}>
+                          {session.status}
+                        </span>
+                      </div>
                     </div>
                     <Body16 className="text-sm text-rb-gray dark:text-gray-300 mb-2">
                       Started: {new Date(session.created_at).toLocaleString()}

@@ -58,6 +58,11 @@ function DashboardContent() {
   const searchParams = useSearchParams()
   const lastNotifyTimestampRef = useRef<number>(0)
   const notifyCountRef = useRef<number>(0)
+  // Mirrors notifyCountRef >= MAX_RENOTIFY_COUNT in state so the "Finding you
+  // a listener" card can actually re-render once re-notifies run out — the
+  // ref alone never triggers a render. See the "Usually under 2 minutes"
+  // copy below, which used to stay up forever (review item #21).
+  const [renotifiesExhausted, setRenotifiesExhausted] = useState(false)
   const router = useRouter()
   const supabase = createClient()
 
@@ -81,7 +86,10 @@ function DashboardContent() {
       const storedTs = sessionStorage.getItem(NOTIFICATION.STORAGE_KEY_LAST_NOTIFY)
       const storedCount = sessionStorage.getItem(NOTIFICATION.STORAGE_KEY_NOTIFY_COUNT)
       if (storedTs) lastNotifyTimestampRef.current = parseInt(storedTs, 10)
-      if (storedCount) notifyCountRef.current = parseInt(storedCount, 10)
+      if (storedCount) {
+        notifyCountRef.current = parseInt(storedCount, 10)
+        setRenotifiesExhausted(notifyCountRef.current >= NOTIFICATION.MAX_RENOTIFY_COUNT)
+      }
     } catch {
       // sessionStorage may not be available
     }
@@ -325,6 +333,7 @@ function DashboardContent() {
       // Update tracking state
       lastNotifyTimestampRef.current = now
       notifyCountRef.current += 1
+      if (notifyCountRef.current >= NOTIFICATION.MAX_RENOTIFY_COUNT) setRenotifiesExhausted(true)
 
       // Persist to sessionStorage
       try {
@@ -358,14 +367,17 @@ function DashboardContent() {
       // Sensitive columns have SELECT revoked for a plain client query
       // (migration 040); NotificationSettings below needs quiet hours and
       // the two notification-category flags, so pull those from
-      // get_my_private_profile() and merge.
-      const [{ data: publicData, error: publicError }, { data: privateData, error: privateError }, block] = await Promise.all([
+      // get_my_private_profile() and merge. is_admin is separately
+      // not-client-readable at all (migration 059) — get_my_admin_status()
+      // is the only way to learn the caller's own value.
+      const [{ data: publicData, error: publicError }, { data: privateData, error: privateError }, { data: isAdmin }, block] = await Promise.all([
         supabase
           .from('profiles')
-          .select('id, display_name, bio, tagline, role_state, tags, avatar_url, user_role, is_admin, last_heartbeat_at, always_available, listener_training_completed_at, created_at, updated_at')
+          .select('id, display_name, bio, tagline, role_state, tags, avatar_url, user_role, last_heartbeat_at, always_available, listener_training_completed_at, created_at, updated_at')
           .eq('id', user.id)
           .single(),
         supabase.rpc('get_my_private_profile').single(),
+        supabase.rpc('get_my_admin_status'),
         getActiveBlock(supabase, user.id),
       ])
 
@@ -374,6 +386,7 @@ function DashboardContent() {
       setProfile({
         ...publicData,
         ...(privateData as PrivateProfileFields | null),
+        is_admin: !!isAdmin,
         email: user.email,
       } as Profile)
       // A blocked user still sees the dashboard (it's the only place to go),
@@ -636,6 +649,7 @@ function DashboardContent() {
       if (newState !== 'requesting') {
         lastNotifyTimestampRef.current = 0
         notifyCountRef.current = 0
+        setRenotifiesExhausted(false)
         try {
           sessionStorage.removeItem(NOTIFICATION.STORAGE_KEY_LAST_NOTIFY)
           sessionStorage.removeItem(NOTIFICATION.STORAGE_KEY_NOTIFY_COUNT)
@@ -669,6 +683,7 @@ function DashboardContent() {
           const now = Date.now()
           lastNotifyTimestampRef.current = now
           notifyCountRef.current = 0
+          setRenotifiesExhausted(false)
           try {
             sessionStorage.setItem(NOTIFICATION.STORAGE_KEY_LAST_NOTIFY, String(now))
             sessionStorage.setItem(NOTIFICATION.STORAGE_KEY_NOTIFY_COUNT, '0')
@@ -1055,13 +1070,29 @@ function DashboardContent() {
                     <span className="w-6 h-6 rounded-full bg-rb-purple/50" aria-hidden="true" />
                   </div>
                 </div>
-                <Body16 className="text-sm text-rb-purple font-semibold">Finding you a listener…</Body16>
-                <Body16 className="text-xs text-rb-purple/80 leading-relaxed">
-                  {availableListenerCount > 0
-                    ? `${availableListenerCount} listener${availableListenerCount === 1 ? '' : 's'} notified`
-                    : 'Notifying all available listeners now.'}
-                </Body16>
-                <Body16 className="text-xs text-rb-gray dark:text-gray-300">Usually under 2 minutes</Body16>
+                {renotifiesExhausted ? (
+                  <>
+                    <Body16 className="text-sm text-rb-purple font-semibold">Still looking for a listener</Body16>
+                    <Body16 className="text-xs text-rb-purple/80 leading-relaxed">
+                      This is taking longer than usual. We&rsquo;ll keep watching for someone to come online —
+                      no need to do anything.
+                    </Body16>
+                    <Body16 className="text-xs text-red-700 dark:text-red-300 leading-relaxed">
+                      Need to talk to someone right now? Text or call 988, or text HOME to 741741 — both free,
+                      24/7. Use the crisis button in the corner to reach them directly.
+                    </Body16>
+                  </>
+                ) : (
+                  <>
+                    <Body16 className="text-sm text-rb-purple font-semibold">Finding you a listener…</Body16>
+                    <Body16 className="text-xs text-rb-purple/80 leading-relaxed">
+                      {availableListenerCount > 0
+                        ? `${availableListenerCount} listener${availableListenerCount === 1 ? '' : 's'} notified`
+                        : 'Notifying all available listeners now.'}
+                    </Body16>
+                    <Body16 className="text-xs text-rb-gray dark:text-gray-300">Usually under 2 minutes</Body16>
+                  </>
+                )}
                 <div className="inline-flex items-center gap-1.5 mt-1 px-3 py-1.5 rounded-full border-2 border-rb-purple/40 text-xs font-medium text-rb-purple/70">
                   <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                     <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />

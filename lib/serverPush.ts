@@ -89,6 +89,14 @@ function buildPayload(payload: UserPushPayload, fallbackTag: string): string {
  * user would mean one round trip each — the thing that makes a broadcast to
  * every user run out of serverless time.
  */
+/**
+ * Throws on a query error rather than silently returning an empty map.
+ * A caller that swallowed the error here used to read "nobody has push
+ * enabled" for every one of these users on a mere network hiccup — in the
+ * drain route that meant a whole claimed batch got permanently marked
+ * skipped/no_subscription instead of released back to pending for the next
+ * run. See app/api/notifications/drain/route.ts.
+ */
 export async function fetchSubscriptionsByUser(
   supabase: SupabaseClient,
   userIds: string[]
@@ -96,10 +104,14 @@ export async function fetchSubscriptionsByUser(
   const byUser = new Map<string, StoredPushSubscription[]>()
   if (userIds.length === 0) return byUser
 
-  const { data: subs } = await supabase
+  const { data: subs, error } = await supabase
     .from('push_subscriptions')
     .select('id, user_id, subscription')
     .in('user_id', [...new Set(userIds)])
+
+  if (error) {
+    throw new Error(`fetchSubscriptionsByUser: ${error.message}`)
+  }
 
   for (const sub of (subs ?? []) as StoredPushSubscription[]) {
     const list = byUser.get(sub.user_id)

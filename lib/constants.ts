@@ -105,6 +105,12 @@ export function containsCrisisLanguage(text: string): boolean {
   return CRISIS_PATTERN.test(normalizeForCrisisMatch(text))
 }
 
+/** One-tap message a listener can send when they see the crisis banner.
+ *  Plain text, no emoji or links that would look like a form message —
+ *  it's meant to read like the listener actually wrote it. */
+export const CRISIS_RESOURCE_SHARE_MESSAGE =
+  "I want to make sure you have this: you can text or call 988 anytime to reach the Suicide & Crisis Lifeline, or text HOME to 741741 for the Crisis Text Line. Both are free, confidential, and available right now. I'm still here too."
+
 // Time constants in milliseconds
 export const TIME = {
   /** How often to send heartbeat signals when available (30 seconds) */

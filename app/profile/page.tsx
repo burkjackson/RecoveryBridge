@@ -103,14 +103,17 @@ export default function ProfilePage() {
       // revoked for a plain client query (migration 040) — the public
       // columns and the private ones come from two different reads and get
       // merged. get_my_private_profile() is scoped server-side to auth.uid(),
-      // so there's nothing to pass it.
-      const [{ data: publicData, error: publicError }, { data: privateData, error: privateError }] = await Promise.all([
+      // so there's nothing to pass it. is_admin is separately not-readable
+      // at all as a column (migration 059); get_my_admin_status() is the
+      // only way to learn the caller's own value.
+      const [{ data: publicData, error: publicError }, { data: privateData, error: privateError }, { data: isAdmin }] = await Promise.all([
         supabase
           .from('profiles')
-          .select('id, display_name, bio, tagline, role_state, tags, avatar_url, user_role, is_admin, last_heartbeat_at, always_available, listener_training_completed_at, created_at, updated_at')
+          .select('id, display_name, bio, tagline, role_state, tags, avatar_url, user_role, last_heartbeat_at, always_available, listener_training_completed_at, created_at, updated_at')
           .eq('id', user.id)
           .single(),
         supabase.rpc('get_my_private_profile').single(),
+        supabase.rpc('get_my_admin_status'),
       ])
 
       if (publicError) throw publicError
@@ -122,6 +125,7 @@ export default function ProfilePage() {
       setProfile({
         ...publicData,
         ...(privateData as PrivateProfileFields | null),
+        is_admin: !!isAdmin,
         email: user.email,
       } as Profile)
     } catch (error) {

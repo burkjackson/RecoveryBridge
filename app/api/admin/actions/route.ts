@@ -432,13 +432,22 @@ export async function POST(request: NextRequest) {
       })
       if (noticeError) throw noticeError
 
-      // Push in parallel — reaches the device even with a wrong email. Best-effort.
-      const pushCount = await sendPushToUser(supabase, userId, {
-        title: OUTREACH_COPY.OUTREACH_TITLE,
-        body: noticeBody,
-        url: '/dashboard',
-        tag: `outreach-${userId}`,
-      })
+      // Push in parallel — reaches the device even with a wrong email.
+      // Best-effort: the in-app notice above is the durable copy, so a push
+      // failure (including fetchSubscriptionsByUser now throwing on a query
+      // error, see lib/serverPush.ts) shouldn't turn a successful outreach
+      // send into a 500 that hides the notice actually landing.
+      let pushCount = 0
+      try {
+        pushCount = await sendPushToUser(supabase, userId, {
+          title: OUTREACH_COPY.OUTREACH_TITLE,
+          body: noticeBody,
+          url: '/dashboard',
+          tag: `outreach-${userId}`,
+        })
+      } catch (pushError) {
+        console.error('Outreach push failed:', pushError)
+      }
 
       await supabase.from('admin_logs').insert([{
         admin_id: admin.id,

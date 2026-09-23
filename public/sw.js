@@ -1,7 +1,7 @@
 // RecoveryBridge Service Worker for Push Notifications
 // This enables background notifications even when the browser tab is closed
 
-const CACHE_NAME = 'recoverybridge-v13'
+const CACHE_NAME = 'recoverybridge-v14'
 const OFFLINE_URL = '/offline'
 
 // Install event - pre-cache offline fallback page

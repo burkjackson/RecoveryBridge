@@ -36,6 +36,8 @@ export async function GET(request: NextRequest) {
       pushSubscriptions,
       reportsFiled,
       notices,
+      mutesCreated,
+      queuedNotifications,
     ] = await Promise.all([
       supabaseAdmin.from('profiles').select('*').eq('id', userId).single(),
       supabaseAdmin.from('sessions').select('*').or(`listener_id.eq.${userId},seeker_id.eq.${userId}`),
@@ -50,7 +52,28 @@ export async function GET(request: NextRequest) {
       // you" follow-up, an admin's personal note, an announcement. Held about
       // them and readable by them in-app, so it belongs in their export.
       supabaseAdmin.from('user_notices').select('*').eq('user_id', userId),
+      // Only mutes THEY created, never ones against them (muted_id = userId)
+      // — same reasoning as migration 053's mute-privacy fix: who muted you
+      // is exactly the reporter-identity leak that closed. A self-export
+      // isn't exempt from that.
+      supabaseAdmin.from('user_mutes').select('*').eq('muter_id', userId),
+      // Notifications still sitting in the queue addressed to them
+      // (thank-you notes, training nudges, check-ins, broadcasts).
+      supabaseAdmin.from('notification_queue').select('*').eq('user_id', userId),
     ])
+
+    // Messages sent TO this user in any of their sessions — messages.select
+    // above only covers what they wrote. Session ids are already in hand
+    // from the sessions query, so this is a second pass over those ids
+    // rather than a join.
+    const sessionIds = (sessions.data ?? []).map((s: { id: string }) => s.id)
+    const messagesReceived = sessionIds.length
+      ? await supabaseAdmin
+          .from('messages')
+          .select('*')
+          .in('session_id', sessionIds)
+          .neq('sender_id', userId)
+      : { data: [] }
 
     const exportData = {
       exported_at: new Date().toISOString(),
@@ -63,6 +86,7 @@ export async function GET(request: NextRequest) {
       profile: profile.data ?? null,
       sessions: sessions.data ?? [],
       messages_sent: messages.data ?? [],
+      messages_received: messagesReceived.data ?? [],
       reactions: reactions.data ?? [],
       feedback_given: feedbackGiven.data ?? [],
       feedback_received: feedbackReceived.data ?? [],
@@ -70,6 +94,8 @@ export async function GET(request: NextRequest) {
       push_subscriptions: pushSubscriptions.data ?? [],
       reports_filed: reportsFiled.data ?? [],
       messages_received_from_recoverybridge: notices.data ?? [],
+      mutes_created: mutesCreated.data ?? [],
+      queued_notifications: queuedNotifications.data ?? [],
     }
 
     const filename = `recoverybridge-data-${new Date().toISOString().slice(0, 10)}.json`

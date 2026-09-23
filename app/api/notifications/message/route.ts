@@ -68,17 +68,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
     }
 
-    // Parse body
+    // Parse body. messageId is required (not optional) — see below: without
+    // it there's nothing tying this call to a real unread message, and it
+    // becomes an unlimited "ping the other person" endpoint gated only by
+    // the per-minute rate limit. Review item #24.
     let sessionId: string
-    let messageId: string | undefined
+    let messageId: string
     try {
       const body = await request.json()
       sessionId = body.sessionId
-      messageId = typeof body.messageId === 'string' ? body.messageId : undefined
+      messageId = body.messageId
     } catch {
       return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
     }
-    if (typeof sessionId !== 'string') {
+    if (typeof sessionId !== 'string' || typeof messageId !== 'string') {
       return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
     }
 
@@ -100,46 +103,49 @@ export async function POST(request: NextRequest) {
 
     const recipientId = session.listener_id === user.id ? session.seeker_id : session.listener_id
 
+    // The message id is the authorization gate for actually sending a push,
+    // not just a hint: it must be a real, unread message this caller sent in
+    // this session. Anything else — a made-up id, someone else's message,
+    // a message from a different session — gets treated as "nothing to
+    // notify about" rather than silently pushing anyway.
+    const { data: message } = await supabase
+      .from('messages')
+      .select('id, session_id, sender_id, read_at')
+      .eq('id', messageId)
+      .maybeSingle()
+
+    const messageBelongsHere =
+      message && message.session_id === sessionId && message.sender_id === user.id
+
+    if (!messageBelongsHere) {
+      return NextResponse.json({ error: 'Message not found' }, { status: 403 })
+    }
+
     // Presence check (see note at top): give the recipient's client a moment to
     // acknowledge the message, then skip the push if it's already been read —
     // that means the chat is on their screen right now.
-    if (messageId) {
-      const { data: message } = await supabase
-        .from('messages')
-        .select('id, session_id, sender_id, read_at')
-        .eq('id', messageId)
-        .maybeSingle()
+    if (message.read_at) {
+      return NextResponse.json({
+        success: true,
+        notified: 0,
+        message: 'Recipient already read it — skipping push',
+      })
+    }
 
-      // Only trust an id that really is this sender's message in this session,
-      // so a caller can't probe unrelated messages through this endpoint.
-      const messageBelongsHere =
-        message && message.session_id === sessionId && message.sender_id === user.id
+    await new Promise((r) => setTimeout(r, PRESENCE_GRACE_MS))
 
-      if (messageBelongsHere) {
-        if (message.read_at) {
-          return NextResponse.json({
-            success: true,
-            notified: 0,
-            message: 'Recipient already read it — skipping push',
-          })
-        }
+    const { data: recheck } = await supabase
+      .from('messages')
+      .select('read_at')
+      .eq('id', messageId)
+      .maybeSingle()
 
-        await new Promise((r) => setTimeout(r, PRESENCE_GRACE_MS))
-
-        const { data: recheck } = await supabase
-          .from('messages')
-          .select('read_at')
-          .eq('id', messageId)
-          .maybeSingle()
-
-        if (recheck?.read_at) {
-          return NextResponse.json({
-            success: true,
-            notified: 0,
-            message: 'Recipient is viewing this chat — skipping push',
-          })
-        }
-      }
+    if (recheck?.read_at) {
+      return NextResponse.json({
+        success: true,
+        notified: 0,
+        message: 'Recipient is viewing this chat — skipping push',
+      })
     }
 
     // Sender's name for the notification title (never trust a client-supplied value)

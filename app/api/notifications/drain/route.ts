@@ -92,6 +92,18 @@ async function finish(
   await supabase.from('notification_queue').update(patch).eq('id', id)
 }
 
+/** Puts claimed rows back to 'pending' with no attempt charged, clearing the
+ *  claim lease so the next run picks them straight back up. Used when a
+ *  downstream read this run needs (profiles, subscriptions) itself failed —
+ *  see the callers. */
+async function releaseClaim(supabase: SupabaseClient, ids: string[]): Promise<void> {
+  if (ids.length === 0) return
+  await supabase
+    .from('notification_queue')
+    .update({ status: 'pending', not_before: new Date().toISOString() })
+    .in('id', ids)
+}
+
 export async function POST(request: NextRequest) {
   if (!isAuthorizedCronRequest(request)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -181,16 +193,39 @@ export async function POST(request: NextRequest) {
 
   const userIds = [...new Set(claimed.map((r) => r.user_id))]
 
-  const { data: profileRows } = await supabase
+  // Both reads below used to swallow their own errors: an empty result
+  // (map) on a query failure reads identically to "these users genuinely
+  // have no profile / no subscription", and the loop below would have
+  // permanently marked every claimed row skipped — no_profile or
+  // no_subscription — on what was actually a transient read failure. A
+  // rare event, but claimed rows have already been pulled out of 'pending'
+  // (see the claim above), so getting this wrong doesn't just delay
+  // delivery, it loses the notification outright once pruneTerminalRows
+  // catches up with it. Release the whole claimed batch back to pending
+  // and let the next run retry, rather than guessing.
+  const { data: profileRows, error: profileRowsError } = await supabase
     .from('profiles')
     .select(PREFERENCE_COLUMNS)
     .in('id', userIds)
+
+  if (profileRowsError) {
+    console.error('[drain] Could not read profiles for claimed batch; releasing:', profileRowsError)
+    await releaseClaim(supabase, claimed.map((r) => r.id))
+    return NextResponse.json({ sent: 0, skipped: expired.length, deferred: 0, failed: 0, released: claimed.length })
+  }
 
   const profiles = new Map<string, ProfileRow>(
     ((profileRows ?? []) as ProfileRow[]).map((p) => [p.id, p])
   )
 
-  const subscriptionsByUser = await fetchSubscriptionsByUser(supabase, userIds)
+  let subscriptionsByUser: Awaited<ReturnType<typeof fetchSubscriptionsByUser>>
+  try {
+    subscriptionsByUser = await fetchSubscriptionsByUser(supabase, userIds)
+  } catch (err) {
+    console.error('[drain] Could not read subscriptions for claimed batch; releasing:', err)
+    await releaseClaim(supabase, claimed.map((r) => r.id))
+    return NextResponse.json({ sent: 0, skipped: expired.length, deferred: 0, failed: 0, released: claimed.length })
+  }
 
   let sent = 0
   let skipped = expired.length

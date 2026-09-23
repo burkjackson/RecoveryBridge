@@ -1,54 +1,89 @@
-'use client'
+// Deliberately a plain server component with inline styles, no Tailwind
+// classes and no client JS.
+//
+// The service worker only precaches this page's HTML document (public/sw.js
+// OFFLINE_URL), not its CSS bundle or JS chunks — those are hashed per build
+// and can't be named ahead of time in the precache list. When this page
+// used Tailwind classes and an onClick reload button, someone actually
+// offline got unstyled text and a dead button, because the stylesheet and
+// hydration bundle it depended on were exactly the things that couldn't
+// load. Inline styles need no stylesheet; the "Try again" link below is
+// next/link's Link, which still server-renders as a plain <a href="/">, so
+// it works identically with no JS loaded — just without eslint's
+// no-html-link-for-pages complaint. See CLAUDE.md known issue #22.
+import Link from 'next/link'
 
 export default function OfflinePage() {
   return (
-    <main id="main-content" className="min-h-screen flex items-center justify-center p-6 bg-[#F8F9FA]">
-      <div className="max-w-sm w-full text-center">
-        <div className="mb-6">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="w-16 h-16 mx-auto text-gray-300"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            aria-hidden="true"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={1.5}
-              d="M18.364 5.636a9 9 0 010 12.728M15.536 8.464a5 5 0 010 7.072M12 12h.01M6.343 6.343a9 9 0 000 12.728M9.172 9.172a5 5 0 000 7.072"
-            />
-            <line x1="3" y1="3" x2="21" y2="21" strokeLinecap="round" strokeWidth={1.5} />
-          </svg>
-        </div>
-
-        <h1 className="text-2xl font-bold text-gray-800 mb-3">You&rsquo;re offline</h1>
-        <p className="text-gray-500 mb-6 leading-relaxed">
-          RecoveryBridge needs an internet connection to connect you with listeners.
-          Check your connection and try again.
+    <main
+      id="main-content"
+      style={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '24px',
+        background: '#F8F9FA',
+        fontFamily:
+          '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
+      }}
+    >
+      <div style={{ maxWidth: '380px', width: '100%', textAlign: 'center' }}>
+        <h1 style={{ fontSize: '24px', fontWeight: 700, color: '#2D3436', margin: '0 0 12px' }}>
+          You&rsquo;re offline
+        </h1>
+        <p style={{ color: '#4A5568', margin: '0 0 24px', lineHeight: 1.6 }}>
+          RecoveryBridge needs an internet connection to connect you with listeners. Check your
+          connection and try again.
         </p>
 
-        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6 text-left">
-          <p className="text-sm font-semibold text-amber-800 mb-1">Need immediate support?</p>
-          <ul className="text-sm text-amber-700 space-y-1">
-            <li>
-              <a href="sms:988" className="underline font-medium">Text 988</a>{' '}or{' '}
-              <a href="tel:988" className="underline font-medium">call</a>
-              {' '}— Suicide &amp; Crisis Lifeline
-            </li>
-            <li>
-              <a href="sms:741741?&body=HOME" className="underline font-medium">Text HOME to 741741</a> — Crisis Text Line
-            </li>
-          </ul>
+        <div
+          style={{
+            background: '#FEF3E2',
+            border: '1px solid #FDE0A8',
+            borderRadius: '12px',
+            padding: '16px',
+            marginBottom: '20px',
+            textAlign: 'left',
+          }}
+        >
+          <p style={{ fontSize: '14px', fontWeight: 700, color: '#92400E', margin: '0 0 8px' }}>
+            Need immediate support?
+          </p>
+          <p style={{ fontSize: '14px', color: '#92400E', margin: '0 0 6px', lineHeight: 1.5 }}>
+            <a href="sms:988" style={{ color: '#92400E', fontWeight: 600 }}>Text 988</a>{' '}or{' '}
+            <a href="tel:988" style={{ color: '#92400E', fontWeight: 600 }}>call</a>
+            {' '}— Suicide &amp; Crisis Lifeline
+          </p>
+          <p style={{ fontSize: '14px', color: '#92400E', margin: '0 0 6px', lineHeight: 1.5 }}>
+            <a href="sms:741741?&body=HOME" style={{ color: '#92400E', fontWeight: 600 }}>
+              Text HOME to 741741
+            </a>{' '}— Crisis Text Line
+          </p>
+          <p style={{ fontSize: '14px', color: '#92400E', margin: 0, lineHeight: 1.5 }}>
+            <a href="tel:911" style={{ color: '#92400E', fontWeight: 600 }}>Call 911</a>{' '}
+            in immediate danger
+          </p>
         </div>
 
-        <button
-          onClick={() => window.location.reload()}
-          className="w-full py-3 bg-[#5A7A8C] text-white rounded-xl font-semibold hover:bg-[#4A6A7C] transition-colors"
+        {/* Not an onClick handler — this has to work with no JS loaded. Link
+            still server-renders a plain <a href="/">, so it works the same. */}
+        <Link
+          href="/"
+          style={{
+            display: 'block',
+            width: '100%',
+            boxSizing: 'border-box',
+            padding: '14px',
+            background: '#4A6A7C',
+            color: '#fff',
+            borderRadius: '12px',
+            fontWeight: 600,
+            textDecoration: 'none',
+          }}
         >
           Try again
-        </button>
+        </Link>
       </div>
     </main>
   )
