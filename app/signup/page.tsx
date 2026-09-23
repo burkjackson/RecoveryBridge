@@ -54,7 +54,13 @@ export default function SignupPage() {
         password,
         options: {
           data: {
-            display_name: displayName,
+            // Trimmed here, not just cosmetically — an untrimmed value lands
+            // straight in profiles.display_name via handle_new_user() with
+            // nothing downstream to catch it. Found trailing spaces live on
+            // 21 profiles this way, including one that silently broke
+            // admin's delete-user name-confirmation step. See the same fix
+            // in app/profile/page.tsx's handleSave().
+            display_name: displayName.trim(),
             consent_version: CONSENT_VERSION,
             consent_accepted_at: new Date().toISOString(),
             age_confirmed: true,

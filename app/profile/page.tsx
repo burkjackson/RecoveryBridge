@@ -140,11 +140,17 @@ export default function ProfilePage() {
 
     setSaving(true)
     try {
-      // Attempt to update the field directly
-      // The database unique constraint will handle username conflicts atomically
+      // Trimmed before it ever reaches the database — a stray trailing
+      // space here (autocomplete, a copy-paste, a finger landing on the
+      // spacebar) is invisible in every place the value is rendered back,
+      // but it's not invisible to a strict string comparison. Found this
+      // live on 21 profiles' display_name, including one that silently
+      // blocked admin's delete-user confirmation (it requires typing the
+      // name back exactly) — see the fix in app/admin/page.tsx.
+      const trimmedValue = editValue.trim()
       const { error } = await supabase
         .from('profiles')
-        .update({ [field]: editValue })
+        .update({ [field]: trimmedValue })
         .eq('id', profile.id)
 
       if (error) {
@@ -157,7 +163,7 @@ export default function ProfilePage() {
         return
       }
 
-      setProfile({ ...profile, [field]: editValue })
+      setProfile({ ...profile, [field]: trimmedValue })
       setEditingField(null)
     } catch (error) {
       console.error('Error updating profile:', error)

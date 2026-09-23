@@ -620,8 +620,14 @@ export default function AdminPage() {
       return
     }
 
-    // Step 2: Check if name matches
-    if (confirmName !== displayName) {
+    // Step 2: Check if name matches. Trimmed on both sides — display_name
+    // can carry a stray leading/trailing space from signup (confirmed on 21
+    // live accounts, calvinrister2@gmail.com's "joer " among them), which is
+    // invisible in the <code> block above and impossible to type back
+    // correctly by eye. Matching the trimmed name still confirms the admin
+    // typed the right person's name; it just stops punishing them for a
+    // whitespace character they were never going to see.
+    if (confirmName.trim() !== displayName.trim()) {
       setErrorModal({ show: true, message: 'Deletion cancelled. The name you entered did not match.' })
       setDeleteUserModal({ show: false, step: 1, userId: '', displayName: '', confirmName: '' })
       return
@@ -1801,7 +1807,7 @@ export default function AdminPage() {
         isOpen={deleteUserModal.show && deleteUserModal.step === 1}
         onClose={() => setDeleteUserModal({ show: false, step: 1, userId: '', displayName: '', confirmName: '' })}
         title="⚠️ Permanent Deletion Warning"
-        type="confirm"
+        type="custom"
         onConfirm={confirmDeleteUser}
         confirmText="Continue"
         confirmStyle="danger"
