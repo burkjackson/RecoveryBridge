@@ -1,6 +1,15 @@
 // This file configures the initialization of Sentry on the client.
 // The config you add here will be used whenever a users loads a page in their browser.
 // https://docs.sentry.io/platforms/javascript/guides/nextjs/
+//
+// Renamed from sentry.client.config.ts (22 Sep 2026, review item). Next.js
+// 15.3+ loads instrumentation-client.ts automatically, by its own
+// convention, before the app hydrates — the older name relied on Sentry's
+// webpack plugin injecting an import for it, which @sentry/nextjs 9+ no
+// longer does when it detects this file instead. No other wiring changes:
+// next.config.js's withSentryConfig call and instrumentation.ts (server +
+// edge) are untouched, since those configs are still explicitly imported
+// there rather than auto-loaded.
 
 import * as Sentry from "@sentry/nextjs";
 

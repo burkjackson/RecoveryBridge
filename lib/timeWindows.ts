@@ -108,14 +108,35 @@ export function findWindowStartingNow(
   const currentMinutes = toMinutes(local.timeStr)
   if (currentMinutes === null) return null
 
+  // A window that started late yesterday (e.g. 23:15) can still be inside its
+  // tolerance after local midnight — the cron's actual cadence is generous
+  // and irregular (see the header comment), so "now" and "the window's
+  // start" can land on opposite sides of a day boundary in the listener's
+  // own timezone. Matching strictly on `w.day === local.dayOfWeek` skipped
+  // those windows outright, no matter how generous the tolerance was.
+  // Fetching yesterday's local calendar day lets a window matched that way
+  // be measured on its own day's clock (today's time-of-day + 24h).
+  const yesterday = localParts(new Date(now.getTime() - 24 * 60 * 60 * 1000), timezone)
+
   // Collect every match, then take the one that started most recently. Schedules
   // are normally non-overlapping, so this picks the same window either way; when
   // they do overlap it keeps the result independent of array order, which the
   // caller's dedupe key depends on.
-  let best: { window: AvailabilityWindow; startMin: number } | null = null
+  let best: { window: AvailabilityWindow; startMin: number; dateStr: string } | null = null
 
   for (const w of windows) {
-    if (w.day !== local.dayOfWeek) continue
+    let currentForWindow: number
+    let dateStr: string
+    if (w.day === local.dayOfWeek) {
+      currentForWindow = currentMinutes
+      dateStr = local.dateStr
+    } else if (yesterday && w.day === yesterday.dayOfWeek) {
+      currentForWindow = currentMinutes + 1440
+      dateStr = yesterday.dateStr
+    } else {
+      continue
+    }
+
     const startMin = toMinutes(w.start)
     if (startMin === null) continue
 
@@ -124,13 +145,13 @@ export function findWindowStartingNow(
     const effectiveEnd = endMin === null || endMin <= startMin ? startMin + 1440 : endMin
     const cap = Math.min(startMin + toleranceMin, effectiveEnd)
 
-    if (currentMinutes >= startMin && currentMinutes < cap) {
-      if (!best || startMin > best.startMin) best = { window: w, startMin }
+    if (currentForWindow >= startMin && currentForWindow < cap) {
+      if (!best || startMin > best.startMin) best = { window: w, startMin, dateStr }
     }
   }
 
   if (!best) return null
-  return { window: best.window, key: `${local.dateStr}|${best.window.day}|${best.window.start}` }
+  return { window: best.window, key: `${best.dateStr}|${best.window.day}|${best.window.start}` }
 }
 
 // Boolean convenience wrapper around findWindowStartingNow.

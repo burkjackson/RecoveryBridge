@@ -47,3 +47,14 @@ next-env.d.ts
 # stray office/editor lock files
 .~lock.*
 *.pdf#
+
+# iCloud's conflict-copy naming for a synced working copy (review note,
+# 22 Sep 2026: the repo lives under an iCloud-synced Desktop folder, so a
+# sync conflict on any tracked file creates a sibling like "page 2.tsx" or
+# "route 2/"). This stops those from ever being `git add`-ed by accident;
+# it doesn't fix the underlying sync/offload flakiness itself — moving the
+# working copy to a non-synced folder (e.g. ~/Developer/RecoveryBridge) is
+# still the real fix for that, and still Burk's call since it means
+# reconfiguring where the local clone lives.
+* 2.*
+* 2/

@@ -191,4 +191,47 @@ describe('findWindowStartingNow', () => {
     expect(findWindowStartingNow(monday7pm, 'America/New_York', 90, edt(18, 59))).toBeNull()
     expect(findWindowStartingNow([], 'America/New_York', 90, edt(19, 5))).toBeNull()
   })
+
+  describe('a window starting late enough that the cron gap crosses midnight', () => {
+    // Monday 23:15 New York, running until 06:00 — long enough that the
+    // window is still legitimately open when the tolerance check lands
+    // after local midnight. edt() only builds same-UTC-day instants, so
+    // this constructs the UTC instant directly: 2026-07-06 23:15 EDT =
+    // 2026-07-07 03:15 UTC.
+    const lateWindow = [{ day: 1, start: '23:15', end: '06:00' }]
+    const mondayAt2315 = new Date(Date.UTC(2026, 6, 7, 3, 15))
+    // 20 minutes later, past local midnight — now Tuesday in New York.
+    const tuesdayAt0035 = new Date(Date.UTC(2026, 6, 7, 4, 35))
+
+    it('still matches once local time has rolled over to the next day', () => {
+      // The bug: matching required w.day === local.dayOfWeek, so a window
+      // that started Monday night was skipped outright the moment the
+      // cron's next run landed after local midnight, no matter how
+      // generous the tolerance was.
+      const match = findWindowStartingNow(lateWindow, 'America/New_York', 90, tuesdayAt0035)
+      expect(match).not.toBeNull()
+      expect(match?.window).toEqual(lateWindow[0])
+    })
+
+    it('keys the carried-over match to the day the window actually started', () => {
+      const beforeMidnight = findWindowStartingNow(lateWindow, 'America/New_York', 90, mondayAt2315)
+      const afterMidnight = findWindowStartingNow(lateWindow, 'America/New_York', 90, tuesdayAt0035)
+      expect(beforeMidnight?.key).toBe('2026-07-06|1|23:15')
+      // Same occurrence, same key — the caller's dedupe depends on that.
+      expect(afterMidnight?.key).toBe(beforeMidnight?.key)
+    })
+
+    it('still stops matching once the tolerance has actually elapsed', () => {
+      // 23:15 + 44min tolerance window caps at the window's own end (23:59),
+      // so this only checks the day-rollover case, not an unbounded match.
+      const wayPastTolerance = new Date(Date.UTC(2026, 6, 7, 6, 0)) // Tuesday 02:00 NY
+      expect(findWindowStartingNow(lateWindow, 'America/New_York', 90, wayPastTolerance)).toBeNull()
+    })
+
+    it('does not match a window on the wrong day just because yesterday rolled over', () => {
+      const sundayWindow = [{ day: 0, start: '23:15', end: '23:59' }]
+      // Still Tuesday-after-Monday in local time — Sunday is neither today nor yesterday.
+      expect(findWindowStartingNow(sundayWindow, 'America/New_York', 90, tuesdayAt0035)).toBeNull()
+    })
+  })
 })

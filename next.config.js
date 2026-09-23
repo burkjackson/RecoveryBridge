@@ -69,7 +69,7 @@ const nextConfig = {
       supabaseHost && `wss://${supabaseHost}`,
       // Sentry's Next.js SDK proxies most client traffic through the
       // same-origin /monitoring tunnelRoute above, but Session Replay
-      // (enabled in sentry.client.config.ts) can still talk to the ingest
+      // (enabled in instrumentation-client.ts) can still talk to the ingest
       // host directly, so it needs to be allowed too.
       sentryHost && `https://${sentryHost}`,
     ].filter(Boolean).join(' ')

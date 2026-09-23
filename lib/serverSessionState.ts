@@ -60,17 +60,50 @@ export async function endSessionRoleStates(
   const seekerUpdate = wasAccepted
     ? { role_state: 'offline' as const }
     : { role_state: 'requesting' as const, last_heartbeat_at: new Date().toISOString() }
-  const updates = []
+  // Wrapped in async IIFEs (rather than chaining .then() straight off the
+  // query builder) so each entry is a real Promise — the builder itself is
+  // only thenable, which Promise.all's typing doesn't accept in an array
+  // declared with a concrete element type.
+  const updates: Array<Promise<{ error: unknown; label: string }>> = []
   if (restoreSeeker) {
-    updates.push(supabase.from('profiles').update(seekerUpdate).eq('id', seekerId))
+    updates.push(
+      (async () => {
+        const { error } = await supabase.from('profiles').update(seekerUpdate).eq('id', seekerId)
+        return { error, label: 'seeker' }
+      })()
+    )
   }
   if (restoreListener) {
     updates.push(
-      supabase
-        .from('profiles')
-        .update({ role_state: 'available', last_heartbeat_at: new Date().toISOString() })
-        .eq('id', listenerId)
+      (async () => {
+        const { error } = await supabase
+          .from('profiles')
+          .update({ role_state: 'available', last_heartbeat_at: new Date().toISOString() })
+          .eq('id', listenerId)
+          // always_available means the listener manages role_state manually
+          // (see the identical exclusion — and its reasoning — in
+          // app/api/cleanup-sessions/route.ts's resetStaleAvailability). The
+          // only way such a listener's row is ever 'offline' is that they
+          // set it themselves, since staleness resets skip them too.
+          // Without this filter, a listener who toggled themselves off
+          // mid-chat — in another tab, or right as this session ended — got
+          // silently flipped back to 'available' the moment the session
+          // closed, overriding a choice they'd just made.
+          .eq('always_available', false)
+        return { error, label: 'listener' }
+      })()
     )
   }
-  await Promise.all(updates)
+  const results = await Promise.all(updates)
+  // Every prior version of this function swallowed the result entirely —
+  // a failed update here left someone stuck exactly where the header above
+  // says this function exists to stop: dropped from AvailableListeners,
+  // /listeners, and every push target, with nothing on screen to explain
+  // why. Logging can't retry the write, but it at least makes the failure
+  // visible instead of indistinguishable from a normal restore.
+  for (const { error, label } of results) {
+    if (error) {
+      console.error(`[endSessionRoleStates] Failed to restore ${label} role_state:`, error)
+    }
+  }
 }

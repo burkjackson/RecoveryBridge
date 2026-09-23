@@ -279,13 +279,32 @@ export default function ProfilePage() {
     if (!profile) return
     setSavingSchedule(true)
     try {
+      // The scheduled-availability cron reads quiet_hours_timezone to know
+      // which clock a schedule's day/hour windows are in (lib/timeWindows.ts),
+      // but that column is otherwise only ever written by the quiet-hours
+      // form in NotificationSettings. Someone who sets an availability
+      // schedule without ever touching quiet hours had it stay null and
+      // silently ran on the cron's America/New_York fallback instead of
+      // their own clock. Save the browser's resolved timezone here too —
+      // but only the first time, so it never clobbers a value the person
+      // actually chose in the quiet-hours form.
+      const update: { availability_schedule: typeof schedule; quiet_hours_timezone?: string } = {
+        availability_schedule: schedule,
+      }
+      if (!profile.quiet_hours_timezone) {
+        try {
+          update.quiet_hours_timezone = Intl.DateTimeFormat().resolvedOptions().timeZone
+        } catch {
+          // Intl unavailable — leave it null, same as before this fix.
+        }
+      }
       const { error } = await supabase
         .from('profiles')
-        .update({ availability_schedule: schedule })
+        .update(update)
         .eq('id', profile.id)
       if (error) throw error
       // Not client-readable back (migration 040) — merge locally.
-      setProfile({ ...profile, availability_schedule: schedule })
+      setProfile({ ...profile, ...update })
     } catch (err) {
       console.error('Error saving schedule:', err)
       setErrorModal({ show: true, message: 'Could not save schedule. Please try again.' })
