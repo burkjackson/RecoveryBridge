@@ -342,19 +342,21 @@ export default function NotificationSettings({ profile, onProfileUpdate }: Notif
     const newValue = !alwaysAvailable
 
     try {
-      const { data, error } = await supabase
+      // No .select() here: returning the whole row asks for columns a
+      // client can't read since migration 040 (email and friends), and the
+      // permission error rolled the update back with it. That silently broke
+      // this toggle from 2 Sep 2026 until 22 Sep. Merge locally instead.
+      const { error } = await supabase
         .from('profiles')
         .update({ always_available: newValue })
         .eq('id', profile.id)
-        .select()
-        .single()
 
       if (error) throw error
 
       setAlwaysAvailable(newValue)
 
-      if (onProfileUpdate && data) {
-        onProfileUpdate(data)
+      if (onProfileUpdate) {
+        onProfileUpdate({ ...profile, always_available: newValue })
       }
 
       setSuccessMessage(newValue

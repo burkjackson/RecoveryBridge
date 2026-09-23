@@ -59,6 +59,17 @@ means nothing if a client can rewrite `ended_at` first. Every client path
 that ends a session now filters on `status = 'active'`, so none touch an
 already-ended row.
 
+### 055 — profile column lockdown
+
+Revokes table-level UPDATE (and INSERT/DELETE/TRUNCATE/TRIGGER/REFERENCES)
+on `profiles` from anon and authenticated, then grants UPDATE back to
+authenticated on only the columns the app's client code writes. Consent
+fields, `email`, `is_admin`, `last_availability_notify_key` and anything
+added later are no longer writable from a browser. A new `sync_profile_email`
+trigger on `auth.users` keeps `profiles.email` in step with the account
+email. **Adding a client-editable column to `profiles` now means adding it
+to this grant.**
+
 ## Pending — not yet applied
 
 ### 050 — user-to-user muting
