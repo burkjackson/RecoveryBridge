@@ -39,6 +39,17 @@ admin path updates `sessions` from a browser JWT anyway.
 
 ## Applied 28 Sep 2026
 
+### 067 — cron secret generated in Vault
+
+065 expected Burk to copy CLEANUP_SECRET_KEY into Vault, but the value
+couldn't be read from Vercel. 067 generates a random 64-character
+`cron_secret` inside the database and adds `verify_cron_secret(candidate)`
+(SECURITY DEFINER, service role only), which `lib/cronAuth.ts`
+`authorizeCronRequest()` calls after the env-var secrets fail. Checked: the
+real secret verifies, wrong and null values don't, and anon/authenticated
+can't execute it. The pg_cron calls return 401 until the app change is
+deployed.
+
 ### 065 — pg_cron schedule
 
 GitHub Actions was running the */15 cron workflow only every 3-4 hours

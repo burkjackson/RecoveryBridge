@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
-import { isAuthorizedCronRequest } from '@/lib/cronAuth'
+import { authorizeCronRequest } from '@/lib/cronAuth'
 import {
   decideDelivery,
   fetchEnabledKinds,
@@ -105,7 +105,7 @@ async function releaseClaim(supabase: SupabaseClient, ids: string[]): Promise<vo
 }
 
 export async function POST(request: NextRequest) {
-  if (!isAuthorizedCronRequest(request)) {
+  if (!(await authorizeCronRequest(request))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 

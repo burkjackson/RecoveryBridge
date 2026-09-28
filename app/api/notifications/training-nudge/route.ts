@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { isAuthorizedCronRequest } from '@/lib/cronAuth'
+import { authorizeCronRequest } from '@/lib/cronAuth'
 import {
   LISTENER_TRAINING_SECTION_IDS,
   NOTIFICATION_COPY,
@@ -38,7 +38,7 @@ interface TrainingProfile {
 }
 
 export async function POST(request: NextRequest) {
-  if (!isAuthorizedCronRequest(request)) {
+  if (!(await authorizeCronRequest(request))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 

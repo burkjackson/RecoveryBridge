@@ -4,7 +4,7 @@ import { TIME_MINUTES, TIME, OUTREACH_COPY, NOTIFICATION_COPY } from '@/lib/cons
 import { sendPushToUser } from '@/lib/serverPush'
 import { enqueueNotifications } from '@/lib/notificationQueue'
 import { endSessionRoleStates } from '@/lib/serverSessionState'
-import { isAuthorizedCronRequest } from '@/lib/cronAuth'
+import { authorizeCronRequest } from '@/lib/cronAuth'
 import {
   seekersNeedingFollowUp,
   summariseSessions,
@@ -214,7 +214,7 @@ export async function POST(request: NextRequest) {
     // run reliably. x-cleanup-secret keeps working for the existing GitHub
     // Actions workflow alongside the shared x-cron-secret/CRON_SECRET
     // convention every other cron route uses (lib/cronAuth.ts).
-    if (!isAuthorizedCronRequest(request, 'x-cleanup-secret') && !isAuthorizedCronRequest(request)) {
+    if (!(await authorizeCronRequest(request))) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 

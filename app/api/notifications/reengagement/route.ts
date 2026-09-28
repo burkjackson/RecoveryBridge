@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { isAuthorizedCronRequest } from '@/lib/cronAuth'
+import { authorizeCronRequest } from '@/lib/cronAuth'
 import { NOTIFICATION_COPY, REENGAGEMENT_INACTIVE_DAYS, TIME } from '@/lib/constants'
 import {
   enqueueNotifications,
@@ -27,7 +27,7 @@ import {
 const REENGAGEMENT_TTL_MS = 24 * 60 * 60 * 1000
 
 export async function POST(request: NextRequest) {
-  if (!isAuthorizedCronRequest(request)) {
+  if (!(await authorizeCronRequest(request))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 

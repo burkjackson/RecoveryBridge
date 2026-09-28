@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { findWindowStartingNow, type AvailabilityWindow } from '@/lib/timeWindows'
-import { isAuthorizedCronRequest } from '@/lib/cronAuth'
+import { authorizeCronRequest } from '@/lib/cronAuth'
 import { isPushConfigured, fetchSubscriptionsByUser, sendPushToSubscriptions } from '@/lib/serverPush'
 
 // How far back a window start still counts as "starting now". This has to
@@ -25,7 +25,7 @@ interface ScheduleProfile {
 }
 
 export async function POST(request: NextRequest) {
-  if (!isAuthorizedCronRequest(request)) {
+  if (!(await authorizeCronRequest(request))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
