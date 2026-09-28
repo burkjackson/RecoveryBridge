@@ -366,6 +366,8 @@ writing this file.
 
 ### 046 — dedupe RLS policies, wrap auth.uid()
 
+**RETIRED 28 Sep 2026: do not apply.** Its ALTER POLICY statements replay 3 Sep versions of policies that 051, 058 and 063 have since changed. Applying it would re-break photo uploads, notices and the block check (063's outage) and undo 058's feedback check. See the header of the file.
+
 Written 3 Sep 2026 from the code review (item 13). The performance advisor
 reports 96 `multiple_permissive_policies` warnings and 43
 `auth_rls_initplan` warnings. Two separate fixes, no behaviour change:

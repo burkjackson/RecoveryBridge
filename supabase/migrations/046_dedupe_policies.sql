@@ -1,3 +1,21 @@
+-- ============================================================================
+-- DO NOT APPLY. RETIRED 28 Sep 2026.
+--
+-- Written 3 Sep against the policies as they were then. Later migrations
+-- changed the same policies, and this file's ALTER POLICY statements would
+-- replay the old versions over them:
+--   * "admins_read_all_notices" (user_notices) and "Admins can manage blocks"
+--     (user_blocks) go back to reading profiles.is_admin inline, which 059
+--     revoked. That is exactly the outage 063 fixed: photo uploads, the
+--     notice banner and the block check all fail for every non-admin.
+--   * "Users can insert own feedback" loses 058's accepted/ended check, so
+--     feedback could be left on a request that was never accepted.
+--   * Others (messages, 051) may drift the same way.
+-- The benefit (fewer duplicate policies, auth.uid() evaluated once per query)
+-- is negligible at this size. If it's ever wanted, write a new migration
+-- from the live pg_policies at that time. Never paste this one in.
+-- ============================================================================
+
 -- Migration 046: Dedupe RLS policies, wrap auth.uid() for single evaluation
 --
 -- Item 13 of the 2 Sep 2026 code review. The performance advisor reports 96
