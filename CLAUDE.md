@@ -88,6 +88,7 @@ components/
 ├── NoticeBanner.tsx                  # Surfaces unread in-app notices (user_notices) on the dashboard
 ├── BroadcastComposer.tsx             # Admin: compose/send a platform announcement to a named audience
 ├── NotificationControls.tsx          # Admin: per-kind on/off switches for what the platform may send
+├── TranscriptEdits.tsx               # Admin transcript: "edited" marker + every earlier version of a message (see #64)
 ├── TagSelector.tsx / Modal.tsx / ErrorState.tsx / Skeleton.tsx / Footer.tsx
 ├── ServiceWorkerRegistration.tsx / SkipLink.tsx
 └── ui/Typography.tsx                 # Semantic type scale (Heading1..., Body16, Body18)
@@ -116,6 +117,7 @@ lib/
 ├── directConnect.ts                  # startDirectConnect() — seeker-initiated connect, shared by 3 call sites (see #43)
 ├── acceptSeeker.ts                   # acceptSeeker() — listener accepting a seeker, shared by 2 call sites (see #43)
 ├── mutes.ts                          # getMutedUserIds() — pairwise mute id set, both directions collapsed (see #49)
+├── chatMessages.ts                   # mergeMessageLists() + canEditMessage() — chat list merging and the edit window (see #64)
 ├── test/fakeSupabase.ts              # Shared fake Supabase client for the API route tests below, dispatch-by-table (see #50)
 ├── supabase/client.ts, server.ts
 ├── types/database.ts
@@ -150,7 +152,7 @@ Compliance/audit: `referral_source` (010, free text since 018), `listener_traini
 
 ### Other tables
 - **sessions** — listener_id, seeker_id, status (`active`/`ended`), ended_at, `accepted_at` (039, applied — NULL means a direct-connect session the listener hasn't accepted; a restrictive RLS policy blocks the seeker from messaging until it's set). A unique partial index (025) enforces **one active session per seeker**, so a duplicate insert fails with `23505` and callers fall back to "someone else just connected"
-- **messages** — session_id, sender_id, content (max 2000), read_at (002, read receipts)
+- **messages** — session_id, sender_id, content (max 2000), read_at (002, read receipts), edited_at (062, **not yet applied** — sender can edit for 5 minutes; every earlier version kept in admin-only `message_edits`, see #64)
 - **message_reactions** — 8 emoji types (003/004)
 - **session_feedback** — helpful boolean + `thank_you_note` (009, max 300 chars, shown in /history)
 - **user_favorites** (007) — favorite contacts from past sessions; favorites get notified first
@@ -183,7 +185,7 @@ All tables have RLS. Admin mutations go through `/api/admin/*` routes (Bearer to
 - Optional weekly availability schedule → "your support time is starting" push at window start
 
 ### 3. Chat session
-- Realtime messages (postgres_changes), typing indicators + read receipts (broadcast), reactions (double-click, 8 types), URL autolinking, conversation starters, crisis-language banner
+- Realtime messages (postgres_changes), editing your own message for 5 minutes (shows "Edited"), typing indicators + read receipts (broadcast), reactions (double-click, 8 types), URL autolinking, conversation starters, crisis-language banner
 - Inactivity: warn at 15 min, auto-close 5 min later; either party can end → feedback modal (helpful? + optional thank-you note) → favourite prompt → dashboard
 - Session start/end moves participants' `role_state` via `/api/sessions/state` (see Known Issue #26) — both sides on end; on start, both sides for an already-accepted session, but only the seeker for a still-pending direct connect (see Known Issue #35)
 - Report flow (3-step) available in chat
@@ -413,6 +415,8 @@ Everything in the flows above is ✅ live, including: auth, onboarding (with ref
     - **Added `* 2.*` and `* 2/` to `.gitignore`** so an iCloud sync-conflict copy of a tracked file or folder can't get committed by accident. This doesn't fix the underlying cause — the working copy is still under an iCloud-synced Desktop folder, which is what creates those conflict copies (and the `@babel 2`, `@eslint 2`, etc. duplication under `node_modules` noted in issue #46) — moving it to a non-synced folder like `~/Developer/RecoveryBridge` is still the real fix and still Burk's call.
     - **Checked, not a bug: the `twilio` dependency.** `lib/sms.ts` does use it (a lazy `require('twilio')`, kept out of the bundle unless SMS is configured) — a static "unused dependency" check misses that because the require is dynamic, not that it's dead. The file's own header already documents that SMS itself has been disabled pending Twilio verification, with a 1 Dec 2026 date to delete the whole thing if that never happens. Left alone; nothing to fix here beyond what's already tracked.
     - Confirmed already fixed in this file's own known issues before this pass started, so not repeated here: the realtime `INSERT` handler using `mergeMessages()` (#60d) and the notification-tap window-focus bug (`public/sw.js`'s `notificationclick` handler already matches on `pathname` **and** `search`, with a comment noting the old pathname-only bug it replaced).
+
+64. **Senders can edit a message for 5 minutes (written 28 Sep 2026, migration 062 NOT yet applied — apply it before merging)** — the database used to refuse any change to `content` (`restrict_message_update()`, 004). Migration 062 adds a sender-only UPDATE policy and rewrites that trigger to allow an edit by the sender, within 5 minutes, while the session is active, trimmed and 1-2000 characters, with `edited_at` stamped by the trigger. Every earlier version goes into `message_edits` (admin-read-only, 10 edits per message max) because a report is decided from the transcript, and without the history someone could say something cruel and clean it up before an admin looked. The admin transcript shows earlier versions (`components/TranscriptEdits.tsx`), `/api/sessions/flag-crisis` scans them, the chat keeps the crisis banner up if crisis language is edited away, and the data export includes the user's own edit history. Chat side: an Edit button under your own message while it's editable, an "Edited" label both sides see, realtime UPDATE handling, and the 3s message poll reaches back past the edit window so a dropped UPDATE still lands. Merge rules live in `lib/chatMessages.ts` (tested): an edit only applies if its `edited_at` is newer than what's on screen, so a slow poll can't roll text back. `TIME.MESSAGE_EDIT_WINDOW_MS` mirrors the SQL interval; change both together. Verified against production in a rolled-back transaction, see `supabase/migrations/README.md` (062).
 
 36. **`/api/cleanup-sessions` accepted any signed-in user's token, no rate limit (fixed 2 Sep 2026)** — the route's auth block had a third branch beyond the two cron secrets: any bearer token that passed `supabase.auth.getUser()` was let through, and `app/dashboard/page.tsx` called it on every page load with the viewer's own token. Since the GitHub Actions cron has run reliably for months (1,000+ consecutive runs), that path was a leftover, not a real caller — but it meant any account could trigger a full sweep (every active session and its messages read, three profile UPDATEs, notice inserts, pushes) on demand, with nothing to stop them hammering it. Replaced the hand-rolled block with `isAuthorizedCronRequest()` from `lib/cronAuth.ts` (already shared by every other cron route) called once for `x-cleanup-secret` and once for the default `x-cron-secret`/`Authorization: Bearer` — the "any authenticated user" branch is gone entirely. Deleted `cleanupStaleSessions()` and its mount-effect call from the dashboard. Also collapsed the route's two near-identical code paths (an early return for "no active sessions" used to duplicate the stale-requesting reset, the missed-connection follow-up, and the availability reset) into one flow: session-closing logic is now skipped, not the rest of the sweep, when there's nothing to close, and there's a single response shape either way.
 

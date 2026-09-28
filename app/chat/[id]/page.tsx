@@ -14,6 +14,7 @@ import { TIME, VALIDATION, CONVERSATION_STARTERS, REACTIONS, NOTIFICATION, conta
 import { linkifyText } from '@/lib/linkify'
 import { syncSessionRoleStates } from '@/lib/sessionState'
 import { getActiveBlock } from '@/lib/blocks'
+import { mergeMessageLists, canEditMessage } from '@/lib/chatMessages'
 import type { ChatMessage as Message, Session, MessageReaction as Reaction } from '@/lib/types/database'
 
 // The subset of a profile the chat header and profile modal render.
@@ -123,6 +124,18 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   // Crisis safety net: id of the most recent crisis-language message the user dismissed.
   // A newer crisis message re-shows the banner.
   const [dismissedCrisisMsgId, setDismissedCrisisMsgId] = useState<string | null>(null)
+  // The last crisis-language message this client saw. Kept so editing the
+  // words away (migration 062) doesn't also take the banner down.
+  const [lastCrisisMessage, setLastCrisisMessage] = useState<Message | null>(null)
+
+  // --- Editing a sent message (migration 062: sender only, 5 minutes, live chat) ---
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null)
+  const [editDraft, setEditDraft] = useState('')
+  const [savingEdit, setSavingEdit] = useState(false)
+  const [editError, setEditError] = useState<string | null>(null)
+  // Re-renders the chat while any of the user's messages is still editable,
+  // so the Edit button goes away when its window closes.
+  const [editClock, setEditClock] = useState(() => Date.now())
   // Guards the server-side crisis flag call (see the effect below) so it
   // fires once per session per client, not once per render.
   const crisisFlagSentRef = useRef(false)
@@ -254,9 +267,15 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
           .eq('session_id', sessionId)
           .order('created_at', { ascending: true })
         // gte (not gt) so an identical timestamp can't be skipped; the merge
-        // dedupes the refetched boundary message.
+        // dedupes the refetched boundary message. Reach back past the edit
+        // window too, so an edit whose realtime UPDATE was dropped still
+        // shows up (a message can only be edited within 5 minutes of being
+        // sent, so nothing older can have changed). 2 minutes of slack
+        // covers clock skew between this device and the database.
         if (lastMessageTimeRef.current) {
-          query = query.gte('created_at', lastMessageTimeRef.current)
+          const editLookback = Date.now() - TIME.MESSAGE_EDIT_WINDOW_MS - 2 * 60 * 1000
+          const since = Math.min(new Date(lastMessageTimeRef.current).getTime(), editLookback)
+          query = query.gte('created_at', new Date(since).toISOString())
         }
         const { data } = await query
         if (data && data.length > 0) mergeMessages(data)
@@ -537,19 +556,13 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
     }
   }
 
-  // Merge fetched/inserted rows into the message list: dedupe by id (realtime
-  // may deliver the same message), keep chronological order, and return the
-  // SAME array reference when nothing is new so no re-render (or downstream
-  // activity-timer effect) fires on quiet polls.
+  // Merge fetched/inserted/edited rows into the message list. See
+  // lib/chatMessages.ts: dedupes by id, keeps chronological order, applies
+  // newer edits and read receipts, and returns the SAME array reference when
+  // nothing changed so no re-render (or downstream activity-timer effect)
+  // fires on quiet polls.
   function mergeMessages(incoming: Message[]) {
-    setMessages((current) => {
-      const known = new Set(current.map((m) => m.id))
-      const fresh = incoming.filter((m) => !known.has(m.id))
-      if (fresh.length === 0) return current
-      return [...current, ...fresh].sort(
-        (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-      )
-    })
+    setMessages((current) => mergeMessageLists(current, incoming))
   }
 
   // --- V2: Load reactions for this session's messages ---
@@ -657,6 +670,23 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
             if (newMsg.sender_id !== currentUserId) {
               setIsOtherTyping(false)
             }
+          }
+        }
+      )
+      // Edits (migration 062) and read receipts. mergeMessages only applies
+      // an edit newer than the one on screen, so ordering doesn't matter.
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'messages',
+          filter: `session_id=eq.${sessionId}`
+        },
+        (payload) => {
+          const updatedMsg = payload.new as Record<string, unknown>
+          if (updatedMsg.id && updatedMsg.sender_id && updatedMsg.content && updatedMsg.created_at) {
+            mergeMessages([updatedMsg as unknown as Message])
           }
         }
       )
@@ -897,6 +927,55 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
       void refreshSession()
     } finally {
       setSending(false)
+    }
+  }
+
+  function startEditing(message: Message) {
+    setReactionPickerMessageId(null)
+    setEditError(null)
+    setEditDraft(message.content)
+    setEditingMessageId(message.id)
+  }
+
+  function cancelEditing() {
+    setEditingMessageId(null)
+    setEditDraft('')
+    setEditError(null)
+  }
+
+  async function saveEdit(messageId: string) {
+    const trimmed = editDraft.trim()
+    if (!trimmed || trimmed.length > VALIDATION.MAX_MESSAGE_LENGTH || savingEdit) return
+    const original = messages.find((m) => m.id === messageId)
+    if (original && trimmed === original.content) {
+      cancelEditing()
+      return
+    }
+
+    setSavingEdit(true)
+    setEditError(null)
+    try {
+      // The database decides whether this edit is allowed (sender, 5 minutes,
+      // chat still open). A refused edit comes back as zero rows, not always
+      // an error, so both count as "couldn't save".
+      const { data: updated, error } = await supabase
+        .from('messages')
+        .update({ content: trimmed })
+        .eq('id', messageId)
+        .select()
+        .maybeSingle()
+      if (error) throw error
+      if (!updated) throw new Error('Message is no longer editable')
+      mergeMessages([updated as Message])
+      setEditingMessageId(null)
+      setEditDraft('')
+      setLastActivityTime(Date.now())
+    } catch (error: unknown) {
+      console.error('Error editing message:', error)
+      setEditError("Couldn't save your edit. Messages can only be changed for 5 minutes after sending, while the chat is open.")
+      void refreshSession()
+    } finally {
+      setSavingEdit(false)
     }
   }
 
@@ -1254,10 +1333,17 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   // NOTE: This hook must run on every render — keep it ABOVE the early `loading`
   // return below, or React throws "Rendered more hooks than during the previous
   // render" the moment loading flips false (crashes the whole chat page).
-  const latestCrisisMessage = useMemo(
+  const currentCrisisMessage = useMemo(
     () => [...messages].reverse().find((m) => containsCrisisLanguage(m.content)),
     [messages]
   )
+  // Remember it, so a sender editing the words away doesn't clear the banner
+  // on either side. Adjusting state during render (not in an effect) is
+  // React's recommended way to derive from a changing value.
+  if (currentCrisisMessage && currentCrisisMessage.id !== lastCrisisMessage?.id) {
+    setLastCrisisMessage(currentCrisisMessage)
+  }
+  const latestCrisisMessage = currentCrisisMessage ?? lastCrisisMessage ?? undefined
   // Deliberately NOT gated on session.status — a crisis message doesn't stop
   // mattering because the chat ended. Stays up through the declined/ended
   // states too, until dismissed.
@@ -1289,6 +1375,17 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
       }
     })()
   }, [latestCrisisMessage, currentUserId, sessionId, supabase])
+
+  // Tick while any of this user's messages can still be edited, so the Edit
+  // button disappears on time. Stops on its own once none can.
+  const hasEditableMessage =
+    session?.status === 'active' &&
+    messages.some((m) => canEditMessage(m, currentUserId, true, editClock))
+  useEffect(() => {
+    if (!hasEditableMessage) return
+    const id = setInterval(() => setEditClock(Date.now()), 15 * 1000)
+    return () => clearInterval(id)
+  }, [hasEditableMessage])
 
   if (loading) {
     return (
@@ -1524,6 +1621,8 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                 const isOwn = message.sender_id === currentUserId
                 const msgReactions = getReactionsForMessage(message.id)
                 const hasReactions = Object.keys(msgReactions).length > 0
+                const isEditing = editingMessageId === message.id
+                const canEdit = canEditMessage(message, currentUserId, session?.status === 'active', editClock)
 
                 return (
                   <div
@@ -1541,12 +1640,14 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                         aria-label={`Message from ${isOwn ? 'you' : otherUserName}`}
                         onDoubleClick={(e) => {
                           e.stopPropagation()
+                          if (isEditing) return
                           setReactionPickerMessageId(
                             reactionPickerMessageId === message.id ? null : message.id
                           )
                         }}
                         onTouchStart={() => {
                           longPressFiredRef.current = false
+                          if (isEditing) return
                           longPressTimerRef.current = setTimeout(() => {
                             longPressFiredRef.current = true
                             setReactionPickerMessageId(
@@ -1561,6 +1662,54 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                           if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current)
                         }}
                       >
+                        {isEditing ? (
+                          <form
+                            onSubmit={(e) => {
+                              e.preventDefault()
+                              void saveEdit(message.id)
+                            }}
+                            aria-label="Edit message"
+                          >
+                            <label htmlFor={`edit-${message.id}`} className="sr-only">Edit your message</label>
+                            <textarea
+                              id={`edit-${message.id}`}
+                              value={editDraft}
+                              onChange={(e) => setEditDraft(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Escape') cancelEditing()
+                                if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+                                  e.preventDefault()
+                                  void saveEdit(message.id)
+                                }
+                              }}
+                              maxLength={VALIDATION.MAX_MESSAGE_LENGTH}
+                              rows={Math.min(6, Math.max(2, Math.ceil(editDraft.length / 40)))}
+                              autoFocus
+                              disabled={savingEdit}
+                              className="w-full min-w-[200px] sm:min-w-[280px] px-3 py-2 rounded-lg text-base text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-white/70 resize-none"
+                            />
+                            <div className="flex items-center justify-end gap-2 mt-2">
+                              <button
+                                type="button"
+                                onClick={cancelEditing}
+                                disabled={savingEdit}
+                                className="min-h-[44px] px-4 rounded-lg text-sm font-semibold bg-white/15 hover:bg-white/25 text-white disabled:opacity-50 transition-all"
+                              >
+                                Cancel
+                              </button>
+                              <button
+                                type="submit"
+                                disabled={savingEdit || !editDraft.trim()}
+                                className="min-h-[44px] px-4 rounded-lg text-sm font-semibold bg-white text-rb-blue hover:bg-gray-100 disabled:opacity-50 transition-all"
+                              >
+                                {savingEdit ? 'Saving...' : 'Save'}
+                              </button>
+                            </div>
+                            {editError && (
+                              <p className="text-xs mt-2 !text-white" role="alert">{editError}</p>
+                            )}
+                          </form>
+                        ) : (
                         <Body16 className={`whitespace-pre-wrap break-words ${isOwn ? '!text-white' : '!text-gray-900 dark:!text-white'}`}>
                           {linkifyText(
                             message.content,
@@ -1569,7 +1718,16 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                               : 'underline decoration-gray-400 hover:decoration-gray-600 dark:decoration-white/70 dark:hover:decoration-white'
                           )}
                         </Body16>
+                        )}
                         <div className="flex items-center justify-end gap-1 mt-1">
+                          {message.edited_at && (
+                            <p
+                              className={`text-xs italic ${isOwn ? '!text-white/80' : '!text-gray-500 dark:!text-white/80'}`}
+                              title={`Edited ${new Date(message.edited_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
+                            >
+                              Edited ·
+                            </p>
+                          )}
                           <p className={`text-xs ${isOwn ? '!text-white/80' : '!text-gray-500 dark:!text-white/80'}`}>
                             {new Date(message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           </p>
@@ -1631,6 +1789,20 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                               <span>{msgReactions[r.key].count}</span>
                             </button>
                           ))}
+                        </div>
+                      )}
+
+                      {/* Edit (own messages, first 5 minutes, live chat only) */}
+                      {canEdit && !isEditing && (
+                        <div className="flex justify-end">
+                          <button
+                            type="button"
+                            onClick={() => startEditing(message)}
+                            className="min-h-[44px] px-2 text-xs font-medium text-gray-500 dark:text-gray-300 hover:text-rb-blue dark:hover:text-white transition-colors"
+                            aria-label="Edit this message"
+                          >
+                            Edit
+                          </button>
                         </div>
                       )}
                     </div>

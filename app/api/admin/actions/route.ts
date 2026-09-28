@@ -382,11 +382,27 @@ export async function POST(request: NextRequest) {
 
       const { data: messages, error: messagesError } = await supabase
         .from('messages')
-        .select('id, sender_id, content, created_at')
+        .select('id, sender_id, content, created_at, edited_at')
         .eq('session_id', sessionId)
         .order('created_at', { ascending: true })
 
       if (messagesError) throw messagesError
+
+      // Every earlier version of an edited message (migration 062). A report
+      // is decided on what was actually said, not what it was tidied into.
+      const { data: edits, error: editsError } = await supabase
+        .from('message_edits')
+        .select('message_id, previous_content, edited_at')
+        .eq('session_id', sessionId)
+        .order('edited_at', { ascending: true })
+
+      if (editsError) throw editsError
+
+      const editsByMessage: Record<string, { previous_content: string; edited_at: string }[]> = {}
+      for (const e of edits || []) {
+        ;(editsByMessage[e.message_id] ??= []).push({ previous_content: e.previous_content, edited_at: e.edited_at })
+      }
+      const messagesWithEdits = (messages || []).map((m) => ({ ...m, edits: editsByMessage[m.id] ?? [] }))
 
       const senderIds = [...new Set((messages || []).map((m) => m.sender_id))]
       const profiles: Record<string, string> = {}
@@ -410,7 +426,7 @@ export async function POST(request: NextRequest) {
         }])
       ).catch(() => {})
 
-      return NextResponse.json({ success: true, messages: messages || [], profiles })
+      return NextResponse.json({ success: true, messages: messagesWithEdits, profiles })
     }
 
     if (action === 'send_outreach') {

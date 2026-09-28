@@ -74,7 +74,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Could not read messages' }, { status: 500 })
     }
 
-    const hasCrisisLanguage = (messages ?? []).some((m) => containsCrisisLanguage(m.content))
+    // Earlier versions of edited messages (migration 062) count too: someone
+    // editing crisis language away a minute later doesn't mean it wasn't said.
+    const { data: edits, error: editsError } = await supabase
+      .from('message_edits')
+      .select('previous_content')
+      .eq('session_id', sessionId)
+      .limit(500)
+
+    if (editsError) {
+      return NextResponse.json({ error: 'Could not read message edits' }, { status: 500 })
+    }
+
+    const hasCrisisLanguage =
+      (messages ?? []).some((m) => containsCrisisLanguage(m.content)) ||
+      (edits ?? []).some((e) => containsCrisisLanguage(e.previous_content))
     if (!hasCrisisLanguage) {
       return NextResponse.json({ success: true, flagged: false })
     }

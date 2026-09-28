@@ -128,6 +128,10 @@ export const TIME = {
   /** Interval to check for inactivity (30 seconds) */
   INACTIVITY_CHECK_INTERVAL_MS: 30 * 1000,
 
+  /** How long after sending a message its sender may edit it (5 minutes).
+   *  Must match the interval in migration 062 — the database is the real gate. */
+  MESSAGE_EDIT_WINDOW_MS: 5 * 60 * 1000,
+
   /** Session cleanup: Close sessions with no messages after this time (10 minutes) */
   CLEANUP_NO_MESSAGES_MS: 10 * 60 * 1000,
 

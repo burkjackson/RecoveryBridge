@@ -38,6 +38,7 @@ export async function GET(request: NextRequest) {
       notices,
       mutesCreated,
       queuedNotifications,
+      messageEdits,
     ] = await Promise.all([
       supabaseAdmin.from('profiles').select('*').eq('id', userId).single(),
       supabaseAdmin.from('sessions').select('*').or(`listener_id.eq.${userId},seeker_id.eq.${userId}`),
@@ -60,6 +61,9 @@ export async function GET(request: NextRequest) {
       // Notifications still sitting in the queue addressed to them
       // (thank-you notes, training nudges, check-ins, broadcasts).
       supabaseAdmin.from('notification_queue').select('*').eq('user_id', userId),
+      // Earlier versions of messages they edited (migration 062). Their own
+      // words, so theirs to see; never the other person's edits.
+      supabaseAdmin.from('message_edits').select('*').eq('sender_id', userId),
     ])
 
     // Messages sent TO this user in any of their sessions — messages.select
@@ -96,6 +100,7 @@ export async function GET(request: NextRequest) {
       messages_received_from_recoverybridge: notices.data ?? [],
       mutes_created: mutesCreated.data ?? [],
       queued_notifications: queuedNotifications.data ?? [],
+      message_edit_history: messageEdits.data ?? [],
     }
 
     const filename = `recoverybridge-data-${new Date().toISOString().slice(0, 10)}.json`

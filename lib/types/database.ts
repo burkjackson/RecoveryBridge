@@ -74,6 +74,8 @@ export interface ChatMessage {
   content: string
   created_at: string
   read_at: string | null
+  /** Set by the database when the sender edits the message (migration 062). */
+  edited_at?: string | null
 }
 
 export interface Report {
@@ -273,7 +275,7 @@ export type Database = {
       }
       messages: {
         Row: ChatMessage
-        Insert: Omit<ChatMessage, 'id' | 'created_at'>
+        Insert: Omit<ChatMessage, 'id' | 'created_at' | 'edited_at'>
         Update: Partial<Omit<ChatMessage, 'id' | 'created_at'>>
       }
       reports: {

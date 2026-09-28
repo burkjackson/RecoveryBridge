@@ -7,6 +7,7 @@ import { Heading1, Body16, Body18 } from '@/components/ui/Typography'
 import Modal from '@/components/Modal'
 import { SkeletonAdminRow } from '@/components/Skeleton'
 import { CompactFooter } from '@/components/Footer'
+import TranscriptEdits, { type TranscriptMessageEdit } from '@/components/TranscriptEdits'
 import BroadcastComposer from '@/components/BroadcastComposer'
 import NotificationControls from '@/components/NotificationControls'
 import { parseReferralSource, OUTREACH_COPY } from '@/lib/constants'
@@ -116,7 +117,7 @@ export default function AdminPage() {
 
   // Transcript viewer
   const [transcriptConfirm, setTranscriptConfirm] = useState<{ show: boolean; sessionId: string; reportedUserId?: string; reportId?: string }>({ show: false, sessionId: '' })
-  const [transcriptMessages, setTranscriptMessages] = useState<Record<string, { id: string; sender_id: string; content: string; created_at: string }[]>>({})
+  const [transcriptMessages, setTranscriptMessages] = useState<Record<string, { id: string; sender_id: string; content: string; created_at: string; edits?: TranscriptMessageEdit[] }[]>>({})
   const [transcriptProfiles, setTranscriptProfiles] = useState<Record<string, string>>({})
   const [transcriptLoading, setTranscriptLoading] = useState<string | null>(null)
   const [expandedTranscript, setExpandedTranscript] = useState<string | null>(null)
@@ -954,6 +955,7 @@ export default function AdminPage() {
                                               : 'bg-gray-700 text-gray-100'
                                           }`}>
                                             {msg.content}
+                                            <TranscriptEdits edits={msg.edits} />
                                           </div>
                                         </div>
                                       )
@@ -1175,6 +1177,7 @@ export default function AdminPage() {
                                       isFirstSpeaker ? 'bg-gray-700 text-gray-100' : 'bg-rb-blue/80 text-white'
                                     }`}>
                                       {msg.content}
+                                      <TranscriptEdits edits={msg.edits} />
                                     </div>
                                   </div>
                                 )
