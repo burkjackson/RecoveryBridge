@@ -39,6 +39,25 @@ admin path updates `sessions` from a browser JWT anyway.
 
 ## Applied 28 Sep 2026
 
+### 063 — admin policies use is_admin()
+
+Fixes an outage 059 caused. Ten policies checked admin status by reading
+`profiles.is_admin` inline, and 059 revoked that column from anon and
+authenticated, so every one of them threw "permission denied for table
+profiles" for a normal user. Postgres evaluates all permissive policies on a
+table, so the whole table broke, not just the admin path. From 22 to 28 Sep:
+profile photo upload failed (storage's upsert hits the legacy blog-images
+UPDATE policy on `storage.objects`), `user_blocks` reads failed
+(`getActiveBlock()` swallowed it and returned "not blocked"; the 041 triggers
+still enforced blocks), and `user_notices` reads failed, so NoticeBanner
+showed nothing. Found from a member's report and confirmed in the Postgres
+logs. All ten now call `(select public.is_admin())` via `ALTER POLICY`, which
+keeps name, command and roles. Reproduced the error and verified the fix in a
+rolled-back transaction (normal user: no error and no admin rows; admin:
+still sees admin tables), then applied it. After: 0 policies read
+`profiles.is_admin` inline, and no invoker-rights function does either.
+**Never read `profiles.is_admin` in a policy. Call `public.is_admin()`.**
+
 ### 062 — message editing
 
 Written and applied 28 Sep 2026 (applied by Claude via the Supabase connector, at Burk's request). Lets a sender edit their own message for 5 minutes
