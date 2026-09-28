@@ -1,4 +1,8 @@
-# Triggers time-based API routes on a 15-minute cadence.
+# Triggers time-based API routes. Asks for every 15 minutes, but GitHub
+# throttles scheduled workflows: measured 28 Sep 2026 at about every 3-4
+# hours. The primary schedule is now pg_cron in Supabase (migration 065,
+# every 10 minutes); this workflow is a backup. Every route is idempotent,
+# so overlapping runs are harmless.
 #
 # Vercel Hobby crons only run once per day, which is too coarse for
 # scheduled-availability (it matches windows starting within the last

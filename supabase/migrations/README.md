@@ -39,6 +39,26 @@ admin path updates `sessions` from a browser JWT anyway.
 
 ## Applied 28 Sep 2026
 
+### 065 — pg_cron schedule
+
+GitHub Actions was running the */15 cron workflow only every 3-4 hours
+(about 7 runs a day since at least 30 Aug). 065 enables `pg_cron` and
+schedules two jobs: the four cron routes every 10 minutes, and the drain at
+2 past, both through `private.ping_cron_routes()` using `pg_net`. The secret
+comes from Vault (`cron_secret`); until Burk adds it the jobs are no-ops.
+Add it once in the SQL editor:
+`select vault.create_secret('<CLEANUP_SECRET_KEY value>', 'cron_secret');`
+Then check `net._http_response` for 200s.
+
+### 066 — queue dedupe covers every status
+
+The unique dedupe index only covered `pending` rows, so the training-nudge
+cron re-queued the same monthly key on every run (482 rows, 3 people). A
+BEFORE INSERT trigger now skips any row whose `(user_id, kind, dedupe_key)`
+already exists; repeats deleted (486 to 7). Tested in a rolled-back
+transaction: a duplicate in a batch is dropped while the new row in the same
+batch lands, and rows with no key are unaffected.
+
 ### 064 — notices: only read_at is client-writable
 
 `authenticated` held a table-level UPDATE on `user_notices`, so a recipient

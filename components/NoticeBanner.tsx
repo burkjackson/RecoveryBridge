@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
+import * as Sentry from '@sentry/nextjs'
 import { createClient } from '@/lib/supabase/client'
 
 interface Notice {
@@ -23,12 +24,22 @@ export default function NoticeBanner() {
   const [userId, setUserId] = useState<string | null>(null)
 
   const loadNotices = useCallback(async (uid: string) => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('user_notices')
       .select('id, title, body, created_at')
       .eq('user_id', uid)
       .is('read_at', null)
       .order('created_at', { ascending: false })
+    if (error) {
+      // Reported, not just logged: from 22 to 28 Sep 2026 this read failed for
+      // every user (Known Issue #65) and the banner simply stayed empty.
+      console.error('Could not load notices:', error)
+      Sentry.captureException(new Error(`Notice load failed: ${error.message}`), {
+        tags: { area: 'notices' },
+        extra: { code: error.code },
+      })
+      return
+    }
     setNotices(data || [])
   }, [supabase])
 
@@ -61,11 +72,18 @@ export default function NoticeBanner() {
     // Optimistic: hide immediately, then persist the read receipt.
     setNotices((prev) => prev.filter((n) => n.id !== id))
     if (!userId) return
-    await supabase
+    const { error } = await supabase
       .from('user_notices')
       .update({ read_at: new Date().toISOString() })
       .eq('id', id)
       .eq('user_id', userId)
+    if (error) {
+      console.error('Could not mark notice read:', error)
+      Sentry.captureException(new Error(`Notice dismiss failed: ${error.message}`), {
+        tags: { area: 'notices' },
+        extra: { code: error.code },
+      })
+    }
   }
 
   if (notices.length === 0) return null
