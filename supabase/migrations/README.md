@@ -39,6 +39,20 @@ admin path updates `sessions` from a browser JWT anyway.
 
 ## Applied 28 Sep 2026
 
+### 064 — notices: only read_at is client-writable
+
+`authenticated` held a table-level UPDATE on `user_notices`, so a recipient
+could rewrite a notice sent to them. Revoked it and granted back
+`update (read_at)`, the only column NoticeBanner writes. Checked as a real
+recipient in a rolled-back transaction: reading and dismissing still work,
+and editing the body is refused.
+
+### 060 — trim display names (applied late)
+
+Written 22 Sep, never run: found on 28 Sep with 20 profiles still carrying a
+trailing space, all created before the app started trimming on write. None
+collided with another name once trimmed. Applied; 0 left.
+
 ### 063 — admin policies use is_admin()
 
 Fixes an outage 059 caused. Ten policies checked admin status by reading
@@ -387,7 +401,9 @@ rollback;
 
 Written 24 Aug 2026 as `035_drop_unused_schema.sql`, renumbered to 038 when
 this branch was rebased onto migrations 035–037 that landed from a parallel
-session in the meantime. Not applied. Removes two things nothing uses:
+session in the meantime. **Applied 31 Aug 2026** by the abandoned branch
+(see 051/052 above; found 28 Sep in `list_migrations` and confirmed: all
+four objects are gone). Removes things nothing uses:
 
 - `profiles.requesting_since` — added early and never wired up. No code writes
   it, no code reads it, every row is null. It would have given the exact
