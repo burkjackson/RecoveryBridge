@@ -702,7 +702,7 @@ export async function POST(request: NextRequest) {
         .order('created_at', { ascending: false })
         // Was 200, with 137 members on 28 Sep 2026: anyone past the cap
         // silently vanished from the admin user list and its search.
-        .limit(1000)
+        .limit(500)
 
       if (listError) throw listError
       return NextResponse.json({ users: data || [] })
