@@ -176,13 +176,23 @@ function isUniqueViolation(error: { code?: string } | null): boolean {
 const INSERT_CHUNK_SIZE = 500
 
 /**
- * Queue notifications, skipping any that are already pending.
+ * Queue notifications, skipping any whose dedupe key was already used for
+ * that person, whatever became of the earlier row.
  *
- * Idempotency is belt-and-braces on purpose. The pre-filter below keeps the
- * common case cheap (one SELECT, one INSERT), and the partial unique index
- * from migration 035 catches the race the pre-filter can't — two cron runs
- * overlapping — at which point the chunk is retried row by row so one
- * duplicate doesn't discard the rest of the batch.
+ * A dedupe key means "once", not "once at a time". This used to check only
+ * PENDING rows, so as soon as the drain marked a row sent or skipped, the
+ * next cron run queued the same key again: by 28 Sep 2026 the training nudge
+ * had 482 rows for 3 people, all key '2026-09' (Known Issue #67).
+ *
+ * Three layers, cheapest first:
+ *   - the pre-filter below (one SELECT) drops keys already in the table;
+ *   - migration 066's BEFORE INSERT trigger silently drops any row whose
+ *     key exists in any status, which covers two cron runs racing;
+ *   - migration 035's partial unique index still rejects a duplicate
+ *     pending row, and the chunk is retried row by row so one duplicate
+ *     doesn't discard the rest of the batch.
+ * Counts come from the rows the insert actually returns, since the trigger
+ * can drop rows without an error.
  */
 export async function enqueueNotifications(
   supabase: SupabaseClient,
@@ -201,17 +211,18 @@ export async function enqueueNotifications(
   items = allowed
 
   const deduped = items.filter((i) => i.dedupeKey)
-  let alreadyPending = new Set<string>()
+  let alreadyQueued = new Set<string>()
 
   if (deduped.length > 0) {
+    // Any status: sent and skipped rows count too. A read failure just means
+    // the trigger (066) does the deduping instead.
     const { data: existing } = await supabase
       .from('notification_queue')
       .select('user_id, kind, dedupe_key')
-      .eq('status', 'pending')
       .in('kind', [...new Set(deduped.map((i) => i.kind))])
       .in('dedupe_key', [...new Set(deduped.map((i) => i.dedupeKey as string))])
 
-    alreadyPending = new Set(
+    alreadyQueued = new Set(
       (existing ?? []).map(
         (r: { user_id: string; kind: string; dedupe_key: string }) =>
           `${r.user_id}|${r.kind}|${r.dedupe_key}`
@@ -228,7 +239,7 @@ export async function enqueueNotifications(
   for (const item of items) {
     if (item.dedupeKey) {
       const key = `${item.userId}|${item.kind}|${item.dedupeKey}`
-      if (alreadyPending.has(key) || seen.has(key)) {
+      if (alreadyQueued.has(key) || seen.has(key)) {
         skipped++
         continue
       }
@@ -240,10 +251,15 @@ export async function enqueueNotifications(
   let queued = 0
   for (let i = 0; i < toInsert.length; i += INSERT_CHUNK_SIZE) {
     const chunk = toInsert.slice(i, i + INSERT_CHUNK_SIZE)
-    const { error } = await supabase.from('notification_queue').insert(chunk)
+    const { data: inserted, error } = await supabase
+      .from('notification_queue')
+      .insert(chunk)
+      .select('id')
 
     if (!error) {
-      queued += chunk.length
+      const landed = (inserted ?? []).length
+      queued += landed
+      skipped += chunk.length - landed
       continue
     }
 
@@ -252,9 +268,14 @@ export async function enqueueNotifications(
     // Lost a race with a concurrent enqueue. Retry individually so the
     // duplicate is the only row dropped.
     for (const row of chunk) {
-      const { error: rowError } = await supabase.from('notification_queue').insert(row)
-      if (!rowError) queued++
-      else if (isUniqueViolation(rowError)) skipped++
+      const { data: rowInserted, error: rowError } = await supabase
+        .from('notification_queue')
+        .insert(row)
+        .select('id')
+      if (!rowError) {
+        if ((rowInserted ?? []).length > 0) queued++
+        else skipped++
+      } else if (isUniqueViolation(rowError)) skipped++
       else throw rowError
     }
   }

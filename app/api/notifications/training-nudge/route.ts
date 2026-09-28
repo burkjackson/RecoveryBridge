@@ -23,9 +23,13 @@ import {
  * "you're 3 sections from finishing" is a reminder. Someone who never opened
  * the page has expressed no such intent, and pushing them would be marketing.
  *
- * Runs on the shared 15-minute cron. The monthly dedupe key means the
- * frequency costs one cheap query per tick and nothing else — a given person
- * can be nudged at most once per calendar month.
+ * Runs on the shared cron (every 10 minutes via pg_cron, migration 065). The
+ * monthly dedupe key means the frequency costs one cheap query per tick and
+ * nothing else: a given person can be nudged at most once per calendar month.
+ * That only holds because enqueueNotifications() now treats a key as used
+ * once it's in the queue in ANY status. It used to check pending rows only,
+ * and this route re-queued the same month's nudge on every run (Known Issue
+ * #67).
  */
 
 interface TrainingProfile {
@@ -44,8 +48,8 @@ export async function POST(request: NextRequest) {
   )
 
   // Bail before the profile scan when the switch is off. enqueueNotifications
-  // would drop these anyway, but this cron runs ~96 times a day and there is no
-  // point querying for candidates nobody is going to message.
+  // would drop these anyway, but this cron runs ~144 times a day and there is
+  // no point querying for candidates nobody is going to message.
   const enabledKinds = await fetchEnabledKinds(supabase)
   if (!enabledKinds.has('training_nudge')) {
     return NextResponse.json({ queued: 0, reason: 'training_nudge is switched off' })

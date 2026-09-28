@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { decideDelivery, fetchEnabledKinds, type DeliveryPreferences } from './notificationQueue'
+import { decideDelivery, enqueueNotifications, fetchEnabledKinds, type DeliveryPreferences, type QueuedNotificationInput } from './notificationQueue'
+import { fakeSupabase } from './test/fakeSupabase'
 
 // A UTC instant whose New York local time is the given hour. 2026-07-06 is EDT (UTC-4).
 function edt(hour: number, minute = 0): Date {
@@ -115,5 +116,70 @@ describe('fetchEnabledKinds', () => {
       supabaseReturning({ data: null, error: { message: 'boom' } })
     )
     expect(kinds.size).toBe(0)
+  })
+})
+
+describe('enqueueNotifications — dedupe', () => {
+  const nudge = (userId: string): QueuedNotificationInput => ({
+    userId,
+    category: 'announcement',
+    kind: 'training_nudge',
+    title: 'Finish training',
+    body: 'A few sections left',
+    dedupeKey: '2026-09',
+  })
+  const enabled = { data: [{ kind: 'training_nudge', enabled: true }], error: null }
+
+  it('skips a key that was already sent or skipped, not just pending', async () => {
+    // Known Issue #67: checking pending rows only re-queued the same monthly
+    // nudge on every cron run.
+    const { client, calls } = fakeSupabase({
+      tables: {
+        notification_kind_settings: enabled,
+        notification_queue: [
+          { data: [{ user_id: 'a', kind: 'training_nudge', dedupe_key: '2026-09' }], error: null },
+          { data: [{ id: 'new-row' }], error: null },
+        ],
+      },
+    })
+
+    const result = await enqueueNotifications(client, [nudge('a'), nudge('b')])
+
+    expect(result).toEqual({ queued: 1, skipped: 1, blocked: 0 })
+    const statusFilter = calls.find(
+      (c) => c.table === 'notification_queue' && c.method === 'eq' && c.args[0] === 'status'
+    )
+    expect(statusFilter).toBeUndefined()
+    const insert = calls.find((c) => c.table === 'notification_queue' && c.method === 'insert')
+    expect((insert?.args[0] as { user_id: string }[]).map((r) => r.user_id)).toEqual(['b'])
+  })
+
+  it('counts only rows the database actually kept', async () => {
+    // Migration 066's trigger drops a duplicate without an error, so the
+    // insert can return fewer rows than it was sent.
+    const { client } = fakeSupabase({
+      tables: {
+        notification_kind_settings: enabled,
+        notification_queue: [
+          { data: [], error: null },
+          { data: [{ id: 'kept' }], error: null },
+        ],
+      },
+    })
+
+    const result = await enqueueNotifications(client, [nudge('a'), nudge('b')])
+
+    expect(result).toEqual({ queued: 1, skipped: 1, blocked: 0 })
+  })
+
+  it('never creates rows for a kind that is switched off', async () => {
+    const { client, calls } = fakeSupabase({
+      tables: { notification_kind_settings: { data: [], error: null } },
+    })
+
+    const result = await enqueueNotifications(client, [nudge('a')])
+
+    expect(result).toEqual({ queued: 0, skipped: 0, blocked: 1 })
+    expect(calls.some((c) => c.table === 'notification_queue')).toBe(false)
   })
 })
