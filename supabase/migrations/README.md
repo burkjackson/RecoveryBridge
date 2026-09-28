@@ -37,6 +37,44 @@ and only the listener may set `accepted_at`, once). Service-role callers
 (cron, server routes, SQL editor) are exempt; admins are not, since no
 admin path updates `sessions` from a browser JWT anyway.
 
+## Applied 28 Sep 2026
+
+### 062 — message editing
+
+Written and applied 28 Sep 2026 (applied by Claude via the Supabase connector, at Burk's request). Lets a sender edit their own message for 5 minutes
+after sending it, while the chat is still active. Adds `messages.edited_at`,
+a new `message_edits` table holding every earlier version, a sender-only
+UPDATE policy on `messages`, and rewrites `restrict_message_update()` (004)
+so it enforces the rules: sender only (service role can't edit either),
+5-minute window, active session, trimmed, non-empty, 2000 characters max,
+`edited_at` set by the trigger and never by the client, and no editing and
+marking read in the same update. The new policy also can't be used to fake
+a read receipt on your own message. A `SECURITY DEFINER` AFTER trigger
+(`log_message_edit()`) copies the old text into `message_edits` and caps
+each message at 10 edits. `message_edits` is admin-read-only; its table
+grants are revoked outright (see #20) and the trigger function's EXECUTE is
+revoked from anon/authenticated/public (see #37).
+
+Why keep the old text: reports are decided from the transcript, and without
+it someone could say something cruel and tidy it up before an admin looked.
+The admin transcript shows every earlier version, and
+`/api/sessions/flag-crisis` scans them too.
+
+Checked live after applying: `edited_at` exists, `message_edits` has RLS
+on with only `authenticated:SELECT` granted, both new policies and the
+`log_message_edits` trigger are present, and no role but the owner can
+EXECUTE `log_message_edit()`.
+
+Verified 28 Sep 2026 against production in a single DO block that raised at
+the end, so everything rolled back (confirmed after: no `edited_at` column,
+no `message_edits` table). 14 cases, all as expected: sender edit within the
+window succeeds and trims; editing the other person's message, the
+recipient editing, and a service-role edit are all refused; editing after 5
+minutes or in an ended session touches 0 rows; empty and 2001-character
+edits refused; sender self-read-receipt refused; a client-set `edited_at` is
+ignored; the 11th edit is refused; a non-admin sees 0 `message_edits` rows,
+an admin sees the original text; the recipient's read receipt still works.
+
 ## Applied 22 Sep 2026
 
 ### 053 — mute privacy
@@ -110,41 +148,6 @@ column needs the same treatment — check `information_schema.column_privileges`
 before assuming a column isn't client-readable.**
 
 ## Pending — not yet applied
-
-### 062 — message editing
-
-Written 28 Sep 2026. Lets a sender edit their own message for 5 minutes
-after sending it, while the chat is still active. Adds `messages.edited_at`,
-a new `message_edits` table holding every earlier version, a sender-only
-UPDATE policy on `messages`, and rewrites `restrict_message_update()` (004)
-so it enforces the rules: sender only (service role can't edit either),
-5-minute window, active session, trimmed, non-empty, 2000 characters max,
-`edited_at` set by the trigger and never by the client, and no editing and
-marking read in the same update. The new policy also can't be used to fake
-a read receipt on your own message. A `SECURITY DEFINER` AFTER trigger
-(`log_message_edit()`) copies the old text into `message_edits` and caps
-each message at 10 edits. `message_edits` is admin-read-only; its table
-grants are revoked outright (see #20) and the trigger function's EXECUTE is
-revoked from anon/authenticated/public (see #37).
-
-Why keep the old text: reports are decided from the transcript, and without
-it someone could say something cruel and tidy it up before an admin looked.
-The admin transcript shows every earlier version, and
-`/api/sessions/flag-crisis` scans them too.
-
-**Apply this before merging the app changes that go with it.** The admin
-transcript and the crisis-flag route both read `message_edits`, and would
-error until the table exists.
-
-Verified 28 Sep 2026 against production in a single DO block that raised at
-the end, so everything rolled back (confirmed after: no `edited_at` column,
-no `message_edits` table). 14 cases, all as expected: sender edit within the
-window succeeds and trims; editing the other person's message, the
-recipient editing, and a service-role edit are all refused; editing after 5
-minutes or in an ended session touches 0 rows; empty and 2001-character
-edits refused; sender self-read-receipt refused; a client-set `edited_at` is
-ignored; the 11th edit is refused; a non-admin sees 0 `message_edits` rows,
-an admin sees the original text; the recipient's read receipt still works.
 
 ### 050 — user-to-user muting
 
