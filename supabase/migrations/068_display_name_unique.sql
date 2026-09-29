@@ -8,9 +8,9 @@
 -- list, the chat header), so a copy is an impersonation route.
 --
 -- 1. Unique, case-insensitively. The later "Luna" (c45f5846, 0 sessions) is
---    exempt from the index until Burk decides how to rename it; nobody else
---    can take "Luna" or any other existing name. Once renamed, drop the
---    WHERE clause (recreate the index without it).
+--    exempt from the index permanently: Burk confirmed 29 Sep 2026 that
+--    both Luna accounts belong to the same person, so neither is renamed.
+--    Nobody else can take "Luna" or any other existing name.
 -- 2. is_display_name_available(name): signup checks this before creating
 --    the account. Without it, a taken name fails inside handle_new_user()
 --    and Supabase reports only "Database error saving new user".

@@ -43,7 +43,7 @@ admin path updates `sessions` from a browser JWT anyway.
 
 There was no unique constraint on `profiles.display_name`, though the app
 assumed one; two accounts were both "Luna". Adds a case-insensitive unique
-index (the later Luna, `c45f5846`, exempt via WHERE until renamed), a 1-50
+index (the later Luna, `c45f5846`, exempt via WHERE permanently: both Luna accounts are the same person, confirmed by Burk 29 Sep), a 1-50
 character check, and `is_display_name_available(name)` (anon-callable yes/no)
 for signup's pre-check. Tested in a rolled-back transaction: taking an
 existing name fails with 23505, a blank name fails the check, the
