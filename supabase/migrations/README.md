@@ -37,6 +37,20 @@ and only the listener may set `accepted_at`, once). Service-role callers
 (cron, server routes, SQL editor) are exempt; admins are not, since no
 admin path updates `sessions` from a browser JWT anyway.
 
+## Applied 29 Sep 2026
+
+### 068 — unique display names
+
+There was no unique constraint on `profiles.display_name`, though the app
+assumed one; two accounts were both "Luna". Adds a case-insensitive unique
+index (the later Luna, `c45f5846`, exempt via WHERE until renamed), a 1-50
+character check, and `is_display_name_available(name)` (anon-callable yes/no)
+for signup's pre-check. Tested in a rolled-back transaction: taking an
+existing name fails with 23505, a blank name fails the check, the
+availability function answers correctly as anon, and rows with a 1-character
+name or an over-long bio still update. No bio CHECK, on purpose (see the
+file header).
+
 ## Applied 28 Sep 2026
 
 ### 067 — cron secret generated in Vault

@@ -14,6 +14,7 @@ import NotificationSettings from '@/components/NotificationSettings'
 import TagSelector from '@/components/TagSelector'
 import type { Profile, PrivateProfileFields, FavoriteWithProfile, ThankYouNoteWithSender } from '@/lib/types/database'
 import { normalizeFavorites } from '@/lib/favorites'
+import { VALIDATION } from '@/lib/constants'
 import { signOutAndCleanUp } from '@/lib/signOut'
 
 // E.164 phone number validation (same as lib/sms.ts but client-safe)
@@ -148,15 +149,29 @@ export default function ProfilePage() {
       // blocked admin's delete-user confirmation (it requires typing the
       // name back exactly) — see the fix in app/admin/page.tsx.
       const trimmedValue = editValue.trim()
+      if (
+        field === 'display_name' &&
+        (trimmedValue.length < VALIDATION.MIN_DISPLAY_NAME_LENGTH ||
+          trimmedValue.length > VALIDATION.MAX_DISPLAY_NAME_LENGTH)
+      ) {
+        setErrorModal({ show: true, message: `Please choose a display name between ${VALIDATION.MIN_DISPLAY_NAME_LENGTH} and ${VALIDATION.MAX_DISPLAY_NAME_LENGTH} characters.` })
+        return
+      }
+      // Two bios predate the limit; editing one mustn't force a rewrite, it
+      // just can't grow. Same rule as the textarea's maxLength below.
+      if (field === 'bio' && trimmedValue.length > Math.max(VALIDATION.MAX_BIO_LENGTH, profile.bio?.length ?? 0)) {
+        setErrorModal({ show: true, message: `Please keep your bio to ${VALIDATION.MAX_BIO_LENGTH} characters.` })
+        return
+      }
       const { error } = await supabase
         .from('profiles')
         .update({ [field]: trimmedValue })
         .eq('id', profile.id)
 
       if (error) {
-        // Handle unique constraint violation
-        if (error.message?.includes('duplicate') || error.message?.includes('unique')) {
-          setErrorModal({ show: true, message: 'This username is already taken. Please choose another.' })
+        // Unique (case-insensitive) since migration 068.
+        if (error.code === '23505' || error.message?.includes('duplicate') || error.message?.includes('unique')) {
+          setErrorModal({ show: true, message: 'This display name is already taken. Please choose another.' })
         } else {
           throw error
         }
@@ -625,6 +640,7 @@ export default function ProfilePage() {
                   type="text"
                   value={editValue}
                   onChange={(e) => setEditValue(e.target.value)}
+                  maxLength={VALIDATION.MAX_DISPLAY_NAME_LENGTH}
                   className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-rb-blue focus:border-transparent transition-all dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400"
                 />
                 <div className="flex gap-2">
@@ -728,6 +744,7 @@ export default function ProfilePage() {
                   value={editValue}
                   onChange={(e) => setEditValue(e.target.value)}
                   rows={4}
+                  maxLength={Math.max(VALIDATION.MAX_BIO_LENGTH, profile.bio?.length ?? 0)}
                   className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-rb-blue focus:border-transparent transition-all resize-none dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400"
                   placeholder="Tell us about yourself..."
                 />

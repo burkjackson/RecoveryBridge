@@ -6,7 +6,7 @@ import { errorMessage } from '@/lib/errors'
 import { useRouter } from 'next/navigation'
 import { Body16 } from '@/components/ui/Typography'
 import Modal from '@/components/Modal'
-import { CONSENT_VERSION } from '@/lib/constants'
+import { CONSENT_VERSION, VALIDATION } from '@/lib/constants'
 
 export default function SignupPage() {
   const [email, setEmail] = useState('')
@@ -46,8 +46,29 @@ export default function SignupPage() {
       return
     }
 
+    const trimmedName = displayName.trim()
+    if (
+      trimmedName.length < VALIDATION.MIN_DISPLAY_NAME_LENGTH ||
+      trimmedName.length > VALIDATION.MAX_DISPLAY_NAME_LENGTH
+    ) {
+      setError(`Please choose a display name between ${VALIDATION.MIN_DISPLAY_NAME_LENGTH} and ${VALIDATION.MAX_DISPLAY_NAME_LENGTH} characters.`)
+      setLoading(false)
+      return
+    }
+
     try {
-      // Create account - database unique constraint will prevent duplicates atomically
+      // Check first (migration 068). The unique index is the real guard, but a
+      // taken name fails inside handle_new_user(), and Supabase reports that
+      // only as "Database error saving new user". If the check itself fails,
+      // carry on and let the index decide.
+      const { data: nameAvailable, error: nameCheckError } = await supabase
+        .rpc('is_display_name_available', { name: trimmedName })
+      if (!nameCheckError && nameAvailable === false) {
+        setError('This display name is already taken. Please choose another.')
+        setLoading(false)
+        return
+      }
+
       const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? (typeof window !== 'undefined' ? window.location.origin : '')
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -60,7 +81,7 @@ export default function SignupPage() {
             // 21 profiles this way, including one that silently broke
             // admin's delete-user name-confirmation step. See the same fix
             // in app/profile/page.tsx's handleSave().
-            display_name: displayName.trim(),
+            display_name: trimmedName,
             consent_version: CONSENT_VERSION,
             consent_accepted_at: new Date().toISOString(),
             age_confirmed: true,
@@ -82,10 +103,11 @@ export default function SignupPage() {
         setShowSuccessModal(true)
       }
     } catch (error: unknown) {
-      // Handle unique constraint violation for duplicate usernames
+      // A name taken between the check above and signUp (a race) surfaces
+      // as the trigger's generic database error, not a duplicate-key one.
       const message = errorMessage(error, 'Could not create your account. Please try again.')
-      if (message.includes('duplicate') || message.includes('unique')) {
-        setError('This username is already taken. Please choose another.')
+      if (message.includes('duplicate') || message.includes('unique') || message.includes('Database error saving new user')) {
+        setError('This display name may already be taken. Please try another.')
       } else {
         setError(message)
       }
@@ -123,6 +145,7 @@ export default function SignupPage() {
                   type="text"
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
+                  maxLength={VALIDATION.MAX_DISPLAY_NAME_LENGTH}
                   required
                   aria-required="true"
                   aria-invalid={error ? "true" : "false"}
