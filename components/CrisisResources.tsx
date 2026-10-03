@@ -2,17 +2,20 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { usePathname } from 'next/navigation'
+import { showsBottomNav } from '@/components/BottomNav'
 
 export default function CrisisResources() {
   const [isOpen, setIsOpen] = useState(false)
   const pathname = usePathname()
   const isChat = pathname?.startsWith('/chat')
+  // Where the bottom nav is showing, float above it: at bottom-6 this button
+  // sat on top of the nav's Profile tab on phones (found 3 Oct 2026).
+  const aboveNav = showsBottomNav(pathname)
   const triggerRef = useRef<HTMLButtonElement>(null)
   const dialogRef = useRef<HTMLDivElement>(null)
 
-  // The chat page anchors its own SOS trigger inside the message input bar
-  // (position:fixed drifts mid-page in the iOS PWA as the keyboard pans the
-  // visual viewport) and opens this modal by dispatching this event.
+  // The chat page has its own SOS pill in its sticky top bar and opens this
+  // modal by dispatching this event.
   useEffect(() => {
     const open = () => setIsOpen(true)
     window.addEventListener('rb:open-crisis', open)
@@ -68,7 +71,8 @@ export default function CrisisResources() {
         <button
           ref={triggerRef}
           onClick={() => setIsOpen(true)}
-          className="fixed right-6 bottom-6 z-50 bg-red-600 hover:bg-red-700 text-white px-4 py-3 rounded-full shadow-lg transition-all hover:scale-105 flex items-center gap-2 font-semibold"
+          style={aboveNav ? { bottom: 'calc(4.5rem + env(safe-area-inset-bottom))' } : undefined}
+          className={`fixed right-6 ${aboveNav ? '' : 'bottom-6'} z-50 bg-red-600 hover:bg-red-700 text-white px-4 py-3 rounded-full shadow-lg transition-all hover:scale-105 flex items-center gap-2 font-semibold`}
           aria-label="Access crisis resources and emergency contacts"
         >
           <span className="text-xl" aria-hidden="true">🆘</span>

@@ -4,6 +4,16 @@ import { usePathname, useRouter } from 'next/navigation'
 
 const PUBLIC_PATHS = ['/', '/login', '/signup', '/forgot-password', '/reset-password', '/contact', '/donate', '/safety', '/terms', '/privacy']
 
+/**
+ * Whether the fixed bottom nav shows on this path. Shared with
+ * CrisisResources, which has to lift its floating SOS button above the nav
+ * wherever the nav is on screen (it used to sit on top of the Profile tab).
+ */
+export function showsBottomNav(pathname: string | null): boolean {
+  if (!pathname) return false
+  return !(PUBLIC_PATHS.includes(pathname) || pathname.startsWith('/chat/'))
+}
+
 const NAV_ITEMS = [
   {
     label: 'Home',
@@ -52,13 +62,13 @@ export default function BottomNav() {
   const router = useRouter()
 
   // Hide on public pages and inside chat sessions
-  const isPublic = PUBLIC_PATHS.includes(pathname) || pathname.startsWith('/chat/')
-  if (isPublic) return null
+  if (!showsBottomNav(pathname)) return null
 
   return (
     <>
-      {/* Spacer so page content isn't hidden behind the fixed bar */}
-      <div className="h-14" aria-hidden="true" />
+      {/* Spacer so page content can scroll clear of the fixed bar AND the
+          floating SOS button that sits just above it (CrisisResources). */}
+      <div style={{ height: 'calc(8rem + env(safe-area-inset-bottom))' }} aria-hidden="true" />
     <nav
       className="fixed bottom-0 left-0 right-0 z-40 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 safe-area-bottom"
       aria-label="Main navigation"
