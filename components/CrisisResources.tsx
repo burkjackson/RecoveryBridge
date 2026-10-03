@@ -60,9 +60,10 @@ export default function CrisisResources() {
 
   return (
     <>
-      {/* Floating Crisis Button — hidden on /chat, where a flow-anchored
-          trigger lives in the message input bar instead (iOS PWAs drift
-          position:fixed elements mid-page during keyboard/scroll panning) */}
+      {/* Floating Crisis Button — hidden on /chat, where an SOS pill lives in
+          the chat's sticky top bar instead (since 3 Oct 2026; a floating
+          button there covered the newest message). iOS PWAs also drift
+          position:fixed elements mid-page during keyboard/scroll panning. */}
       {!isChat && (
         <button
           ref={triggerRef}

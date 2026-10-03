@@ -1467,8 +1467,9 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   return (
     <>
       <main id="main-content" className="min-h-screen flex flex-col bg-[#F8F9FA] dark:bg-gray-900">
-        {/* Header */}
-        <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4 sm:p-6">
+        {/* Header. Sticky so the SOS pill below (and Report / End Session)
+            stay on screen through a long chat instead of scrolling away. */}
+        <div className="sticky top-0 z-30 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4 sm:p-6">
           <div className="max-w-4xl mx-auto flex justify-between items-center">
             <div>
               <div className="flex items-center gap-2 mb-1">
@@ -1483,6 +1484,24 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </button>
+                {/* SOS lives in the top bar (Burk, 3 Oct). It used to float over
+                    the bottom-right of the message list, where it covered the
+                    newest message's Edit link and read receipts. On the left,
+                    by the name, so it can't be mistaken for End Session on the
+                    right. Shown to participants in every state: pending,
+                    active, declined and ended. Opens the global CrisisResources
+                    modal. */}
+                {isParticipant && (
+                  <button
+                    type="button"
+                    onClick={() => window.dispatchEvent(new Event('rb:open-crisis'))}
+                    aria-label="Access crisis resources and emergency contacts"
+                    className="min-h-[44px] ml-1 px-3 flex items-center gap-1.5 bg-red-600 hover:bg-red-700 text-white rounded-full text-sm font-bold shadow-sm transition-all"
+                  >
+                    <span aria-hidden="true">🆘</span>
+                    SOS
+                  </button>
+                )}
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 <div className="flex items-center gap-1.5">
@@ -1566,12 +1585,9 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
           </div>
         )}
 
-        {/* Messages. The extra bottom padding keeps the newest message (and its
-            Edit link) scrollable clear of the floating SOS button, which sits
-            over the bottom-right of this list. It used to cover Edit
-            completely (Burk, 3 Oct). */}
+        {/* Messages */}
         <div
-          className="flex-1 overflow-y-auto px-4 pt-4 pb-24 sm:px-6 sm:pt-6 sm:pb-24"
+          className="flex-1 overflow-y-auto p-4 sm:p-6"
           role="log"
           aria-live="polite"
           aria-label="Chat messages"
@@ -1967,22 +1983,6 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
           </div>
         )}
 
-        {/* SOS stand-in for when the composer isn't mounted (pending, declined,
-            ended). Zero-height anchor so the button floats just above whichever
-            bottom bar is showing, same spot the composer's own SOS sits. */}
-        {isParticipant && !showComposer && (
-          <div className="relative h-0">
-            <button
-              type="button"
-              onClick={() => window.dispatchEvent(new Event('rb:open-crisis'))}
-              aria-label="Access crisis resources and emergency contacts"
-              className="absolute right-4 bottom-full mb-3 z-40 bg-red-600 hover:bg-red-700 text-white px-4 py-3 rounded-full shadow-lg font-semibold flex items-center gap-2"
-            >
-              <span className="text-xl" aria-hidden="true">🆘</span>
-              <span className="hidden sm:inline">Crisis Help</span>
-            </button>
-          </div>
-        )}
 
         {/* Ended-session bar.
             The composer below only renders while the session is active, so
@@ -2105,18 +2105,6 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
         {/* Message Input */}
         {showComposer && (
           <div className="relative bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4">
-            {/* SOS anchored to the input bar, in page flow — position:fixed
-                drifts mid-page in the iOS PWA when the keyboard pans the
-                visual viewport. Opens the global CrisisResources modal. */}
-            <button
-              type="button"
-              onClick={() => window.dispatchEvent(new Event('rb:open-crisis'))}
-              aria-label="Access crisis resources and emergency contacts"
-              className="absolute right-4 bottom-full mb-3 z-40 bg-red-600 hover:bg-red-700 text-white px-4 py-3 rounded-full shadow-lg font-semibold flex items-center gap-2"
-            >
-              <span className="text-xl" aria-hidden="true">🆘</span>
-              <span className="hidden sm:inline">Crisis Help</span>
-            </button>
             <form onSubmit={sendMessage} className="max-w-4xl mx-auto" aria-label="Send message">
               <div className="flex gap-2">
                 <label htmlFor="message-input" className="sr-only">Type your message</label>
