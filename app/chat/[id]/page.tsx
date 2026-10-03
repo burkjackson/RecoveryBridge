@@ -1720,29 +1720,6 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                         </Body16>
                         )}
                         <div className="flex items-center justify-end gap-1 mt-1">
-                          {/* Edit sits inside the bubble, next to the time, so it's
-                              where people look. It used to be small gray text below
-                              the bubble, and nobody found it (Burk, 3 Oct). Long-press
-                              offers it too. Own messages, first 5 minutes, live chat. */}
-                          {canEdit && !isEditing && (
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                startEditing(message)
-                              }}
-                              onDoubleClick={(e) => e.stopPropagation()}
-                              onTouchStart={(e) => e.stopPropagation()}
-                              className="flex items-center gap-1 -my-2 py-2 px-1.5 mr-1 rounded text-xs font-semibold !text-white/90 hover:!text-white underline-offset-2 hover:underline"
-                              aria-label="Edit this message"
-                            >
-                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                                <path d="M12 20h9" />
-                                <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
-                              </svg>
-                              Edit
-                            </button>
-                          )}
                           {message.edited_at && (
                             <p
                               className={`text-xs italic ${isOwn ? '!text-white/80' : '!text-gray-500 dark:!text-white/80'}`}
@@ -1827,6 +1804,27 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                         </div>
                       )}
 
+
+                      {/* Edit, below your own message (Burk's call, 3 Oct): pencil
+                          plus label so it reads as an action, not a caption.
+                          Long-press offers it too. Own messages, first 5 minutes,
+                          live chat only. */}
+                      {canEdit && !isEditing && (
+                        <div className="flex justify-end">
+                          <button
+                            type="button"
+                            onClick={() => startEditing(message)}
+                            className="min-h-[44px] px-2 flex items-center gap-1 text-xs font-semibold text-rb-blue dark:text-blue-300 hover:underline underline-offset-2"
+                            aria-label="Edit this message"
+                          >
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                              <path d="M12 20h9" />
+                              <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                            </svg>
+                            Edit
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )
