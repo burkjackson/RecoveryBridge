@@ -1566,9 +1566,12 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
           </div>
         )}
 
-        {/* Messages */}
+        {/* Messages. The extra bottom padding keeps the newest message (and its
+            Edit link) scrollable clear of the floating SOS button, which sits
+            over the bottom-right of this list. It used to cover Edit
+            completely (Burk, 3 Oct). */}
         <div
-          className="flex-1 overflow-y-auto p-4 sm:p-6"
+          className="flex-1 overflow-y-auto px-4 pt-4 pb-24 sm:px-6 sm:pt-6 sm:pb-24"
           role="log"
           aria-live="polite"
           aria-label="Chat messages"
