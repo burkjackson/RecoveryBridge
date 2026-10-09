@@ -1464,14 +1464,31 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
     (otherAwayTooLong || seekerUnanswered) &&
     (connectionWarningDismissedAt === null || presenceTick - connectionWarningDismissedAt > UNANSWERED_MS)
 
+  // SOS sits in the top-right button row with Report / End Session (Burk,
+  // 9 Oct), styled to match them. It used to float over the message list,
+  // where it covered the newest message's Edit link, then sat as a pill by
+  // the name. It stays first in the row so Report separates it from End
+  // Session. Shown to participants in every state: pending, active, declined
+  // and ended. Opens the global CrisisResources modal.
+  const sosButton = (
+    <button
+      type="button"
+      onClick={() => window.dispatchEvent(new Event('rb:open-crisis'))}
+      aria-label="Access crisis resources and emergency contacts"
+      className="flex-1 sm:flex-none min-h-[44px] px-3 sm:px-4 py-2 text-sm bg-red-600 hover:bg-red-700 text-white rounded-lg transition-all font-semibold"
+    >
+      SOS
+    </button>
+  )
+
   return (
     <>
       <main id="main-content" className="min-h-screen flex flex-col bg-[#F8F9FA] dark:bg-gray-900">
-        {/* Header. Sticky so the SOS pill below (and Report / End Session)
+        {/* Header. Sticky so SOS (and Report / End Session)
             stay on screen through a long chat instead of scrolling away. */}
         <div className="sticky top-0 z-30 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4 sm:p-6">
-          <div className="max-w-4xl mx-auto flex justify-between items-center">
-            <div>
+          <div className="max-w-4xl mx-auto flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center">
+            <div className="min-w-0">
               <div className="flex items-center gap-2 mb-1">
                 <Body18 className="font-bold text-gray-900 dark:text-gray-100">Chat with {otherUserName}</Body18>
                 <button
@@ -1484,24 +1501,6 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </button>
-                {/* SOS lives in the top bar (Burk, 3 Oct). It used to float over
-                    the bottom-right of the message list, where it covered the
-                    newest message's Edit link and read receipts. On the left,
-                    by the name, so it can't be mistaken for End Session on the
-                    right. Shown to participants in every state: pending,
-                    active, declined and ended. Opens the global CrisisResources
-                    modal. */}
-                {isParticipant && (
-                  <button
-                    type="button"
-                    onClick={() => window.dispatchEvent(new Event('rb:open-crisis'))}
-                    aria-label="Access crisis resources and emergency contacts"
-                    className="min-h-[44px] ml-1 px-3 flex items-center gap-1.5 bg-red-600 hover:bg-red-700 text-white rounded-full text-sm font-bold shadow-sm transition-all"
-                  >
-                    <span aria-hidden="true">🆘</span>
-                    SOS
-                  </button>
-                )}
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 <div className="flex items-center gap-1.5">
@@ -1533,29 +1532,33 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                 ← Back to Admin
               </button>
             ) : session?.status === 'active' ? (
-              <div className="flex gap-2">
+              <div className="flex gap-2 sm:shrink-0">
+                {sosButton}
                 <button
                   onClick={openReportModal}
                   aria-label="Report user"
-                  className="min-h-[44px] px-4 py-2 text-sm bg-amber-500 hover:bg-amber-600 text-white rounded-lg transition-all font-semibold"
+                  className="flex-1 sm:flex-none min-h-[44px] px-3 sm:px-4 py-2 text-sm bg-amber-500 hover:bg-amber-600 text-white rounded-lg transition-all font-semibold"
                 >
                   Report
                 </button>
                 <button
                   onClick={() => setEndSessionConfirmModal(true)}
                   aria-label="End session"
-                  className="min-h-[44px] px-4 py-2 text-sm bg-red-600 hover:bg-red-700 text-white rounded-lg transition-all font-semibold"
+                  className="flex-1 sm:flex-none min-h-[44px] px-3 sm:px-4 py-2 text-sm bg-red-600 hover:bg-red-700 text-white rounded-lg transition-all font-semibold"
                 >
                   End Session
                 </button>
               </div>
             ) : (
-              <button
-                onClick={returnToDashboard}
-                className="min-h-[44px] px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-all font-semibold"
-              >
-                ← Back to Dashboard
-              </button>
+              <div className="flex gap-2 sm:shrink-0">
+                {sosButton}
+                <button
+                  onClick={returnToDashboard}
+                  className="flex-1 sm:flex-none min-h-[44px] px-3 sm:px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-all font-semibold"
+                >
+                  ← Back to Dashboard
+                </button>
+              </div>
             )}
           </div>
         </div>
