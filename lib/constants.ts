@@ -168,9 +168,9 @@ export const TIME = {
    */
   MISSED_CONNECTION_LOOKBACK_MS: 3 * 60 * 60 * 1000,
 
-  /** How long the post-chat "Returning to dashboard..." confirmation shows before navigating (4 seconds).
+  /** How long the post-chat "Returning to dashboard..." confirmation shows before navigating (5 seconds).
    *  Long enough to read and tap the donate link on the same screen; 1.5s wasn't. */
-  POST_CHAT_REDIRECT_MS: 4 * 1000,
+  POST_CHAT_REDIRECT_MS: 5 * 1000,
 
   /**
    * How long a listener can sit at role_state='available' with no heartbeat
