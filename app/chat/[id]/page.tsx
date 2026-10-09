@@ -55,6 +55,9 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   const [favoriteAdded, setFavoriteAdded] = useState(false)
   const [favoriteSaving, setFavoriteSaving] = useState(false)
   const [alreadyFavorited, setAlreadyFavorited] = useState(false)
+  // Set when the donate link is tapped, so the post-chat redirect timer below
+  // doesn't pull them to the dashboard instead.
+  const [goingToDonate, setGoingToDonate] = useState(false)
   const [favoriteError, setFavoriteError] = useState(false)
 
   // Mute ("don't match me with this person again") — a two-step confirm so
@@ -1255,12 +1258,13 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   // promises "Returning to dashboard..." — so the navigation runs on a timer here.
   // This covers people who just saved a favorite, people who were already
   // favorited, and people who just confirmed a mute — all three land on a
-  // screen with no button, just a redirect.
+  // screen with no button, just a redirect. A tap on the donate link cancels it.
   useEffect(() => {
+    if (goingToDonate) return
     if (!favoriteStep || (!alreadyFavorited && !favoriteAdded && !muteDone)) return
     const redirect = setTimeout(returnToDashboard, TIME.POST_CHAT_REDIRECT_MS)
     return () => clearTimeout(redirect)
-  }, [favoriteStep, alreadyFavorited, favoriteAdded, muteDone, returnToDashboard])
+  }, [favoriteStep, alreadyFavorited, favoriteAdded, muteDone, returnToDashboard, goingToDonate])
 
   function skipFeedback() {
     setFeedbackModal(false)
@@ -2549,7 +2553,15 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                     <div className="mt-6 pt-4 border-t border-gray-100 dark:border-gray-700">
                       <Body16 className="text-xs text-gray-400 dark:text-gray-300">
                         RecoveryBridge is free thanks to people like you.{' '}
-                        <a href="/donate" className="text-rb-blue dark:text-blue-400 font-semibold hover:underline">
+                        <a
+                          href="/donate"
+                          onClick={(e) => {
+                            e.preventDefault()
+                            setGoingToDonate(true)
+                            router.push('/donate')
+                          }}
+                          className="text-rb-blue dark:text-blue-400 font-semibold hover:underline"
+                        >
                           Consider giving back 💙
                         </a>
                       </Body16>
