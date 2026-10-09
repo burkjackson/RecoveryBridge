@@ -1266,6 +1266,14 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
     return () => clearTimeout(redirect)
   }, [favoriteStep, alreadyFavorited, favoriteAdded, muteDone, returnToDashboard, goingToDonate])
 
+  // The donate link sits on screens with a redirect timer, so it cancels the
+  // timer before navigating.
+  function openDonate(e: React.MouseEvent<HTMLAnchorElement>) {
+    e.preventDefault()
+    setGoingToDonate(true)
+    router.push('/donate')
+  }
+
   function skipFeedback() {
     setFeedbackModal(false)
     returnToDashboard()
@@ -2546,25 +2554,39 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                     </>
                   )}
 
-                  {/* Gentle, optional support nudge — hidden during the mute
-                      flow so a moderation decision doesn't get muddied by a
-                      donation ask */}
+                  {/* Optional support nudge, hidden during the mute flow so a
+                      moderation decision doesn't get muddied by a donation ask.
+                      Listeners just gave their time and get a real button;
+                      seekers just reached out for help and get a quiet line,
+                      so the end of their chat doesn't feel like a collection
+                      plate (Burk, 9 Oct). */}
                   {!muteConfirming && !muteDone && (
                     <div className="mt-6 pt-4 border-t border-gray-100 dark:border-gray-700">
-                      <Body16 className="text-xs text-gray-400 dark:text-gray-300">
-                        RecoveryBridge is free thanks to people like you.{' '}
-                        <a
-                          href="/donate"
-                          onClick={(e) => {
-                            e.preventDefault()
-                            setGoingToDonate(true)
-                            router.push('/donate')
-                          }}
-                          className="text-rb-blue dark:text-blue-400 font-semibold hover:underline"
-                        >
-                          Consider giving back 💙
-                        </a>
-                      </Body16>
+                      {isListenerViewer ? (
+                        <>
+                          <Body16 className="text-sm text-gray-600 dark:text-gray-300 mb-3">
+                            RecoveryBridge is free thanks to people like you.
+                          </Body16>
+                          <a
+                            href="/donate"
+                            onClick={openDonate}
+                            className="min-h-[44px] w-full px-4 py-2.5 flex items-center justify-center border-2 border-rb-blue dark:border-blue-400 text-rb-blue dark:text-blue-300 rounded-xl font-semibold hover:bg-rb-blue-light dark:hover:bg-gray-700 transition-all text-sm"
+                          >
+                            Help keep RecoveryBridge free 💙
+                          </a>
+                        </>
+                      ) : (
+                        <Body16 className="text-sm text-gray-500 dark:text-gray-300">
+                          RecoveryBridge is free thanks to people like you.{' '}
+                          <a
+                            href="/donate"
+                            onClick={openDonate}
+                            className="text-rb-blue dark:text-blue-400 font-semibold hover:underline"
+                          >
+                            Consider giving back 💙
+                          </a>
+                        </Body16>
+                      )}
                     </div>
                   )}
                 </div>
