@@ -1475,7 +1475,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
       type="button"
       onClick={() => window.dispatchEvent(new Event('rb:open-crisis'))}
       aria-label="Access crisis resources and emergency contacts"
-      className="min-h-[44px] px-2.5 sm:px-4 py-2 text-xs sm:text-sm whitespace-nowrap bg-red-600 hover:bg-red-700 text-white rounded-lg transition-all font-semibold"
+      className="w-16 sm:w-28 min-h-[44px] px-1 py-1.5 text-xs sm:text-sm leading-tight sm:whitespace-nowrap bg-red-600 hover:bg-red-700 text-white rounded-lg transition-all font-semibold"
     >
       SOS
     </button>
@@ -1537,14 +1537,14 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                 <button
                   onClick={openReportModal}
                   aria-label="Report user"
-                  className="min-h-[44px] px-2.5 sm:px-4 py-2 text-xs sm:text-sm whitespace-nowrap bg-amber-500 hover:bg-amber-600 text-white rounded-lg transition-all font-semibold"
+                  className="w-16 sm:w-28 min-h-[44px] px-1 py-1.5 text-xs sm:text-sm leading-tight sm:whitespace-nowrap bg-amber-500 hover:bg-amber-600 text-white rounded-lg transition-all font-semibold"
                 >
                   Report
                 </button>
                 <button
                   onClick={() => setEndSessionConfirmModal(true)}
                   aria-label="End session"
-                  className="min-h-[44px] px-2.5 sm:px-4 py-2 text-xs sm:text-sm whitespace-nowrap bg-rb-dark hover:bg-gray-900 dark:bg-gray-600 dark:hover:bg-gray-500 text-white rounded-lg transition-all font-semibold"
+                  className="w-16 sm:w-28 min-h-[44px] px-1 py-1.5 text-xs sm:text-sm leading-tight sm:whitespace-nowrap bg-rb-dark hover:bg-gray-900 dark:bg-gray-600 dark:hover:bg-gray-500 text-white rounded-lg transition-all font-semibold"
                 >
                   End Session
                 </button>
