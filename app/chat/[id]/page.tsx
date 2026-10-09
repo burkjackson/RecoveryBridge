@@ -1475,7 +1475,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
       type="button"
       onClick={() => window.dispatchEvent(new Event('rb:open-crisis'))}
       aria-label="Access crisis resources and emergency contacts"
-      className="flex-1 sm:flex-none min-h-[44px] px-3 sm:px-4 py-2 text-sm bg-red-600 hover:bg-red-700 text-white rounded-lg transition-all font-semibold"
+      className="min-h-[44px] px-2.5 sm:px-4 py-2 text-xs sm:text-sm whitespace-nowrap bg-red-600 hover:bg-red-700 text-white rounded-lg transition-all font-semibold"
     >
       SOS
     </button>
@@ -1487,7 +1487,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
         {/* Header. Sticky so SOS (and Report / End Session)
             stay on screen through a long chat instead of scrolling away. */}
         <div className="sticky top-0 z-30 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4 sm:p-6">
-          <div className="max-w-4xl mx-auto flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center">
+          <div className="max-w-4xl mx-auto flex justify-between items-center gap-2 sm:gap-3">
             <div className="min-w-0">
               <div className="flex items-center gap-2 mb-1">
                 <Body18 className="font-bold text-gray-900 dark:text-gray-100">Chat with {otherUserName}</Body18>
@@ -1532,29 +1532,29 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                 ← Back to Admin
               </button>
             ) : session?.status === 'active' ? (
-              <div className="flex gap-2 sm:shrink-0">
+              <div className="flex shrink-0 gap-1.5 sm:gap-2">
                 {sosButton}
                 <button
                   onClick={openReportModal}
                   aria-label="Report user"
-                  className="flex-1 sm:flex-none min-h-[44px] px-3 sm:px-4 py-2 text-sm bg-amber-500 hover:bg-amber-600 text-white rounded-lg transition-all font-semibold"
+                  className="min-h-[44px] px-2.5 sm:px-4 py-2 text-xs sm:text-sm whitespace-nowrap bg-amber-500 hover:bg-amber-600 text-white rounded-lg transition-all font-semibold"
                 >
                   Report
                 </button>
                 <button
                   onClick={() => setEndSessionConfirmModal(true)}
                   aria-label="End session"
-                  className="flex-1 sm:flex-none min-h-[44px] px-3 sm:px-4 py-2 text-sm bg-red-600 hover:bg-red-700 text-white rounded-lg transition-all font-semibold"
+                  className="min-h-[44px] px-2.5 sm:px-4 py-2 text-xs sm:text-sm whitespace-nowrap bg-red-600 hover:bg-red-700 text-white rounded-lg transition-all font-semibold"
                 >
                   End Session
                 </button>
               </div>
             ) : (
-              <div className="flex gap-2 sm:shrink-0">
+              <div className="flex shrink-0 gap-1.5 sm:gap-2">
                 {sosButton}
                 <button
                   onClick={returnToDashboard}
-                  className="flex-1 sm:flex-none min-h-[44px] px-3 sm:px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-all font-semibold"
+                  className="min-h-[44px] px-2.5 sm:px-4 py-2 text-xs sm:text-sm whitespace-nowrap border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-all font-semibold"
                 >
                   ← Back to Dashboard
                 </button>
