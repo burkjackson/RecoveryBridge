@@ -1549,7 +1549,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                 <button
                   onClick={openReportModal}
                   aria-label="Report user"
-                  className="w-16 sm:w-28 min-h-[44px] px-1 py-1.5 text-xs sm:text-sm leading-tight sm:whitespace-nowrap bg-amber-500 hover:bg-amber-600 text-white rounded-lg transition-all font-semibold"
+                  className="w-16 sm:w-28 min-h-[44px] px-1 py-1.5 text-xs sm:text-sm leading-tight sm:whitespace-nowrap bg-amber-700 hover:bg-amber-800 text-white rounded-lg transition-all font-semibold"
                 >
                   Report
                 </button>
