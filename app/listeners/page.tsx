@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { SPECIALTY_TAGS, isListenerOnline } from '@/lib/constants'
 import { startDirectConnect } from '@/lib/directConnect'
 import { getMutedUserIds } from '@/lib/mutes'
+import { getBusyListenerIds } from '@/lib/busyListeners'
 import { errorMessage } from '@/lib/errors'
 import Image from 'next/image'
 import { Heading1, Body16, Body18 } from '@/components/ui/Typography'
@@ -114,8 +115,12 @@ export default function ListenersPage() {
 
       // Drop anyone muted-or-muting the current user (see lib/mutes.ts) —
       // UX side of migration 050, the DB trigger backstops a stale list.
-      const mutedIds = await getMutedUserIds(supabase, user.id)
-      const onlineListeners = activeListeners.filter(l => !mutedIds.has(l.id))
+      // Also drop always_available listeners who are mid-chat (migration 069).
+      const [mutedIds, busyIds] = await Promise.all([
+        getMutedUserIds(supabase, user.id),
+        getBusyListenerIds(supabase),
+      ])
+      const onlineListeners = activeListeners.filter(l => !mutedIds.has(l.id) && !busyIds.has(l.id))
 
       // Load helpful counts for these listeners
       const listenerIds = onlineListeners.map(l => l.id)

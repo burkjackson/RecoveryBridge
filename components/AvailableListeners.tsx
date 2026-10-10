@@ -10,6 +10,7 @@ import Modal from '@/components/Modal'
 import { UI, formatTimeAgo, isListenerOnline } from '@/lib/constants'
 import { startDirectConnect } from '@/lib/directConnect'
 import { getMutedUserIds } from '@/lib/mutes'
+import { getBusyListenerIds } from '@/lib/busyListeners'
 import type { Profile } from '@/lib/types/database'
 
 interface Listener {
@@ -90,8 +91,11 @@ export default function AvailableListeners({ onCountChange, currentUserId, curre
       // Drop anyone muted-or-muting userId (see lib/mutes.ts) before doing
       // any further work on this list — UX side of migration 050, the DB
       // trigger is the real backstop if this list is stale.
-      const mutedIds = userId ? await getMutedUserIds(supabase, userId) : new Set<string>()
-      const onlineListeners = activeListeners.filter(l => !mutedIds.has(l.id))
+      const [mutedIds, busyIds] = await Promise.all([
+        userId ? getMutedUserIds(supabase, userId) : Promise.resolve(new Set<string>()),
+        getBusyListenerIds(supabase),
+      ])
+      const onlineListeners = activeListeners.filter(l => !mutedIds.has(l.id) && !busyIds.has(l.id))
 
       // Load favorites and shared session history
       let favIds = new Set<string>()

@@ -37,6 +37,18 @@ and only the listener may set `accepted_at`, once). Service-role callers
 (cron, server routes, SQL editor) are exempt; admins are not, since no
 admin path updates `sessions` from a browser JWT anyway.
 
+## Applied 10 Oct 2026
+
+### 069 — busy listener ids
+
+An always_available listener keeps role_state while chatting, so they stayed
+on every seeker's list and a Connect tap hit the one-active-session-per-listener
+index. Adds `get_busy_listener_ids()` (authenticated only): bare ids of
+always_available listeners in an active session, leaving out any session the
+caller is in. Tested in a rolled-back transaction with a fake active session:
+a third user sees the listener as busy, the seeker and listener in that
+session don't, anon gets permission denied.
+
 ## Applied 29 Sep 2026
 
 ### 068 — unique display names

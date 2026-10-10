@@ -19,6 +19,7 @@ import { getActiveBlock, type ActiveBlock } from '@/lib/blocks'
 import { syncSessionRoleStates } from '@/lib/sessionState'
 import { startDirectConnect } from '@/lib/directConnect'
 import { getMutedUserIds } from '@/lib/mutes'
+import { getBusyListenerIds } from '@/lib/busyListeners'
 import ThemeToggle from '@/components/ThemeToggle'
 import { signOutAndCleanUp } from '@/lib/signOut'
 import { ensurePushSubscriptionSaved } from '@/lib/pushNotifications'
@@ -43,6 +44,8 @@ function DashboardContent() {
   const [recentSessions, setRecentSessions] = useState<SessionWithUserName[]>([])
   const [availableListenerCount, setAvailableListenerCount] = useState(0)
   const [favorites, setFavorites] = useState<FavoriteWithProfile[]>([])
+  // Always-available favorites who are mid-chat (migration 069): shown, but not connectable.
+  const [busyFavoriteIds, setBusyFavoriteIds] = useState<Set<string>>(new Set())
   const [connectingFavorite, setConnectingFavorite] = useState<string | null>(null)
   const [activeBlock, setActiveBlock] = useState<ActiveBlock | null>(null)
   const [error, setError] = useState<{ show: boolean; message: string; action?: () => void }>({ show: false, message: '' })
@@ -511,8 +514,12 @@ function DashboardContent() {
       // mute doesn't remove the favorite row itself, it just stops this
       // person from showing up as a connect option; the trigger would
       // reject the session anyway if this list were stale.
-      const mutedIds = await getMutedUserIds(supabase, session.user.id)
+      const [mutedIds, busyIds] = await Promise.all([
+        getMutedUserIds(supabase, session.user.id),
+        getBusyListenerIds(supabase),
+      ])
       setFavorites(normalized.filter((f) => !mutedIds.has(f.favorite_user_id)))
+      setBusyFavoriteIds(busyIds)
     } catch (error) {
       console.error('Error loading favorites:', error)
     }
@@ -1125,11 +1132,12 @@ function DashboardContent() {
                 // Defensive: never let a dangling favorite (deleted profile) crash render
                 if (!fp) return null
                 const heartbeatThreshold = new Date(Date.now() - TIME.HEARTBEAT_THRESHOLD_MS).toISOString()
-                const isOnline = fp.always_available || (
+                const isBusy = busyFavoriteIds.has(fav.favorite_user_id)
+                const isOnline = !isBusy && (fp.always_available || (
                   fp.last_heartbeat_at !== null &&
                   fp.role_state === 'available' &&
                   fp.last_heartbeat_at >= heartbeatThreshold
-                )
+                ))
                 return (
                   <div key={fav.id} className="flex items-center gap-3 p-3 bg-amber-50/40 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-800/40 rounded-lg">
                     {/* Avatar */}
@@ -1149,7 +1157,7 @@ function DashboardContent() {
                         <span className={`w-2 h-2 rounded-full flex-shrink-0 ${isOnline ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-600'}`} aria-hidden="true"></span>
                       </div>
                       <Body16 className="text-sm text-rb-gray dark:text-gray-300">
-                        {isOnline ? 'Available now' : 'Offline'}
+                        {isOnline ? 'Available now' : isBusy ? 'In a conversation' : 'Offline'}
                       </Body16>
                     </div>
 
