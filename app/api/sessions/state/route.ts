@@ -94,7 +94,17 @@ export async function POST(request: NextRequest) {
       ]
       if (session.accepted_at) {
         updates.push(
-          supabase.from('profiles').update({ role_state: 'offline' }).eq('id', session.listener_id)
+          supabase
+            .from('profiles')
+            .update({ role_state: 'offline' })
+            .eq('id', session.listener_id)
+            // An always_available listener manages role_state by hand, and
+            // endSessionRoleStates() never restores one (it can't tell our
+            // 'offline' from theirs). Moving them here left them stuck
+            // showing offline after every chat (found 10 Oct 2026). They're
+            // reachable through always_available either way, and the
+            // one-active-session-per-listener index stops a second chat.
+            .eq('always_available', false)
         )
       }
       await Promise.all(updates)

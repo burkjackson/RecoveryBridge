@@ -1,6 +1,10 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { getActiveBlock } from '@/lib/blocks'
 import { syncSessionRoleStates } from '@/lib/sessionState'
+import { isListenerBusyError } from '@/lib/validation'
+
+export const LISTENER_BUSY_MESSAGE =
+  "This listener is in another conversation right now. Try someone else, or send a request to everyone."
 
 export type DirectConnectResult =
   | { kind: 'session'; id: string }
@@ -70,6 +74,13 @@ export async function startDirectConnect(
 
     if (existing) {
       return { kind: 'session', id: existing.id }
+    }
+
+    // An always_available listener stays listed while they're in another
+    // chat, so this one is reachable from a normal tap. Don't show the raw
+    // unique-index error for it.
+    if (isListenerBusyError(error)) {
+      return { kind: 'error', message: LISTENER_BUSY_MESSAGE }
     }
 
     return { kind: 'error', message: error?.message || 'An unexpected error occurred' }

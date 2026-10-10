@@ -161,6 +161,10 @@ export default function PeopleSeeking({ currentUserId, currentRoleState }: Peopl
         setBlockModal({ show: true, reason: result.reason })
         return
       }
+      if (result.kind === 'listener_busy') {
+        setErrorModal({ show: true, message: "You're already in another conversation. Finish that one first." })
+        return
+      }
       if (result.kind === 'conflict') {
         setErrorModal({ show: true, message: 'Someone else just connected with this person. The list will refresh.' })
         await loadPeopleSeeking()

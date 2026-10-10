@@ -8,7 +8,7 @@ vi.mock('@/lib/sessionState', () => ({
   syncSessionRoleStates: (...args: unknown[]) => syncSessionRoleStatesMock(...args),
 }))
 
-import { startDirectConnect } from './directConnect'
+import { startDirectConnect, LISTENER_BUSY_MESSAGE } from './directConnect'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 /**
@@ -152,5 +152,17 @@ describe('startDirectConnect', () => {
     const result = await startDirectConnect(supabase, { seekerId: 's1', listenerId: 'l1' })
 
     expect(result).toEqual({ kind: 'error', message: 'boom' })
+  })
+
+  it('shows a plain message, not the raw index error, when the listener is in another chat', async () => {
+    getActiveBlockMock.mockResolvedValue(null)
+    const supabase = fakeSupabase({
+      selects: [null, null],
+      insertResult: { data: null, error: { code: '23505', message: 'duplicate key value violates unique constraint "idx_one_active_session_per_listener"' } },
+    })
+
+    const result = await startDirectConnect(supabase, { seekerId: 's1', listenerId: 'l1' })
+
+    expect(result).toEqual({ kind: 'error', message: LISTENER_BUSY_MESSAGE })
   })
 })

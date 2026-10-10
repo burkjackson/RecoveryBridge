@@ -131,6 +131,14 @@ function ConnectInner() {
       return
     }
 
+    if (result.kind === 'listener_busy') {
+      setPhase({
+        kind: 'unavailable',
+        message: "You're already in another conversation. Finish that one first, and if they're still waiting you can connect then.",
+      })
+      return
+    }
+
     if (result.kind === 'conflict' || result.kind === 'error') {
       // Between the preflight and this tap the seeker may have been taken by
       // someone else, or left. The DB enforces both (unique active session per

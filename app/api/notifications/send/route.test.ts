@@ -101,4 +101,32 @@ describe('POST /api/notifications/send', () => {
     expect(res.status).toBe(403)
     expect(await res.json()).toEqual({ error: 'Forbidden' })
   })
+
+  it('does not page an always-available listener who is already in a chat', async () => {
+    const { client, calls } = fakeSupabase({
+      authUser: { id: 'k1' },
+      tables: {
+        profiles: [
+          { data: { display_name: 'Kai', role_state: 'requesting' }, error: null },
+          {
+            data: [{ id: 'l1', role_state: 'offline', always_available: true, last_heartbeat_at: null }],
+            error: null,
+          },
+        ],
+        sessions: [
+          // The seeker has no active session yet...
+          { data: null, error: null },
+          // ...but the only listener is busy with someone else.
+          { data: [{ listener_id: 'l1' }], error: null },
+        ],
+      },
+    })
+    currentClient = client
+
+    const res = await POST(makeRequest({ seekerId: 'k1' }))
+
+    expect(res.status).toBe(200)
+    expect(await res.json()).toMatchObject({ notified: 0, message: 'No available listeners to notify' })
+    expect(calls.some((c) => c.table === 'push_subscriptions')).toBe(false)
+  })
 })

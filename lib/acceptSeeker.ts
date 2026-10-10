@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { getActiveBlock } from '@/lib/blocks'
 import { syncSessionRoleStates } from '@/lib/sessionState'
+import { isListenerBusyError } from '@/lib/validation'
 
 export type AcceptSeekerResult =
   | { kind: 'session'; id: string }
@@ -8,6 +9,8 @@ export type AcceptSeekerResult =
   /** Unique-violation on the one-active-session-per-seeker index — someone
    *  else connected with this person a moment earlier. */
   | { kind: 'conflict' }
+  /** The listener themselves is already in another active chat. */
+  | { kind: 'listener_busy' }
   | { kind: 'error'; message: string }
 
 /**
@@ -39,6 +42,9 @@ export async function acceptSeeker(
     .single()
 
   if (error) {
+    if (isListenerBusyError(error)) {
+      return { kind: 'listener_busy' }
+    }
     if (error.code === '23505') {
       return { kind: 'conflict' }
     }

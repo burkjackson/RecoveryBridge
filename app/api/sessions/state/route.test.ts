@@ -135,6 +135,39 @@ describe('POST /api/sessions/state', () => {
     expect(profileUpdates[0].args).toEqual(['id', 'k1'])
   })
 
+  it('starting an accepted session leaves an always-available listener\'s role_state alone', async () => {
+    const { client, calls } = fakeSupabase({
+      authUser: { id: 'l1' },
+      tables: {
+        sessions: {
+          data: {
+            id: 's1',
+            listener_id: 'l1',
+            seeker_id: 'k1',
+            status: 'active',
+            accepted_at: '2026-10-10T00:00:00Z',
+          },
+          error: null,
+        },
+        profiles: { data: null, error: null },
+      },
+    })
+    currentClient = client
+
+    const res = await POST(makeRequest({ sessionId: 's1', phase: 'start' }))
+
+    expect(res.status).toBe(200)
+    const profileEqs = calls.filter((c) => c.table === 'profiles' && c.method === 'eq')
+    // Seeker by id; listener by id AND always_available = false, so the
+    // update skips an always_available listener (endSessionRoleStates never
+    // puts one back).
+    expect(profileEqs.map((c) => c.args)).toEqual([
+      ['id', 'k1'],
+      ['id', 'l1'],
+      ['always_available', false],
+    ])
+  })
+
   it('refuses to start a session that has already ended (replayed old id)', async () => {
     const { client, calls } = fakeSupabase({
       authUser: { id: 'k1' },

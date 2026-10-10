@@ -287,7 +287,26 @@ export async function POST(request: NextRequest) {
     } catch (e) {
       console.error('[notify] mute lookup failed; sending without mute filter', e)
     }
-    const listeners = onlineListeners.filter((l) => !mutedIds.has(l.id))
+    // Don't page a listener who's already in a chat. Only matters for
+    // always_available listeners (anyone else is 'offline' while chatting),
+    // but tapping it lands them on "this person is no longer waiting", and
+    // the one-active-session-per-listener index means they can't take it.
+    // Fail open, same as the mute lookup above.
+    const busyIds = new Set<string>()
+    const candidateIds = onlineListeners.map((l) => l.id)
+    if (candidateIds.length > 0) {
+      const { data: busyRows, error: busyError } = await supabase
+        .from('sessions')
+        .select('listener_id')
+        .eq('status', 'active')
+        .in('listener_id', candidateIds)
+      if (busyError) {
+        console.error('[notify] busy-listener lookup failed; sending without it', busyError)
+      } else {
+        for (const r of (busyRows ?? []) as { listener_id: string }[]) busyIds.add(r.listener_id)
+      }
+    }
+    const listeners = onlineListeners.filter((l) => !mutedIds.has(l.id) && !busyIds.has(l.id))
 
     if (listeners.length === 0) {
       console.log(`[notify] No available listeners for seeker ${seekerId}`)

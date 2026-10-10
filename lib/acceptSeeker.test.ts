@@ -82,4 +82,14 @@ describe('acceptSeeker', () => {
 
     expect(result).toEqual({ kind: 'error', message: 'Seeker is no longer requesting support' })
   })
+
+  it('reports listener_busy when the listener is already in another chat', async () => {
+    getActiveBlockMock.mockResolvedValue(null)
+    const supabase = fakeSupabase({ data: null, error: { code: '23505', message: 'duplicate key value violates unique constraint "idx_one_active_session_per_listener"' } })
+
+    const result = await acceptSeeker(supabase, { listenerId: 'l1', seekerId: 's1' })
+
+    expect(result).toEqual({ kind: 'listener_busy' })
+    expect(syncSessionRoleStatesMock).not.toHaveBeenCalled()
+  })
 })
