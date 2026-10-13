@@ -33,6 +33,17 @@ describe('parseReferralSource', () => {
     })
   })
 
+  it('parses prefixed search and other entries with details', () => {
+    expect(parseReferralSource('search_engine')).toEqual({ emoji: '🔍', label: 'Search Engine/AI', detail: null })
+    expect(parseReferralSource('search: Google, "sober chat online"')).toEqual({
+      emoji: '🔍', label: 'Search Engine/AI', detail: 'Google, "sober chat online"',
+    })
+    // A typed "Other" that happens to match a category key stays Other.
+    expect(parseReferralSource('other: facebook')).toEqual({
+      emoji: '💬', label: 'Other', detail: 'facebook',
+    })
+  })
+
   it('treats unrecognized free text as Other with the text as detail', () => {
     expect(parseReferralSource('my therapist recommended it')).toEqual({
       emoji: '💬', label: 'Other', detail: 'my therapist recommended it',

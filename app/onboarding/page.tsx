@@ -149,6 +149,9 @@ export default function OnboardingPage() {
   const [otherReferral, setOtherReferral] = useState('')
   const [podcastName, setPodcastName] = useState('')
   const [websiteName, setWebsiteName] = useState('')
+  const [searchEngineName, setSearchEngineName] = useState('')
+  // One gentle ask for detail on a blank follow-up box; the second tap goes through.
+  const [referralNudged, setReferralNudged] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const router = useRouter()
@@ -237,6 +240,17 @@ export default function OnboardingPage() {
         setError('Please read and acknowledge all sections to continue')
         return
       }
+    } else if (currentKey === 'referral') {
+      const detailByChoice: Record<string, string> = {
+        other: otherReferral,
+        podcast: podcastName,
+        website_blog: websiteName,
+        search_engine: searchEngineName,
+      }
+      if (referralSource in detailByChoice && !detailByChoice[referralSource].trim() && !referralNudged) {
+        setReferralNudged(true)
+        return
+      }
     }
 
     setError('')
@@ -280,12 +294,14 @@ export default function OnboardingPage() {
           // metadata at profile creation, with the timestamps generated
           // server-side. There's no read-only display of them on this page.
           referral_source: referralSource === 'other'
-            ? (otherReferral.trim() || 'other')
+            ? (otherReferral.trim() ? `other: ${otherReferral.trim()}` : 'other')
             : referralSource === 'podcast'
               ? (podcastName.trim() ? `podcast: ${podcastName.trim()}` : 'podcast')
               : referralSource === 'website_blog'
                 ? (websiteName.trim() ? `website: ${websiteName.trim()}` : 'website_blog')
-                : (referralSource || null),
+                : referralSource === 'search_engine'
+                  ? (searchEngineName.trim() ? `search: ${searchEngineName.trim()}` : 'search_engine')
+                  : (referralSource || null),
         })
         .eq('id', userId)
 
@@ -961,9 +977,9 @@ export default function OnboardingPage() {
                 {[
                   { value: 'podcast', label: 'Podcast', placeholder: 'Which podcast? (optional)', detail: podcastName, setDetail: setPodcastName },
                   { value: 'website_blog', label: 'Website or Blog', placeholder: 'Which website or blog? (optional)', detail: websiteName, setDetail: setWebsiteName },
-                  { value: 'search_engine', label: 'Search Engine (Google, etc.)' },
+                  { value: 'search_engine', label: 'Search Engine or AI Assistant', placeholder: 'Which one, and what did you search for? (optional)', detail: searchEngineName, setDetail: setSearchEngineName },
                   { value: 'friend_family', label: 'Friend or Family Member' },
-                  { value: 'other', label: 'Other', placeholder: 'Please tell us where you heard about us', detail: otherReferral, setDetail: setOtherReferral },
+                  { value: 'other', label: 'Other', placeholder: 'Where did you hear about us?', detail: otherReferral, setDetail: setOtherReferral },
                 ].map(({ value, label, placeholder, detail, setDetail }) => (
                   <div key={value}>
                     <label
@@ -993,6 +1009,11 @@ export default function OnboardingPage() {
                         maxLength={200}
                         autoFocus
                       />
+                    )}
+                    {referralSource === value && placeholder && referralNudged && !detail?.trim() && (
+                      <p className="mt-2 px-1 text-sm text-gray-600 dark:text-gray-300" role="status">
+                        Even a few words helps us reach more people who need support. Or tap Complete again to skip.
+                      </p>
                     )}
                   </div>
                 ))}

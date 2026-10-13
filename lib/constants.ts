@@ -20,14 +20,15 @@ const REFERRAL_SOURCE_LABELS: Record<string, { emoji: string; label: string }> =
   tiktok: { emoji: '🎵', label: 'TikTok' },
   podcast: { emoji: '🎙️', label: 'Podcast' },
   website_blog: { emoji: '🌐', label: 'Website/Blog' },
-  search_engine: { emoji: '🔍', label: 'Search Engine' },
+  search_engine: { emoji: '🔍', label: 'Search Engine/AI' },
   friend_family: { emoji: '🤝', label: 'Friend/Family' },
   other: { emoji: '💬', label: 'Other' },
 }
 
-/** Parses the profiles.referral_source value set during onboarding. Podcast and
- *  website entries carry an optional "prefix: detail" suffix, while "Other" with
- *  a typed detail is stored as the raw free text itself (see onboarding/page.tsx). */
+/** Parses the profiles.referral_source value set during onboarding. Podcast,
+ *  website, search and other entries carry an optional "prefix: detail" suffix
+ *  (see onboarding/page.tsx). Rows written before "other: " existed stored the
+ *  typed text bare, so anything unrecognised still falls through to Other. */
 export function parseReferralSource(raw: string | null | undefined): ParsedReferralSource | null {
   if (!raw) return null
 
@@ -39,6 +40,12 @@ export function parseReferralSource(raw: string | null | undefined): ParsedRefer
   }
   if (raw.startsWith('website: ')) {
     return { ...REFERRAL_SOURCE_LABELS.website_blog, detail: raw.slice('website: '.length) }
+  }
+  if (raw.startsWith('search: ')) {
+    return { ...REFERRAL_SOURCE_LABELS.search_engine, detail: raw.slice('search: '.length) }
+  }
+  if (raw.startsWith('other: ')) {
+    return { ...REFERRAL_SOURCE_LABELS.other, detail: raw.slice('other: '.length) }
   }
   return { ...REFERRAL_SOURCE_LABELS.other, detail: raw }
 }
