@@ -10,6 +10,7 @@ import Modal from '@/components/Modal'
 import { SkeletonChatMessage } from '@/components/Skeleton'
 import ErrorState from '@/components/ErrorState'
 import { PrivacyBadge } from '@/components/Footer'
+import SessionTimer from '@/components/SessionTimer'
 import { TIME, VALIDATION, CONVERSATION_STARTERS, REACTIONS, NOTIFICATION, containsCrisisLanguage, CRISIS_RESOURCE_SHARE_MESSAGE, formatTimeAgo } from '@/lib/constants'
 import { linkifyText } from '@/lib/linkify'
 import { syncSessionRoleStates } from '@/lib/sessionState'
@@ -1525,7 +1526,15 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                     ) : (
                       <>
                         <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" aria-label="Active"></span>
-                        <Body16 className="text-sm text-gray-600 dark:text-gray-300">Active session</Body16>
+                        <Body16 className="text-sm text-gray-600 dark:text-gray-300">
+                          Active session
+                          {session.accepted_at && (
+                            <>
+                              {' · '}
+                              <SessionTimer since={session.accepted_at} />
+                            </>
+                          )}
+                        </Body16>
                       </>
                     )
                   ) : (
