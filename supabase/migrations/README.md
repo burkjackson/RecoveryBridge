@@ -1,7 +1,9 @@
 # Migrations
 
-Numbered SQL, applied in order. Paste each into the Supabase SQL editor (the
-project has no CLI migration runner wired up) and run it once.
+Numbered SQL, applied in order. The project has no CLI migration runner wired
+up, so each one runs once in one of two ways: Burk pastes it into the Supabase
+SQL editor, or Claude applies it through the Supabase connector when Burk asks
+for that in the session.
 
 ## Applied — backfilled from an abandoned branch (reconciled 4 Sep 2026)
 
@@ -869,8 +871,9 @@ while no scheduled push had ever fired, and the profile page's schedule editor
 had nothing to write to. The rewritten route surfaced it as a 500, which is
 what finally made it visible. Applied 24 Aug 2026; the cron is green again.
 
-**Never assume a migration file has been run.** Check `list_migrations`, or
-look for the column.
+**Never assume a migration file has been run.** Query for what it creates.
+`list_migrations` isn't enough, because it misses anything pasted into the SQL
+editor.
 
 ### Also applied
 

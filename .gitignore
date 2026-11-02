@@ -33,9 +33,15 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# Claude Code worktrees
-.claude/
+# Claude Code local files. Rules and skills are shared project config, so
+# they stay tracked; everything else under .claude/ is per-machine.
+.claude/*
+!.claude/rules/
+!.claude/skills/
 .clone/
+
+# Local pre-slimming copy of CLAUDE.md (never commit)
+CLAUDE.md.backup
 
 # stray temp files
 *.tmp
