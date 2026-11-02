@@ -165,6 +165,14 @@ See `.claude/rules/notifications.md`.
 ### 5. Admin moderation (/admin)
 Tabs for reports, blocks, sessions, users, sign-ups (with referral source), "Couldn't Connect", and Broadcast (`components/BroadcastComposer.tsx` — pick a named audience, preview its size and how many can receive a push, send) (`missed` — seekers whose request went unanswered, from `user_notices`; an admin can send them a personal note). All mutations via `/api/admin/actions` (server-verified `is_admin`, rate-limited, audit-logged including transcript views).
 
+## Key Constants
+
+`lib/constants.ts` is the source of truth. Highlights: heartbeat 30s ping / 1h online threshold (5 min for PeopleSeeking freshness), inactivity warn 15 min + close 5 min later, re-notify every 2 min max 3×, seeker requesting state goes stale after 30 min, message max 2000 chars, 18 specialty tags (max 5), 8 reaction emoji, 44 timezones (worldwide: US, Canada, Latin America, Europe, Middle East/Africa, Asia-Pacific), `parseReferralSource()` helper.
+
+## Test Coverage
+
+Vitest covers these `lib/` helpers: acceptSeeker, busyListeners, chatMessages, constants, cronAuth, directConnect, errors, favorites, missedConnections, notificationQueue, pushEndpoint, rateLimit, safeRedirect, serverPush, sessionState, timeWindows. It also covers the `admin/actions`, `notifications/send` and `sessions/state` API routes.
+
 ## Optional Environment Variables
 
 ```

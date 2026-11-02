@@ -3,7 +3,7 @@
 Peer-to-peer support for people in addiction recovery. **Seekers** (needing support) and **listeners** (offering it) connect in real-time 1:1 chats, like an anonymous, on-demand peer support hotline.
 
 - **Live:** https://recoverybridge.app (Vercel, auto-deploys from `main`)
-- **The GitHub repo is public.** Treat anything committed as disclosed, and keep member details out of the repo.
+- **The GitHub repo (`burkjackson/RecoveryBridge`) is public.** Treat anything committed as disclosed, and keep member details out of the repo.
 
 ## Tech stack
 
@@ -11,11 +11,12 @@ Peer-to-peer support for people in addiction recovery. **Seekers** (needing supp
 |-------|-----------|
 | Framework | Next.js 15 (App Router, React 18, TypeScript) |
 | Database | Supabase (PostgreSQL, Auth, Realtime, Storage) |
-| Styling | Tailwind CSS 3.4, class-based dark mode |
+| Styling | Tailwind CSS 3.4, custom theme, class-based dark mode |
 | Push | web-push (VAPID) + service worker |
 | Email | Resend |
 | SMS | Twilio, disabled pending verification |
 | Errors | Sentry (`@sentry/nextjs`) |
+| Image cropping | react-easy-crop |
 | Hosting | Vercel |
 | Cron | Supabase pg_cron every 10 min (primary); GitHub Actions and daily Vercel crons (backups) |
 
@@ -51,7 +52,7 @@ middleware.ts       # Route protection (auth + admin check)
 - **Chat:** realtime messages with a 5-minute edit window, read receipts, reactions and a crisis banner. Inactivity warns at 15 min and closes 5 min later. Ending leads to feedback.
 - **Notifications:** support requests and chat messages send directly. Everything else goes through `notification_queue`.
 - **Admin:** all mutations go through `/api/admin/*` (Bearer token → `is_admin` check), never client-side Supabase.
-- **Routes:** `middleware.ts` protects `/dashboard`, `/chat`, `/profile`, `/listeners`, `/training`, `/history`, `/onboarding` and `/admin`.
+- **Routes:** `middleware.ts` uses `@supabase/ssr` cookie sessions. `/dashboard`, `/chat`, `/profile`, `/listeners`, `/training`, `/history`, `/connect` and `/admin` send signed-out users to `/login?redirect=`. `/onboarding` sends them to `/signup`. `/admin` also requires `is_admin`, else → `/dashboard`.
 - **Constants:** `lib/constants.ts` is the source of truth for timing, validation, tags and copy.
 - **SMS:** fully coded but disabled.
 
@@ -72,7 +73,7 @@ middleware.ts       # Route protection (auth + admin check)
 - Every table has RLS, and a blocked write often affects zero rows with no error.
 
 ### Code
-- Never construct a Resend or service-role Supabase client at module scope in a route. The build must succeed with no server secrets set.
+- Never construct a Resend or service-role Supabase client at module scope in a route. Next imports every route while collecting page data during the build, so a constructor that throws on a missing key turns one absent env var into a failed deploy for the whole site. The build must succeed with no server secrets set.
 - Anything that ends a session server-side must also move role state (`endSessionRoleStates()`).
 - `admin`, `chat`, `profile` and `dashboard` pages are large. Extract components rather than adding to them.
 - Effects with trimmed dependency arrays carry `// eslint-disable-next-line react-hooks/exhaustive-deps -- <reason>`, so a genuinely new warning stands out.
@@ -87,11 +88,11 @@ middleware.ts       # Route protection (auth + admin check)
 Keep all of these clean:
 
 ```
-npm test
-npx tsc --noEmit
-npx eslint .
-npm audit
-npm run build
+npm test          # vitest; all pass (coverage areas in docs/architecture.md)
+npx tsc --noEmit  # no type errors
+npx eslint .      # 0 errors, 0 warnings
+npm audit         # 0 vulnerabilities
+npm run build     # succeeds with NO server secrets set
 ```
 
 ## Git and deploy
@@ -108,7 +109,7 @@ Required: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE
 
 ## Burk's preferences
 
-- **Email drafts for manual sending (Gmail):** plain linear text only, with short paragraphs, one instruction per line and full URLs written out. No Markdown structure, which collapses when pasted into Gmail.
+- **Email drafts for manual sending (Gmail):** plain linear text only, with short paragraphs, one instruction per line and full URLs written out. No Markdown structure (bold markers, numbered lists with inline links, arrows, tables); it collapses into unreadable columns when pasted into Gmail.
 
 ## Where everything else lives
 
