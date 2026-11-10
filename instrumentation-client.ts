@@ -40,3 +40,7 @@ if (process.env.NEXT_PUBLIC_SENTRY_DSN) {
     ],
   });
 }
+
+// Required by the SDK to instrument App Router navigations; without it the
+// build logs an "ACTION REQUIRED" warning and navigations aren't traced.
+export const onRouterTransitionStart = Sentry.captureRouterTransitionStart;

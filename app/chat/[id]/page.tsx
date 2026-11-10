@@ -2017,15 +2017,23 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
             loading a session that ended earlier leaves it false. That is
             exactly what a listener hit on 25 Aug arriving 13 minutes late —
             reported as "I tried to respond and nothing happened". */}
-        {session && session.status !== 'active' && isParticipant && (
+        {session && session.status !== 'active' && isParticipant && !pendingDeclined && (
           <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4">
             <div className="max-w-4xl mx-auto text-center space-y-2">
+              {/* A request that closed before it was accepted (declined,
+                  cancelled, timed out, or closed because the listener
+                  couldn't be notified) was never a conversation. Loaded
+                  after the fact there's no telling who closed it, so the
+                  copy doesn't say. */}
               <p className="font-semibold text-rb-dark dark:text-gray-100">
-                This conversation has ended
+                {session.accepted_at ? 'This conversation has ended' : 'This request has closed'}
               </p>
               <p className="text-sm text-rb-gray dark:text-gray-300">
-                {session.ended_at ? `It ended ${formatTimeAgo(session.ended_at)}. ` : ''}
-                You can still read it here, but new messages can&rsquo;t be sent.
+                {session.accepted_at
+                  ? `${session.ended_at ? `It ended ${formatTimeAgo(session.ended_at)}. ` : ''}You can still read it here, but new messages can’t be sent.`
+                  : isListenerViewer
+                    ? 'It closed before it was accepted, so no conversation started.'
+                    : 'It closed before it was accepted, so no conversation started. You can try another listener or send a request to everyone.'}
               </p>
               <button
                 onClick={() => router.push('/dashboard')}

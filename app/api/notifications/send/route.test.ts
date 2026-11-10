@@ -21,6 +21,7 @@ vi.mock('web-push', () => ({
   },
 }))
 
+import webpush from 'web-push'
 import { fakeSupabase } from '@/lib/test/fakeSupabase'
 
 let currentClient: ReturnType<typeof fakeSupabase>['client']
@@ -52,6 +53,7 @@ beforeEach(() => {
   process.env.VAPID_SUBJECT = 'mailto:test@example.com'
   process.env.VAPID_PUBLIC_KEY = 'test-public-key'
   process.env.VAPID_PRIVATE_KEY = 'test-private-key'
+  vi.mocked(webpush.sendNotification).mockReset()
 })
 
 describe('POST /api/notifications/send', () => {
@@ -128,5 +130,50 @@ describe('POST /api/notifications/send', () => {
     expect(res.status).toBe(200)
     expect(await res.json()).toMatchObject({ notified: 0, message: 'No available listeners to notify' })
     expect(calls.some((c) => c.table === 'push_subscriptions')).toBe(false)
+  })
+
+  it('closes a pending direct connect when the listener is in quiet hours, so the seeker is not left waiting', async () => {
+    const { client, calls } = fakeSupabase({
+      authUser: { id: 'k1' },
+      tables: {
+        profiles: [
+          { data: { display_name: 'Kai', role_state: 'requesting' }, error: null },
+          // The listener, in quiet hours all day.
+          {
+            data: {
+              id: 'l1',
+              quiet_hours_enabled: true,
+              quiet_hours_start: '00:00',
+              quiet_hours_end: '24:00',
+              quiet_hours_timezone: 'UTC',
+            },
+            error: null,
+          },
+          { data: null, error: null },
+        ],
+        sessions: [
+          { data: { id: 's1', direct_connect_notified_at: null }, error: null },
+          // The close succeeds.
+          { data: { id: 's1' }, error: null },
+        ],
+      },
+    })
+    currentClient = client
+
+    const res = await POST(makeRequest({ seekerId: 'k1', targetListenerId: 'l1' }))
+
+    expect(res.status).toBe(200)
+    expect(await res.json()).toMatchObject({ notified: 0, sessionEnded: true })
+    expect(webpush.sendNotification).not.toHaveBeenCalled()
+
+    // Closed only while still pending, never an accepted chat.
+    const sessionUpdate = calls.find((c) => c.table === 'sessions' && c.method === 'update')
+    expect(sessionUpdate?.args[0]).toMatchObject({ status: 'ended' })
+    expect(calls.some((c) => c.table === 'sessions' && c.method === 'is' && c.args[0] === 'accepted_at')).toBe(true)
+
+    // Seeker back to 'requesting'; the listener's state is not touched.
+    const profileUpdates = calls.filter((c) => c.table === 'profiles' && c.method === 'update')
+    expect(profileUpdates).toHaveLength(1)
+    expect(profileUpdates[0].args[0]).toMatchObject({ role_state: 'requesting' })
   })
 })

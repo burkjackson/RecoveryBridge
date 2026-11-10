@@ -290,19 +290,10 @@ export default function AdminPage() {
         return
       }
 
-      // SECURITY WARNING: This is client-side authorization only!
-      // ⚠️ CRITICAL: Ensure Row Level Security (RLS) policies are enabled on:
-      //    - reports table
-      //    - user_blocks table
-      //    - sessions table (for admin viewing all sessions)
-      //    - profiles table (for admin viewing all profiles)
-      //
-      // RLS policies should restrict access to these tables to users with is_admin = true
-      // Without proper RLS, a malicious user could bypass this client-side check
-      // and query admin data directly using browser DevTools.
-      //
-      // TODO: Consider moving admin operations to server-side API routes with
-      // proper authentication middleware for defense-in-depth security.
+      // This check only decides what to render. It is not the security
+      // boundary: middleware.ts gates /admin on is_admin, every mutation goes
+      // through /api/admin/* (Bearer token + is_admin check), and RLS limits
+      // what a non-admin could read directly.
       // is_admin isn't client-SELECT-able anymore (migration 059), so this
       // goes through get_my_admin_status(), which only ever answers for
       // the caller — same reasoning as middleware.ts's own gate above.

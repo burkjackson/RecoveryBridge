@@ -125,23 +125,23 @@ const nextConfig = {
 // Only wrap with Sentry when auth token is available (production/CI)
 // This prevents the dev server from hanging when Sentry vars aren't set
 if (process.env.SENTRY_AUTH_TOKEN && process.env.SENTRY_ORG && process.env.SENTRY_PROJECT) {
-  const { withSentryConfig } = require("@sentry/nextjs");
-  module.exports = withSentryConfig(
-    nextConfig,
-    {
-      silent: true,
-      org: process.env.SENTRY_ORG,
-      project: process.env.SENTRY_PROJECT,
-    },
-    {
-      widenClientFileUpload: true,
-      transpileClientSDK: true,
-      tunnelRoute: "/monitoring",
-      hideSourceMaps: true,
-      disableLogger: true,
-      automaticVercelMonitors: true,
-    }
-  );
+  const { withSentryConfig } = require("@sentry/nextjs/config");
+  // One options object. withSentryConfig takes (nextConfig, options); a third
+  // argument is ignored, which is how tunnelRoute and widenClientFileUpload
+  // sat here for a long time without doing anything. The other options that
+  // lived in that third object are gone on purpose: transpileClientSDK and
+  // hideSourceMaps no longer exist in @sentry/nextjs 10, disableLogger is
+  // deprecated, and automaticVercelMonitors was never in effect, so turning
+  // it on is a separate decision.
+  module.exports = withSentryConfig(nextConfig, {
+    silent: true,
+    org: process.env.SENTRY_ORG,
+    project: process.env.SENTRY_PROJECT,
+    widenClientFileUpload: true,
+    // Same-origin proxy for browser events, so ad blockers don't drop them.
+    // The CSP comment in headers() above assumes this is on.
+    tunnelRoute: "/monitoring",
+  });
 } else {
   module.exports = nextConfig;
 }

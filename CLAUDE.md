@@ -60,7 +60,7 @@ middleware.ts       # Route protection (auth + admin check)
 
 ### Safety and privacy
 - People using this may be in crisis. Crisis help must stay reachable in every chat state.
-- Push text renders on a locked phone. It must never name the other person, quote them, or imply why the recipient uses RecoveryBridge.
+- Push text renders on a locked phone. It must never quote the other person or imply why the recipient uses RecoveryBridge. Support-request, direct-connect and chat-message pushes show the other person's username on purpose, so the recipient knows who they're connecting with; queued notifications name no one.
 - Never commit member data: user IDs, display names, per-account behaviour or message content. Put aggregate numbers in docs.
 - Don't fold other notifications into the support-request toggle. Someone muting an announcement must still hear that a person needs support.
 

@@ -27,7 +27,7 @@ export async function deleteUserAccount(
     .update({ status: 'ended', ended_at: new Date().toISOString() })
     .eq('status', 'active')
     .or(`listener_id.eq.${userId},seeker_id.eq.${userId}`)
-    .select('id, listener_id, seeker_id')
+    .select('id, listener_id, seeker_id, accepted_at')
 
   // Whichever side `userId` was on is about to be deleted anyway, so only
   // the other person's state actually matters here — but running the normal
@@ -35,10 +35,22 @@ export async function deleteUserAccount(
   await Promise.all(
     (endedSessions ?? []).map(async (session) => {
       try {
-        await endSessionRoleStates(supabaseAdmin, {
-          seekerId: session.seeker_id,
-          listenerId: session.listener_id,
-        })
+        // A direct connect the listener never accepted wasn't a
+        // conversation: the listener never left the pool, and a seeker whose
+        // chosen listener just deleted their account goes back to
+        // 'requesting', not 'offline'. Keyed off the session's own
+        // accepted_at (sessions-connect rule, #34).
+        const wasAccepted = Boolean(session.accepted_at)
+        await endSessionRoleStates(
+          supabaseAdmin,
+          { seekerId: session.seeker_id, listenerId: session.listener_id },
+          {
+            wasAccepted,
+            restoreListener: wasAccepted,
+            // The account being deleted must not be put back in the queue.
+            restoreSeeker: wasAccepted || session.seeker_id !== userId,
+          }
+        )
       } catch (err) {
         console.error(`Could not sync role_state for session ${session.id} during account deletion:`, err)
       }

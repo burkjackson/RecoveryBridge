@@ -35,17 +35,18 @@ paths:
 
 The switch is enforced in three places, and all of them matter: `enqueueNotifications` won't create rows for a disabled kind, the drain re-checks at delivery (so switching off *cancels* an existing backlog rather than letting it drain), and `send_broadcast` checks before writing its `user_notices` rows. It fails closed — an unknown kind, or an unreadable settings table, sends nothing.
 
-`/api/notifications/drain` delivers them on the shared cron: it re-checks consent at send time, **defers** anything landing in the recipient's quiet hours (moves `not_before` forward rather than dropping it), retires rows past `expires_at`, and prunes terminal rows after 30 days.
+`/api/notifications/drain` delivers them on the shared cron: it re-checks consent at send time, **defers** anything landing in the recipient's quiet hours (moves `not_before` forward rather than dropping it), retires rows past `expires_at`, and prunes terminal rows after 45 days (`QUEUE_RETENTION_DAYS`; it must outlast the monthly dedupe key, or a nudge repeats in a 31-day month).
 
 Three rules worth keeping:
 1. **Never fold these into the support-request toggle.** Someone who mutes push to escape an announcement also stops hearing that a person needs support. That's why the categories are separate preferences and why support requests keep the original toggle.
-2. **Push text renders on a locked phone.** Nothing in `NOTIFICATION_COPY` names the other person, quotes what they wrote, or implies why the recipient uses RecoveryBridge.
+2. **Push text renders on a locked phone.** No push quotes what someone wrote or implies why the recipient uses RecoveryBridge. The direct pushes (support request, direct connect, chat message) show the other person's username on purpose (Burk's decision, 9 Nov 2026: it's good to know who you're being connected with), so don't strip it. The queued kinds in `NOTIFICATION_COPY` name no one.
 3. **Don't bake a live count into a queued body.** The check-in deliberately says "listeners are around", not "3 listeners are online" — the queue can drain 35+ minutes later (longer through quiet hours), by which time a number is a lie.
 
 ## Also keep in mind
 - "Ship off" is only the default. On 2 Nov 2026 all 5 kinds were switched on in production, so check `notification_kind_settings` rather than assuming.
 - Don't put anything urgent in the queue: it's only as timely as the cron plus quiet-hours deferrals. Support requests and chat messages stay on their direct paths.
 - A broadcast can't be unsent, and the composer says so before confirming.
+- A direct connect to a listener in quiet hours can't be delivered, and the push is their only signal. `/api/notifications/send` closes the pending session at once (seeker back to `requesting`), so nobody waits on a listener who was never told.
 - Support pushes need a long enough TTL to outlast a sleeping phone (`SUPPORT_PUSH_TTL_SECONDS`).
 - A read failure in the drain must release the batch back to `pending`. Never treat it as "no subscription", which permanently mislabels rows as `skipped` (#62).
 - Listener targeting uses `isListenerOnline()`. `always_available` bypasses the heartbeat check by design.

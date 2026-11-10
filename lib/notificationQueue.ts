@@ -41,8 +41,15 @@ export const QUIET_HOURS_DEFER_MS = 30 * 60 * 1000
 /** Rows are given up on after this many delivery attempts. */
 export const MAX_DELIVERY_ATTEMPTS = 3
 
-/** Terminal rows older than this are pruned by the drain. */
-export const QUEUE_RETENTION_DAYS = 30
+/**
+ * Terminal rows older than this are pruned by the drain.
+ *
+ * Must stay longer than the longest dedupe period. The monthly kinds dedupe
+ * on "YYYY-MM", and a row is the only record that a key was used: at 30 days,
+ * a nudge sent on the 1st of a 31-day month was pruned on the 31st and queued
+ * again that day. 45 keeps every monthly row past the end of its month.
+ */
+export const QUEUE_RETENTION_DAYS = 45
 
 /**
  * Which notification kinds are switched on platform-wide.

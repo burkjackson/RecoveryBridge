@@ -4,6 +4,7 @@ import { createClient } from '@supabase/supabase-js'
 import { sendSupportRequestEmail } from '@/lib/email'
 import { isInQuietHours } from '@/lib/timeWindows'
 import { TIME, isListenerOnline } from '@/lib/constants'
+import { endSessionRoleStates } from '@/lib/serverSessionState'
 import { isRateLimited } from '@/lib/rateLimit'
 import { getActiveBlock } from '@/lib/blocks'
 import { getMutedUserIdsForUser } from '@/lib/mutes'
@@ -137,6 +138,46 @@ export async function POST(request: NextRequest) {
         })
       }
 
+      const { data: listener } = await supabase
+        .from('profiles')
+        .select('id, display_name, email, email_notifications_enabled, quiet_hours_enabled, quiet_hours_start, quiet_hours_end, quiet_hours_timezone')
+        .eq('id', targetListenerId)
+        .maybeSingle()
+
+      // The push below is the listener's only signal that this request
+      // exists, and quiet hours suppress it. This used to return here with
+      // the session still pending (and already claimed as "notified"), so the
+      // seeker sat waiting on someone who had never been told, until the
+      // cleanup cron timed the request out. Close it now instead, the same
+      // way a decline does: the seeker goes back to 'requesting' and the chat
+      // page tells them to try someone else. The listener never left the pool
+      // for a pending request (#35), so their state is left alone.
+      if (!listener || isInQuietHours(listener)) {
+        const { data: closed } = await supabase
+          .from('sessions')
+          .update({ status: 'ended', ended_at: new Date().toISOString() })
+          .eq('id', directSession.id)
+          .eq('status', 'active')
+          .is('accepted_at', null)
+          .select('id')
+          .maybeSingle()
+
+        if (closed) {
+          await endSessionRoleStates(
+            supabase,
+            { seekerId, listenerId: targetListenerId },
+            { restoreListener: false, wasAccepted: false }
+          )
+        }
+
+        return NextResponse.json({
+          success: true,
+          message: 'Listener unavailable or in quiet hours',
+          notified: 0,
+          sessionEnded: Boolean(closed),
+        })
+      }
+
       // Claim it before sending, not after: if two calls race, only the one
       // that actually flips this from null wins and sends. is('...', null)
       // makes the update itself the compare-and-swap.
@@ -153,20 +194,6 @@ export async function POST(request: NextRequest) {
           success: true,
           message: 'Already notified for this session',
           notified: 0,
-        })
-      }
-
-      const { data: listener } = await supabase
-        .from('profiles')
-        .select('id, display_name, email, email_notifications_enabled, quiet_hours_enabled, quiet_hours_start, quiet_hours_end, quiet_hours_timezone')
-        .eq('id', targetListenerId)
-        .maybeSingle()
-
-      if (!listener || isInQuietHours(listener)) {
-        return NextResponse.json({
-          success: true,
-          message: 'Listener unavailable or in quiet hours',
-          notified: 0
         })
       }
 

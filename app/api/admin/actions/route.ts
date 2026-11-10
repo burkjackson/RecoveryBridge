@@ -20,6 +20,9 @@ import { isRateLimited } from '@/lib/rateLimit'
 import { endSessionRoleStates } from '@/lib/serverSessionState'
 import { UUID_RE } from '@/lib/validation'
 
+/** The values the admin UI can set; anything else is rejected. */
+const REPORT_STATUSES: readonly unknown[] = ['pending', 'reviewing', 'resolved', 'dismissed']
+
 const AUDIENCE_KEYS = BROADCAST_AUDIENCES.map((a) => a.key) as readonly string[]
 
 /** Rows per insert, and per page when reading the audience back. */
@@ -187,6 +190,13 @@ export async function POST(request: NextRequest) {
       if (!reportId || !status) {
         return NextResponse.json({ error: 'reportId and status required' }, { status: 400 })
       }
+      if (!REPORT_STATUSES.includes(status)) {
+        return NextResponse.json({ error: 'Invalid status' }, { status: 400 })
+      }
+      // Only a terminal status is a resolution. Marking a report 'reviewing'
+      // used to stamp resolved_at/resolved_by too, so an open report looked
+      // resolved to anything reading those columns.
+      const isTerminal = status === 'resolved' || status === 'dismissed'
 
       // Fetch report + user emails before updating (for notifications)
       const { data: reportData } = await supabase
@@ -203,8 +213,8 @@ export async function POST(request: NextRequest) {
         .from('reports')
         .update({
           status,
-          resolved_at: new Date().toISOString(),
-          resolved_by: admin.id,
+          resolved_at: isTerminal ? new Date().toISOString() : null,
+          resolved_by: isTerminal ? admin.id : null,
           resolution_notes: notes ?? null,
         })
         .eq('id', reportId)
@@ -219,7 +229,7 @@ export async function POST(request: NextRequest) {
       }])
 
       // Fire-and-forget: notify parties when a report reaches a terminal state
-      if ((status === 'resolved' || status === 'dismissed') && reportData) {
+      if (isTerminal && reportData) {
         const reporter = (reportData.reporter as unknown) as { display_name: string; email: string } | null
         const reported = (reportData.reported_user as unknown) as { display_name: string; email: string } | null
 
@@ -294,7 +304,7 @@ export async function POST(request: NextRequest) {
         .update({ status: 'ended', ended_at: new Date().toISOString() })
         .or(`listener_id.eq.${userId},seeker_id.eq.${userId}`)
         .eq('status', 'active')
-        .select('id, listener_id, seeker_id')
+        .select('id, listener_id, seeker_id, accepted_at')
 
       // Free the *other* participant the same way ending a chat normally does.
       // Skip restoring the blocked user to 'available' if they were the
@@ -306,7 +316,14 @@ export async function POST(request: NextRequest) {
             await endSessionRoleStates(
               supabase,
               { seekerId: session.seeker_id, listenerId: session.listener_id },
-              { restoreListener: session.listener_id !== userId }
+              {
+                // A listener only leaves the pool on accept (#35), so a
+                // pending request has nothing to restore on their side.
+                restoreListener: session.listener_id !== userId && Boolean(session.accepted_at),
+                // A request the blocked listener never accepted puts the
+                // seeker back in the queue. Never the blocked seeker.
+                wasAccepted: Boolean(session.accepted_at) || session.seeker_id === userId,
+              }
             )
           } catch (err) {
             console.error(`Could not sync role_state for session ${session.id} during block:`, err)
@@ -345,22 +362,33 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'sessionId required' }, { status: 400 })
       }
 
+      // status='active' is the guard: without it, ending a session that had
+      // already ended rewrote its ended_at and moved both people's role_state
+      // again, pulling them out of whatever they were doing by then.
       const { data: endedSession, error: sessionError } = await supabase
         .from('sessions')
         .update({ status: 'ended', ended_at: new Date().toISOString() })
         .eq('id', sessionId)
-        .select('id, listener_id, seeker_id')
-        .single()
+        .eq('status', 'active')
+        .select('id, listener_id, seeker_id, accepted_at')
+        .maybeSingle()
 
       if (sessionError) throw sessionError
+      if (!endedSession) {
+        return NextResponse.json({ error: 'Session is not active' }, { status: 409 })
+      }
 
       // A forced admin end is otherwise a normal end-of-conversation: free the
-      // listener back to 'available', not just close the session row.
+      // listener back to 'available', not just close the session row. A
+      // request that was never accepted is different: the listener never left
+      // the pool, and the seeker goes back to 'requesting'.
+      const wasAccepted = Boolean(endedSession.accepted_at)
       try {
-        await endSessionRoleStates(supabase, {
-          seekerId: endedSession.seeker_id,
-          listenerId: endedSession.listener_id,
-        })
+        await endSessionRoleStates(
+          supabase,
+          { seekerId: endedSession.seeker_id, listenerId: endedSession.listener_id },
+          { wasAccepted, restoreListener: wasAccepted }
+        )
       } catch (err) {
         console.error(`Could not sync role_state for session ${sessionId} during admin end_session:`, err)
       }
@@ -434,6 +462,9 @@ export async function POST(request: NextRequest) {
       const trimmed = typeof message === 'string' ? message.trim() : ''
       if (!userId || !trimmed) {
         return NextResponse.json({ error: 'userId and message required' }, { status: 400 })
+      }
+      if (typeof userId !== 'string' || !UUID_RE.test(userId)) {
+        return NextResponse.json({ error: 'Invalid userId' }, { status: 400 })
       }
 
       const noticeBody = trimmed.slice(0, OUTREACH_COPY.OUTREACH_MAX_LENGTH)

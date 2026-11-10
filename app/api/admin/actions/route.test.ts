@@ -115,4 +115,81 @@ describe('POST /api/admin/actions', () => {
     })
     expect(fetchEnabledKindsMock).toHaveBeenCalled()
   })
+
+  it('refuses to end a session that is not active, and moves nobody (409)', async () => {
+    const { client, calls } = fakeSupabase({
+      authUser: { id: 'admin1' },
+      tables: {
+        profiles: { data: { is_admin: true }, error: null },
+        // The status='active' filter matched nothing.
+        sessions: { data: null, error: null },
+      },
+    })
+    currentClient = client
+
+    const res = await POST(makeRequest({ action: 'end_session', sessionId: 's1' }))
+
+    expect(res.status).toBe(409)
+    expect(calls.some((c) => c.table === 'sessions' && c.method === 'eq' && c.args[0] === 'status' && c.args[1] === 'active')).toBe(true)
+    expect(calls.some((c) => c.table === 'profiles' && c.method === 'update')).toBe(false)
+    expect(calls.some((c) => c.table === 'admin_logs')).toBe(false)
+  })
+
+  it('ending a never-accepted request sends the seeker back to requesting and leaves the listener alone', async () => {
+    const { client, calls } = fakeSupabase({
+      authUser: { id: 'admin1' },
+      tables: {
+        profiles: { data: { is_admin: true }, error: null },
+        sessions: { data: { id: 's1', seeker_id: 'k1', listener_id: 'l1', accepted_at: null }, error: null },
+      },
+    })
+    currentClient = client
+
+    const res = await POST(makeRequest({ action: 'end_session', sessionId: 's1' }))
+
+    expect(res.status).toBe(200)
+    const profileUpdates = calls.filter((c) => c.table === 'profiles' && c.method === 'update')
+    expect(profileUpdates).toHaveLength(1)
+    expect(profileUpdates[0].args[0]).toMatchObject({ role_state: 'requesting' })
+  })
+
+  it('rejects an unknown report status', async () => {
+    const { client, calls } = fakeSupabase({
+      authUser: { id: 'admin1' },
+      tables: { profiles: { data: { is_admin: true }, error: null } },
+    })
+    currentClient = client
+
+    const res = await POST(makeRequest({ action: 'update_report', reportId: 'r1', status: 'banana' }))
+
+    expect(res.status).toBe(400)
+    expect(calls.some((c) => c.table === 'reports')).toBe(false)
+  })
+
+  it('does not stamp a report as resolved when it only moves to reviewing', async () => {
+    const { client, calls } = fakeSupabase({
+      authUser: { id: 'admin1' },
+      tables: { profiles: { data: { is_admin: true }, error: null } },
+    })
+    currentClient = client
+
+    const res = await POST(makeRequest({ action: 'update_report', reportId: 'r1', status: 'reviewing' }))
+
+    expect(res.status).toBe(200)
+    const update = calls.find((c) => c.table === 'reports' && c.method === 'update')
+    expect(update?.args[0]).toMatchObject({ status: 'reviewing', resolved_at: null, resolved_by: null })
+  })
+
+  it('rejects outreach to something that is not a user id', async () => {
+    const { client, calls } = fakeSupabase({
+      authUser: { id: 'admin1' },
+      tables: { profiles: { data: { is_admin: true }, error: null } },
+    })
+    currentClient = client
+
+    const res = await POST(makeRequest({ action: 'send_outreach', userId: 'not-a-uuid', message: 'Hello' }))
+
+    expect(res.status).toBe(400)
+    expect(calls.some((c) => c.table === 'user_notices')).toBe(false)
+  })
 })
