@@ -18,6 +18,22 @@ describe('safeRedirectPath', () => {
     expect(safeRedirectPath('/\\evil.com')).toBe('/dashboard')
   })
 
+  it('rejects tabs and newlines the URL parser strips into a protocol-relative URL', () => {
+    // What ?redirect=/%09/evil.com decodes to; resolves to https://evil.com/.
+    expect(safeRedirectPath('/\t/evil.com')).toBe('/dashboard')
+    expect(safeRedirectPath('/\n/evil.com')).toBe('/dashboard')
+    expect(safeRedirectPath('/\r/evil.com')).toBe('/dashboard')
+    expect(safeRedirectPath('/\t\\evil.com')).toBe('/dashboard')
+  })
+
+  it('rejects a backslash anywhere in the path', () => {
+    expect(safeRedirectPath('/chat\\..\\evil')).toBe('/dashboard')
+  })
+
+  it('still allows a path with a query string and hash', () => {
+    expect(safeRedirectPath('/chat/abc-123?x=1#top')).toBe('/chat/abc-123?x=1#top')
+  })
+
   it('rejects an absolute URL', () => {
     expect(safeRedirectPath('https://evil.com')).toBe('/dashboard')
   })
