@@ -100,7 +100,7 @@ npm run build     # succeeds with NO server secrets set
 - **Pushing to `main` deploys to production** (Vercel project `recovery-bridge`, team `burkjacksons-projects`).
 - Solo project: commit to `main` directly or merge worktree branches into it. **Never open PRs.**
 - CI runs typecheck, lint, test and build on every push, with no secrets.
-- Domains: recoverybridge.app (+www). Stories live on Ghost at stories.recoverybridge.app, not in this app.
+- Domains: recoverybridge.app (+www). Stories live on Ghost at blog.recoverybridge.app (the canonical host), not in this app.
 - Fetch and compare with `origin` before auditing; the local checkout can fall behind.
 
 ## Environment variables

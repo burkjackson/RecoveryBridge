@@ -28,7 +28,9 @@ blog.recoverybridge.app
 stories.recoverybridge.app
 ```
 
-Ghost properties (`next.config.js` points to `blog.recoverybridge.app`).
+Ghost properties. `blog.recoverybridge.app` is the canonical host, and the one
+`next.config.js` and every in-app link point to; `stories.recoverybridge.app`
+still responds but nothing should link to it.
 
 ## Tier 3 — Backend & ops (add only per task; each widens reach)
 

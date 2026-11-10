@@ -134,7 +134,7 @@ Compliance/audit: `referral_source` (010, free text since 018), `listener_traini
 - **notification_queue** (035) — one row per recipient per non-support notification (thank-you note, training nudge, check-in, broadcast). Drained by `/api/notifications/drain`; `dedupe_key` + a partial unique index make every enqueue idempotent, `not_before` doubles as a quiet-hours deferral and a claim lease
 - **broadcasts** (035) — audit record for an admin announcement; queue rows hang off it
 - **notification_kind_settings** (036) — the admin on/off switch per notification kind. Absent row = off; unreadable = everything off
-- **blog/story tables** (011–015) — **legacy**: stories moved to Ghost at stories.recoverybridge.app; no in-app UI reads them
+- **blog/story tables** (011–015) — **legacy**: stories moved to Ghost at blog.recoverybridge.app; no in-app UI reads them
 
 All tables have RLS. Admin mutations go through `/api/admin/*` routes (Bearer token → `getUser` → `is_admin` check), not client-side Supabase.
 
