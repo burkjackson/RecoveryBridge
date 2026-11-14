@@ -464,6 +464,33 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: true, messages: messagesWithEdits, profiles })
     }
 
+    // An admin opening a live chat from the dashboard reads it through the
+    // chat page, not load_transcript, so that view needs its own audit row.
+    // The chat page calls this before it shows an observer anything and
+    // refuses to render if it fails.
+    if (action === 'log_live_view') {
+      const { sessionId } = body
+      if (typeof sessionId !== 'string' || !UUID_RE.test(sessionId)) {
+        return NextResponse.json({ error: 'Valid sessionId required' }, { status: 400 })
+      }
+
+      const { error: auditError } = await supabase.from('admin_logs').insert([{
+        admin_id: admin.id,
+        action_type: 'live_chat_viewed',
+        target_session_id: sessionId,
+      }])
+
+      if (auditError) {
+        console.error('log_live_view: audit log insert failed', auditError)
+        return NextResponse.json(
+          { error: 'Could not record this chat view, so the chat was not opened. Please try again.' },
+          { status: 500 }
+        )
+      }
+
+      return NextResponse.json({ success: true })
+    }
+
     if (action === 'send_outreach') {
       const { userId, message } = body
       const trimmed = typeof message === 'string' ? message.trim() : ''

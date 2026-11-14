@@ -478,6 +478,9 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   }, [messages])
 
   async function loadSession() {
+    // Stays true when an observing admin's view couldn't be logged, so the
+    // page keeps its loading state instead of rendering the chat on the way out.
+    let leaving = false
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) {
@@ -503,6 +506,31 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
         .single()
 
       if (error) throw error
+
+      // Anyone who can load a session they aren't part of is an admin (RLS).
+      // The privacy policy says admin access to conversations is logged, so
+      // the audit row is written before the chat is shown — and if it can't
+      // be, the admin goes back to the dashboard without seeing it.
+      const isObserver = user.id !== sessionData.listener_id && user.id !== sessionData.seeker_id
+      if (isObserver) {
+        const { data: { session: authSession } } = await supabase.auth.getSession()
+        const logged = await fetch('/api/admin/actions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${authSession?.access_token}`,
+          },
+          body: JSON.stringify({ action: 'log_live_view', sessionId }),
+        }).then((r) => r.ok).catch(() => false)
+
+        if (!logged) {
+          leaving = true
+          setMessages([])
+          router.push('/admin')
+          return
+        }
+      }
+
       setSession(sessionData)
 
       // Get other user's name
@@ -533,7 +561,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
       console.error('Error loading session:', error)
       router.push('/dashboard')
     } finally {
-      setLoading(false)
+      if (!leaving) setLoading(false)
     }
   }
 
