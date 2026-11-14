@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Heading1, Body16, Body18 } from '@/components/ui/Typography'
 import { CompactFooter } from '@/components/Footer'
+import { CHAT_PRIVACY_COPY } from '@/lib/constants'
 
 export default function PrivacyPage() {
   const router = useRouter()
@@ -41,7 +42,7 @@ export default function PrivacyPage() {
             </Body16>
             <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
               <Body16 className="text-sm dark:text-gray-100">
-                <strong>Our Promise:</strong> Your conversations are private. We never sell your data. Your information is encrypted and protected.
+                <strong>Our Promise:</strong> {CHAT_PRIVACY_COPY.FULL} We never sell your data. Your information is encrypted and protected.
               </Body16>
             </div>
           </section>
@@ -53,7 +54,7 @@ export default function PrivacyPage() {
               <strong className="text-[#2D3436] dark:text-gray-100">Account Information:</strong> When you create an account, we collect your email address, display name, and any profile information you choose to share (like your bio or role).
             </Body16>
             <Body16 className="text-rb-gray dark:text-gray-300 mb-3">
-              <strong className="text-[#2D3436] dark:text-gray-100">Messages:</strong> We store your chat messages so the service works, encrypted both in transit and at rest. If someone reports misconduct, a RecoveryBridge admin may review that session&apos;s transcript to look into it — and every review is logged.
+              <strong className="text-[#2D3436] dark:text-gray-100">Messages:</strong> We store your chat messages so the service works, encrypted both in transit and at rest. {CHAT_PRIVACY_COPY.FULL} {CHAT_PRIVACY_COPY.CRISIS_SCAN}
             </Body16>
             <Body16 className="text-rb-gray dark:text-gray-300">
               <strong className="text-[#2D3436] dark:text-gray-100">Usage Data:</strong> We collect basic information about how you use RecoveryBridge (like when you log in) to improve our service and keep it secure.

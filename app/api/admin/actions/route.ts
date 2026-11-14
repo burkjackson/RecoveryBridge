@@ -442,17 +442,24 @@ export async function POST(request: NextRequest) {
         profileData?.forEach((p) => { profiles[p.id] = p.display_name })
       }
 
-      // Audit log is written server-side — fire-and-forget so it doesn't block the response.
-      // Wrap in Promise.resolve: the Supabase builder is a PromiseLike (no .catch of its own).
-      Promise.resolve(
-        supabase.from('admin_logs').insert([{
-          admin_id: admin.id,
-          action_type: 'transcript_viewed',
-          target_session_id: sessionId,
-          target_report_id: reportId || null,
-          details: { report_id: reportId || null },
-        }])
-      ).catch(() => {})
+      // The audit row must exist before the transcript leaves the server: the
+      // privacy policy promises every transcript review is logged. If the
+      // insert fails, the admin gets a 500 and no messages.
+      const { error: auditError } = await supabase.from('admin_logs').insert([{
+        admin_id: admin.id,
+        action_type: 'transcript_viewed',
+        target_session_id: sessionId,
+        target_report_id: reportId || null,
+        details: { report_id: reportId || null },
+      }])
+
+      if (auditError) {
+        console.error('load_transcript: audit log insert failed', auditError)
+        return NextResponse.json(
+          { error: 'Could not record this transcript review, so the transcript was not loaded. Please try again.' },
+          { status: 500 }
+        )
+      }
 
       return NextResponse.json({ success: true, messages: messagesWithEdits, profiles })
     }

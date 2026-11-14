@@ -5,6 +5,7 @@ import Footer from '@/components/Footer'
 import ProductPreview from '@/components/ProductPreview'
 import FaqAccordion from '@/components/FaqAccordion'
 import { faqs } from '@/lib/faqs'
+import { CHAT_PRIVACY_COPY } from '@/lib/constants'
 
 export const metadata: Metadata = {
   title: 'Free Anonymous Recovery Chat & Peer Support | RecoveryBridge',
@@ -202,7 +203,7 @@ export default function Home() {
                 </div>
                 <h3 className="text-heading-3 text-rb-dark dark:text-gray-100 mb-2">A Listener Shows Up</h3>
                 <p className="text-sm text-rb-gray dark:text-gray-300 leading-relaxed">
-                  A volunteer listener accepts and a private, one-on-one chat begins. No audience. No records shared. Just the two of you.
+                  A volunteer listener accepts and a one-on-one chat begins. {CHAT_PRIVACY_COPY.FULL}
                 </p>
               </div>
 

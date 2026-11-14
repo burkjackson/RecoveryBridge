@@ -236,6 +236,18 @@ export const OUTREACH_COPY = {
   OUTREACH_MAX_LENGTH: 500,
 } as const
 
+// Who can see a chat. One wording everywhere (homepage, support pages, footer,
+// privacy/safety pages, welcome email) so the promise can't drift from how
+// admin access actually works: admins can read conversations for safety or
+// misconduct reasons, and load_transcript writes an admin_logs row before it
+// returns anything.
+export const CHAT_PRIVACY_COPY = {
+  FULL: "Chats aren't public. Authorized RecoveryBridge administrators can access conversations when needed to look into safety or misconduct concerns. Transcript reviews in our admin tools are logged.",
+  /** For badges and taglines where FULL won't fit */
+  SHORT: 'Private one-on-one chat, not a public room',
+  CRISIS_SCAN: "Chat text is scanned automatically for crisis language so we can surface help. That scan doesn't involve a person reading your chat.",
+} as const
+
 // Convert time constants to minutes for easier reference
 export const TIME_MINUTES = {
   HEARTBEAT_INTERVAL: TIME.HEARTBEAT_INTERVAL_MS / (60 * 1000),

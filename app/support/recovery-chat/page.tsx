@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import Footer from '@/components/Footer'
+import { CHAT_PRIVACY_COPY } from '@/lib/constants'
 
 // SEO landing page targeting the "recovery chat / recovery chats" query cluster —
 // a real, unclaimed demand surfaced in Search Console (people searching the exact
@@ -48,7 +49,7 @@ const pageFaqs = [
   },
   {
     q: 'Is the chat private or public?',
-    a: 'Private. This is a one-on-one chat, not a public forum or group room. Your conversation is visible only to you and the person you are speaking with. You choose a display name — no real name or phone number required — and we never sell your data.',
+    a: `This is a one-on-one chat, not a public forum or group room. ${CHAT_PRIVACY_COPY.FULL} You choose a display name — no real name or phone number required — and we never sell your data.`,
   },
   {
     q: 'Do I have to be sober or in a program to chat?',
@@ -158,7 +159,7 @@ export default function RecoveryChatPage() {
           </li>
           <li className="flex gap-3">
             <span className="flex-shrink-0 w-7 h-7 rounded-full bg-rb-blue text-white text-sm font-bold flex items-center justify-center">2</span>
-            <span><strong className="text-rb-dark dark:text-gray-100">A listener shows up.</strong> A volunteer peer accepts, and a private one-on-one chat begins — just the two of you.</span>
+            <span><strong className="text-rb-dark dark:text-gray-100">A listener shows up.</strong> A volunteer peer accepts, and a one-on-one chat begins. {CHAT_PRIVACY_COPY.SHORT}.</span>
           </li>
           <li className="flex gap-3">
             <span className="flex-shrink-0 w-7 h-7 rounded-full bg-rb-blue text-white text-sm font-bold flex items-center justify-center">3</span>

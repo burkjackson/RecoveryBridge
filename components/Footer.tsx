@@ -1,5 +1,6 @@
 // Footer component with privacy reassurance for mental health platform
 import ThemeToggle from './ThemeToggle'
+import { CHAT_PRIVACY_COPY } from '@/lib/constants'
 
 interface FooterProps {
   className?: string
@@ -73,11 +74,11 @@ export default function Footer({ className = '', donateHref = '/donate' }: Foote
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-full mb-3">
             <span className="text-xl" role="img" aria-label="Lock">🔒</span>
             <span className="text-sm font-semibold text-green-900 dark:text-green-200">
-              Your conversations are private & confidential
+              {CHAT_PRIVACY_COPY.SHORT}
             </span>
           </div>
           <p className="text-sm text-rb-gray dark:text-gray-300 max-w-md mx-auto">
-            Your data is encrypted and never sold. We share it only with trusted service providers who help us run RecoveryBridge. We're committed to protecting your privacy.
+            {CHAT_PRIVACY_COPY.FULL} Your data is encrypted and never sold. We share it only with trusted service providers who help us run RecoveryBridge. We're committed to protecting your privacy.
           </p>
         </div>
 
@@ -155,7 +156,7 @@ export function PrivacyBadge({ className = '' }: { className?: string }) {
     <div className={`inline-flex items-center gap-2 px-3 py-1.5 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-full ${className}`}>
       <span className="text-base" role="img" aria-label="Lock">🔒</span>
       <span className="text-xs sm:text-sm font-medium text-green-900 dark:text-green-200">
-        Private & Confidential
+        {CHAT_PRIVACY_COPY.SHORT}
       </span>
     </div>
   )
@@ -170,7 +171,7 @@ export function CompactFooter({ className = '' }: FooterProps) {
         <span>•</span>
         <a href="/terms" className="hover:text-rb-blue transition">Terms</a>
         <span>•</span>
-        <span className="text-gray-400 dark:text-gray-300">🔒 Private & Confidential</span>
+        <span className="text-gray-400 dark:text-gray-300">🔒 {CHAT_PRIVACY_COPY.SHORT}</span>
       </div>
     </footer>
   )

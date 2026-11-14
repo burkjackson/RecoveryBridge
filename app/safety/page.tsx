@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Heading1, Body16, Body18 } from '@/components/ui/Typography'
 import { CompactFooter } from '@/components/Footer'
+import { CHAT_PRIVACY_COPY } from '@/lib/constants'
 
 export default function SafetyPage() {
   const router = useRouter()
@@ -233,7 +234,7 @@ export default function SafetyPage() {
           <section>
             <Body18 className="font-semibold mb-3 dark:text-gray-100">Privacy and Confidentiality</Body18>
             <Body16 className="text-rb-gray dark:text-gray-300 mb-2">
-              <strong className="text-[#2D3436] dark:text-gray-100">What we protect:</strong> Your conversations are private and encrypted in transit and at rest. We never share your personal information without your consent. The only exception is that if a chat is reported for misconduct, an administrator may review that session&apos;s transcript &mdash; and every such review is logged.
+              <strong className="text-[#2D3436] dark:text-gray-100">What we protect:</strong> Your conversations are encrypted in transit and at rest. We never share your personal information without your consent. {CHAT_PRIVACY_COPY.FULL} {CHAT_PRIVACY_COPY.CRISIS_SCAN}
             </Body16>
             <Body16 className="text-rb-gray dark:text-gray-300 mb-2">
               <strong className="text-[#2D3436] dark:text-gray-100">What we ask of you:</strong> Please respect others' privacy too. Don't share screenshots, personal details, or stories from your conversations without explicit permission.

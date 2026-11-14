@@ -1,4 +1,5 @@
 import { escapeHtml } from '@/lib/email/escapeHtml'
+import { CHAT_PRIVACY_COPY } from '@/lib/constants'
 
 export function welcomeEmailHtml(displayName: string): string {
   const firstName = escapeHtml(displayName.split(' ')[0] || displayName)
@@ -91,7 +92,7 @@ export function welcomeEmailHtml(displayName: string): string {
                               </td>
                               <td style="padding-left:12px;">
                                 <p style="margin:0;font-size:15px;font-weight:600;color:#2D3436;">A listener shows up</p>
-                                <p style="margin:4px 0 0;font-size:14px;color:#4A5568;line-height:1.6;">A volunteer accepts and a private, one-on-one chat begins. No audience. No records shared. Just the two of you.</p>
+                                <p style="margin:4px 0 0;font-size:14px;color:#4A5568;line-height:1.6;">A volunteer accepts and a one-on-one chat begins. ${escapeHtml(CHAT_PRIVACY_COPY.FULL)}</p>
                               </td>
                             </tr>
                           </table>

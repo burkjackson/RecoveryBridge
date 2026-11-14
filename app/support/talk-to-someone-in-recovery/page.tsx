@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import Footer from '@/components/Footer'
+import { CHAT_PRIVACY_COPY } from '@/lib/constants'
 
 // SEO landing page (server component so the content ships in the initial HTML).
 // Targets the high-intent "free / someone to talk to about addiction" query
@@ -47,7 +48,7 @@ const pageFaqs = [
   },
   {
     q: 'Is it anonymous?',
-    a: 'Yes. You choose a display name — no real name, phone number, or identifying information required. Your conversation is private and visible only to you and the person you are speaking with. We never sell your data.',
+    a: `You choose a display name — no real name, phone number, or identifying information required. ${CHAT_PRIVACY_COPY.FULL} We never sell your data.`,
   },
   {
     q: 'Do I need to be sober or in a program to use it?',
@@ -154,7 +155,7 @@ export default function TalkToSomeonePage() {
           </li>
           <li className="flex gap-3">
             <span className="flex-shrink-0 w-7 h-7 rounded-full bg-rb-blue text-white text-sm font-bold flex items-center justify-center">2</span>
-            <span><strong className="text-rb-dark dark:text-gray-100">A listener shows up.</strong> A volunteer peer accepts, and a private one-on-one chat begins — just the two of you.</span>
+            <span><strong className="text-rb-dark dark:text-gray-100">A listener shows up.</strong> A volunteer peer accepts, and a one-on-one chat begins. {CHAT_PRIVACY_COPY.SHORT}.</span>
           </li>
           <li className="flex gap-3">
             <span className="flex-shrink-0 w-7 h-7 rounded-full bg-rb-blue text-white text-sm font-bold flex items-center justify-center">3</span>

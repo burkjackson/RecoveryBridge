@@ -3,6 +3,8 @@
 // FAQPage structured data on the home page (app/page.tsx), so the rich-result
 // markup can never drift out of sync with what visitors actually see — Google
 // flags FAQ schema whose Q&A text isn't present on the page.
+import { CHAT_PRIVACY_COPY } from '@/lib/constants'
+
 export interface Faq {
   q: string
   a: string
@@ -15,7 +17,7 @@ export const faqs: Faq[] = [
   },
   {
     q: 'Is it anonymous?',
-    a: "You choose a display name — no real name, phone number, or identifying info required. Your conversations are private, encrypted, and visible only to you and the person you're speaking with. We never sell your data or share it with advertisers.",
+    a: `You choose a display name — no real name, phone number, or identifying info required. Your conversations are encrypted. ${CHAT_PRIVACY_COPY.FULL} We never sell your data or share it with advertisers.`,
   },
   {
     q: 'Is it really free?',
