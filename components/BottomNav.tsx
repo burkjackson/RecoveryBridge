@@ -71,6 +71,9 @@ export default function BottomNav() {
       <div style={{ height: 'calc(8rem + env(safe-area-inset-bottom))' }} aria-hidden="true" />
     <nav
       className="fixed bottom-0 left-0 right-0 z-40 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 safe-area-bottom"
+      // --vv-shift pulls the bar back to the real bottom of the screen after
+      // the iOS 26 keyboard bug floats it up mid-page (see ViewportFix).
+      style={{ translate: '0 var(--vv-shift, 0px)' }}
       aria-label="Main navigation"
     >
       <div className="flex items-stretch justify-around max-w-lg mx-auto">

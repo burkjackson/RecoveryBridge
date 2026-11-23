@@ -5,6 +5,7 @@ import ServiceWorkerRegistration from '@/components/ServiceWorkerRegistration'
 import ThemeProvider from '@/components/ThemeProvider'
 import ToastProvider from '@/components/ToastProvider'
 import BottomNav from '@/components/BottomNav'
+import ViewportFix from '@/components/ViewportFix'
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://recoverybridge.app'),
@@ -100,6 +101,7 @@ export default function RootLayout({
         <ThemeProvider>
           <ToastProvider>
             <ServiceWorkerRegistration />
+            <ViewportFix />
             {children}
             <CrisisResources />
             <BottomNav />

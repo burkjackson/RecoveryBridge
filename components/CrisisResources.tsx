@@ -66,12 +66,13 @@ export default function CrisisResources() {
       {/* Floating Crisis Button — hidden on /chat, where an SOS pill lives in
           the chat's sticky top bar instead (since 3 Oct 2026; a floating
           button there covered the newest message). iOS PWAs also drift
-          position:fixed elements mid-page during keyboard/scroll panning. */}
+          position:fixed elements mid-page during keyboard/scroll panning;
+          --vv-shift (ViewportFix) pulls it back down. */}
       {!isChat && (
         <button
           ref={triggerRef}
           onClick={() => setIsOpen(true)}
-          style={aboveNav ? { bottom: 'calc(4.5rem + env(safe-area-inset-bottom))' } : undefined}
+          style={{ ...(aboveNav ? { bottom: 'calc(4.5rem + env(safe-area-inset-bottom))' } : {}), translate: '0 var(--vv-shift, 0px)' }}
           className={`fixed right-6 ${aboveNav ? '' : 'bottom-6'} z-50 bg-red-600 hover:bg-red-700 text-white px-4 py-3 rounded-full shadow-lg transition-all hover:scale-105 flex items-center gap-2 font-semibold`}
           aria-label="Access crisis resources and emergency contacts"
         >
